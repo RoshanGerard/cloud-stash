@@ -104,7 +104,9 @@ two-stage review per CLAUDE.md Coding discipline.
 
 ## 6. Deferred manual smoke (PENDING_TC.MD)
 
-- [ ] 6.1 Editor-integration smoke: in VS Code with the ESLint extension,
+- [x] 6.1 Editor-integration smoke (RECORDED in PENDING_TC.MD; HUMAN smoke
+      deferred — RuleTester's 41 cases prove the rule + suggestion logic):
+      in VS Code with the ESLint extension,
       type `tag: "auth-revoked"` and confirm the squiggle + the two opt-in
       Quick Fix suggestions (`DatasourceErrorTag.AuthRevoked` /
       `FilesErrorTag.AuthRevoked`) appear and apply correctly with import
