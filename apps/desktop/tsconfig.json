@@ -6,6 +6,15 @@
     "outDir": "dist",
     "declarationDir": "dist",
     "tsBuildInfoFile": "dist/.tsbuildinfo",
+    // Emit declarations only — never `.js`. `outDir` is `dist`, the SAME
+    // directory electron-vite writes the bundled main+preload to. If `tsc -b`
+    // (pnpm typecheck) transpiled `src/preload/index.ts` → `dist/preload/index.js`
+    // it would clobber the electron-vite bundle with a raw
+    // `require("@ft5/ipc-contracts")` (breaking the sandbox + tripping
+    // `scripts/preload-bundle.test.ts`). apps/desktop is a leaf — nothing
+    // consumes its emit; the runtime build is electron-vite — so tsc type-checks
+    // and emits `.d.ts` only, leaving the `dist/**/*.js` bundles to electron-vite.
+    "emitDeclarationOnly": true,
     "types": ["node"],
     // The compiled runtime for main+preload is CJS (see
     // `electron.vite.config.ts`'s `formats: ["cjs"]`), and `package.json` no

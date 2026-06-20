@@ -72,3 +72,29 @@ describe("preload bundle forbids runtime requires of workspace deps", () => {
     expect(ALLOWED_REQUIRE_SPECIFIERS.size).toBe(1);
   });
 });
+
+// Regression guard for the tsc-vs-electron-vite output collision: the desktop
+// tsconfig emits to `dist/` (rootDir src → outDir dist), the SAME directory
+// electron-vite writes the bundled main+preload to (`dist/main`, `dist/preload`).
+// Without `emitDeclarationOnly`, `tsc -b` (pnpm typecheck) transpiles
+// `src/preload/index.ts` → `dist/preload/index.js` with a raw
+// `require("@ft5/ipc-contracts")` that clobbers the electron-vite bundle and
+// trips the guard above. apps/desktop is a leaf in the project-reference graph
+// (nothing consumes its emit; the runtime build is electron-vite), so tsc must
+// emit declarations only and leave the `dist/**/*.js` bundles to electron-vite.
+describe("desktop tsc emit must not clobber the electron-vite bundle", () => {
+  it("apps/desktop/tsconfig.json sets emitDeclarationOnly", () => {
+    const raw = readFileSync(
+      path.resolve(repoRoot, "apps/desktop/tsconfig.json"),
+      "utf8",
+    );
+    // Strip `//` line comments (the tsconfig is JSONC; no string value here
+    // contains `//`) so JSON.parse can read the actual compiler options.
+    const parsed = JSON.parse(raw.replace(/\/\/.*$/gm, ""));
+    expect(
+      parsed.compilerOptions?.emitDeclarationOnly,
+      "apps/desktop/tsconfig.json must set compilerOptions.emitDeclarationOnly: true " +
+        "so `tsc -b` does not transpile a plain-tsc preload over the electron-vite bundle",
+    ).toBe(true);
+  });
+});
