@@ -1534,7 +1534,7 @@ The handler already holds the `downloadJobId` for the in-flight call in its own 
 Every TypeScript source and test file SHALL reference `FilesErrorTag`
 values through the `FilesErrorTag` const object exported from
 `@ft5/ipc-contracts` (e.g. `FilesErrorTag.Disconnected`) — across the
-workspace (`packages/`, `services/`, `apps/`, `scripts/`) — rather than
+workspace (`packages/`, `services/`, `apps/`, `scripts/`, `tools/`) — rather than
 the equivalent raw string literal (e.g. `"disconnected"`) in any
 error-tag context: construction (`tag: ...`), comparison (`tag === ...` /
 `tag !== ...`), or `switch`/`case` arm. This is a behavior-preserving convention:
@@ -1585,7 +1585,7 @@ does not distinguish them, so enum-correctness is review-enforced.
 
 #### Scenario: No raw `FilesErrorTag` literals remain outside exemptions
 
-- **WHEN** the const-convention guard test (`packages/ipc-contracts/src/__tests__/error-tag-const-convention.test.ts`) grep-scans every `.ts` / `.tsx` file under `packages/`, `services/`, `apps/`, and `scripts/` for raw error-tag string literals in an error-tag context (`tag` / `errorTag` / `lastErrorTag` / `engineCause` / `.tag` construction or comparison, and `case` arms)
+- **WHEN** the const-convention guard test (`packages/ipc-contracts/src/__tests__/error-tag-const-convention.test.ts`) grep-scans every `.ts` / `.tsx` file under `packages/`, `services/`, `apps/`, `scripts/`, and `tools/` for raw error-tag string literals in an error-tag context (`tag` / `errorTag` / `lastErrorTag` / `engineCause` / `.tag` construction or comparison, and `case` arms)
 - **THEN** it finds zero occurrences of any `FilesErrorTag` value as a raw literal, excluding the const definition, serialized-payload fixtures, comments, `dist/`, and `node_modules/`
 
 #### Scenario: `files:*` envelope vocabulary is unchanged
