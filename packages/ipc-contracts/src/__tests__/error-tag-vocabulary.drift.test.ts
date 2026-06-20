@@ -2,10 +2,11 @@
 // `DatasourceErrorTag` and `FilesErrorTag` const objects in ipc-contracts.
 //
 // If a new tag value is added to either enum, this test fails until the shared
-// vocabulary module is updated — preventing the ESLint rule (Task 2) and the
-// grep-scan guard (Task 3) from silently missing the new value.
+// vocabulary module is updated — preventing the grep-scan guard (Task 2) and
+// the ESLint rule (Task 3) from silently missing the new value.
 //
-// Import style mirrors `datasource-error-tag.test-d.ts`.
+// Const-object imports use the same relative-source style as the colocated type
+// tests; the shared vocabulary is a cross-package .mjs (import depth noted below).
 
 import { describe, expect, it } from "vitest";
 

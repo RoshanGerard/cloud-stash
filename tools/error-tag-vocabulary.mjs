@@ -1,7 +1,7 @@
 /**
  * Single source of truth for the error-tag vocabulary shared by:
  *   - the Vitest grep-scan guard (packages/ipc-contracts/src/__tests__/error-tag-const-convention.test.ts)
- *   - the ESLint rule (packages/eslint-plugin-ft5/src/rules/no-error-tag-literals.js, Task 2)
+ *   - the ESLint rule (tools/eslint-rules/no-raw-error-tag-literal.mjs, Task 3)
  *
  * This is a plain ESM data module with NO imports so it can be loaded
  * directly by ESLint via Node without needing to resolve the TypeScript
