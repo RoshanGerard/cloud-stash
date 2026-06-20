@@ -1541,6 +1541,20 @@ error-tag context: construction (`tag: ...`), comparison (`tag === ...` /
 the const's value IS the same string, so the `files:*` envelope wire
 shape and the derived `FilesErrorTag` union are unchanged.
 
+This convention SHALL be enforced by TWO complementary mechanisms that
+agree on the same tag vocabulary and field set:
+
+- The const-convention **guard test**
+  (`packages/ipc-contracts/src/__tests__/error-tag-const-convention.test.ts`)
+  — a non-bypassable CI/test-time backstop that grep-scans the workspace.
+- A custom **ESLint rule** `ft5/no-raw-error-tag-literal`
+  (`tools/eslint-rules/no-raw-error-tag-literal.mjs`, wired as an inline
+  plugin in `eslint.config.mjs`) — an AST rule providing editor-time
+  feedback and opt-in suggestions. It is syntactic (no type services); it
+  SHALL NOT apply an autofix via `--fix` (a wrong-enum substitution on a
+  shared value is type-safe and test-green, so it MUST NOT be auto-applied),
+  but MAY offer opt-in ESLint suggestions to the const reference.
+
 The following are explicitly EXEMPT and MAY remain raw strings:
 
 - The const-object definition itself in
@@ -1554,7 +1568,14 @@ The following are explicitly EXEMPT and MAY remain raw strings:
 - Type-position declarations — `readonly tag:` interface members and
   string-literal union types (e.g. event-payload tag unions) — which
   DECLARE a contract's allowed tag values (definitions, peers of the const
-  object), not value references.
+  object), not value references. The ESLint rule, visiting value positions
+  only, never flags these without a dedicated exemption.
+- Literals belonging to a DIFFERENT error vocabulary that happens to share
+  the string. `AuthFailedTag` (the `auth-failed` event payload) is a plain
+  type union with no const object and is out of scope; its `auth-revoked` /
+  `provider-error` literals stay raw — recorded in the guard allowlist and
+  carrying an `// eslint-disable-next-line ft5/no-raw-error-tag-literal --
+  <reason>` for the rule.
 
 Because the five values shared with `DatasourceErrorTag` (`auth-revoked`,
 `rate-limited`, `conflict`, `cancelled`, `invalid-datasource`) are
@@ -1564,11 +1585,16 @@ does not distinguish them, so enum-correctness is review-enforced.
 
 #### Scenario: No raw `FilesErrorTag` literals remain outside exemptions
 
-- **WHEN** the const-convention guard test (`packages/ipc-contracts/src/__tests__/error-tag-const-convention.test.ts`) grep-scans every `.ts` / `.tsx` file under `packages/`, `services/`, `apps/`, and `scripts/` for raw error-tag string literals in an error-tag context (`tag`/`errorTag`/`.tag` construction or comparison, and `case` arms)
+- **WHEN** the const-convention guard test (`packages/ipc-contracts/src/__tests__/error-tag-const-convention.test.ts`) grep-scans every `.ts` / `.tsx` file under `packages/`, `services/`, `apps/`, and `scripts/` for raw error-tag string literals in an error-tag context (`tag` / `errorTag` / `lastErrorTag` / `engineCause` / `.tag` construction or comparison, and `case` arms)
 - **THEN** it finds zero occurrences of any `FilesErrorTag` value as a raw literal, excluding the const definition, serialized-payload fixtures, comments, `dist/`, and `node_modules/`
 
 #### Scenario: `files:*` envelope vocabulary is unchanged
 
 - **WHEN** the migration replaces a literal such as `tag: "exhausted-retries"` on a `FilesErrorEnvelope` with `tag: FilesErrorTag.ExhaustedRetries`
 - **THEN** the runtime value, the `files:*` envelope wire shape, and the `FilesErrorTag` derived union are byte-identical, and the existing fs-sync + renderer test suites pass unchanged
+
+#### Scenario: ESLint rule enforces the `FilesErrorTag` convention in the editor
+
+- **WHEN** a developer writes a `FilesErrorTag` value (e.g. `tag: "disconnected"`) as a raw literal in an enforced error-tag context and ESLint evaluates `ft5/no-raw-error-tag-literal`
+- **THEN** the rule reports the violation and offers an opt-in suggestion to `FilesErrorTag.Disconnected` (inserting the `@ft5/ipc-contracts` import if absent); for one of the five shared values it offers both the `FilesErrorTag.*` and `DatasourceErrorTag.*` suggestions; the rule never applies a fix via `eslint --fix`
 
