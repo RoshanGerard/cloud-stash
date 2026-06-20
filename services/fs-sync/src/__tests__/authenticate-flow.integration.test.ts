@@ -451,9 +451,23 @@ describe("authenticate flow integration — credentials-form (amazon-s3) start+c
           // Surface the wire error so a test failure is diagnosable —
           // the assertion below would otherwise just print "expected
           // false to be true".
-          throw new Error(
-            `complete failed: ${JSON.stringify(completeRes.error)}`,
-          );
+          //
+          // Mock-drift tripwire: a `provider-error` here almost always means
+          // the `vi.mock("@aws-sdk/client-s3")` above did NOT apply — the real
+          // AWS SDK ran a live `HeadBucket` against the synthetic bucket and
+          // failed. That happens when this checkout's
+          // `services/fs-sync/node_modules/@aws-sdk/client-s3` symlink is
+          // missing (node_modules drift: the devDep is in pnpm-lock.yaml but
+          // not materialized, so `vi.mock` can't resolve the specifier from
+          // this test's location and silently no-ops). Fix: run `pnpm install`.
+          const wire = JSON.stringify(completeRes.error);
+          const hint = wire.includes("provider-error")
+            ? " — provider-error on the S3 credentials arm usually means " +
+              "vi.mock('@aws-sdk/client-s3') did not apply (missing " +
+              "services/fs-sync/node_modules/@aws-sdk/client-s3 symlink — " +
+              "run `pnpm install`)"
+            : "";
+          throw new Error(`complete failed: ${wire}${hint}`);
         }
         expect(completeRes.ok).toBe(true);
         const completeResult = completeRes.result as {
