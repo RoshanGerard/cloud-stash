@@ -249,6 +249,48 @@ ruleTester.run("no-raw-error-tag-literal", rule, {
         },
       ],
     },
+    // --- optional-chaining comparison (ChainExpression peel) ---
+    {
+      code: 'if (err?.tag === "disconnected") {}',
+      errors: [
+        {
+          messageId: "raw",
+          data: { value: "disconnected" },
+          suggestions: [
+            {
+              messageId: "use",
+              data: { ref: "FilesErrorTag.Disconnected" },
+              output:
+                'import { FilesErrorTag } from "@ft5/ipc-contracts";\nif (err?.tag === FilesErrorTag.Disconnected) {}',
+            },
+          ],
+        },
+      ],
+    },
+    // --- optional-chaining switch discriminant (ChainExpression peel) ---
+    {
+      code: 'switch (e?.tag) { case "conflict": break; }',
+      errors: [
+        {
+          messageId: "raw",
+          data: { value: "conflict" },
+          suggestions: [
+            {
+              messageId: "use",
+              data: { ref: "DatasourceErrorTag.Conflict" },
+              output:
+                'import { DatasourceErrorTag } from "@ft5/ipc-contracts";\nswitch (e?.tag) { case DatasourceErrorTag.Conflict: break; }',
+            },
+            {
+              messageId: "use",
+              data: { ref: "FilesErrorTag.Conflict" },
+              output:
+                'import { FilesErrorTag } from "@ft5/ipc-contracts";\nswitch (e?.tag) { case FilesErrorTag.Conflict: break; }',
+            },
+          ],
+        },
+      ],
+    },
     // --- import APPEND to an existing @ft5/ipc-contracts value import ---
     {
       code: 'import { FilesErrorTag } from "@ft5/ipc-contracts";\nconst e = { tag: "auth-expired" };',

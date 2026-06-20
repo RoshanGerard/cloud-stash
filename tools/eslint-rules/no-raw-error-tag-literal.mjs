@@ -37,6 +37,10 @@ const IPC_CONTRACTS = "@ft5/ipc-contracts";
 /** The field name a discriminant/operand refers to, or null. */
 function fieldNameOf(node) {
   if (!node) return null;
+  // Peel optional-chaining: `err?.tag` is a ChainExpression wrapping an
+  // (optional) MemberExpression. Without this the rule misses the common
+  // `x?.tag === "..."` / `switch (x?.tag)` error-handling shapes.
+  if (node.type === "ChainExpression") node = node.expression;
   if (
     node.type === "MemberExpression" &&
     !node.computed &&
