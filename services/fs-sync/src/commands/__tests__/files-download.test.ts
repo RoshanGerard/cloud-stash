@@ -843,7 +843,7 @@ describe("files:download — range-not-honored detection (§13.7 / §13.8 + §12
     // First retrying event: cycle 1 mid-stream network-error (waitMs > 0).
     expect(retrying[0]?.payload).toMatchObject({
       attempt: 1,
-      engineCause: "network-error",
+      engineCause: DatasourceErrorTag.NetworkError,
     });
     expect((retrying[0]?.payload as { waitMs: number }).waitMs).toBeGreaterThan(0);
     // Second retrying event: rewrite-from-0 trigger (waitMs === 0,
@@ -2250,7 +2250,7 @@ describe("files:download — network drop mid-stream recovers (§6.4)", () => {
         attempt: 1,
         limit: 5,
         waitMs: 1000,
-        engineCause: "network-error",
+        engineCause: DatasourceErrorTag.NetworkError,
       });
       expect(stepper.callCount()).toBe(2);
     } finally {
@@ -2320,7 +2320,7 @@ describe("files:download — exhausts env budget after CONSECUTIVE_FAIL_LIMIT (�
         expect(e.payload).toMatchObject({
           attempt: idx + 1,
           limit: 5,
-          engineCause: "network-error",
+          engineCause: DatasourceErrorTag.NetworkError,
         });
       });
       const failed = events.filter((e) => e.name === "download-failed");
@@ -2413,13 +2413,13 @@ describe("files:download — byte-progress resets counter (§6.6)", () => {
       // First retry after the error-without-progress (count: 0→1).
       expect(retrying[0]?.payload).toMatchObject({
         attempt: 1,
-        engineCause: "network-error",
+        engineCause: DatasourceErrorTag.NetworkError,
       });
       // KEY: second retry attempt is ALSO 1 (counter reset by 512-byte
       // mid-stream progress in step 2's throw, then ++ to 1 again).
       expect(retrying[1]?.payload).toMatchObject({
         attempt: 1,
-        engineCause: "network-error",
+        engineCause: DatasourceErrorTag.NetworkError,
       });
     } finally {
       vi.useRealTimers();
@@ -2563,7 +2563,7 @@ describe("files:download — rate-limited honors retryAfterMs (§6.8)", () => {
       expect(partialEvents).toHaveLength(1);
       expect(partialEvents[0]?.payload).toMatchObject({
         waitMs: 5000,
-        engineCause: "rate-limited",
+        engineCause: DatasourceErrorTag.RateLimited,
       });
       // Cross the boundary; second downloadFile should fire.
       await pump(2);
@@ -3115,7 +3115,7 @@ describe("files:download — auth-expired co-exists with env retry (§6.16)", ()
       expect(retrying).toHaveLength(1);
       expect(retrying[0]?.payload).toMatchObject({
         attempt: 1,
-        engineCause: "network-error",
+        engineCause: DatasourceErrorTag.NetworkError,
       });
       // Decision 5 — the single mid-stream auth-expired triggers exactly
       // one handler-owned refresh, independent of the env-retry count.
@@ -3264,7 +3264,7 @@ describe("files:download — per-attempt timeout fires when engine hangs (§11.7
         datasourceId: "ds-1",
         attempt: 1,
         limit: 5,
-        engineCause: "network-error",
+        engineCause: DatasourceErrorTag.NetworkError,
       });
       // Drive past the env-retry sleep so the second engine call lands
       // and the (succeeding) tail completes.
@@ -3330,7 +3330,7 @@ describe("files:download — per-attempt timeout counts against budget (§11.8)"
         expect(e.payload).toMatchObject({
           attempt: idx + 1,
           limit: 5,
-          engineCause: "network-error",
+          engineCause: DatasourceErrorTag.NetworkError,
         });
       });
       const failed = events.filter((e) => e.name === "download-failed");

@@ -5,6 +5,8 @@ import * as path from "node:path";
 import Database from "better-sqlite3";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { DatasourceErrorTag } from "@ft5/ipc-contracts";
+
 import { applyMigrations } from "../db/migrations.js";
 import { createEventBus, type EventBus } from "../events/event-bus.js";
 import { JobRepository } from "../jobs/repository.js";
@@ -55,7 +57,7 @@ function enqueueWaiting(id: string): void {
   });
   repo.transition(id, "running");
   repo.transition(id, "waiting-network", {
-    lastErrorTag: "network-error",
+    lastErrorTag: DatasourceErrorTag.NetworkError,
     incrementAttempt: true,
   });
 }
