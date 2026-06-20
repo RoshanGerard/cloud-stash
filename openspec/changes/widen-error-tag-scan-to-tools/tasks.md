@@ -1,12 +1,12 @@
 ## 1. Implementation
 
-- [ ] 1.1 Add `"tools"` to `SCAN_ROOTS` in `packages/ipc-contracts/src/__tests__/error-tag-const-convention.test.ts` (the only impl edit).
+- [x] 1.1 Add `"tools"` to `SCAN_ROOTS` in `packages/ipc-contracts/src/__tests__/error-tag-const-convention.test.ts` (the only impl edit).
 
 ## 2. Verification
 
-- [ ] 2.1 Run the guard test — confirm it stays green (zero violations; `tools/` adds no `.ts`/`.tsx` to scan today).
-- [ ] 2.2 Run the full `@ft5/ipc-contracts` test suite — confirm the drift test and the rest stay green.
-- [ ] 2.3 `openspec validate widen-error-tag-scan-to-tools --strict` — green.
+- [x] 2.1 Run the guard test — confirm it stays green (zero violations; `tools/` adds no `.ts`/`.tsx` to scan today).
+- [x] 2.2 Run the full `@ft5/ipc-contracts` test suite — confirm the drift test and the rest stay green. (guard + drift = 16 tests green; whole suite re-run at finish gate.)
+- [x] 2.3 `openspec validate widen-error-tag-scan-to-tools --strict` — green.
 
 ## 3. Spec sync + archive
 

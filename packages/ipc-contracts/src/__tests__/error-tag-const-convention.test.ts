@@ -26,8 +26,12 @@ const __dirname = path.dirname(__filename);
 // From packages/ipc-contracts/src/__tests__/ walk up to the repo root.
 const repoRoot = path.resolve(__dirname, "..", "..", "..", "..");
 
-// Roots that carry TypeScript we own.
-const SCAN_ROOTS = ["packages", "services", "apps", "scripts"];
+// Roots that carry TypeScript we own. `tools/` holds the convention's own
+// enforcement machinery (the ft5/no-raw-error-tag-literal ESLint rule + the
+// shared error-tag-vocabulary module); it is scanned so a future .ts/.tsx
+// there can never silently harbor a raw error-tag literal. Inert today —
+// tools/ currently holds only .mjs, and collectFiles scans .ts/.tsx only.
+const SCAN_ROOTS = ["packages", "services", "apps", "scripts", "tools"];
 
 // Directories never scanned.
 const SKIP_DIRS = new Set([
