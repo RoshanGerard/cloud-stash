@@ -1072,3 +1072,35 @@ triggering button unmounts. This is not a WCAG AA failure and not a regression
 (no prior in-page form swap existed); the approved Visual direction is silent on
 it. Follow-up: on reveal, move focus to the form's first field; on Back, return
 focus to the Reconnect button. Low priority.
+
+---
+
+## add-error-tag-literal-lint — §6.1 editor-integration smoke (deferred 2026-06-21)
+
+The ESLint rule `ft5/no-raw-error-tag-literal` is fully unit-tested via ESLint
+`RuleTester` (41 cases: construction / comparison both orders / `case` arms /
+optional-chaining; shared + unique values; one-vs-two suggestions; import
+insertion; `as const` parity), and `pnpm lint` is clean repo-wide. The one thing
+RuleTester cannot observe is the live IDE surfacing.
+
+**Scenario** (per `openspec/changes/archive/.../add-error-tag-literal-lint/tasks.md` §6.1):
+In VS Code with the ESLint extension, type `tag: "auth-revoked"` in a `.ts`
+file and confirm:
+
+1. the squiggle appears at edit time (rule active via the inline flat-config plugin);
+2. two opt-in Quick Fix suggestions surface (`DatasourceErrorTag.AuthRevoked`
+   and `FilesErrorTag.AuthRevoked`) — a unique value like `"auth-expired"` shows
+   ONE; a `lastErrorTag`/`engineCause` value shows ONE (`DatasourceErrorTag.*`);
+3. applying a suggestion rewrites the literal AND inserts the
+   `@ft5/ipc-contracts` named import if absent;
+4. `eslint --fix` / `pnpm lint:fix` does NOT auto-apply any of them (suggestions
+   only, never a top-level fix — Decision 3).
+
+**Status:** PENDING — RuleTester proves the rule logic + suggestion fixers; only
+a live editor + ESLint extension confirms the editor-time DX.
+
+**Why deferred:** Requires a human at a VS Code keyboard with the ESLint
+extension loading the workspace flat config. The non-bypassable Vitest grep
+guard backstops enforcement regardless.
+
+**Owner:** unassigned. Bench check during the next editor session.

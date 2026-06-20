@@ -5,6 +5,8 @@ import * as path from "node:path";
 import Database from "better-sqlite3";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
+import { DatasourceErrorTag } from "@ft5/ipc-contracts";
+
 import { applyMigrations } from "../db/migrations.js";
 
 import { enqueueMirror, SyncAlreadyRunningError } from "./enqueue.js";
@@ -133,7 +135,7 @@ describe("enqueueMirror dedup", () => {
 
     repo.transition(first.jobId, "waiting-network", {
       incrementAttempt: true,
-      lastErrorTag: "network-error",
+      lastErrorTag: DatasourceErrorTag.NetworkError,
     });
     expect(() =>
       enqueueMirror(db, {

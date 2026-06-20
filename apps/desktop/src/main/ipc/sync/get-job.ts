@@ -27,6 +27,7 @@ export async function handleSyncGetJob(
     const wire = await client.getJob({ jobId: req.jobId });
     return { job: wire.job };
   } catch (err) {
+    // eslint-disable-next-line ft5/no-raw-error-tag-literal -- ServiceErrorTag vocabulary (no const object) — out of scope
     if (err instanceof SyncCommandError && err.tag === "not-found") {
       return { job: null };
     }

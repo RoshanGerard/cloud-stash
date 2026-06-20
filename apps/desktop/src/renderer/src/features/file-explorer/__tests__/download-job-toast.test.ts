@@ -37,7 +37,7 @@
 //         initial progress; subsequent live events for any of those ids
 //         update the existing toast (not create a duplicate).
 
-import { FilesErrorTag } from "@ft5/ipc-contracts";
+import { DatasourceErrorTag, FilesErrorTag } from "@ft5/ipc-contracts";
 import { beforeEach, describe, expect, it, vi, type Mock } from "vitest";
 
 import {
@@ -832,7 +832,7 @@ describe("createDownloadJobToaster — retrying state (§8)", () => {
         attempt: 2,
         limit: 5,
         waitMs: 4000,
-        engineCause: "network-error",
+        engineCause: DatasourceErrorTag.NetworkError,
       }),
     );
 
@@ -915,7 +915,7 @@ describe("createDownloadJobToaster — retrying state (§8)", () => {
         attempt: 2,
         limit: 5,
         waitMs: 4000,
-        engineCause: "network-error",
+        engineCause: DatasourceErrorTag.NetworkError,
       }),
     );
 
@@ -1012,7 +1012,7 @@ describe("createDownloadJobToaster — retrying state (§8)", () => {
         attempt: 3,
         limit: 5,
         waitMs: 4000,
-        engineCause: "network-error",
+        engineCause: DatasourceErrorTag.NetworkError,
       }),
     );
 
@@ -1284,7 +1284,7 @@ describe("createDownloadJobToaster — Cancel action (§12.2)", () => {
         attempt: 2,
         limit: 5,
         waitMs: 4000,
-        engineCause: "network-error",
+        engineCause: DatasourceErrorTag.NetworkError,
       },
     });
 
@@ -1368,7 +1368,7 @@ describe("createDownloadJobToaster — Cancel action (§12.2)", () => {
         attempt: 1,
         limit: 5,
         waitMs: 1000,
-        engineCause: "network-error",
+        engineCause: DatasourceErrorTag.NetworkError,
       },
     });
     eventApi.emit(
@@ -1693,7 +1693,7 @@ describe("createDownloadJobToaster — bytes-only progress fallback (§12.3)", (
         attempt: 3,
         limit: 5,
         waitMs: 4000,
-        engineCause: "network-error",
+        engineCause: DatasourceErrorTag.NetworkError,
       },
     });
     const retryCall2 = toast.loading.mock.calls[2] as [

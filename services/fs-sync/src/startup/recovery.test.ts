@@ -5,6 +5,8 @@ import * as path from "node:path";
 import Database from "better-sqlite3";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
+import { DatasourceErrorTag } from "@ft5/ipc-contracts";
+
 import { applyMigrations } from "../db/migrations.js";
 import { JobRepository } from "../jobs/repository.js";
 
@@ -87,7 +89,7 @@ describe("recoverRunningJobs", () => {
     insertAt("a");
     repo.transition("a", "running");
     repo.transition("a", "waiting-network", {
-      lastErrorTag: "network-error",
+      lastErrorTag: DatasourceErrorTag.NetworkError,
       incrementAttempt: true,
     });
     const before = repo.getById("a");

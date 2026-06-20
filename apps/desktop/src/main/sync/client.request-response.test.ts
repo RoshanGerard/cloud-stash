@@ -268,6 +268,7 @@ describe("SyncClient request/response", () => {
         id: req.id,
         kind: "response",
         ok: false,
+        // eslint-disable-next-line ft5/no-raw-error-tag-literal -- ServiceErrorTag vocabulary (no const object) — out of scope
         error: { tag: "not-found", message: "no such job" },
       });
     });
@@ -279,6 +280,7 @@ describe("SyncClient request/response", () => {
     const client = new SyncClient(socket, { generateId: () => "e-1" });
     await expect(
       client.request("sync:get-job", { jobId: "missing" }),
+    // eslint-disable-next-line ft5/no-raw-error-tag-literal -- ServiceErrorTag vocabulary (no const object) — out of scope
     ).rejects.toMatchObject({ tag: "not-found", command: "sync:get-job" });
   });
 });

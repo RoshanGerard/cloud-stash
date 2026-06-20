@@ -85,6 +85,7 @@ describe("handleSyncGetRetryPolicy", () => {
 
   it("re-throws SyncCommandError failures (e.g. not-found)", async () => {
     const err = new SyncCommandError("sync:get-retry-policy", {
+      // eslint-disable-next-line ft5/no-raw-error-tag-literal -- ServiceErrorTag vocabulary (no const object) — out of scope
       tag: "not-found",
       message: "no policy for datasource",
     });

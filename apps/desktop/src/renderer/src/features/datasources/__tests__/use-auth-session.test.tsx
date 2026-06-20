@@ -172,6 +172,7 @@ describe("useAuthSession — auth-* event plumbing", () => {
         kind: "auth-failed",
         payload: {
           correlationId: "corr-3",
+          // eslint-disable-next-line ft5/no-raw-error-tag-literal -- AuthFailedTag vocabulary (no const object) — out of scope
           tag: "auth-revoked",
           message: "Token was revoked by the user",
         },

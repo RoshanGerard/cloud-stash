@@ -154,7 +154,7 @@ export class Scheduler {
       if (!executor) {
         this.repo.transition(latest.id, "running", { incrementAttempt: true });
         this.repo.transition(latest.id, "failed", {
-          lastErrorTag: "unsupported",
+          lastErrorTag: DatasourceErrorTag.Unsupported,
           lastErrorMessage: `no executor registered for kind=${latest.kind}`,
         });
         this.bus.emit("job-failed", {

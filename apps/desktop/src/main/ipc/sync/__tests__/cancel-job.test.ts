@@ -58,6 +58,7 @@ describe("handleSyncCancelJob", () => {
 
   it("re-throws not-found (not a renderer-observable fallible outcome for cancel)", async () => {
     const err = new SyncCommandError("sync:cancel-job", {
+      // eslint-disable-next-line ft5/no-raw-error-tag-literal -- ServiceErrorTag vocabulary (no const object) — out of scope
       tag: "not-found",
       message: "job j-missing does not exist",
     });

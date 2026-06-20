@@ -70,6 +70,7 @@ describe("DatasourceErrorTag — `as const` object shape (Decision 1)", () => {
     // 143+ existing literal references in the codebase keep working
     // because the derived type IS the string union.
     const err = new DatasourceError({
+      // eslint-disable-next-line ft5/no-raw-error-tag-literal -- deliberate raw-literal-form back-compat type test
       tag: "auth-revoked",
       datasourceType: "onedrive",
       datasourceId: "ds-2",

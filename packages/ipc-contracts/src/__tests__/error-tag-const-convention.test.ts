@@ -19,6 +19,8 @@ import { fileURLToPath } from "node:url";
 
 import { describe, expect, it } from "vitest";
 
+import { TAG_VALUES, ENFORCED_FIELDS } from "../../../../tools/error-tag-vocabulary.mjs";
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 // From packages/ipc-contracts/src/__tests__/ walk up to the repo root.
@@ -41,12 +43,15 @@ const SKIP_DIRS = new Set([
 
 // Files exempt because they legitimately contain the literals:
 // - the two const-object definitions (the source of truth);
-// - this guard test (the patterns embed the literals).
+// - this guard test (the patterns embed the literals);
+// - the ESLint rule's RuleTester suite (its `code:` fixtures embed raw literals
+//   as test input — the same rationale as this guard test).
 const EXEMPT_FILES = new Set(
   [
     "packages/ipc-contracts/src/files.ts",
     "packages/ipc-contracts/src/fs-datasource-engine.ts",
     "packages/ipc-contracts/src/__tests__/error-tag-const-convention.test.ts",
+    "scripts/eslint-rules/no-raw-error-tag-literal.test.ts",
   ].map((p) => p.replaceAll("/", path.sep)),
 );
 
@@ -107,24 +112,8 @@ const WIRE_LITERAL_ALLOWLIST = new Set<string>([
   'apps/desktop/src/renderer/src/features/file-explorer/__tests__/store.test.ts|||error: { tag: "network-error" as const, message: "boom", retryable: true },',
 ]);
 
-// Union of every DatasourceErrorTag + FilesErrorTag value.
-const TAG_VALUES = [
-  "auth-expired",
-  "auth-revoked",
-  "not-found",
-  "conflict",
-  "unsupported",
-  "rate-limited",
-  "network-error",
-  "provider-error",
-  "cancelled",
-  "invalid-datasource",
-  "disconnected",
-  "other",
-  "exhausted-retries",
-];
-
 const VAL = `(?:${TAG_VALUES.join("|")})`;
+const FIELD = `(?:${ENFORCED_FIELDS.join("|")})`;
 
 // Type-position declarations are contract DEFINITIONS, not value
 // references — peers of the const objects themselves (interface members
@@ -135,22 +124,23 @@ const VAL = `(?:${TAG_VALUES.join("|")})`;
 // hides a runtime value; a single-pipe union next to a tag literal is
 // likewise never a runtime construction (`||` logical-or is unaffected —
 // it has no adjacent string literal on the pipe).
-const TYPE_DECL = /\breadonly\s+(?:tag|errorTag)\s*:/;
+const TYPE_DECL = new RegExp(`\\breadonly\\s+${FIELD}\\s*:`);
 const TAG_UNION = new RegExp(`"${VAL}"\\s*\\|\\s*"|"\\s*\\|\\s*"${VAL}"`);
 // An object-TYPE member uses a `;` separator (`{ tag: "other"; message:
 // string }`) where a value object uses `,`. A tag literal immediately
 // followed by `;` is therefore a type-position member even without
 // `readonly` — also a definition, not a value reference.
-const TYPE_MEMBER = new RegExp(`(?:tag|errorTag)\\s*:\\s*"${VAL}"\\s*;`);
+const TYPE_MEMBER = new RegExp(`${FIELD}\\s*:\\s*"${VAL}"\\s*;`);
 
 // Error-tag contexts, evaluated on a comment-stripped line:
-// - construction `tag: "…"` (the leading [^"\w] guard skips JSON `"tag":`);
+// - construction `tag: "…"` / `lastErrorTag: "…"` / `engineCause: "…"` (the
+//   leading [^"\w] guard skips JSON `"tag":`);
 // - comparison `tag === "…"` / `!==` / `==` (either order);
 // - `case "…":` switch arm.
 const PATTERNS: RegExp[] = [
-  new RegExp(`(^|[^"\\w])(?:tag|errorTag)\\s*:\\s*"${VAL}"`),
-  new RegExp(`(?:tag|errorTag)\\s*(?:===|!==|==)\\s*"${VAL}"`),
-  new RegExp(`"${VAL}"\\s*(?:===|!==|==)\\s*(?:[\\w.]*\\.)?(?:tag|errorTag)\\b`),
+  new RegExp(`(^|[^"\\w])${FIELD}\\s*:\\s*"${VAL}"`),
+  new RegExp(`${FIELD}\\s*(?:===|!==|==)\\s*"${VAL}"`),
+  new RegExp(`"${VAL}"\\s*(?:===|!==|==)\\s*(?:[\\w.]*\\.)?${FIELD}\\b`),
   new RegExp(`\\bcase\\s+"${VAL}"\\s*:`),
 ];
 

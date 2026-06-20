@@ -5,6 +5,8 @@ import * as path from "node:path";
 import Database from "better-sqlite3";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
+import { DatasourceErrorTag } from "@ft5/ipc-contracts";
+
 import { applyMigrations } from "../db/migrations.js";
 
 import { JobRepository } from "./repository.js";
@@ -159,14 +161,14 @@ describe("JobRepository.transition", () => {
     repo.transition("j-3", "running");
     repo.transition("j-3", "waiting-network", {
       incrementAttempt: true,
-      lastErrorTag: "network-error",
+      lastErrorTag: DatasourceErrorTag.NetworkError,
       lastErrorMessage: "DNS fail",
     });
     const row = repo.getById("j-3");
     expect(row).toMatchObject({
       status: "waiting-network",
       attempt: 1,
-      lastErrorTag: "network-error",
+      lastErrorTag: DatasourceErrorTag.NetworkError,
       lastErrorMessage: "DNS fail",
     });
   });

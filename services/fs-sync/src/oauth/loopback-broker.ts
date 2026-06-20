@@ -338,6 +338,7 @@ export function createOAuthLoopbackBroker(
           cleanup(correlationId);
           options.bus.emit("auth-failed", {
             correlationId,
+            // eslint-disable-next-line ft5/no-raw-error-tag-literal -- AuthFailedTag vocabulary (no const object) — out of scope
             tag: "auth-revoked",
           });
           return;
@@ -377,6 +378,7 @@ export function createOAuthLoopbackBroker(
           } catch (err) {
             options.bus.emit("auth-failed", {
               correlationId,
+              // eslint-disable-next-line ft5/no-raw-error-tag-literal -- AuthFailedTag vocabulary (no const object) — out of scope
               tag: "provider-error",
               message: String(err),
             });
