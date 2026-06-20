@@ -171,7 +171,15 @@ Decision-3 spec scenarios.
 `eslint.config.mjs` imports it and registers `plugins: { ft5: { rules: {
 "no-raw-error-tag-literal": rule } } }` with `rules: {
 "ft5/no-raw-error-tag-literal": "error" }` in a repo-wide config block. The
-rule is unit-tested with ESLint's `RuleTester` in a colocated test.
+rule is unit-tested with ESLint's `RuleTester`. The test lives at
+`scripts/eslint-rules/no-raw-error-tag-literal.test.ts` (NOT colocated under
+`tools/`): the repo's vitest `include` scans `scripts/**`, `packages/**`,
+`apps/**`, `services/**` — not `tools/**`, and `scripts/` is where the repo's
+other tooling-guardrail tests live (e.g. `provider-sdk-forbidden-import.test.ts`),
+mirroring how Task 1's drift guard landed in a vitest-included path while its
+module stays under `tools/`. The RuleTester suite is added to the grep guard's
+`EXEMPT_FILES` because its `code:` fixtures embed raw literals as test input
+(the same rationale the guard test itself is exempt).
 
 **Why:** minimal footprint — no new published workspace package, no build
 step. Matches the config's stated "minimal change" ethos.
