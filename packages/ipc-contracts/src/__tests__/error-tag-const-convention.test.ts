@@ -43,12 +43,15 @@ const SKIP_DIRS = new Set([
 
 // Files exempt because they legitimately contain the literals:
 // - the two const-object definitions (the source of truth);
-// - this guard test (the patterns embed the literals).
+// - this guard test (the patterns embed the literals);
+// - the ESLint rule's RuleTester suite (its `code:` fixtures embed raw literals
+//   as test input — the same rationale as this guard test).
 const EXEMPT_FILES = new Set(
   [
     "packages/ipc-contracts/src/files.ts",
     "packages/ipc-contracts/src/fs-datasource-engine.ts",
     "packages/ipc-contracts/src/__tests__/error-tag-const-convention.test.ts",
+    "scripts/eslint-rules/no-raw-error-tag-literal.test.ts",
   ].map((p) => p.replaceAll("/", path.sep)),
 );
 
