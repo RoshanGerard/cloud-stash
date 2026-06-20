@@ -13,6 +13,12 @@
 import tseslint from "typescript-eslint";
 import importX from "eslint-plugin-import-x";
 
+// Local (inline) plugin: the error-tag const-reference rule. Authored as a
+// plain .mjs module under tools/ (no published package, no build step — see
+// add-error-tag-literal-lint design.md Decision 5). Complements the Vitest
+// grep-scan guard with editor-time feedback + opt-in suggestions.
+import noRawErrorTagLiteral from "./tools/eslint-rules/no-raw-error-tag-literal.mjs";
+
 export default tseslint.config(
   {
     // Allow the TypeScript convention of prefixing intentionally-unused
@@ -28,6 +34,20 @@ export default tseslint.config(
           caughtErrorsIgnorePattern: "^_",
         },
       ],
+    },
+  },
+  {
+    // Error-tag const-reference convention (add-error-tag-literal-lint).
+    // Repo-wide: forbids raw DatasourceErrorTag / FilesErrorTag value literals
+    // on tag / errorTag / lastErrorTag / engineCause. Off-vocabulary literals
+    // (ServiceErrorTag / AuthFailedTag, off-taxonomy fixtures) carry a per-site
+    // `// eslint-disable-next-line ft5/no-raw-error-tag-literal -- <reason>`,
+    // mirroring the Vitest guard's WIRE_LITERAL_ALLOWLIST (Decision 4).
+    plugins: {
+      ft5: { rules: { "no-raw-error-tag-literal": noRawErrorTagLiteral } },
+    },
+    rules: {
+      "ft5/no-raw-error-tag-literal": "error",
     },
   },
   {

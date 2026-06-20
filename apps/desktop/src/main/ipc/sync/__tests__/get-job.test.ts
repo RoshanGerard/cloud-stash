@@ -59,6 +59,7 @@ describe("handleSyncGetJob", () => {
   it("returns { job: null } when the client rejects with tag 'not-found'", async () => {
     const { client } = makeFakeClient(async () => {
       throw new SyncCommandError("sync:get-job", {
+        // eslint-disable-next-line ft5/no-raw-error-tag-literal -- ServiceErrorTag vocabulary (no const object) — out of scope
         tag: "not-found",
         message: "job j-missing not found",
       });

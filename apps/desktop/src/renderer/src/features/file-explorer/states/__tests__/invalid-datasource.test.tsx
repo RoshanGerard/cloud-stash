@@ -228,6 +228,7 @@ describe("InvalidDatasourceState — useAuthSession lifecycle", () => {
       "failed",
       {
         status: "failed",
+        // eslint-disable-next-line ft5/no-raw-error-tag-literal -- AuthFailedTag vocabulary (no const object) — out of scope
         tag: "auth-revoked",
       } as AuthSessionState,
     ],

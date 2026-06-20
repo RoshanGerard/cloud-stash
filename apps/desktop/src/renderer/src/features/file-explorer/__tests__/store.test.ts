@@ -1957,6 +1957,7 @@ describe("pagination — loadMore failure + retryLoadMore (§8.4, §8.5)", () =>
     return {
       ok: false,
       error: {
+        // eslint-disable-next-line ft5/no-raw-error-tag-literal -- off-taxonomy fixture — network-error is not a FilesErrorTag member
         tag: "network-error",
         message: "connection timed out",
         retryable: true,
@@ -1980,6 +1981,7 @@ describe("pagination — loadMore failure + retryLoadMore (§8.4, §8.5)", () =>
     expect(after.entries.map((e) => e.id)).toEqual(["a", "b"]);
     expect(after.loadingMore).toBe(false);
     expect(after.loadMoreError).toEqual({
+      // eslint-disable-next-line ft5/no-raw-error-tag-literal -- off-taxonomy fixture — network-error is not a FilesErrorTag member
       tag: "network-error",
       message: "connection timed out",
       retryable: true,
@@ -2069,6 +2071,7 @@ describe("pagination — navigation discards cursor + failed-state (§8.6)", () 
   it("navigate() clears nextCursor and loadMoreError", async () => {
     const listFn = vi.fn(async () => ({
       ok: false as const,
+      // eslint-disable-next-line ft5/no-raw-error-tag-literal -- off-taxonomy fixture — network-error is not a FilesErrorTag member
       error: { tag: "network-error" as const, message: "boom", retryable: true },
     }));
     installFilesListApi(listFn);

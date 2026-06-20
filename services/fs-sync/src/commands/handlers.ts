@@ -189,6 +189,7 @@ export function buildCommandHandlers(deps: HandlersDeps): CommandHandlers {
         return {
           ok: false,
           error: {
+            // eslint-disable-next-line ft5/no-raw-error-tag-literal -- ServiceErrorTag vocabulary (no const object) — out of scope
             tag: "not-found",
             message: `no job with id ${params.jobId}`,
           },
@@ -202,6 +203,7 @@ export function buildCommandHandlers(deps: HandlersDeps): CommandHandlers {
       if (!job) {
         return {
           ok: false,
+          // eslint-disable-next-line ft5/no-raw-error-tag-literal -- ServiceErrorTag vocabulary (no const object) — out of scope
           error: { tag: "not-found", message: `no job with id ${params.jobId}` },
         };
       }
@@ -262,6 +264,7 @@ export function buildCommandHandlers(deps: HandlersDeps): CommandHandlers {
         return {
           ok: false,
           error: {
+            // eslint-disable-next-line ft5/no-raw-error-tag-literal -- ServiceErrorTag vocabulary (no const object) — out of scope
             tag: "not-found",
             message: `no policy for scope=${params.scope} datasourceId=${params.datasourceId ?? ""}`,
           },
