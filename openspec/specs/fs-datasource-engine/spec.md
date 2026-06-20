@@ -735,7 +735,7 @@ The engine SHALL NOT define, export, instantiate, or inject an EventBus. `Engine
 Every TypeScript source and test file SHALL reference `DatasourceErrorTag`
 values through the `DatasourceErrorTag` const object exported from
 `@ft5/ipc-contracts` (e.g. `DatasourceErrorTag.AuthRevoked`) — across the
-workspace (`packages/`, `services/`, `apps/`, `scripts/`) — rather than
+workspace (`packages/`, `services/`, `apps/`, `scripts/`, `tools/`) — rather than
 the equivalent raw string literal (e.g. `"auth-revoked"`) in any
 error-tag context: construction (`tag: ...`), comparison (`tag === ...` /
 `tag !== ...`), or `switch`/`case` arm. The enforced field set SHALL
@@ -799,7 +799,7 @@ engine-layer and map deterministically to `DatasourceErrorTag`.
 
 #### Scenario: No raw `DatasourceErrorTag` literals remain outside exemptions
 
-- **WHEN** the const-convention guard test (`packages/ipc-contracts/src/__tests__/error-tag-const-convention.test.ts`) grep-scans every `.ts` / `.tsx` file under `packages/`, `services/`, `apps/`, and `scripts/` for raw error-tag string literals in an error-tag context (`tag` / `errorTag` / `lastErrorTag` / `engineCause` / `.tag` construction or comparison, and `case` arms)
+- **WHEN** the const-convention guard test (`packages/ipc-contracts/src/__tests__/error-tag-const-convention.test.ts`) grep-scans every `.ts` / `.tsx` file under `packages/`, `services/`, `apps/`, `scripts/`, and `tools/` for raw error-tag string literals in an error-tag context (`tag` / `errorTag` / `lastErrorTag` / `engineCause` / `.tag` construction or comparison, and `case` arms)
 - **THEN** it finds zero occurrences of any `DatasourceErrorTag` value as a raw literal, excluding the const definition, serialized-payload fixtures, comments, `dist/`, and `node_modules/`
 
 #### Scenario: Engine error taxonomy values are unchanged
