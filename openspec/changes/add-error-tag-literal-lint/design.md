@@ -224,6 +224,31 @@ same module (or a guard-local `expect` asserts equality with
   wrong enum. → Today no such value lands there (verified); both fields are
   engine-layer by design. Documented so a future assigner re-checks.
 
+- **Intentional scope boundary — the contract is field-scoped, not
+  value-scoped.** Both layers enforce tag values only in the three
+  *field-attached* contexts: construction (`tag:`/`errorTag:`/…),
+  comparison (`.tag === …`), and `case` arms over a tag discriminant. A tag
+  value reached by other means — a *type-annotated binding*
+  (`const x: FilesErrorTag = "auth-revoked"`), a `return "auth-revoked"`, or
+  a bare function argument — is NOT flagged by either layer (no preceding
+  field-name token / no Property-or-comparison-or-case node). This is a
+  deliberate boundary (matching the original migration's tag-context scope),
+  not an oversight: widening to bare values would collide with non-tag uses
+  of the same strings (`ConflictPolicy`, `JobStatus`, the word "other").
+  Such literals stay raw; if one must carry a tag value, prefer the const
+  ref by hand.
+
+- **File-coverage asymmetry between the two layers (known limitation).** The
+  ESLint rule runs repo-wide (every `.ts`/`.tsx`/`.mjs`/`.cjs` ESLint lints,
+  including `tools/` and repo-root config), whereas the non-bypassable grep
+  guard scans only `packages/`, `services/`, `apps/`, `scripts/` (`.tsx?`
+  only). So a *future* enforced-field tag literal added under `tools/` or at
+  repo root would be caught by the (locally-disable-able) ESLint layer but
+  NOT by the non-bypassable grep backstop. No current hole (those files
+  carry no field-context tag literals). Accepted as a known limitation;
+  closing it (add `tools` to the guard's `SCAN_ROOTS`) is a cheap optional
+  follow-up.
+
 ## Migration Plan
 
 TDD order (per advisor checkpoint #1):

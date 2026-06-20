@@ -51,8 +51,12 @@ two-stage review per CLAUDE.md Coding discipline.
       shared value (`rate-limited`) → ONE `DatasourceErrorTag.*` suggestion.
       Assert each suggestion inserts the `@ft5/ipc-contracts` named import
       when absent (and does NOT duplicate an existing import).
-- [x] 3.3 Assert the rule provides NO `fix` (only `suggest`) — RuleTester
-      suggestion `output` assertions confirm `--fix` is a no-op.
+- [x] 3.3 Guarantee NO `--fix` autofix: the rule reports via
+      `context.report({ ..., suggest })` with NO top-level `fix` and `meta`
+      has no `fixable`, so `eslint --fix` is structurally a no-op (the
+      load-bearing guarantee). RuleTester invalid cases declare no top-level
+      `output` (which would fail if a `fix` existed) and exercise the
+      suggestion fixers only.
 - [x] 3.4 Implement `tools/eslint-rules/no-raw-error-tag-literal.mjs`:
       AST visitors for `Property` values, `BinaryExpression` operands, and
       `SwitchCase` tests; field-name match via the shared vocabulary;
