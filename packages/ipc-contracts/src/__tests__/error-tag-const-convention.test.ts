@@ -108,6 +108,28 @@ const WIRE_LITERAL_ALLOWLIST = new Set<string>([
   // Same AuthFailedTag vocabulary: `AuthSessionState.tag` is `AuthFailedTag`
   // (datasources/store.tsx), so this `auth-revoked` is NOT FilesErrorTag.
   'apps/desktop/src/renderer/src/features/file-explorer/states/__tests__/invalid-datasource.test.tsx|||tag: "auth-revoked",',
+  // enforce-oauth-reconnect-account-match: `account-mismatch` (and its
+  // sibling `provider-error`) are AuthFailedTag wire-vocabulary values — a
+  // plain type union in sync-service/events.ts with no const object, out of
+  // scope for the const-ref convention (same family as `auth-revoked` above).
+  // These are the genuine wire-payload literals: the broker emit + the
+  // auth-failed event/store/renderer test fixtures. Each site also carries an
+  // `eslint-disable ft5/no-raw-error-tag-literal` comment (rule-disables are a
+  // subset of this allowlist).
+  'services/fs-sync/src/oauth/loopback-broker.ts|||tag: "account-mismatch",',
+  'apps/desktop/src/main/sync/event-bridge.auth.test.ts|||tag: "account-mismatch",',
+  'apps/desktop/src/renderer/src/features/datasources/__tests__/store-auth.test.tsx|||tag: "account-mismatch",',
+  'apps/desktop/src/renderer/src/features/datasources/__tests__/store-auth.test.tsx|||tag: "provider-error",',
+  'apps/desktop/src/renderer/src/features/datasources/__tests__/card-auth-error-banner.test.tsx|||tag: "account-mismatch",',
+  'apps/desktop/src/renderer/src/features/file-explorer/states/__tests__/invalid-datasource.test.tsx|||tag: "account-mismatch",',
+  'apps/desktop/src/renderer/src/features/file-explorer/states/__tests__/invalid-datasource.test.tsx|||tag: "provider-error",',
+  // Same AuthFailedTag vocabulary, inline-object + production-comparison forms:
+  // the card/reconnect-view components compare `sessionState.tag` (AuthFailedTag)
+  // and the card test seeds inline `{ tag, expectedEmail }` fixtures.
+  'apps/desktop/src/renderer/src/features/datasources/__tests__/card-auth-error-banner.test.tsx|||{ tag: "account-mismatch", expectedEmail: "acme@gmail.com" },',
+  'apps/desktop/src/renderer/src/features/datasources/__tests__/card-auth-error-banner.test.tsx|||{ tag: "provider-error", message: "boom" },',
+  'apps/desktop/src/renderer/src/features/datasources/card.tsx|||sessionState.tag === "account-mismatch";',
+  'apps/desktop/src/renderer/src/features/file-explorer/states/invalid-datasource.tsx|||sessionState.tag === "account-mismatch";',
   // Deliberate OFF-TAXONOMY fixture: `"network-error"` is NOT a FilesErrorTag
   // member (Files has `disconnected`, not `network-error`), yet this test
   // hands the store a `FilesListResponse` carrying it. Pre-existing fixture;
