@@ -1141,3 +1141,73 @@ untested. Add a rejecting-`get` broker test.
 
 **Status:** PENDING — needs a human with real provider credentials + accounts.
 **Owner:** unassigned.
+
+---
+
+## add-drive-docs-editors-export — §6.1/§6.2 Drive export manual smoke (deferred 2026-06-21)
+
+Google Drive Docs Editors export (`files.export`) is fully implemented and the
+FULL repo suite (307 files / 2847 passed / 10 skipped / 0 failed) is green —
+engine 340/340 (incl. the contract arm + drift guard), the renderer
+orchestrator extension-append, and the shared `GOOGLE_APPS_EXPORT_FORMATS`
+table. BUT export has NEVER run against a real Drive datasource; every test
+drives a fake `files.export` responder. CLAUDE.md step 8 ("feature exercised
+against a running system") is therefore DEFERRED here (same real-credential
+gate as `add-drive-oauth-browser-consent §1`).
+
+### §6.1 — per-subtype export happy-path (real Drive)
+**Scenario:** dev build against a real Drive datasource. Download one of each
+exportable subtype and confirm the file saves with the right extension and
+opens in the target app:
+- Google Doc → `<title>.docx` (Word)
+- Google Sheet → `<title>.xlsx` (Excel)
+- Google Slides → `<title>.pptx` (PowerPoint)
+- Google Drawing → `<title>.png` (image)
+- Apps Script → `<title>.json`
+
+Also confirm the append-always policy on a Doc whose title already looks
+extension-shaped (e.g. a Doc literally named `Notes.txt` → saves as
+`Notes.txt.docx`).
+
+**Covered in isolation by:**
+- `packages/fs-datasource-engine/src/strategies/googledrive-client.test.ts` —
+  "doDownloadFileImpl Google Apps export (files.export)" describe: the
+  const-driven `it.each` over `GOOGLE_APPS_EXPORT_FORMATS` (export call issued
+  with the mapped `exportMime`, NO alt=media, byte-count via `onProgress`, no
+  `contentRange`), plus the rangeStart-ignored / quota / abort / mid-stream-error
+  arms and the drift-guard set-equality assertion.
+- `packages/fs-datasource-engine/src/strategies/googledrive-client.contract.test.ts` —
+  the Drive-specific export contract arm.
+- `apps/desktop/src/renderer/src/features/file-explorer/__tests__/use-download-orchestrator.test.ts` —
+  the const-driven extension-append cases (per-subtype `.docx/.xlsx/.pptx/.png/.json`,
+  the `Notes.txt` → `Notes.txt.docx` append-always edge, the Save-as `defaultPath`
+  basename, binary-unchanged, and the absent/non-string `providerMetadata.mimeType`
+  fall-through).
+- `packages/ipc-contracts/src/__tests__/google-apps-export-formats.test.ts` —
+  pins the exact 5-key table shape.
+
+### §6.2 — Google Form refusal still friendly (real Drive)
+**Scenario:** download a Google Form (and, if available, a Jamboard / Site)
+against the dev build → confirm the friendly `tag:"unsupported"` toast ("Google
+Drive documents download not supported") still appears (Forms/Jamboard/Sites are
+NOT exportable via the Drive API and stay on the refusal path).
+
+**Covered in isolation by:** the kept-refusal arms in `googledrive-client.test.ts`
+(Form + unknown-future `application/vnd.google-apps.<x>` + folder-not-caught), and
+the renderer "non-exportable Google Apps mime appends nothing" orchestrator test.
+
+**Why deferred:** Requires a running dev build with real Drive credentials
+(`~/ft5/sync_app/config.json` per `add-drive-oauth-browser-consent §1`). Until
+run, treat Drive Docs Editors export as automated-green but NOT yet
+provider-verified.
+
+**Owner:** unassigned (HUMAN). Pair with the §1 HUMAN ops setup pass and the
+existing `add-engine-rename-download §27` Drive smokes.
+
+**Minor (record for a future cleanup, non-blocking):** the engine
+folder-not-caught test's negative assertion (`googledrive-client.test.ts`,
+"folder mime NOT caught") matches against `"add-drive-docs-editors-export"`, a
+string the production refusal copy never contains, so the negative match is
+loosely coupled (the test's real discriminator — reaching the missing
+stream-responder path — still holds). Optional one-line fix: pin
+`not.toContain("Google Drive documents download not supported")` instead.
