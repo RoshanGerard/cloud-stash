@@ -27,6 +27,25 @@ import {
 // Tiny harness — just enough to construct and call authenticate
 // ---------------------------------------------------------------------------
 
+/** Build a Microsoft v2.0 `id_token` (dummy signature; never verified — D2).
+ * `iss`/`tid` use a tenant GUID (never `common`) so the strategy can derive
+ * the accepted issuer from the token's own `tid`. */
+function makeMsIdToken(overrides: Record<string, unknown> = {}): string {
+  const b64url = (obj: unknown): string =>
+    Buffer.from(JSON.stringify(obj), "utf8").toString("base64url");
+  const guid = "9188040d-6c67-4c5b-b112-36a304b66dad";
+  const payload = {
+    sub: "preauth-sub",
+    email: "preauth@contoso.com",
+    aud: "preauth-client-id",
+    iss: `https://login.microsoftonline.com/${guid}/v2.0`,
+    tid: guid,
+    exp: Math.floor(Date.now() / 1000) + 3600,
+    ...overrides,
+  };
+  return `${b64url({ alg: "RS256", typ: "JWT" })}.${b64url(payload)}.ZHVtbXktc2ln`;
+}
+
 function makeContext(): BaseClientContext {
   const credentialStore: CredentialStore = {
     get: async () => null,
@@ -129,6 +148,11 @@ describe("OneDriveClient — preAuth (no creds)", () => {
           access_token: "new-at",
           refresh_token: "new-rt",
           expires_in: 3600,
+          // Capture-on-exchange is unconditional (enforce-oauth-reconnect-
+          // account-match) — supply a valid Microsoft id_token whose `aud`
+          // matches the preAuth clientId and whose `iss`/`tid` use a tenant
+          // GUID (never `common`) so the exchange does not fail closed.
+          id_token: makeMsIdToken({ aud: "preauth-client-id" }),
         }),
         { status: 200, headers: { "Content-Type": "application/json" } },
       );

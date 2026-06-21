@@ -27,6 +27,7 @@ import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type {
+  AuthResult,
   OAuthIntent,
   StoredCredentials,
 } from "@ft5/ipc-contracts";
@@ -227,6 +228,95 @@ afterEach(() => {
   createdClients.length = 0;
   vi.restoreAllMocks();
 });
+
+// ---------------------------------------------------------------------------
+// id_token (OIDC) fixtures — enforce-oauth-reconnect-account-match
+// ---------------------------------------------------------------------------
+//
+// Capture-on-exchange (D2/D3) is UNCONDITIONAL: every successful token
+// exchange now reads + validates the Microsoft `id_token`. A real Microsoft
+// v2.0 id_token's `iss` is TENANT-SPECIFIC —
+// `https://login.microsoftonline.com/{tenant-GUID}/v2.0` — and NEVER carries
+// `common`; the matching tenant GUID is the `tid` claim. The strategy derives
+// the one accepted issuer from the token's own `tid`, so these fixtures use a
+// GUID (not `common`) for BOTH `iss` and `tid` (this is the E1 trap-avoidance
+// proof). `aud` defaults to the `makeCreds` default clientId ("test-client-id").
+
+/** A representative Microsoft tenant GUID (personal-MSA tenant). */
+const MS_TENANT_GUID = "9188040d-6c67-4c5b-b112-36a304b66dad";
+/** The clientId `makeCreds` seeds by default — id_token `aud` must equal it. */
+const DEFAULT_CLIENT_ID = "test-client-id";
+
+function b64url(obj: unknown): string {
+  return Buffer.from(JSON.stringify(obj), "utf8").toString("base64url");
+}
+
+/** Build a `header.payload.signature` JWT. Signature is a dummy constant. */
+function makeIdToken(payload: Record<string, unknown>): string {
+  const header = b64url({ alg: "RS256", typ: "JWT" });
+  const body = b64url(payload);
+  return `${header}.${body}.ZHVtbXktc2ln`;
+}
+
+/** A valid Microsoft v2.0 id_token payload. `iss` and `tid` use the SAME
+ * GUID (never `common`); override `sub`/`email`/`aud`/`iss`/`tid`/`exp`. */
+function msIdTokenPayload(
+  overrides: Record<string, unknown> = {},
+): Record<string, unknown> {
+  return {
+    sub: "ms-sub-1",
+    email: "alice@contoso.com",
+    aud: DEFAULT_CLIENT_ID,
+    iss: `https://login.microsoftonline.com/${MS_TENANT_GUID}/v2.0`,
+    tid: MS_TENANT_GUID,
+    exp: Math.floor(Date.now() / 1000) + 3600,
+    ...overrides,
+  };
+}
+
+/** A 200 token-endpoint Response carrying access/refresh tokens + an
+ * id_token. Used to replace bare success mocks once capture is unconditional. */
+function tokenResponseWithIdToken(
+  idToken: string,
+  body: Record<string, unknown> = {},
+): Response {
+  return new Response(
+    JSON.stringify({
+      access_token: "new-at",
+      refresh_token: "new-rt",
+      expires_in: 3600,
+      id_token: idToken,
+      ...body,
+    }),
+    { status: 200, headers: { "Content-Type": "application/json" } },
+  );
+}
+
+/** A CredentialStore that records every `put` so throw-before-persist can be
+ * asserted (the default `makeStore` discards puts). */
+function makeSpyAuthCtx(): {
+  ctx: BaseClientContext;
+  puts: Array<{ id: string; creds: StoredCredentials }>;
+} {
+  const puts: Array<{ id: string; creds: StoredCredentials }> = [];
+  const store: CredentialStore = {
+    get: async () => null,
+    put: async (id, creds) => {
+      puts.push({ id, creds });
+    },
+    delete: async () => undefined,
+  };
+  return {
+    ctx: { credentialStore: store, providerDescriptor: providers.onedrive },
+    puts,
+  };
+}
+
+const ONEDRIVE_PREAUTH = {
+  clientId: DEFAULT_CLIENT_ID,
+  clientSecret: "secret",
+  redirectUri: "http://127.0.0.1:5599/callback",
+};
 
 // ---------------------------------------------------------------------------
 // listDirectory
@@ -581,14 +671,7 @@ describe("OneDriveClient — authenticate", () => {
   it("completeWith(code) posts to the token endpoint and returns an AuthResult", async () => {
     const { client } = makeFakeGraph([]);
     const fetchImpl = vi.fn(async () =>
-      new Response(
-        JSON.stringify({
-          access_token: "new-at",
-          refresh_token: "new-rt",
-          expires_in: 3600,
-        }),
-        { status: 200, headers: { "Content-Type": "application/json" } },
-      ),
+      tokenResponseWithIdToken(makeIdToken(msIdTokenPayload())),
     ) as unknown as typeof fetch;
     const h = makeHarness({ graph: client, fetchImpl });
     const intent = (await h.client.authenticate()) as OAuthIntent;
@@ -2258,5 +2341,304 @@ describe("OneDriveClient — normalizeError AbortError → cancelled", () => {
     const out = normalize(err) as DatasourceError<"onedrive">;
     expect(out.tag).toBe("cancelled");
     expect(out.retryable).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Account identity — capture, enforce, refresh-preserve
+// (enforce-oauth-reconnect-account-match — Decisions D1–D7; OneDrive issuer
+// derived from the token's own tenant GUID `tid`, per E1.)
+// ---------------------------------------------------------------------------
+//
+// Capture-on-exchange is unconditional (D2/D3); enforcement (D4) applies only
+// when an `expectedAccount` anchor is injected at construction (reconnect).
+// These tests construct via the class constructor so they can pass creds=null
+// + preAuth (the createForAuth shape) + the optional `expectedAccount` 5th
+// param. The Graph SDK is never invoked during authenticate, so makeFakeGraph
+// is omitted — a null graphFactory stub suffices.
+
+describe("OneDriveClient — account identity (scope widening)", () => {
+  it("authorize URL requests openid + email alongside the file/offline scopes", async () => {
+    const { client } = makeFakeGraph([]);
+    const h = makeHarness({ graph: client });
+    const intent = (await h.client.authenticate()) as OAuthIntent;
+    const scope = new URL(intent.authorizeUrl).searchParams.get("scope") ?? "";
+    const tokens = scope.split(/\s+/).filter(Boolean);
+    expect(tokens).toContain("openid");
+    expect(tokens).toContain("email");
+    // Existing file + offline scopes are still requested.
+    expect(tokens).toContain("offline_access");
+    expect(tokens).toContain("Files.ReadWrite.All");
+  });
+});
+
+describe("OneDriveClient — account identity (capture on exchange)", () => {
+  function makeFakeGraphStub(): GraphClientLike {
+    return { api: () => { throw new Error("graph not expected in auth-only test"); } } as unknown as GraphClientLike;
+  }
+
+  it("exchange with a valid Microsoft id_token (iss/tid use a GUID, not common) writes meta.account = { sub, email }", async () => {
+    const { ctx, puts } = makeSpyAuthCtx();
+    const fetchImpl = vi.fn(async () =>
+      tokenResponseWithIdToken(
+        makeIdToken(
+          msIdTokenPayload({ sub: "ms-sub-cap", email: "carol@contoso.com" }),
+        ),
+      ),
+    ) as unknown as typeof fetch;
+    const client = new OneDriveClient(
+      { datasourceId: "ds-od-cap", ctx },
+      null,
+      { graphFactory: makeFakeGraphStub, fetchImpl },
+      ONEDRIVE_PREAUTH,
+    );
+    createdClients.push(client);
+    const intent = (await client.authenticate()) as OAuthIntent;
+    const result = await intent.completeWith("auth-code-1");
+    expect(result.meta?.account).toEqual({
+      sub: "ms-sub-cap",
+      email: "carol@contoso.com",
+    });
+    expect(puts).toHaveLength(1);
+    const storedMeta = puts[0]!.creds.authResult.meta as Record<string, unknown>;
+    expect(storedMeta.account).toEqual({
+      sub: "ms-sub-cap",
+      email: "carol@contoso.com",
+    });
+  });
+
+  it("exchange with a malformed id_token throws a RETRYABLE DatasourceError and does NOT persist (fail-closed)", async () => {
+    const { ctx, puts } = makeSpyAuthCtx();
+    const fetchImpl = vi.fn(async () =>
+      tokenResponseWithIdToken("not-a-jwt"),
+    ) as unknown as typeof fetch;
+    const client = new OneDriveClient(
+      { datasourceId: "ds-od-malformed", ctx },
+      null,
+      { graphFactory: makeFakeGraphStub, fetchImpl },
+      ONEDRIVE_PREAUTH,
+    );
+    createdClients.push(client);
+    const intent = (await client.authenticate()) as OAuthIntent;
+    await expect(intent.completeWith("auth-code-2")).rejects.toSatisfy(
+      (e: unknown) => e instanceof DatasourceError && e.retryable === true,
+    );
+    expect(puts).toHaveLength(0);
+  });
+
+  it("exchange with a MISSING tid throws a RETRYABLE DatasourceError and does NOT persist (fail-closed)", async () => {
+    const { ctx, puts } = makeSpyAuthCtx();
+    // A token whose `tid` is absent: the strategy cannot derive the accepted
+    // issuer, so it must fail closed rather than build a `.../undefined/v2.0`.
+    const payload = msIdTokenPayload();
+    delete payload.tid;
+    const fetchImpl = vi.fn(async () =>
+      tokenResponseWithIdToken(makeIdToken(payload)),
+    ) as unknown as typeof fetch;
+    const client = new OneDriveClient(
+      { datasourceId: "ds-od-notid", ctx },
+      null,
+      { graphFactory: makeFakeGraphStub, fetchImpl },
+      ONEDRIVE_PREAUTH,
+    );
+    createdClients.push(client);
+    const intent = (await client.authenticate()) as OAuthIntent;
+    await expect(intent.completeWith("auth-code-3")).rejects.toSatisfy(
+      (e: unknown) => e instanceof DatasourceError && e.retryable === true,
+    );
+    expect(puts).toHaveLength(0);
+  });
+
+  it("exchange with an expired id_token throws a RETRYABLE DatasourceError and does NOT persist (fail-closed)", async () => {
+    const { ctx, puts } = makeSpyAuthCtx();
+    const fetchImpl = vi.fn(async () =>
+      tokenResponseWithIdToken(
+        makeIdToken(
+          msIdTokenPayload({ exp: Math.floor(Date.now() / 1000) - 3600 }),
+        ),
+      ),
+    ) as unknown as typeof fetch;
+    const client = new OneDriveClient(
+      { datasourceId: "ds-od-expired", ctx },
+      null,
+      { graphFactory: makeFakeGraphStub, fetchImpl },
+      ONEDRIVE_PREAUTH,
+    );
+    createdClients.push(client);
+    const intent = (await client.authenticate()) as OAuthIntent;
+    await expect(intent.completeWith("auth-code-4")).rejects.toSatisfy(
+      (e: unknown) => e instanceof DatasourceError && e.retryable === true,
+    );
+    expect(puts).toHaveLength(0);
+  });
+
+  it("exchange with a MISSING id_token throws a RETRYABLE DatasourceError and does NOT persist (fail-closed)", async () => {
+    const { ctx, puts } = makeSpyAuthCtx();
+    const fetchImpl = vi.fn(async () =>
+      new Response(
+        JSON.stringify({
+          access_token: "at",
+          refresh_token: "rt",
+          expires_in: 3600,
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } },
+      ),
+    ) as unknown as typeof fetch;
+    const client = new OneDriveClient(
+      { datasourceId: "ds-od-noidtoken", ctx },
+      null,
+      { graphFactory: makeFakeGraphStub, fetchImpl },
+      ONEDRIVE_PREAUTH,
+    );
+    createdClients.push(client);
+    const intent = (await client.authenticate()) as OAuthIntent;
+    await expect(intent.completeWith("auth-code-5")).rejects.toSatisfy(
+      (e: unknown) => e instanceof DatasourceError && e.retryable === true,
+    );
+    expect(puts).toHaveLength(0);
+  });
+});
+
+describe("OneDriveClient — account identity (reconnect enforcement)", () => {
+  function makeFakeGraphStub(): GraphClientLike {
+    return { api: () => { throw new Error("graph not expected in auth-only test"); } } as unknown as GraphClientLike;
+  }
+
+  it("login_hint is present in the authorize URL when constructed with expectedAccount; absent otherwise", async () => {
+    const { ctx } = makeSpyAuthCtx();
+    const withAnchor = new OneDriveClient(
+      { datasourceId: "ds-od-hint", ctx },
+      null,
+      { graphFactory: makeFakeGraphStub },
+      ONEDRIVE_PREAUTH,
+      { sub: "anchor-sub", email: "bound@contoso.com" },
+    );
+    createdClients.push(withAnchor);
+    const intent1 = (await withAnchor.authenticate()) as OAuthIntent;
+    expect(new URL(intent1.authorizeUrl).searchParams.get("login_hint")).toBe(
+      "bound@contoso.com",
+    );
+
+    const withoutAnchor = new OneDriveClient(
+      { datasourceId: "ds-od-nohint", ctx },
+      null,
+      { graphFactory: makeFakeGraphStub },
+      ONEDRIVE_PREAUTH,
+    );
+    createdClients.push(withoutAnchor);
+    const intent2 = (await withoutAnchor.authenticate()) as OAuthIntent;
+    expect(new URL(intent2.authorizeUrl).searchParams.has("login_hint")).toBe(
+      false,
+    );
+  });
+
+  it("reconnect with a MATCHING sub persists normally and preserves meta.account", async () => {
+    const { ctx, puts } = makeSpyAuthCtx();
+    const fetchImpl = vi.fn(async () =>
+      tokenResponseWithIdToken(
+        makeIdToken(
+          msIdTokenPayload({ sub: "same-sub", email: "new-email@contoso.com" }),
+        ),
+      ),
+    ) as unknown as typeof fetch;
+    const client = new OneDriveClient(
+      { datasourceId: "ds-od-match", ctx },
+      null,
+      { graphFactory: makeFakeGraphStub, fetchImpl },
+      ONEDRIVE_PREAUTH,
+      { sub: "same-sub", email: "old-email@contoso.com" },
+    );
+    createdClients.push(client);
+    const intent = (await client.authenticate()) as OAuthIntent;
+    const result = await intent.completeWith("auth-code-match");
+    expect(puts).toHaveLength(1);
+    expect(result.meta?.account).toEqual({
+      sub: "same-sub",
+      email: "new-email@contoso.com",
+    });
+  });
+
+  it("reconnect with a DIFFERENT sub throws DatasourceError{tag:account-mismatch} carrying both emails+subs, and does NOT persist", async () => {
+    const { ctx, puts } = makeSpyAuthCtx();
+    const fetchImpl = vi.fn(async () =>
+      tokenResponseWithIdToken(
+        makeIdToken(
+          msIdTokenPayload({ sub: "intruder-sub", email: "intruder@contoso.com" }),
+        ),
+      ),
+    ) as unknown as typeof fetch;
+    const client = new OneDriveClient(
+      { datasourceId: "ds-od-mismatch", ctx },
+      null,
+      { graphFactory: makeFakeGraphStub, fetchImpl },
+      ONEDRIVE_PREAUTH,
+      { sub: "bound-sub", email: "owner@contoso.com" },
+    );
+    createdClients.push(client);
+    const intent = (await client.authenticate()) as OAuthIntent;
+    let caught: unknown;
+    try {
+      await intent.completeWith("auth-code-mismatch");
+    } catch (e) {
+      caught = e;
+    }
+    expect(caught).toBeInstanceOf(DatasourceError);
+    const err = caught as DatasourceError<"onedrive">;
+    expect(err.tag).toBe(DatasourceErrorTag.AccountMismatch);
+    expect(err.retryable).toBe(false);
+    const raw = err.raw as Record<string, unknown>;
+    expect(raw.expectedSub).toBe("bound-sub");
+    expect(raw.expectedEmail).toBe("owner@contoso.com");
+    expect(raw.actualSub).toBe("intruder-sub");
+    expect(raw.actualEmail).toBe("intruder@contoso.com");
+    expect(puts).toHaveLength(0);
+  });
+});
+
+describe("OneDriveClient — account identity (refresh preserves anchor)", () => {
+  it("refreshTokenImpl re-emits the stored meta.account unchanged (refresh response has no id_token)", async () => {
+    const { client: graph } = makeFakeGraph([]);
+    const fetchImpl = vi.fn(async () =>
+      new Response(
+        JSON.stringify({
+          access_token: "refreshed-at",
+          expires_in: 3600,
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } },
+      ),
+    ) as unknown as typeof fetch;
+    // Build creds carrying meta.account so readCredsFromStored seeds the anchor.
+    const creds: StoredCredentials = {
+      providerId: "onedrive",
+      authResult: {
+        accessToken: "access-tok",
+        refreshToken: "refresh-tok",
+        meta: {
+          clientId: DEFAULT_CLIENT_ID,
+          tenantId: "common",
+          redirectUri: "http://localhost:3000/oauth/callback",
+          account: { sub: "stable-sub", email: "stable@contoso.com" },
+        },
+      },
+      createdAt: 0,
+      updatedAt: 0,
+    };
+    const ctx: BaseClientContext = {
+      credentialStore: makeStore(),
+      providerDescriptor: providers.onedrive,
+    };
+    const client = createOneDriveClient("ds-od-refresh", creds, ctx, {
+      graphFactory: () => graph,
+      fetchImpl,
+    }) as OneDriveClient;
+    createdClients.push(client);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const refresh = (client as any).refreshTokenImpl.bind(client);
+    const result: AuthResult = await refresh();
+    expect(result.accessToken).toBe("refreshed-at");
+    expect(result.meta?.account).toEqual({
+      sub: "stable-sub",
+      email: "stable@contoso.com",
+    });
   });
 });

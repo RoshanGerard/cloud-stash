@@ -22,14 +22,14 @@
 - [x] 4.2 (TDD) Google Drive: failing test that, given a token response with an `id_token`, the exchange validates `aud`/`iss`/`exp`, extracts `{ sub, email }`, and persists `AuthResult.meta.account`.
 - [x] 4.3 (TDD) Google Drive: failing test that a missing/invalid/unparseable `id_token` throws a **retryable** `DatasourceError` and persists nothing (fail-closed).
 - [x] 4.4 Implement Google Drive capture (scope widening + `id_token` parse/validate helper + `meta.account` write + fail-closed); make 4.1–4.3 green.
-- [ ] 4.5 (TDD) OneDrive: mirror 4.1–4.3 (scope `openid email`, `id_token` claims incl. pairwise `sub`, fail-closed).
-- [ ] 4.6 Implement OneDrive capture; make 4.5 green.
+- [x] 4.5 (TDD) OneDrive: mirror 4.1–4.3 (scope `openid email`, `id_token` claims incl. pairwise `sub`, fail-closed).
+- [x] 4.6 Implement OneDrive capture; make 4.5 green.
 - [x] 4.7 Add a shared `id_token` decode+validate helper (single implementation reused by both strategies) with its own unit tests (claim validation, expiry, malformed input). <!-- shared foundation: packages/fs-datasource-engine/src/oauth/id-token.ts (parseIdToken + IdTokenError) + __tests__/id-token.test.ts (13 tests). -->
 
 ## 5. Engine — refresh preserves the anchor
 
 - [x] 5.1 (TDD) Google Drive: failing test that `refreshCredentials()` on a credential carrying `meta.account` re-emits the same `{ sub, email }` (refresh response has no `id_token`).
-- [ ] 5.2 (TDD) OneDrive: same refresh-preservation test.
+- [x] 5.2 (TDD) OneDrive: same refresh-preservation test.
 - [ ] 5.3 Implement anchor preservation in both `refreshTokenImpl` paths; make 5.1–5.2 green.
 
 ## 6. Engine — reconnect enforcement (`createForAuth` + throw-before-persist)
