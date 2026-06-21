@@ -84,6 +84,7 @@ import { basename, extname } from "node:path";
 import { Transform, type Readable } from "node:stream";
 
 import type {
+  AccountIdentity,
   AuthIntent,
   AuthResult,
   DatasourceStatus,
@@ -99,6 +100,7 @@ import type {
 import { DatasourceError, DatasourceErrorTag } from "@ft5/ipc-contracts";
 
 import type { PreAuthConfig } from "../auth-types.js";
+import { parseIdToken, IdTokenError } from "../oauth/id-token.js";
 import {
   BaseDatasourceClient,
   type BaseClientContext,
@@ -214,12 +216,27 @@ const OAUTH_TOKEN_URL = "https://oauth2.googleapis.com/token";
 // Drive's OAuth scope for full-access to all files the user owns or has been
 // granted access to. `drive.file` is narrower (only app-created files) but
 // would prevent listing the user's existing content.
-const OAUTH_SCOPE = "https://www.googleapis.com/auth/drive";
+//
+// `openid email` are appended (enforce-oauth-reconnect-account-match D1) so the
+// token endpoint returns an `id_token` carrying the account `sub` + `email`
+// used to capture the same-account anchor. The resource-scope sufficiency
+// check (`isScopeSufficient`) keys on Drive-scope INCLUSION, so the widened
+// superset still passes (existing Drive-only tokens keep working too).
+const OAUTH_SCOPE = "openid email https://www.googleapis.com/auth/drive";
 
 // The scope the engine requires of the ISSUED grant. Intentionally a separate
 // constant from OAUTH_SCOPE: OAUTH_SCOPE is what the authorize URL requests;
 // REQUIRED_DRIVE_SCOPE is what we validate on the issued credential at runtime.
 const REQUIRED_DRIVE_SCOPE = "https://www.googleapis.com/auth/drive";
+
+// Accepted issuers for the Google `id_token`'s `iss` claim. Google emits BOTH
+// the `https://`-prefixed and bare-host forms across surfaces; accept both
+// (enforce-oauth-reconnect-account-match — design.md Open Questions: Google
+// `iss = https://accounts.google.com`).
+const GOOGLE_ID_TOKEN_ISSUERS = [
+  "https://accounts.google.com",
+  "accounts.google.com",
+];
 
 // Resumable-upload chunk size. Google recommends multiples of 256 KiB; we
 // pick 10 MiB to match the OneDrive strategy's chunk cadence and keep the
@@ -421,6 +438,25 @@ interface GoogleDriveCredsMeta {
    * Populated at construction from `authResult.meta.scope` if present.
    * `undefined` means legacy credentials pre-dating scope backfill. */
   scope?: string;
+  /** The bound account identity (enforce-oauth-reconnect-account-match D3).
+   * Populated from `authResult.meta.account` on the legacy/create path and on
+   * a successful exchange. `refreshTokenImpl` re-emits it so a refresh (whose
+   * response carries no `id_token`) does NOT erase the anchor. `undefined`
+   * for credentials connected before this shipped (capture-on-next-auth, D8). */
+  account?: AccountIdentity;
+}
+
+/** Read `meta.account` into an `AccountIdentity` when it is a well-formed
+ * `{ sub: string; email: string }`; otherwise `undefined`. Tolerant of legacy
+ * credentials that lack the field (D8). */
+function readAccountFromMeta(
+  meta: Record<string, unknown>,
+): AccountIdentity | undefined {
+  const account = meta.account;
+  if (account === null || typeof account !== "object") return undefined;
+  const { sub, email } = account as Record<string, unknown>;
+  if (typeof sub !== "string" || sub.length === 0) return undefined;
+  return { sub, email: typeof email === "string" ? email : "" };
 }
 
 function readCredsFromStored(
@@ -443,6 +479,7 @@ function readCredsFromStored(
         "Google Drive credentials must include meta.clientId, meta.clientSecret, meta.redirectUri",
     });
   }
+  const account = readAccountFromMeta(meta);
   return {
     clientId: meta.clientId,
     clientSecret: meta.clientSecret,
@@ -450,6 +487,7 @@ function readCredsFromStored(
     accessToken: authResult.accessToken,
     refreshToken: authResult.refreshToken ?? "",
     ...(typeof meta.scope === "string" ? { scope: meta.scope } : {}),
+    ...(account ? { account } : {}),
   };
 }
 
@@ -529,6 +567,15 @@ export class GoogleDriveClient extends BaseDatasourceClient<"google-drive"> {
    * here without a boundary translation step.
    */
   private preAuth: PreAuthConfig | undefined;
+  /**
+   * Optional reconnect same-account anchor (enforce-oauth-reconnect-account-
+   * match D4). Seeded at construction on the reconnect createForAuth path
+   * (fs-sync reads the datasource's stored `meta.account` and threads it down).
+   * When present, the token exchange hard-blocks (throw-before-persist) if the
+   * freshly-authenticated `sub` differs. `undefined` on first connect
+   * (capture-only — no anchor to compare against). It also drives the
+   * `login_hint` on the authorize URL (D6). */
+  private readonly expectedAccount: AccountIdentity | undefined;
   private readonly driveFactory: DriveFactory;
   private readonly fetchImpl: typeof fetch;
   private readonly lruCap: number;
@@ -553,12 +600,15 @@ export class GoogleDriveClient extends BaseDatasourceClient<"google-drive"> {
     creds: GoogleDriveCredsMeta | null,
     options: GoogleDriveClientOptions = {},
     preAuth?: PreAuthConfig | null,
+    expectedAccount?: AccountIdentity,
   ) {
     super(init);
     this.creds = creds;
     // Normalise null → undefined so internal precedence checks compare
     // against a single sentinel.
     this.preAuth = preAuth ?? undefined;
+    // Reconnect same-account anchor (D4). `undefined` on first connect.
+    this.expectedAccount = expectedAccount;
     this.driveFactory = options.driveFactory ?? createDefaultDriveFactory();
     this.fetchImpl =
       options.fetchImpl ??
@@ -1026,6 +1076,13 @@ export class GoogleDriveClient extends BaseDatasourceClient<"google-drive"> {
       code_challenge: codeChallenge,
       code_challenge_method: "S256",
     });
+    // login_hint (D6): on a reconnect (expectedAccount present), steer the
+    // provider to pre-select the bound account so most users never hit the
+    // hard block. Steering only — D4's post-exchange check is the enforcement.
+    // Omitted on first connect, and when the anchor carries no email.
+    if (this.expectedAccount && this.expectedAccount.email !== "") {
+      params.set("login_hint", this.expectedAccount.email);
+    }
     const authorizeUrl = `${OAUTH_AUTHORIZE_URL}?${params.toString()}`;
     const intent: OAuthIntent = {
       kind: "oauth",
@@ -1062,10 +1119,30 @@ export class GoogleDriveClient extends BaseDatasourceClient<"google-drive"> {
     } catch (err) {
       throw this.normalizeErrorImpl(err);
     }
-    return this.parseTokenResponse(resp);
+    // capture: true — this is the authorization-code exchange; read + validate
+    // the id_token and capture/enforce the account identity (D2/D3/D4/D7).
+    return this.parseTokenResponse(resp, { capture: true });
   }
 
-  private async parseTokenResponse(resp: Response): Promise<AuthResult> {
+  /**
+   * Parse a token-endpoint response into an `AuthResult`.
+   *
+   * `capture` selects the account-identity mode (enforce-oauth-reconnect-
+   * account-match):
+   *   - `true` (authorization-code exchange): read + validate the `id_token`
+   *     (D2), fail closed with a RETRYABLE error if it is absent/unreadable
+   *     (D7), enforce the same-account anchor when `expectedAccount` is set
+   *     (D4, throw-before-persist), and write the captured `AccountIdentity`
+   *     onto `result.meta.account` + `this.creds.account` (D3).
+   *   - `false` (refresh grant): refresh responses carry NO `id_token`; do not
+   *     require one. PRESERVE the anchor by re-emitting the stored
+   *     `this.creds.account` onto `result.meta.account` (D3) — a refresh that
+   *     rebuilt meta from app-config only would silently erase the anchor.
+   */
+  private async parseTokenResponse(
+    resp: Response,
+    opts: { capture: boolean },
+  ): Promise<AuthResult> {
     const text = await resp.text();
     let parsed: Record<string, unknown>;
     try {
@@ -1120,6 +1197,26 @@ export class GoogleDriveClient extends BaseDatasourceClient<"google-drive"> {
     if (typeof expiresIn === "number") {
       result.expiresAt = Date.now() + expiresIn * 1000;
     }
+
+    // Account identity (enforce-oauth-reconnect-account-match).
+    //   - capture (exchange): read + validate the id_token, enforce the
+    //     anchor (throw-before-persist), then carry the captured identity.
+    //   - preserve (refresh): re-emit the stored anchor; refresh has no
+    //     id_token.
+    // Whichever branch runs, `account` is the identity to thread onto
+    // result.meta + this.creds (undefined when there is nothing to carry).
+    let account: AccountIdentity | undefined;
+    if (opts.capture) {
+      account = this.captureAccountFromIdToken(parsed, oauthApp.clientId);
+    } else {
+      // Refresh: anchor survives from the current creds (D3). Carry it
+      // forward so persistence does not erase it.
+      account = this.creds?.account;
+    }
+    if (account) {
+      meta.account = account;
+    }
+
     // Update in-memory creds so subsequent SDK calls use the new token.
     // On the createForAuth path (creds: null at construction), seed a
     // fresh GoogleDriveCredsMeta from the AuthResult + preAuth-sourced
@@ -1132,6 +1229,7 @@ export class GoogleDriveClient extends BaseDatasourceClient<"google-drive"> {
         accessToken,
         refreshToken: typeof refreshToken === "string" ? refreshToken : "",
         ...(typeof issuedScope === "string" ? { scope: issuedScope } : {}),
+        ...(account ? { account } : {}),
       };
     } else {
       this.creds = {
@@ -1139,9 +1237,78 @@ export class GoogleDriveClient extends BaseDatasourceClient<"google-drive"> {
         accessToken,
         ...(typeof refreshToken === "string" ? { refreshToken } : {}),
         ...(typeof issuedScope === "string" ? { scope: issuedScope } : {}),
+        ...(account ? { account } : {}),
       };
     }
     return result;
+  }
+
+  /**
+   * Decode + validate the exchange response's `id_token`, enforce the
+   * reconnect same-account anchor, and return the captured `AccountIdentity`.
+   *
+   * Fail-closed (D7): a missing / non-string / unparseable / claim-invalid
+   * `id_token` throws a RETRYABLE `DatasourceError` (the user can retry the
+   * consent flow) — we NEVER persist credentials whose identity we could not
+   * read, so an account swap can't slip through on an unreadable token.
+   *
+   * Enforce (D4): when `this.expectedAccount` is set and the freshly-read
+   * `sub` differs, throw `DatasourceError{ tag: account-mismatch }` carrying
+   * BOTH emails + BOTH subs on `raw`. This runs inside the exchange closure,
+   * which `completeAuth` invokes BEFORE `persistCredentials`, so the throw
+   * skips persistence with no rollback window — the bound credentials are
+   * never touched.
+   */
+  private captureAccountFromIdToken(
+    parsed: Record<string, unknown>,
+    clientId: string,
+  ): AccountIdentity {
+    const idToken = parsed.id_token;
+    let account: AccountIdentity;
+    try {
+      if (typeof idToken !== "string" || idToken.length === 0) {
+        throw new IdTokenError(
+          "malformed",
+          "token response is missing the id_token (openid scope required)",
+        );
+      }
+      account = parseIdToken(idToken, {
+        clientId,
+        issuers: GOOGLE_ID_TOKEN_ISSUERS,
+      });
+    } catch (err) {
+      if (err instanceof IdTokenError) {
+        // Fail closed (D7): retryable so the user can re-consent.
+        throw new DatasourceError<"google-drive">({
+          tag: DatasourceErrorTag.AuthExpired,
+          datasourceType: "google-drive",
+          datasourceId: this.datasourceId,
+          retryable: true,
+          raw: { kind: "id-token-unreadable", reason: err.reason },
+          message:
+            "Could not read the account identity from Google's response — please try connecting again.",
+        });
+      }
+      throw err;
+    }
+
+    // Enforce the same-account anchor (D4) — throw-before-persist.
+    if (this.expectedAccount && account.sub !== this.expectedAccount.sub) {
+      throw new DatasourceError<"google-drive">({
+        tag: DatasourceErrorTag.AccountMismatch,
+        datasourceType: "google-drive",
+        datasourceId: this.datasourceId,
+        retryable: false,
+        raw: {
+          expectedSub: this.expectedAccount.sub,
+          expectedEmail: this.expectedAccount.email,
+          actualSub: account.sub,
+          actualEmail: account.email,
+        },
+        message: `This datasource is connected to ${this.expectedAccount.email}. Reconnect using that account to continue.`,
+      });
+    }
+    return account;
   }
 
   // -------------------------------------------------------------------------
@@ -2013,7 +2180,9 @@ export class GoogleDriveClient extends BaseDatasourceClient<"google-drive"> {
     } catch (err) {
       throw this.normalizeErrorImpl(err);
     }
-    return this.parseTokenResponse(resp);
+    // capture: false — refresh responses carry no id_token; preserve the
+    // existing account anchor rather than reading one (D3).
+    return this.parseTokenResponse(resp, { capture: false });
   }
 
   // -------------------------------------------------------------------------
@@ -2201,8 +2370,19 @@ export const createGoogleDriveClientForAuth: PreAuthFactoryFn<"google-drive"> = 
   datasourceId,
   preAuth,
   ctx,
+  expectedAccount,
 ) => {
-  return new GoogleDriveClient({ datasourceId, ctx }, null, {}, preAuth);
+  // `expectedAccount` (4th positional arg per PreAuthFactoryFn) is the
+  // reconnect same-account anchor; threaded to the 5th constructor slot so the
+  // exchange can hard-block a different-account reconnect (D4). `undefined` on
+  // first connect (capture-only).
+  return new GoogleDriveClient(
+    { datasourceId, ctx },
+    null,
+    {},
+    preAuth,
+    expectedAccount,
+  );
 };
 
 /**
