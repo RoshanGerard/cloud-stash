@@ -345,3 +345,43 @@ export const FILES_CHANNELS = {
   download: "files:download",
   upload: "files:upload",
 } as const;
+
+// Per add-drive-docs-editors-export Decision 1. Single shared source of truth
+// mapping each exportable Google Apps mime type to the Drive `files.export`
+// target mime and the saved-file extension. Both the Drive engine strategy and
+// the renderer's download orchestrator consume this table so the mapping can
+// never drift between producer and consumer.
+//
+// Google Workspace types that are NOT listed here (e.g. `google-apps.form`,
+// `google-apps.site`) have no exportable binary representation via the Drive
+// files.export API and are excluded.
+export const GOOGLE_APPS_EXPORT_FORMATS = {
+  "application/vnd.google-apps.document": {
+    exportMime:
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    extension: ".docx",
+  },
+  "application/vnd.google-apps.spreadsheet": {
+    exportMime:
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    extension: ".xlsx",
+  },
+  "application/vnd.google-apps.presentation": {
+    exportMime:
+      "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    extension: ".pptx",
+  },
+  "application/vnd.google-apps.drawing": {
+    exportMime: "image/png",
+    extension: ".png",
+  },
+  "application/vnd.google-apps.script": {
+    exportMime: "application/vnd.google-apps.script+json",
+    extension: ".json",
+  },
+} as const;
+
+// Derived type for the exportable mime keys — useful for narrowing in
+// `mimeType` checks before looking up the export entry.
+export type GoogleAppsExportableMime =
+  keyof typeof GOOGLE_APPS_EXPORT_FORMATS;
