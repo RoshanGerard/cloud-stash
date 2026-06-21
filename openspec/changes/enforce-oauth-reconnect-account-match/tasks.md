@@ -24,7 +24,7 @@
 - [ ] 4.4 Implement Google Drive capture (scope widening + `id_token` parse/validate helper + `meta.account` write + fail-closed); make 4.1–4.3 green.
 - [ ] 4.5 (TDD) OneDrive: mirror 4.1–4.3 (scope `openid email`, `id_token` claims incl. pairwise `sub`, fail-closed).
 - [ ] 4.6 Implement OneDrive capture; make 4.5 green.
-- [ ] 4.7 Add a shared `id_token` decode+validate helper (single implementation reused by both strategies) with its own unit tests (claim validation, expiry, malformed input).
+- [x] 4.7 Add a shared `id_token` decode+validate helper (single implementation reused by both strategies) with its own unit tests (claim validation, expiry, malformed input). <!-- shared foundation: packages/fs-datasource-engine/src/oauth/id-token.ts (parseIdToken + IdTokenError) + __tests__/id-token.test.ts (13 tests). -->
 
 ## 5. Engine — refresh preserves the anchor
 
@@ -34,7 +34,7 @@
 
 ## 6. Engine — reconnect enforcement (`createForAuth` + throw-before-persist)
 
-- [ ] 6.1 (TDD) `factory.createForAuth` accepts an optional `expectedAccount` and threads it to the OAuth strategy constructor (failing test on the new parameter + strategy field).
+- [x] 6.1 (TDD) `factory.createForAuth` accepts an optional `expectedAccount` and threads it to the OAuth strategy constructor (failing test on the new parameter + strategy field). <!-- FACTORY HALF ONLY (shared foundation): public createForAuth(providerId, oauthAppConfig, ctx, datasourceId?, expectedAccount?) + widened PreAuthFactoryFn 4th param; forwarded to entry.createForAuth as 4th positional arg. factory.test.ts §6.1 asserts mock.calls[0][3]. The per-provider strategy-CONSTRUCTOR field + post-exchange compare is done by the Google Drive / OneDrive provider agents (tasks 6.2-6.5). -->
 - [ ] 6.2 (TDD) Strategy: failing test that with `expectedAccount` present and a matching `sub`, persistence proceeds normally (with preserved `meta.account`).
 - [ ] 6.3 (TDD) Strategy: failing test that with `expectedAccount` present and a **different** `sub`, the completion closure throws `DatasourceError { tag: "account-mismatch" }` carrying the expected email, and **no `CredentialStore.put` occurs** (assert the store is untouched — proves throw-before-persist, no rollback window).
 - [ ] 6.4 (TDD) Strategy: failing test that `expectedAccount` present adds `login_hint=<email>` to the authorize URL; and that absent `expectedAccount` performs capture only (no comparison, no `login_hint`).

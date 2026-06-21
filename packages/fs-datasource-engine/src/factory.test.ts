@@ -8,9 +8,11 @@
 
 import { describe, expect, it, vi } from "vitest";
 
-import type { ProviderId } from "@ft5/ipc-contracts";
+import type { AccountIdentity, ProviderId } from "@ft5/ipc-contracts";
 import { providers } from "@ft5/ipc-contracts";
 import { DatasourceError } from "@ft5/ipc-contracts";
+
+import type { OAuthAppConfig } from "./auth-types.js";
 
 import type { CredentialStore } from "./credential-store.js";
 import type {
@@ -384,5 +386,92 @@ describe("createDefaultProviderRegistry", () => {
       expect(typeof client.uploadFile).toBe("function");
       expect(typeof client.delete).toBe("function");
     }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// enforce-oauth-reconnect-account-match §6.1 — `createForAuth` threads an
+// optional `expectedAccount` (the reconnect same-account anchor) down to the
+// per-entry `PreAuthFactoryFn`. fs-sync's reconnect path reads the stored
+// `meta.account` and passes it as the new 5th public argument; the factory
+// forwards it as the 4th positional argument to `entry.createForAuth`
+// (`(datasourceId, oauthAppConfig, baseCtx, expectedAccount)`). The strategy
+// owns the post-exchange comparison + throw-before-persist (provider work);
+// this slice only proves the wiring.
+// ---------------------------------------------------------------------------
+
+describe("ClientFactory.createForAuth — expectedAccount threading (§6.1)", () => {
+  const sampleOAuthConfig: OAuthAppConfig = {
+    clientId: "gd-client-id",
+    clientSecret: "gd-client-secret",
+    redirectUri: "http://127.0.0.1:55555/callback",
+  };
+
+  const expectedAccount: AccountIdentity = {
+    sub: "google-sub-12345",
+    email: "alice@example.com",
+  };
+
+  function registryWithGoogleSpy(): {
+    registry: ProviderRegistry;
+    googleCreateForAuth: ReturnType<typeof vi.fn<PreAuthFactoryFn<"google-drive">>>;
+  } {
+    const googleCreateForAuth = vi
+      .fn<PreAuthFactoryFn<"google-drive">>()
+      .mockImplementation((datasourceId) =>
+        makeFakeClient("google-drive", datasourceId),
+      );
+    const registry: ProviderRegistry = {
+      "amazon-s3": makeSpyRegistryEntry<"amazon-s3">(),
+      "google-drive": {
+        create: makeSpyFactoryFn<"google-drive">(),
+        createForAuth: googleCreateForAuth,
+        validateCredentialShape: vi.fn<CredentialShapeValidator>(),
+        authKind: "oauth",
+      },
+      onedrive: makeSpyRegistryEntry<"onedrive">(),
+    };
+    return { registry, googleCreateForAuth };
+  }
+
+  it("forwards expectedAccount (5th public arg) as the 4th positional arg to entry.createForAuth", () => {
+    const ctx = makeEngineContext();
+    const { registry, googleCreateForAuth } = registryWithGoogleSpy();
+    const factory = createClientFactory(registry);
+
+    factory.createForAuth(
+      "google-drive",
+      sampleOAuthConfig,
+      ctx,
+      "ds-reconnect-1",
+      expectedAccount,
+    );
+
+    expect(googleCreateForAuth).toHaveBeenCalledTimes(1);
+    const call = googleCreateForAuth.mock.calls[0];
+    // (datasourceId, preAuth, baseCtx, expectedAccount)
+    expect(call[0]).toBe("ds-reconnect-1");
+    expect(call[1]).toBe(sampleOAuthConfig);
+    expect(call[3]).toEqual(expectedAccount);
+    // Referentially the same object the caller passed (no copy/transform).
+    expect(call[3]).toBe(expectedAccount);
+  });
+
+  it("passes undefined as the 4th positional arg when expectedAccount is omitted (first-connect / capture-only)", () => {
+    const ctx = makeEngineContext();
+    const { registry, googleCreateForAuth } = registryWithGoogleSpy();
+    const factory = createClientFactory(registry);
+
+    factory.createForAuth(
+      "google-drive",
+      sampleOAuthConfig,
+      ctx,
+      "ds-first-connect",
+    );
+
+    expect(googleCreateForAuth).toHaveBeenCalledTimes(1);
+    const call = googleCreateForAuth.mock.calls[0];
+    expect(call[0]).toBe("ds-first-connect");
+    expect(call[3]).toBeUndefined();
   });
 });
