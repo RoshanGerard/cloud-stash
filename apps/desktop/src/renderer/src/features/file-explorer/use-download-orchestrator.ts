@@ -30,7 +30,7 @@
 
 import { useCallback, useRef, useState } from "react";
 
-import { FilesErrorTag } from "@ft5/ipc-contracts";
+import { FilesErrorTag, GOOGLE_APPS_EXPORT_FORMATS } from "@ft5/ipc-contracts";
 import type {
   FileEntry,
   FilesDownloadRequest,
@@ -342,17 +342,36 @@ export function useDownloadOrchestrator(
       const alwaysAsk = getAlwaysAsk();
       const wantSaveDialog = shiftKey || alwaysAsk;
 
+      // Compute the effective local filename. For Google Apps native formats
+      // (Docs, Sheets, Slides, Drawings, Scripts) the export extension must
+      // be appended so the OS can open the converted file. The Drive mime
+      // travels in `providerMetadata.mimeType` because `entry.mimeType` is
+      // always null (the fs-sync entry mapper hardcodes null for all
+      // providers). Append-always — no name splitting/parsing, so a Doc
+      // named "Notes.txt" becomes "Notes.txt.docx". The engine `path` /
+      // `entry.path` sent to the backend is UNCHANGED; only the local save
+      // path gets the extension.
+      const rawMime = entry.providerMetadata.mimeType;
+      const effectiveName =
+        typeof rawMime === "string" &&
+        Object.prototype.hasOwnProperty.call(GOOGLE_APPS_EXPORT_FORMATS, rawMime)
+          ? entry.name +
+            GOOGLE_APPS_EXPORT_FORMATS[
+              rawMime as keyof typeof GOOGLE_APPS_EXPORT_FORMATS
+            ].extension
+          : entry.name;
+
       let toPath: string;
       if (wantSaveDialog) {
         const result = await api.showSaveDialog({
-          defaultPath: joinFolderAndName(defaultFolder, entry.name),
+          defaultPath: joinFolderAndName(defaultFolder, effectiveName),
         });
         if (result.canceled || !result.filePath) {
           return null;
         }
         toPath = result.filePath;
       } else {
-        toPath = joinFolderAndName(defaultFolder, entry.name);
+        toPath = joinFolderAndName(defaultFolder, effectiveName);
       }
 
       // add-download-overwrite-confirm §5 — conflict re-prompt loop.
