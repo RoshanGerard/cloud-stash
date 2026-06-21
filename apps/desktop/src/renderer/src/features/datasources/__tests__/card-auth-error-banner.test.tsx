@@ -280,6 +280,141 @@ describe("AuthErrorBanner — Reconnect calls sync.authenticateStart", () => {
   });
 });
 
+describe("AuthErrorBanner — Wrong-account mini-callout (enforce-oauth-reconnect-account-match §8.3)", () => {
+  // `AuthErrorBanner` is not exported and the card uses the real
+  // `DatasourcesProvider`, so we drive the failed session through the live
+  // event stream: click Reconnect (records correlationId "corr-reconnect"),
+  // then emit an `auth-failed` SyncEvent for that correlation tagged
+  // `account-mismatch`. The store reducer threads expectedEmail/actualEmail
+  // onto the failed session (group-7 plumbing), and the card assembles the
+  // CONDENSED copy from `expectedEmail` only (per design.md `## Visual
+  // direction`).
+  // Clicks Reconnect then emits the `auth-failed` SyncEvent for the recorded
+  // correlation. Returns the FRESH `auth-error-banner` element after the
+  // re-render (in the account-mismatch arm this element IS the amber callout —
+  // it keeps the `auth-error-banner` testid for container-identity continuity).
+  async function reconnectThenEmit(
+    summary: DatasourceSummary,
+    failure: {
+      tag: string;
+      message?: string;
+      expectedEmail?: string;
+      actualEmail?: string;
+    },
+  ): Promise<HTMLElement> {
+    renderCard(summary);
+    fireEvent.click(
+      within(screen.getByTestId("auth-error-banner")).getByRole("button", {
+        name: /reconnect/i,
+      }),
+    );
+    // `handleReconnect` records the correlationId in a microtask after the
+    // async `authenticateStart` resolves; wait for that (the "Connecting…"
+    // pending state) BEFORE emitting the terminal event, otherwise the event
+    // for "corr-reconnect" lands while the banner is still keyed on the
+    // "__none__" sentinel and is dropped.
+    await waitFor(() =>
+      expect(authenticateStartMock).toHaveBeenCalledTimes(1),
+    );
+    act(() => {
+      emitSyncEvent({
+        kind: "auth-failed",
+        payload: {
+          correlationId: "corr-reconnect",
+          tag: failure.tag,
+          ...(failure.message !== undefined
+            ? { message: failure.message }
+            : {}),
+          ...(failure.expectedEmail !== undefined
+            ? { expectedEmail: failure.expectedEmail }
+            : {}),
+          ...(failure.actualEmail !== undefined
+            ? { actualEmail: failure.actualEmail }
+            : {}),
+        },
+      } as SyncEvent);
+    });
+    return screen.getByTestId("auth-error-banner");
+  }
+
+  it("renders the condensed 'Wrong account' mini-callout naming only the expected account", async () => {
+    const callout = await reconnectThenEmit(
+      buildErrorSummary({ errorKind: "auth-revoked" }),
+      {
+        // eslint-disable-next-line ft5/no-raw-error-tag-literal -- AuthFailedTag vocabulary (no const object) — out of scope
+        tag: "account-mismatch",
+        expectedEmail: "acme@gmail.com",
+        actualEmail: "other@gmail.com",
+        message: "Wrong account.",
+      },
+    );
+
+    expect(within(callout).getByText("Wrong account")).toBeInTheDocument();
+    const body = within(callout).getByTestId("wrong-account-callout-body");
+    expect(body).toHaveTextContent("Connect as acme@gmail.com to continue.");
+    // Condensed — the card names ONLY the expected account (no actual).
+    expect(body.textContent).not.toContain("other@gmail.com");
+    expect(body.textContent).not.toContain("You signed in as");
+    // The generic "Reconnect failed" line MUST NOT also render.
+    expect(
+      within(callout).queryByText("Reconnect failed — please try again."),
+    ).not.toBeInTheDocument();
+  });
+
+  it("keeps the Reconnect action LIVE (not disabled) inside the mini-callout", async () => {
+    const callout = await reconnectThenEmit(
+      buildErrorSummary({ errorKind: "auth-revoked" }),
+      // eslint-disable-next-line ft5/no-raw-error-tag-literal -- AuthFailedTag vocabulary (no const object) — out of scope
+      { tag: "account-mismatch", expectedEmail: "acme@gmail.com" },
+    );
+
+    const reconnectBtn = within(callout).getByRole("button", {
+      name: /reconnect/i,
+    });
+    expect(reconnectBtn).not.toBeDisabled();
+  });
+
+  it("the mini-callout's alert-triangle icon is amber and aria-hidden (not the destructive token)", async () => {
+    const callout = await reconnectThenEmit(
+      buildErrorSummary({ errorKind: "auth-revoked" }),
+      // eslint-disable-next-line ft5/no-raw-error-tag-literal -- AuthFailedTag vocabulary (no const object) — out of scope
+      { tag: "account-mismatch", expectedEmail: "acme@gmail.com" },
+    );
+
+    const svg = callout.querySelector("svg");
+    expect(svg).not.toBeNull();
+    expect(svg!.getAttribute("aria-hidden")).toBe("true");
+    expect(svg!.classList.toString()).not.toContain("text-destructive");
+    expect(svg!.classList.toString()).toMatch(/amber/);
+  });
+
+  it("the mini-callout container uses the amber palette (not the destructive token)", async () => {
+    const callout = await reconnectThenEmit(
+      buildErrorSummary({ errorKind: "auth-revoked" }),
+      // eslint-disable-next-line ft5/no-raw-error-tag-literal -- AuthFailedTag vocabulary (no const object) — out of scope
+      { tag: "account-mismatch", expectedEmail: "acme@gmail.com" },
+    );
+    expect(callout.className).toMatch(/amber/);
+    expect(callout.className).not.toContain("text-destructive");
+  });
+
+  it("a NON-account-mismatch failed tag keeps the existing 'Reconnect failed' copy and no callout", async () => {
+    const banner = await reconnectThenEmit(
+      buildErrorSummary({ errorKind: "auth-revoked" }),
+      // eslint-disable-next-line ft5/no-raw-error-tag-literal -- AuthFailedTag vocabulary (no const object) — out of scope
+      { tag: "provider-error", message: "boom" },
+    );
+
+    expect(
+      within(banner).getByText("Reconnect failed — please try again."),
+    ).toBeInTheDocument();
+    expect(
+      within(banner).queryByText("Wrong account"),
+    ).not.toBeInTheDocument();
+    expect(banner.className).not.toMatch(/amber/);
+  });
+});
+
 describe("AuthErrorBanner — accessible name and Tab order", () => {
   it("banner has aria-label or aria-labelledby", () => {
     renderCard(buildErrorSummary({ errorKind: "auth-revoked" }));

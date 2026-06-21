@@ -319,6 +319,70 @@ function AuthErrorBanner({
       sessionState.status === "failed" ||
       sessionState.status === "timeout");
 
+  // enforce-oauth-reconnect-account-match §8 (design.md `## Visual direction`)
+  // — a reconnect that authenticated as the WRONG account surfaces as a failed
+  // session tagged `account-mismatch`. Narrow explicitly on the failed/tag
+  // discriminant (`isFailed` also covers `cancelled`/`timeout`, which carry no
+  // `tag`/email fields). The card's CONDENSED copy names ONLY the expected
+  // account, assembled from the structured `expectedEmail` (D5 — never parsed
+  // from `message`).
+  const isAccountMismatch =
+    sessionState.status === "failed" &&
+    // eslint-disable-next-line ft5/no-raw-error-tag-literal -- AuthFailedTag vocabulary (no const object) — out of scope
+    sessionState.tag === "account-mismatch";
+  const expectedEmail = isAccountMismatch
+    ? sessionState.expectedEmail
+    : undefined;
+
+  const reconnectButton = (
+    <Button
+      type="button"
+      size="sm"
+      variant="outline"
+      disabled={isWaiting}
+      onClick={() => {
+        void handleReconnect();
+      }}
+    >
+      {isWaiting ? "Connecting…" : "Reconnect"}
+    </Button>
+  );
+
+  // Wrong-account mini-callout: amber, condensed (Reconnect inside), the card
+  // grows taller. Amber signals a recoverable correction — red stays reserved
+  // for hard errors. Reconnect stays live for a retry.
+  if (isAccountMismatch) {
+    return (
+      <div
+        data-testid="auth-error-banner"
+        aria-label="Authorization required"
+        className="flex items-start gap-2 rounded-md border border-amber-300 bg-amber-50 p-3 dark:border-amber-700 dark:bg-amber-600/13"
+      >
+        <Icon
+          name="alert-triangle"
+          aria-hidden
+          className="mt-0.5 size-4 shrink-0 text-amber-600 dark:text-amber-400"
+        />
+        <div className="flex min-w-0 flex-1 flex-col gap-2">
+          <div className="min-w-0">
+            <p className="text-xs font-semibold text-amber-800 dark:text-amber-300">
+              Wrong account
+            </p>
+            <p
+              data-testid="wrong-account-callout-body"
+              className="mt-0.5 text-xs text-amber-900 dark:text-amber-200"
+            >
+              Connect as{" "}
+              <strong className="font-semibold">{expectedEmail}</strong> to
+              continue.
+            </p>
+          </div>
+          <div className="flex">{reconnectButton}</div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       data-testid="auth-error-banner"
@@ -332,17 +396,7 @@ function AuthErrorBanner({
             ? "Reconnect failed — please try again."
             : "Authentication expired — please reconnect."}
       </p>
-      <Button
-        type="button"
-        size="sm"
-        variant="outline"
-        disabled={isWaiting}
-        onClick={() => {
-          void handleReconnect();
-        }}
-      >
-        {isWaiting ? "Connecting…" : "Reconnect"}
-      </Button>
+      {reconnectButton}
     </div>
   );
 }
