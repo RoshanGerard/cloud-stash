@@ -34,7 +34,7 @@ import type {
   OAuthIntent,
   StoredCredentials,
 } from "@ft5/ipc-contracts";
-import { DatasourceError, DatasourceErrorTag, providers } from "@ft5/ipc-contracts";
+import { DatasourceError, DatasourceErrorTag, GOOGLE_APPS_EXPORT_FORMATS, providers } from "@ft5/ipc-contracts";
 
 import type { BaseClientContext, CredentialStore } from "../base-client.js";
 import {
@@ -3631,33 +3631,20 @@ describe("GoogleDriveClient — doDownloadFileImpl mid-stream 401 → auth-expir
 // ---------------------------------------------------------------------------
 
 describe("GoogleDriveClient — doDownloadFileImpl Google Apps export (files.export)", () => {
-  // The five exportable subtypes from the shared GOOGLE_APPS_EXPORT_FORMATS
-  // table. Each routes through `files.export` with its mapped `exportMime`.
-  const exportableSubtypes = [
-    {
-      mime: "application/vnd.google-apps.document",
-      exportMime:
-        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    },
-    {
-      mime: "application/vnd.google-apps.spreadsheet",
-      exportMime:
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    },
-    {
-      mime: "application/vnd.google-apps.presentation",
-      exportMime:
-        "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-    },
-    {
-      mime: "application/vnd.google-apps.drawing",
-      exportMime: "image/png",
-    },
-    {
-      mime: "application/vnd.google-apps.script",
-      exportMime: "application/vnd.google-apps.script+json",
-    },
-  ] as const;
+  // Derived from the shared GOOGLE_APPS_EXPORT_FORMATS const — adding a new
+  // entry to the const automatically covers it here (no manual sync needed).
+  // Guard: the set-equality assertion below + the const-driven renderer test
+  // together enforce the single-source-of-truth invariant: engine and renderer
+  // can never disagree on which subtypes are exportable or which extension applies.
+  const exportableSubtypes = Object.entries(GOOGLE_APPS_EXPORT_FORMATS).map(
+    ([mime, { exportMime }]) => ({ mime, exportMime }),
+  );
+
+  it("exportableSubtypes covers EXACTLY the keys in GOOGLE_APPS_EXPORT_FORMATS (drift guard)", () => {
+    expect(exportableSubtypes.map((s) => s.mime).sort()).toEqual(
+      Object.keys(GOOGLE_APPS_EXPORT_FORMATS).sort(),
+    );
+  });
 
   it.each(exportableSubtypes)(
     "$mime routes through files.export with the mapped exportMime; NO alt=media call; byte-counts via onProgress; result has no contentRange",
