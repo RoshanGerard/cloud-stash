@@ -5,16 +5,16 @@
 
 ## 2. Contracts + error taxonomy (`packages/ipc-contracts`)
 
-- [ ] 2.1 (TDD) Add a failing type/test asserting `DatasourceErrorTag.AccountMismatch === "account-mismatch"` and that the tag is part of the exported taxonomy.
-- [ ] 2.2 Add `account-mismatch` to the `DatasourceErrorTag` const object; make 2.1 green.
-- [ ] 2.3 (TDD) Add a failing test asserting the `AuthFailedTag` wire union includes `"account-mismatch"`.
-- [ ] 2.4 Add `"account-mismatch"` to the `AuthFailedTag` wire taxonomy; make 2.3 green.
-- [ ] 2.5 Document the `AuthResult.meta.account = { sub: string; email: string }` shape and add the optional `expectedAccount: { sub: string; email: string }` type used by `createForAuth`; build `@ft5/ipc-contracts`.
+- [x] 2.1 (TDD) Add a failing type/test asserting `DatasourceErrorTag.AccountMismatch === "account-mismatch"` and that the tag is part of the exported taxonomy.
+- [x] 2.2 Add `account-mismatch` to the `DatasourceErrorTag` const object; make 2.1 green.
+- [x] 2.3 (TDD) Add a failing test asserting the `AuthFailedTag` wire union includes `"account-mismatch"`.
+- [x] 2.4 Add `"account-mismatch"` to the `AuthFailedTag` wire taxonomy; make 2.3 green.
+- [x] 2.5 Document the `AuthResult.meta.account = { sub: string; email: string }` shape and add the optional `expectedAccount: { sub: string; email: string }` type used by `createForAuth`; build `@ft5/ipc-contracts`.
 
 ## 3. Error-tag tooling (`tools/`)
 
-- [ ] 3.1 Add `account-mismatch` to `tools/error-tag-vocabulary.mjs` (the shared vocab consumed by the lint rule and drift guard).
-- [ ] 3.2 Run the error-tag drift guard and `ft5/no-raw-error-tag-literal` lint over the repo; confirm the new tag is recognized and no raw-literal violations are introduced.
+- [x] 3.1 Add `account-mismatch` to `tools/error-tag-vocabulary.mjs` (the shared vocab consumed by the lint rule and drift guard).
+- [x] 3.2 Run the error-tag drift guard and `ft5/no-raw-error-tag-literal` lint over the repo; confirm the new tag is recognized and no raw-literal violations are introduced.
 
 ## 4. Engine — account-identity capture (`packages/fs-datasource-engine`)
 

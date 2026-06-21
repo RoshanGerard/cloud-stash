@@ -106,6 +106,10 @@ describe("sync-service auth-* event taxonomy — implement-datasource-onboarding
     expectTypeOf<"provider-error">().toMatchTypeOf<AuthFailedTag>();
   });
 
+  it("AuthFailedTag union admits account-mismatch (reconnect wrong-account)", () => {
+    expectTypeOf<"account-mismatch">().toMatchTypeOf<AuthFailedTag>();
+  });
+
   it("auth-timeout payload is { correlationId }", () => {
     expectTypeOf<AuthTimeoutPayload>().toEqualTypeOf<{
       readonly correlationId: string;

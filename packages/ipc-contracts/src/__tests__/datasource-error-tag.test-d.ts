@@ -18,11 +18,12 @@ import {
 } from "../fs-datasource-engine.js";
 
 describe("DatasourceErrorTag — `as const` object shape (Decision 1)", () => {
-  it("exposes a runtime const object with exactly the 10 documented members", () => {
+  it("exposes a runtime const object with exactly the 11 documented members", () => {
     // Snapshot of expected literal values. `InvalidDatasource` joins in
     // §3 of add-invalid-datasource-state and is the engine-side tag for
     // misconfigured datasources (registry drift, missing credential file,
-    // wrong credential shape).
+    // wrong credential shape). `AccountMismatch` joins in
+    // enforce-oauth-reconnect-account-match for reconnect wrong-account.
     expect(DatasourceErrorTag).toStrictEqual({
       AuthExpired: "auth-expired",
       AuthRevoked: "auth-revoked",
@@ -34,10 +35,11 @@ describe("DatasourceErrorTag — `as const` object shape (Decision 1)", () => {
       ProviderError: "provider-error",
       Cancelled: "cancelled",
       InvalidDatasource: "invalid-datasource",
+      AccountMismatch: "account-mismatch",
     });
   });
 
-  it("derived type is the same 10-string union as the documented taxonomy", () => {
+  it("derived type is the same 11-string union as the documented taxonomy", () => {
     // Equality check: derived type from `as const` matches the documented
     // union so pre-refactor literal call sites continue to type-check
     // without migration.
@@ -52,6 +54,7 @@ describe("DatasourceErrorTag — `as const` object shape (Decision 1)", () => {
       | "provider-error"
       | "cancelled"
       | "invalid-datasource"
+      | "account-mismatch"
     >();
   });
 

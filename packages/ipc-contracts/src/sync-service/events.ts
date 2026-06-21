@@ -132,11 +132,18 @@ export interface AuthCancelledPayload {
  * narrow — failure modes that are typed-error-class (e.g.,
  * `service-config-missing`) surface through the request/response path
  * NOT through events. Events cover the loopback and engine-runtime
- * failures that arrive after the response was already sent. */
+ * failures that arrive after the response was already sent.
+ *
+ * `"account-mismatch"` (per enforce-oauth-reconnect-account-match) is the
+ * wire surface of the engine's `DatasourceErrorTag.AccountMismatch`: the
+ * loopback broker maps a reconnect `completeWith` rejection whose engine tag
+ * is `account-mismatch` onto this member, with a `message` naming the bound
+ * account email. */
 export type AuthFailedTag =
   | "auth-revoked"
   | "provider-error"
-  | "engine-error";
+  | "engine-error"
+  | "account-mismatch";
 
 /** Service emitted `auth-failed` on loopback `state` mismatch, on a
  * `completeWith` rejection, or on engine errors during `submit`. */

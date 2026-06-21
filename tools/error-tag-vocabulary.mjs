@@ -12,11 +12,12 @@
  * that test fails until this module is updated.
  */
 
-// The union of every DatasourceErrorTag + FilesErrorTag value (13 distinct).
+// The union of every DatasourceErrorTag + FilesErrorTag value (14 distinct).
 export const TAG_VALUES = [
   "auth-expired", "auth-revoked", "not-found", "conflict", "unsupported",
   "rate-limited", "network-error", "provider-error", "cancelled",
-  "invalid-datasource", "disconnected", "other", "exhausted-retries",
+  "invalid-datasource", "account-mismatch", "disconnected", "other",
+  "exhausted-retries",
 ];
 
 // The error-tag field names the convention enforces (object-property keys and
@@ -34,7 +35,7 @@ export const FIELD_ENUM = {
 };
 
 // value -> the enum(s) that contain it and the MEMBER NAME to reference.
-// 8 unique values map to ONE enum; the 5 shared values map to BOTH (same
+// 9 unique values map to ONE enum; the 5 shared values map to BOTH (same
 // member name in each). This drives the ESLint suggestion builder later.
 export const VALUE_ENUM_MEMBERS = {
   "auth-expired":       { DatasourceErrorTag: "AuthExpired" },
@@ -47,6 +48,7 @@ export const VALUE_ENUM_MEMBERS = {
   "provider-error":     { DatasourceErrorTag: "ProviderError" },
   "cancelled":          { DatasourceErrorTag: "Cancelled", FilesErrorTag: "Cancelled" },
   "invalid-datasource": { DatasourceErrorTag: "InvalidDatasource", FilesErrorTag: "InvalidDatasource" },
+  "account-mismatch":   { DatasourceErrorTag: "AccountMismatch" },
   "disconnected":       { FilesErrorTag: "Disconnected" },
   "other":              { FilesErrorTag: "Other" },
   "exhausted-retries":  { FilesErrorTag: "ExhaustedRetries" },

@@ -218,7 +218,7 @@ describe("ipc-contracts fs-datasource-engine types — credentials & quota", () 
 });
 
 describe("ipc-contracts fs-datasource-engine types — error taxonomy", () => {
-  it("DatasourceErrorTag is exactly the documented 10-tag union", () => {
+  it("DatasourceErrorTag is exactly the documented 11-tag union", () => {
     // `"cancelled"` joined the taxonomy with `add-fs-engine-cancellation`.
     // It is reserved for base-originated cancellation of in-flight uploads —
     // strategies' own `normalizeError` MUST NOT emit this tag for raw
@@ -229,6 +229,11 @@ describe("ipc-contracts fs-datasource-engine types — error taxonomy", () => {
     // (registry drift, missing credential file, wrong credential shape)
     // detected at the `factory.create` / `resolveClient` layer before any
     // provider call goes out.
+    //
+    // `"account-mismatch"` joined the taxonomy with
+    // `enforce-oauth-reconnect-account-match`. It is thrown by an OAuth
+    // strategy's authenticate completion closure (not `normalizeError`) when
+    // a reconnect authenticates as a different account than the bound one.
     expectTypeOf<DatasourceErrorTag>().toEqualTypeOf<
       | "auth-expired"
       | "auth-revoked"
@@ -240,6 +245,7 @@ describe("ipc-contracts fs-datasource-engine types — error taxonomy", () => {
       | "provider-error"
       | "cancelled"
       | "invalid-datasource"
+      | "account-mismatch"
     >();
   });
 
