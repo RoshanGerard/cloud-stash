@@ -1,8 +1,8 @@
 ## 1. Shared format table (ipc-contracts)
 
-- [ ] 1.1 Write a failing test asserting `GOOGLE_APPS_EXPORT_FORMATS` exists in `@ft5/ipc-contracts` with exactly the five entries (document→docx, spreadsheet→xlsx, presentation→pptx, drawing→png, script→json), each `{ exportMime, extension }`, and that it is `as const`.
-- [ ] 1.2 Add `GOOGLE_APPS_EXPORT_FORMATS` to `packages/ipc-contracts/src/files.ts` (or a sibling module) and re-export it from the package index. Add a typed helper type for an exportable mime key. Make 1.1 pass.
-- [ ] 1.3 Build the ipc-contracts package (`pnpm --filter @ft5/ipc-contracts build`) so the const resolves for engine + renderer consumers.
+- [x] 1.1 Write a failing test asserting `GOOGLE_APPS_EXPORT_FORMATS` exists in `@ft5/ipc-contracts` with exactly the five entries (document→docx, spreadsheet→xlsx, presentation→pptx, drawing→png, script→json), each `{ exportMime, extension }`, and that it is `as const`.
+- [x] 1.2 Add `GOOGLE_APPS_EXPORT_FORMATS` to `packages/ipc-contracts/src/files.ts` (or a sibling module) and re-export it from the package index. Add a typed helper type for an exportable mime key. Make 1.1 pass.
+- [x] 1.3 Build the ipc-contracts package (`pnpm --filter @ft5/ipc-contracts build`) so the const resolves for engine + renderer consumers.
 
 ## 2. Engine — Drive strategy export branch
 
@@ -19,25 +19,25 @@
 
 ## 3. Engine↔renderer drift guard
 
-- [ ] 3.1 Write a failing drift-guard test asserting every `GOOGLE_APPS_EXPORT_FORMATS` entry is exportable by the engine (routes via `files.export` with the entry's `exportMime`) AND, via a representative `FileEntry` (mime in `providerMetadata.mimeType`), produces the entry's `extension` on the renderer side — i.e. the guard exercises both execution paths, not just table self-consistency — and that a mime absent from the const is exportable by neither.
-- [ ] 3.2 Ensure both consumers derive exportability/extension from the single const (no hard-coded duplicate list on either side). Make 3.1 pass.
+- [x] 3.1 Write a failing drift-guard test asserting every `GOOGLE_APPS_EXPORT_FORMATS` entry is exportable by the engine (routes via `files.export` with the entry's `exportMime`) AND, via a representative `FileEntry` (mime in `providerMetadata.mimeType`), produces the entry's `extension` on the renderer side — i.e. the guard exercises both execution paths, not just table self-consistency — and that a mime absent from the const is exportable by neither.
+- [x] 3.2 Ensure both consumers derive exportability/extension from the single const (no hard-coded duplicate list on either side). Make 3.1 pass.
 
 ## 4. Renderer — append export extension
 
-- [ ] 4.1 Write failing orchestrator tests in `use-download-orchestrator.test.ts`. All exportable-entry fixtures put the provider mime in `providerMetadata.mimeType` (NOT `entry.mimeType`, which the mapper hardcodes to `null`): (a) a `google-apps.document` entry composes `toPath` from basename `"<name>.docx"`; (b) append-always edge — `name: "Notes.txt"` → `"Notes.txt.docx"`; (c) each exportable subtype appends its mapped extension; (d) a binary entry uses `entry.name` unchanged; (e) the Save-as `defaultPath` uses the extended basename when the dialog is shown; (f) a non-exportable Google Apps mime (Form) appends nothing and dispatches with `entry.name`; (g) a `providerMetadata.mimeType` that is absent or non-string appends nothing and dispatches with `entry.name` (no crash).
-- [ ] 4.2 In `use-download-orchestrator.ts` `dispatchAgainstFolder`, derive the effective basename: read `entry.providerMetadata.mimeType` with a `typeof === "string"` guard; when that string is a key in `GOOGLE_APPS_EXPORT_FORMATS`, use `entry.name + GOOGLE_APPS_EXPORT_FORMATS[mime].extension`; else `entry.name`. Do NOT read `entry.mimeType` (always null). Pass the effective basename to `joinFolderAndName` and the Save-as `defaultPath`. No extension parsing of the title. Make 4.1 pass.
-- [ ] 4.3 Confirm `scripts/no-extension-parsing.test.ts` still passes (the new code uses no `lastIndexOf(".")`).
+- [x] 4.1 Write failing orchestrator tests in `use-download-orchestrator.test.ts`. All exportable-entry fixtures put the provider mime in `providerMetadata.mimeType` (NOT `entry.mimeType`, which the mapper hardcodes to `null`): (a) a `google-apps.document` entry composes `toPath` from basename `"<name>.docx"`; (b) append-always edge — `name: "Notes.txt"` → `"Notes.txt.docx"`; (c) each exportable subtype appends its mapped extension; (d) a binary entry uses `entry.name` unchanged; (e) the Save-as `defaultPath` uses the extended basename when the dialog is shown; (f) a non-exportable Google Apps mime (Form) appends nothing and dispatches with `entry.name`; (g) a `providerMetadata.mimeType` that is absent or non-string appends nothing and dispatches with `entry.name` (no crash).
+- [x] 4.2 In `use-download-orchestrator.ts` `dispatchAgainstFolder`, derive the effective basename: read `entry.providerMetadata.mimeType` with a `typeof === "string"` guard; when that string is a key in `GOOGLE_APPS_EXPORT_FORMATS`, use `entry.name + GOOGLE_APPS_EXPORT_FORMATS[mime].extension`; else `entry.name`. Do NOT read `entry.mimeType` (always null). Pass the effective basename to `joinFolderAndName` and the Save-as `defaultPath`. No extension parsing of the title. Make 4.1 pass.
+- [x] 4.3 Confirm `scripts/no-extension-parsing.test.ts` still passes (the new code uses no `lastIndexOf(".")`).
 
 ## 5. Verification
 
-- [ ] 5.1 `pnpm --filter @ft5/fs-datasource-engine test` green (export branch + refusal + binary regression + contract).
-- [ ] 5.2 `pnpm --filter @ft5/ipc-contracts test` + renderer file-explorer tests green (orchestrator + drift guard).
-- [ ] 5.3 Typecheck (`tsc -b`) + lint clean across touched packages; engine, ipc-contracts, and desktop renderer.
-- [ ] 5.4 Full repo test suite green (or only the known pre-existing flakes per memory: `scripts/render-budget.test.tsx` load-induced; `authenticate-flow` S3 `vi.mock` main-checkout flake).
-- [ ] 5.5 `openspec validate add-drive-docs-editors-export --strict` green.
-- [ ] 5.6 Reactive/forward audit: confirm the spec delta is purely `## ADDED` (no canonical refusal requirement existed to REMOVE) and the four-piece IPC rule does not apply (no wire field added).
+- [x] 5.1 `pnpm --filter @ft5/fs-datasource-engine test` green (export branch + refusal + binary regression + contract).
+- [x] 5.2 `pnpm --filter @ft5/ipc-contracts test` + renderer file-explorer tests green (orchestrator + drift guard).
+- [x] 5.3 Typecheck (`tsc -b`) + lint clean across touched packages; engine, ipc-contracts, and desktop renderer.
+- [x] 5.4 Full repo test suite green (or only the known pre-existing flakes per memory: `scripts/render-budget.test.tsx` load-induced; `authenticate-flow` S3 `vi.mock` main-checkout flake).
+- [x] 5.5 `openspec validate add-drive-docs-editors-export --strict` green.
+- [x] 5.6 Reactive/forward audit: confirm the spec delta is purely `## ADDED` (no canonical refusal requirement existed to REMOVE) and the four-piece IPC rule does not apply (no wire field added).
 
 ## 6. Manual smoke (deferred — PENDING_TC.MD)
 
-- [ ] 6.1 Against a real Drive datasource in the dev build, download one of each exportable subtype (Doc/Sheet/Slide/Drawing/Script) → confirm the file saves with the right extension and opens in the target app. (HUMAN-only; gated on `add-drive-oauth-browser-consent §1` real credentials. Record in PENDING_TC.MD with pointers to the unit tests above.)
-- [ ] 6.2 Download a Google Form against the dev build → confirm the friendly `unsupported` toast still appears. (HUMAN-only; same gate.)
+- [x] 6.1 Against a real Drive datasource in the dev build, download one of each exportable subtype (Doc/Sheet/Slide/Drawing/Script) → confirm the file saves with the right extension and opens in the target app. (HUMAN-only; gated on `add-drive-oauth-browser-consent §1` real credentials. Record in PENDING_TC.MD with pointers to the unit tests above.)
+- [x] 6.2 Download a Google Form against the dev build → confirm the friendly `unsupported` toast still appears. (HUMAN-only; same gate.)
