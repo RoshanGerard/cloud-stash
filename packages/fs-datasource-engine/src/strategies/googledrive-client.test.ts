@@ -107,12 +107,30 @@ interface GetStreamResponder {
     options: Record<string, unknown> | undefined,
   ) => { stream: Readable; headers: Record<string, string> };
 }
+/**
+ * `export` for the Google Apps export-download path: `files.export({ fileId,
+ * mimeType }, { responseType: "stream", signal })`. The fake matches on
+ * `fileId` and invokes the handler with the params + optional 2nd argument so
+ * tests can assert the export `mimeType` and `signal` forwarding. Returns a
+ * Node Readable + a `headers` map (Drive's export stream response surface).
+ * Unlike `getStreams` there is no `alt: "media"` discriminator — `export` is
+ * a distinct SDK method, so the fake routes purely on `fileId`.
+ */
+interface ExportStreamResponder {
+  fileId: string;
+  handler: (
+    params: Record<string, unknown>,
+    options: Record<string, unknown> | undefined,
+  ) => { stream: Readable; headers: Record<string, string> };
+}
 
 interface FakeDriveOptions {
   lists?: ListResponder[];
   gets?: GetResponder[];
   /** Stream-mode responders (alt === "media"). Matched by fileId before metadata `gets`. */
   getStreams?: GetStreamResponder[];
+  /** Export-mode responders (`files.export`). Matched by fileId. */
+  exports?: ExportStreamResponder[];
   deletes?: DeleteResponder[];
   creates?: CreateResponder[];
   updates?: UpdateResponder[];
@@ -124,6 +142,7 @@ function makeFakeDrive(opts: FakeDriveOptions): {
   calls: {
     list: Array<Record<string, unknown>>;
     get: Array<{ params: Record<string, unknown>; options?: Record<string, unknown> }>;
+    export: Array<{ params: Record<string, unknown>; options?: Record<string, unknown> }>;
     delete: Array<Record<string, unknown>>;
     create: Array<Record<string, unknown>>;
     update: Array<Record<string, unknown>>;
@@ -133,6 +152,10 @@ function makeFakeDrive(opts: FakeDriveOptions): {
   const calls = {
     list: [] as Array<Record<string, unknown>>,
     get: [] as Array<{
+      params: Record<string, unknown>;
+      options?: Record<string, unknown>;
+    }>,
+    export: [] as Array<{
       params: Record<string, unknown>;
       options?: Record<string, unknown>;
     }>,
@@ -179,6 +202,21 @@ function makeFakeDrive(opts: FakeDriveOptions): {
           });
         }
         return { data: match.handler(params) };
+      },
+      async export(params, options) {
+        calls.export.push({
+          params,
+          ...(options !== undefined ? { options } : {}),
+        });
+        const fileId = String(params.fileId ?? "");
+        const match = (opts.exports ?? []).find((r) => r.fileId === fileId);
+        if (!match) {
+          throw makeGaxiosError(404, "no-export-responder", "notFound", {
+            message: `no export responder for fileId=${fileId}`,
+          });
+        }
+        const { stream, headers } = match.handler(params, options);
+        return { data: stream, headers };
       },
       async delete(params) {
         calls.delete.push(params);
@@ -3358,6 +3396,9 @@ describe("GoogleDriveClient — doDownloadFileImpl (files.get alt=media stream)"
     expect(calls.get[0]!.params.fields).toBe("mimeType");
     expect(calls.get[1]!.params.fileId).toBe("DL-ID");
     expect(calls.get[1]!.params.alt).toBe("media");
+    // Binary regression: a non-Google-Apps mime flows through alt=media and
+    // must NOT route through files.export (add-drive-docs-editors-export).
+    expect(calls.export).toHaveLength(0);
 
     // Progress is consumer-observed via options.onProgress only (the engine
     // emits no events). The byte-counting Transform fires onProgress per
@@ -3584,38 +3625,379 @@ describe("GoogleDriveClient — doDownloadFileImpl mid-stream 401 → auth-expir
 });
 
 // ---------------------------------------------------------------------------
-// doDownloadFileImpl — Google Apps native files refuse with friendly error
-// (post-archive smoke 2026-04-28; parked follow-up `add-drive-docs-editors-export`)
+// doDownloadFileImpl — Google Apps native files EXPORT via files.export
+// (add-drive-docs-editors-export D1/D2 — promote the post-archive refusal
+// branch to route exportable subtypes through `files.export`)
 // ---------------------------------------------------------------------------
 
-describe("GoogleDriveClient — doDownloadFileImpl Google Apps native refusal", () => {
-  it("Google Doc (mimeType application/vnd.google-apps.document) throws DatasourceError tag:'unsupported' with the concise toast message; no alt=media call is issued", async () => {
-    // The strategy's metadata pre-fetch must catch the Google Apps mime
-    // BEFORE the alt=media stream call. Post-smoke-2 (2026-04-28): the
-    // user-facing message is a single concise line — the per-subtype
-    // humanized noun + "Open it in Drive..." prose was rejected as
-    // toast noise. The parked follow-up `add-drive-docs-editors-export`
-    // still owns the proper export-path implementation.
+describe("GoogleDriveClient — doDownloadFileImpl Google Apps export (files.export)", () => {
+  // The five exportable subtypes from the shared GOOGLE_APPS_EXPORT_FORMATS
+  // table. Each routes through `files.export` with its mapped `exportMime`.
+  const exportableSubtypes = [
+    {
+      mime: "application/vnd.google-apps.document",
+      exportMime:
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    },
+    {
+      mime: "application/vnd.google-apps.spreadsheet",
+      exportMime:
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    },
+    {
+      mime: "application/vnd.google-apps.presentation",
+      exportMime:
+        "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    },
+    {
+      mime: "application/vnd.google-apps.drawing",
+      exportMime: "image/png",
+    },
+    {
+      mime: "application/vnd.google-apps.script",
+      exportMime: "application/vnd.google-apps.script+json",
+    },
+  ] as const;
+
+  it.each(exportableSubtypes)(
+    "$mime routes through files.export with the mapped exportMime; NO alt=media call; byte-counts via onProgress; result has no contentRange",
+    async ({ mime, exportMime }) => {
+      const fixture = Buffer.from(`exported-bytes-for-${mime}`);
+      const fileId = "EXP-ID";
+      const { client, calls } = makeFakeDrive({
+        gets: [
+          {
+            fileId,
+            handler: () => ({
+              id: fileId,
+              name: "fixture-doc",
+              mimeType: mime,
+            }),
+          },
+        ],
+        exports: [
+          {
+            fileId,
+            handler: (params, options) => {
+              // The export call must carry the mapped exportMime and the
+              // stream responseType. No Range header is ever set on export.
+              expect(params.mimeType).toBe(exportMime);
+              expect(options?.responseType).toBe("stream");
+              expect((options?.headers ?? {})).not.toHaveProperty("Range");
+              const stream = new Readable({
+                read() {
+                  this.push(fixture);
+                  this.push(null);
+                },
+              });
+              return {
+                stream,
+                headers: { "content-length": String(fixture.length) },
+              };
+            },
+          },
+        ],
+      });
+      const onProgress = vi.fn<(loaded: number, total: number | null) => void>();
+      const h = makeHarness({ drive: client });
+      const result = await h.client.downloadFile(
+        { kind: "handle", handle: fileId },
+        { onProgress },
+      );
+      expect(result.contentLength).toBe(fixture.length);
+      // Export cannot serve a byte Range → no contentRange on the result.
+      expect(result.contentRange).toBeUndefined();
+      // Drain the stream so the byte-counting Transform fires onProgress.
+      const chunks: Buffer[] = [];
+      await new Promise<void>((resolve, reject) => {
+        result.stream.on("data", (c: Buffer) => chunks.push(c));
+        result.stream.on("end", () => resolve());
+        result.stream.on("error", reject);
+      });
+      expect(Buffer.concat(chunks).equals(fixture)).toBe(true);
+
+      // Exactly ONE export call with the mapped mime; NO alt=media get.
+      expect(calls.export).toHaveLength(1);
+      expect(calls.export[0]!.params.fileId).toBe(fileId);
+      expect(calls.export[0]!.params.mimeType).toBe(exportMime);
+      // The only files.get is the metadata pre-fetch (fields:"mimeType");
+      // no alt=media media-download call is issued for Google Apps files.
+      expect(calls.get).toHaveLength(1);
+      expect(calls.get[0]!.params.alt).toBeUndefined();
+      expect(calls.get[0]!.params.fields).toBe("mimeType");
+
+      // onProgress fired with a final loaded === the exported byte count.
+      expect(onProgress.mock.calls.length).toBeGreaterThanOrEqual(1);
+      const loaded = onProgress.mock.calls.map((c) => c[0]);
+      expect(loaded[loaded.length - 1]).toBe(fixture.length);
+    },
+  );
+
+  it("downloadFile({ rangeStart: N>0 }) for an exportable subtype issues files.export with NO Range header and resolves with no contentRange (D2 resilient-by-restart)", async () => {
+    const fixture = Buffer.from("full-export-body-ignoring-rangeStart");
+    const fileId = "RANGE-EXP-ID";
     const { client, calls } = makeFakeDrive({
       gets: [
         {
-          fileId: "DOC-ID",
+          fileId,
           handler: () => ({
-            id: "DOC-ID",
-            name: "DT-206 Code Review",
+            id: fileId,
+            name: "ranged-doc",
             mimeType: "application/vnd.google-apps.document",
           }),
         },
       ],
-      // No `getStreams` — the strategy must refuse before it would
-      // dispatch the alt=media call. If the refusal misses, the fake
-      // throws `no-get-stream-responder` and the test still surfaces
-      // a failure (via a different error message).
+      exports: [
+        {
+          fileId,
+          handler: (_params, options) => {
+            // Export must NOT carry a Range header even when rangeStart > 0;
+            // the export branch ignores rangeStart entirely (D2).
+            const headers = (options?.headers ?? {}) as Record<string, string>;
+            expect(headers.Range).toBeUndefined();
+            const stream = new Readable({
+              read() {
+                this.push(fixture);
+                this.push(null);
+              },
+            });
+            return {
+              stream,
+              headers: { "content-length": String(fixture.length) },
+            };
+          },
+        },
+      ],
+    });
+    const h = makeHarness({ drive: client });
+    const result = await h.client.downloadFile(
+      { kind: "handle", handle: fileId },
+      { rangeStart: 1048576 },
+    );
+    expect(result.contentLength).toBe(fixture.length);
+    expect(result.contentRange).toBeUndefined();
+    await new Promise<void>((resolve, reject) => {
+      result.stream.on("data", () => {});
+      result.stream.on("end", () => resolve());
+      result.stream.on("error", reject);
+    });
+    expect(calls.export).toHaveLength(1);
+  });
+
+  it("a quota-exceeded files.export rejection surfaces through normalizeErrorImpl (friendly mapped error), not raw provider JSON", async () => {
+    const fileId = "QUOTA-EXP-ID";
+    const { client, calls } = makeFakeDrive({
+      gets: [
+        {
+          fileId,
+          handler: () => ({
+            id: fileId,
+            name: "huge-doc",
+            mimeType: "application/vnd.google-apps.document",
+          }),
+        },
+      ],
+      exports: [
+        {
+          fileId,
+          handler: () => {
+            // Drive returns 403 with reason `exportSizeLimitExceeded` when
+            // a Doc is too large to export. The strategy must normalize it
+            // via normalizeErrorImpl rather than leak raw provider JSON.
+            throw makeGaxiosError(
+              403,
+              "export-too-large",
+              "exportSizeLimitExceeded",
+              { innerMessage: "This file is too large to be exported." },
+            );
+          },
+        },
+      ],
     });
     const h = makeHarness({ drive: client });
     let caught: unknown;
     try {
-      await h.client.downloadFile({ kind: "handle", handle: "DOC-ID" });
+      await h.client.downloadFile({ kind: "handle", handle: fileId });
+    } catch (err) {
+      caught = err;
+    }
+    // The rejection surfaces as a normalized DatasourceError (not a raw
+    // GaxiosError / provider JSON blob). The single export call is what
+    // rejected — pins the error to the export path (a refusal issues NO
+    // export call), so this test cannot pass on a routing regression.
+    expect(caught).toBeInstanceOf(DatasourceError);
+    const e = caught as DatasourceError<"google-drive">;
+    expect(e.datasourceType).toBe("google-drive");
+    expect(e.datasourceId).toBe("ds-gd-1");
+    expect(calls.export).toHaveLength(1);
+  });
+
+  it("aborting the consumer signal during export errors the returned stream (normalized cancelled) and forwards the signal into files.export; no further bytes flow", async () => {
+    const controller = new AbortController();
+    const fileId = "CANCEL-EXP-ID";
+    const { client, calls } = makeFakeDrive({
+      gets: [
+        {
+          fileId,
+          handler: () => ({
+            id: fileId,
+            name: "cancel-doc",
+            mimeType: "application/vnd.google-apps.document",
+          }),
+        },
+      ],
+      exports: [
+        {
+          fileId,
+          handler: (_params, options) => {
+            const sig = options?.signal as AbortSignal | undefined;
+            const stream = new Readable({ read() {} });
+            if (sig) {
+              sig.addEventListener("abort", () => {
+                stream.destroy(
+                  Object.assign(new Error("aborted"), { name: "AbortError" }),
+                );
+              });
+            }
+            // First chunk lands so byte counts are non-zero at abort time.
+            setImmediate(() => {
+              stream.push(Buffer.alloc(2048));
+            });
+            return {
+              stream,
+              headers: { "content-length": "16384" },
+            };
+          },
+        },
+      ],
+    });
+    const onProgress = vi.fn<(loaded: number, total: number | null) => void>();
+    const h = makeHarness({ drive: client });
+    const result = await h.client.downloadFile(
+      { kind: "handle", handle: fileId },
+      { signal: controller.signal, onProgress },
+    );
+    // The user's signal must be threaded into the files.export SDK call.
+    expect(calls.export).toHaveLength(1);
+    expect(calls.export[0]!.options?.signal).toBe(controller.signal);
+
+    let bytesSeen = 0;
+    let streamError: unknown;
+    await new Promise<void>((resolve) => {
+      result.stream.on("data", (c: Buffer) => {
+        bytesSeen += c.length;
+        if (bytesSeen >= 2048) controller.abort();
+      });
+      result.stream.on("error", (err) => {
+        streamError = err;
+        resolve();
+      });
+      result.stream.on("end", () => resolve());
+    });
+    expect(streamError).toBeInstanceOf(DatasourceError);
+    expect((streamError as DatasourceError<"google-drive">).tag).toBe(
+      "cancelled",
+    );
+    // No further bytes flowed after the single pre-abort chunk.
+    expect(bytesSeen).toBe(2048);
+    expect(onProgress.mock.calls.length).toBeGreaterThanOrEqual(1);
+    const loaded = onProgress.mock.calls.map((c) => c[0]);
+    expect(loaded[loaded.length - 1]).toBe(2048);
+  });
+
+  it("a mid-export stream error is forwarded through the byte-counter and surfaces normalized to the consumer (so fs-sync's env-retry can classify it)", async () => {
+    const fileId = "MIDERR-EXP-ID";
+    const { client } = makeFakeDrive({
+      gets: [
+        {
+          fileId,
+          handler: () => ({
+            id: fileId,
+            name: "miderr-doc",
+            mimeType: "application/vnd.google-apps.document",
+          }),
+        },
+      ],
+      exports: [
+        {
+          fileId,
+          handler: () => {
+            const stream = new Readable({ read() {} });
+            // Push a chunk so the byte-counter fires once, then synthesize a
+            // mid-export failure by destroying the stream with a Gaxios-shaped
+            // 500. normalizeErrorImpl maps a generic 5xx to `provider-error`
+            // (non-retryable — only 503/serviceUnavailable and the
+            // network/system-error class are retryable); the returned stream
+            // re-emits the normalized DatasourceError on `error`.
+            setImmediate(() => {
+              stream.push(Buffer.alloc(512));
+              stream.destroy(
+                makeGaxiosError(500, "mid-export-blip", "backendError"),
+              );
+            });
+            return {
+              stream,
+              headers: { "content-length": "8192" },
+            };
+          },
+        },
+      ],
+    });
+    const h = makeHarness({ drive: client });
+    const result = await h.client.downloadFile({
+      kind: "handle",
+      handle: fileId,
+    });
+    let caught: unknown;
+    await new Promise<void>((resolve) => {
+      result.stream.on("data", () => {});
+      result.stream.on("end", () => resolve());
+      result.stream.on("error", (err) => {
+        caught = err;
+        resolve();
+      });
+    });
+    expect(caught).toBeInstanceOf(DatasourceError);
+    const e = caught as DatasourceError<"google-drive">;
+    expect(e.datasourceType).toBe("google-drive");
+    expect(e.datasourceId).toBe("ds-gd-1");
+    // A generic mid-export 5xx normalizes to non-retryable `provider-error`;
+    // pinning the tag documents what fs-sync's consumer sees off this surface.
+    expect(e.tag).toBe("provider-error");
+    expect(e.retryable).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// doDownloadFileImpl — Google Apps native files that CANNOT be exported still
+// refuse with the friendly error (Forms, unknown future subtypes); folder mime
+// stays excluded. (add-drive-docs-editors-export D1 miss-branch)
+// ---------------------------------------------------------------------------
+
+describe("GoogleDriveClient — doDownloadFileImpl non-exportable Google Apps refusal", () => {
+  it("a Google Form (application/vnd.google-apps.form — NOT in the export table) throws DatasourceError tag:'unsupported' with the concise message; no export/alt=media call is issued", async () => {
+    // `form` has no exportable binary representation via files.export, so it
+    // stays in the refusal branch. The other former-refusal subtypes
+    // (document/spreadsheet/presentation/drawing/script) moved to export.
+    const fileId = "APPS-FORM";
+    const { client, calls } = makeFakeDrive({
+      gets: [
+        {
+          fileId,
+          handler: () => ({
+            id: fileId,
+            name: "fixture-form",
+            mimeType: "application/vnd.google-apps.form",
+          }),
+        },
+      ],
+      // No `exports` / `getStreams` — the strategy must refuse before it
+      // would dispatch either call.
+    });
+    const h = makeHarness({ drive: client });
+    let caught: unknown;
+    try {
+      await h.client.downloadFile({ kind: "handle", handle: fileId });
     } catch (err) {
       caught = err;
     }
@@ -3625,48 +4007,12 @@ describe("GoogleDriveClient — doDownloadFileImpl Google Apps native refusal", 
     expect(e.retryable).toBe(false);
     expect(e.message).toBe("Google Drive documents download not supported");
 
-    // Only ONE files.get call — the metadata pre-fetch. No alt=media.
+    // Only ONE files.get call — the metadata pre-fetch. No export, no
+    // alt=media.
     expect(calls.get).toHaveLength(1);
     expect(calls.get[0]!.params.alt).toBeUndefined();
     expect(calls.get[0]!.params.fields).toBe("mimeType");
-  });
-
-  it("each Google Apps subtype (sheet/presentation/drawing/form/script) is refused with the same concise message", async () => {
-    // Post-smoke-2 (2026-04-28): the per-subtype noun was dropped from
-    // the user copy; every Apps subtype now produces the same line.
-    const subtypes = [
-      "spreadsheet",
-      "presentation",
-      "drawing",
-      "form",
-      "script",
-    ];
-    for (const subtype of subtypes) {
-      const fileId = `APPS-${subtype.toUpperCase()}`;
-      const { client } = makeFakeDrive({
-        gets: [
-          {
-            fileId,
-            handler: () => ({
-              id: fileId,
-              name: `fixture-${subtype}`,
-              mimeType: `application/vnd.google-apps.${subtype}`,
-            }),
-          },
-        ],
-      });
-      const h = makeHarness({ drive: client });
-      let caught: unknown;
-      try {
-        await h.client.downloadFile({ kind: "handle", handle: fileId });
-      } catch (err) {
-        caught = err;
-      }
-      expect(caught).toBeInstanceOf(DatasourceError);
-      const e = caught as DatasourceError<"google-drive">;
-      expect(e.tag).toBe("unsupported");
-      expect(e.message).toBe("Google Drive documents download not supported");
-    }
+    expect(calls.export).toHaveLength(0);
   });
 
   it("an unknown application/vnd.google-apps.<future> subtype still refuses with the concise message (defence-in-depth against new Google types)", async () => {

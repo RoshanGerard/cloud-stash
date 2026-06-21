@@ -233,6 +233,31 @@ export interface StrategyContractFixture {
     controller: AbortController;
   }): void;
 
+  /**
+   * Whether this provider can export provider-native "documents" that have no
+   * downloadable binary representation via the normal media-download path —
+   * i.e. Google Drive's Workspace files (Docs / Sheets / Slides / Drawings /
+   * Apps Script) routed through `files.export` (add-drive-docs-editors-export).
+   * Drive (`true`) is the only provider with this notion today; OneDrive / S3
+   * (`undefined`/`false`) have no Google Apps concept, so the shared export
+   * scenario is skipped for them.
+   */
+  supportsGoogleAppsExport?: boolean;
+
+  /**
+   * Prime a successful Google Apps export download. Only providers that set
+   * `supportsGoogleAppsExport: true` implement this. The fixture's SDK mock
+   * returns a stream containing exactly `bytes` bytes for the export of the
+   * file at `path` (whose provider mime is one the export table maps). The
+   * shared scenario invokes `client.downloadFile({ kind: "path", path },
+   * { onProgress })`, drains the stream, and asserts:
+   *   - the bytes flowing through are byte-equal to the supplied buffer
+   *   - `result.contentLength === bytes.length`
+   *   - `result.contentRange` is undefined (export cannot serve a Range — D2)
+   *   - `onProgress` fired ≥1 time with a final `loaded === bytes.length`
+   */
+  primeGoogleAppsExport?(opts: { path: string; bytes: Buffer }): void;
+
   // -------------------------------------------------------------------------
   // migrate-engine-cache-invalidation §3 — cache-eviction contract (Decision 5)
   // -------------------------------------------------------------------------
@@ -730,6 +755,44 @@ export function runStrategyContractSuite<T extends DatasourceType>(
       const lastTick = progressTicks[progressTicks.length - 1]!;
       expect(lastTick.loaded).toBeGreaterThanOrEqual(firstChunkBytes);
       expect(lastTick.loaded).toBeLessThan(totalBytes);
+    });
+
+    // -----------------------------------------------------------------------
+    // add-drive-docs-editors-export — Google Apps export-download contract.
+    // Gated on `supportsGoogleAppsExport`: Drive (`true`) routes Workspace
+    // files through `files.export`; OneDrive / S3 have no such notion and
+    // skip vacuously (the `if` guards both the flag AND the optional hook).
+    // -----------------------------------------------------------------------
+    it("downloadFile of an exportable Google Apps file streams the export end-to-end; onProgress fires; result carries no contentRange (export cannot serve a Range)", async () => {
+      if (!fixture.supportsGoogleAppsExport || !fixture.primeGoogleAppsExport) {
+        return; // provider has no Google Apps export notion — vacuous.
+      }
+      const exportBytes = Buffer.from("contract-google-apps-export-payload");
+      fixture.resetMock();
+      fixture.primeGoogleAppsExport({
+        path: "/contract-export-doc",
+        bytes: exportBytes,
+      });
+      const { client } = makeHarness();
+      const progressTicks: Array<{ loaded: number; total: number | null }> = [];
+      const result = await client.downloadFile(
+        { kind: "path", path: "/contract-export-doc" },
+        { onProgress: (loaded, total) => progressTicks.push({ loaded, total }) },
+      );
+      expect(result.contentLength).toBe(exportBytes.length);
+      // Export cannot serve a byte Range → no contentRange (D2).
+      expect(result.contentRange).toBeUndefined();
+      const chunks: Buffer[] = [];
+      await new Promise<void>((resolve, reject) => {
+        result.stream.on("data", (c: Buffer) => chunks.push(c));
+        result.stream.on("end", () => resolve());
+        result.stream.on("error", reject);
+      });
+      expect(Buffer.concat(chunks).equals(exportBytes)).toBe(true);
+      expect(progressTicks.length).toBeGreaterThanOrEqual(1);
+      expect(progressTicks[progressTicks.length - 1]!.loaded).toBe(
+        exportBytes.length,
+      );
     });
 
     // -----------------------------------------------------------------------

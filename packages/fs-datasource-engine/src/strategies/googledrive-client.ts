@@ -96,7 +96,12 @@ import type {
   StoredCredentials,
   Target,
 } from "@ft5/ipc-contracts";
-import { DatasourceError, DatasourceErrorTag } from "@ft5/ipc-contracts";
+import {
+  DatasourceError,
+  DatasourceErrorTag,
+  GOOGLE_APPS_EXPORT_FORMATS,
+} from "@ft5/ipc-contracts";
+import type { GoogleAppsExportableMime } from "@ft5/ipc-contracts";
 
 import type { PreAuthConfig } from "../auth-types.js";
 import {
@@ -143,6 +148,22 @@ export interface DriveFilesLike {
    * Drive's resumable-stream contract.
    */
   get(
+    params: Record<string, unknown>,
+    options?: Record<string, unknown>,
+  ): Promise<{ data: unknown; headers?: Record<string, string> }>;
+  /**
+   * Drive's `files.export` streams a Google Apps native file (Doc / Sheet /
+   * Slide / Drawing / Apps Script) converted to a downloadable binary format:
+   *   - `export({ fileId, mimeType: <exportMime> }, { responseType: "stream",
+   *     signal })` → `{ data: Readable, headers }`.
+   *
+   * Mirrors the media-download shape of `get`: `data` is widened to `unknown`
+   * so the call site narrows to `Readable`, and the optional 2nd argument
+   * carries `responseType` / `signal`. Export cannot serve a byte Range, so
+   * no `headers.Range` is ever passed and the response carries no
+   * `Content-Range`.
+   */
+  export(
     params: Record<string, unknown>,
     options?: Record<string, unknown>,
   ): Promise<{ data: unknown; headers?: Record<string, string> }>;
@@ -397,6 +418,20 @@ function parseContentRangeHeader(
     return undefined;
   }
   return { start, end, total };
+}
+
+/**
+ * Parse the `Content-Length` header (case-insensitive) from a Drive response
+ * header bag into a number, or `null` when absent / empty. Shared by the
+ * `alt=media` download and the `files.export` paths so both surface the same
+ * `contentLength` contract (`null` when the provider omits the header — common
+ * on server-generated export streams).
+ */
+function parseContentLengthHeader(
+  headers: Record<string, string>,
+): number | null {
+  const raw = headers["content-length"] ?? headers["Content-Length"];
+  return raw !== undefined && raw !== "" ? Number.parseInt(raw, 10) : null;
 }
 
 /** Returns true iff the space-separated `scope` string includes the full
@@ -1869,11 +1904,53 @@ export class GoogleDriveClient extends BaseDatasourceClient<"google-drive"> {
       metaMimeType.startsWith("application/vnd.google-apps.") &&
       metaMimeType !== DRIVE_FOLDER_MIME
     ) {
-      // Post-smoke-2 (2026-04-28): the per-subtype humanized name +
-      // "Open it in Drive..." prose was rejected as too noisy in the
-      // toast; user wants a single concise line. The parked follow-up
-      // `add-drive-docs-editors-export` still owns the proper export
-      // path; this is just the friendly refusal.
+      // Google Apps native file (Doc / Sheet / Slide / Drawing / Apps Script /
+      // Form / …). `files.get?alt=media` cannot serve these (403
+      // `fileNotDownloadable`). Drive's `files.export` converts the
+      // exportable subtypes to a downloadable binary; the shared
+      // `GOOGLE_APPS_EXPORT_FORMATS` table (single source of truth, also
+      // consumed by the renderer for the saved extension) decides which.
+      if (metaMimeType in GOOGLE_APPS_EXPORT_FORMATS) {
+        // HIT — exportable subtype. Stream the export in its default format.
+        // `files.export` cannot serve a byte Range, so the export branch
+        // IGNORES `options.rangeStart` entirely (no Range header) and returns
+        // NO `contentRange`. A mid-export transient failure is recovered by
+        // fs-sync's existing rewrite-from-0 path (a `rangeStart > 0` retry
+        // gets the full body again with no `contentRange`) — zero fs-sync
+        // change. See design.md D2 (resilient-by-restart).
+        const entry =
+          GOOGLE_APPS_EXPORT_FORMATS[metaMimeType as GoogleAppsExportableMime];
+        const exportOptions: Record<string, unknown> = {
+          responseType: "stream",
+          ...(options.signal ? { signal: options.signal } : {}),
+        };
+        let exportResp: { data: unknown; headers?: Record<string, string> };
+        try {
+          exportResp = await this.drive().files.export(
+            { fileId, mimeType: entry.exportMime },
+            exportOptions,
+          );
+        } catch (err) {
+          throw this.normalizeErrorImpl(err);
+        }
+        const exportContentLength = parseContentLengthHeader(
+          exportResp.headers ?? {},
+        );
+        return {
+          stream: this.wrapDownloadStream(
+            exportResp.data as Readable,
+            exportContentLength,
+            options,
+          ),
+          contentLength: exportContentLength,
+        };
+      }
+
+      // MISS — a Google Apps subtype the Drive API cannot export (Forms,
+      // Jamboard, Sites, Shortcuts, unknown future `google-apps.<x>`). Keep
+      // the concise friendly refusal (post-smoke-2 2026-04-28: the
+      // per-subtype humanized noun + "Open it in Drive…" prose was rejected
+      // as toast noise).
       throw new DatasourceError<"google-drive">({
         tag: DatasourceErrorTag.Unsupported,
         datasourceType: "google-drive",
@@ -1902,27 +1979,48 @@ export class GoogleDriveClient extends BaseDatasourceClient<"google-drive"> {
     } catch (err) {
       throw this.normalizeErrorImpl(err);
     }
-    const sourceStream = resp.data as Readable;
     const respHeaders = resp.headers ?? {};
-    const contentLengthHeader =
-      respHeaders["content-length"] ?? respHeaders["Content-Length"];
-    const contentLength =
-      contentLengthHeader !== undefined && contentLengthHeader !== ""
-        ? Number.parseInt(contentLengthHeader, 10)
-        : null;
+    const contentLength = parseContentLengthHeader(respHeaders);
     const contentRange = parseContentRangeHeader(
       respHeaders["content-range"] ?? respHeaders["Content-Range"],
     );
 
-    // Wrap source in a `Transform` so the byte-counting hook is INLINE
-    // with the data flow. The consumer attaches their listeners to the
-    // wrapper; chunks flow through `_transform` (counting) then onward
-    // to the consumer untouched. Using `Transform` (rather than a
-    // `PassThrough` + extra `data` listener) avoids the timing race
-    // where the strategy's `data` listener consumes a chunk before
-    // the consumer attaches: a `Transform` pushes each chunk forward
-    // exactly once, and the consumer's `data` / `pipe` is the sole
-    // consumer driving flow.
+    // Per-call total fall-back: when the provider response does not carry
+    // a `Content-Length` header (rare on Drive but possible), the engine
+    // contract surfaces `contentLength: null` and the byte-counter
+    // observes `total: null` per tick — fs-sync handles that case.
+    return {
+      stream: this.wrapDownloadStream(
+        resp.data as Readable,
+        contentLength,
+        options,
+      ),
+      contentLength,
+      ...(contentRange ? { contentRange } : {}),
+    };
+  }
+
+  /**
+   * Wrap a Drive download/export source stream in a byte-counting `Transform`
+   * shared by the `alt=media` and `files.export` paths.
+   *
+   * The `Transform` keeps the byte-counting hook INLINE with the data flow:
+   * the consumer attaches their listeners to the returned wrapper; chunks
+   * flow through `transform` (counting + `onProgress`) then onward to the
+   * consumer untouched. Using `Transform` (rather than a `PassThrough` + extra
+   * `data` listener) avoids the timing race where the strategy's `data`
+   * listener consumes a chunk before the consumer attaches: a `Transform`
+   * pushes each chunk forward exactly once, and the consumer's `data` / `pipe`
+   * is the sole consumer driving flow. Source errors are normalized and
+   * forwarded so the wrapper transitions to errored state (without the
+   * `error` listener, a mid-stream provider error would never surface on the
+   * returned stream).
+   */
+  private wrapDownloadStream(
+    sourceStream: Readable,
+    contentLength: number | null,
+    options: DownloadOptions,
+  ): Transform {
     let loaded = 0;
     const total: number | null = contentLength;
     const counter = new Transform({
@@ -1936,9 +2034,6 @@ export class GoogleDriveClient extends BaseDatasourceClient<"google-drive"> {
         cb(null, chunk);
       },
     });
-    // Forward errors from the source stream; without this listener the
-    // wrapper would not transition to errored state and the base's
-    // `error` listener would never fire on a mid-stream provider error.
     sourceStream.on("error", (err) => {
       const normalized = this.normalizeErrorImpl(err);
       counter.destroy(normalized);
@@ -1947,16 +2042,7 @@ export class GoogleDriveClient extends BaseDatasourceClient<"google-drive"> {
     // automatically and back-pressures the source via the consumer's
     // pipe / `.on("data")`.
     sourceStream.pipe(counter);
-
-    // Per-call total fall-back: when the provider response does not carry
-    // a `Content-Length` header (rare on Drive but possible), the engine
-    // contract surfaces `contentLength: null` and the byte-counter
-    // observes `total: null` per tick — fs-sync handles that case.
-    return {
-      stream: counter,
-      contentLength,
-      ...(contentRange ? { contentRange } : {}),
-    };
+    return counter;
   }
 
   // -------------------------------------------------------------------------
