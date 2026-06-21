@@ -372,9 +372,17 @@ function AuthErrorBanner({
               data-testid="wrong-account-callout-body"
               className="mt-0.5 text-xs text-amber-900 dark:text-amber-200"
             >
-              Connect as{" "}
-              <strong className="font-semibold">{expectedEmail}</strong> to
-              continue.
+              {expectedEmail ? (
+                <>
+                  Connect as{" "}
+                  <strong className="font-semibold">{expectedEmail}</strong> to
+                  continue.
+                </>
+              ) : (
+                // Email-less account: block still fires on `sub`; no email to
+                // name, so fall back to a generic phrase rather than a blank.
+                <>Reconnect with the originally-connected account to continue.</>
+              )}
             </p>
           </div>
           <div className="flex">{reconnectButton}</div>

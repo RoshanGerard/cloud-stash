@@ -281,9 +281,18 @@ export function InvalidDatasourceState({
               data-testid="wrong-account-callout-body"
               className="mt-0.5 text-[12px] text-amber-900 dark:text-amber-200"
             >
-              This datasource is connected to{" "}
-              <strong className="font-semibold">{expectedEmail}</strong>.
-              {actualEmail !== undefined ? (
+              {expectedEmail ? (
+                <>
+                  This datasource is connected to{" "}
+                  <strong className="font-semibold">{expectedEmail}</strong>.
+                </>
+              ) : (
+                // Email-less account (e.g. an AAD id_token with no `email`
+                // claim): the block still fires on `sub`, but we have no email
+                // to name, so fall back to a generic phrase instead of a blank.
+                <>This datasource is connected to a different account.</>
+              )}
+              {actualEmail ? (
                 <>
                   {" "}
                   You signed in as{" "}
@@ -291,8 +300,12 @@ export function InvalidDatasourceState({
                 </>
               ) : null}{" "}
               Reconnect using{" "}
-              <strong className="font-semibold">{expectedEmail}</strong> to
-              continue.
+              {expectedEmail ? (
+                <strong className="font-semibold">{expectedEmail}</strong>
+              ) : (
+                "the originally-connected account"
+              )}{" "}
+              to continue.
             </p>
           </div>
         </div>

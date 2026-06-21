@@ -547,6 +547,23 @@ describe("InvalidDatasourceState — Wrong-account callout (enforce-oauth-reconn
     expect(body.textContent).not.toContain("You signed in as");
   });
 
+  it("falls back to a generic phrase (never a blank email) when expectedEmail is empty — email-less account", async () => {
+    await renderThenFail({
+      status: "failed",
+      // eslint-disable-next-line ft5/no-raw-error-tag-literal -- AuthFailedTag vocabulary (no const object) — out of scope
+      tag: "account-mismatch",
+      expectedEmail: "",
+    } as AuthSessionState);
+
+    const body = screen.getByTestId("wrong-account-callout-body");
+    expect(body).toHaveTextContent(
+      "This datasource is connected to a different account. Reconnect using the originally-connected account to continue.",
+    );
+    // No blank-email artifacts ("connected to ." / "using  to").
+    expect(body.textContent).not.toContain("connected to .");
+    expect(body.textContent).not.toMatch(/using\s+to continue/);
+  });
+
   it("the callout's alert-triangle icon is amber and aria-hidden (real-text alert, not icon-only)", async () => {
     await renderThenFail({
       status: "failed",

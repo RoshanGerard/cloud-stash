@@ -398,6 +398,22 @@ describe("AuthErrorBanner — Wrong-account mini-callout (enforce-oauth-reconnec
     expect(callout.className).not.toContain("text-destructive");
   });
 
+  it("falls back to a generic phrase (never a blank email) when expectedEmail is empty — email-less account", async () => {
+    const callout = await reconnectThenEmit(
+      buildErrorSummary({ errorKind: "auth-revoked" }),
+      {
+        // eslint-disable-next-line ft5/no-raw-error-tag-literal -- AuthFailedTag vocabulary (no const object) — out of scope
+        tag: "account-mismatch",
+        expectedEmail: "",
+      },
+    );
+    const body = within(callout).getByTestId("wrong-account-callout-body");
+    expect(body).toHaveTextContent(
+      "Reconnect with the originally-connected account to continue.",
+    );
+    expect(body.textContent).not.toContain("Connect as ");
+  });
+
   it("a NON-account-mismatch failed tag keeps the existing 'Reconnect failed' copy and no callout", async () => {
     const banner = await reconnectThenEmit(
       buildErrorSummary({ errorKind: "auth-revoked" }),
