@@ -71,7 +71,9 @@ export type {
 export {
   FILES_CHANNELS,
   FILES_PROVIDER_SEARCH_DEFERRED_MESSAGE,
+  GOOGLE_APPS_EXPORT_FORMATS,
 } from "./files.js";
+export type { GoogleAppsExportableMime } from "./files.js";
 
 // `ConflictPolicy` is the canonical union used by both the sync-service
 // command surface and the new renderer-facing `FilesUploadRequest`. The

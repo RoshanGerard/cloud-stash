@@ -29,7 +29,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from "vitest";
 import { act, cleanup, renderHook } from "@testing-library/react";
 
-import { FilesErrorTag } from "@ft5/ipc-contracts";
+import { FilesErrorTag, GOOGLE_APPS_EXPORT_FORMATS } from "@ft5/ipc-contracts";
 import type {
   FileEntry,
   FilesDownloadResponse,
@@ -69,6 +69,32 @@ function makeFileEntry(name: string, parentPath: string = "/"): FileEntry {
     modifiedAt: "2026-04-28T00:00:00.000Z",
     createdAt: null,
     providerMetadata: {},
+  };
+}
+
+/**
+ * Build a FileEntry that represents a Google Apps file. The Drive mime
+ * travels in `providerMetadata.mimeType` (entry.mimeType is always null).
+ */
+function makeGoogleAppsEntry(
+  name: string,
+  googleMime: string,
+  parentPath: string = "/",
+): FileEntry {
+  const path =
+    parentPath === "/" ? `/${name}` : `${parentPath}/${name}`;
+  return {
+    id: `entry-${name}`,
+    kind: "file",
+    name,
+    path,
+    parentPath,
+    size: 0,
+    mimeFamily: "document",
+    mimeType: null,
+    modifiedAt: "2026-04-28T00:00:00.000Z",
+    createdAt: null,
+    providerMetadata: { mimeType: googleMime },
   };
 }
 
@@ -760,5 +786,204 @@ describe("sanitizeFilenameForOS — Windows-friendly filename scrubbing", () => 
   it("replaces C0 control chars with '_'", () => {
     // \x07 (BEL) survives as a non-trim char; gets replaced with `_`.
     expect(sanitizeFilenameForOS("a\x07b.txt")).toBe("a_b.txt");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// add-drive-docs-editors-export — Google Apps export-extension appending
+//
+// Drive's native formats (Docs, Sheets, Slides, Drawings, Scripts) have no
+// inherent file extension; without an appended extension the OS can't open
+// the exported blob. `dispatchAgainstFolder` reads `providerMetadata.mimeType`
+// (NOT `entry.mimeType`, which is always null per the fs-sync entry mapper)
+// and appends the mapped extension from `GOOGLE_APPS_EXPORT_FORMATS` when
+// the mime is a key in that map. The engine `path` / `entry.path` sent to
+// the backend is UNCHANGED — only the local save filename changes.
+// Append-always: no splitting/parsing of entry.name, so "Notes.txt" with a
+// Doc mime becomes "Notes.txt.docx".
+// ---------------------------------------------------------------------------
+
+describe("useDownloadOrchestrator — Google Apps export extension (add-drive-docs-editors-export)", () => {
+  beforeEach(() => {
+    localStorage.setItem(
+      DOWNLOADS_DEFAULT_FOLDER_KEY,
+      "/Users/alice/Downloads/ft5",
+    );
+  });
+
+  it("(a) application/vnd.google-apps.document → toPath basename ends in .docx", async () => {
+    const api = makeApi();
+    const { result } = renderHook(() => useDownloadOrchestrator({ api }));
+
+    await act(async () => {
+      await result.current.dispatchDownload(
+        makeGoogleAppsEntry("My Document", "application/vnd.google-apps.document"),
+        { shiftKey: false },
+        "ds-1",
+      );
+    });
+
+    expect(api.download).toHaveBeenCalledTimes(1);
+    const call = api.download.mock.calls[0]?.[0] as { toPath: string; path: string };
+    // Local save path gets the extension.
+    expect(call.toPath).toBe("/Users/alice/Downloads/ft5/My Document.docx");
+    // Engine path (remote handle) is unchanged.
+    expect(call.path).toBe("/My Document");
+  });
+
+  it("(b) append-always: name='Notes.txt' with document mime → basename 'Notes.txt.docx'", async () => {
+    const api = makeApi();
+    const { result } = renderHook(() => useDownloadOrchestrator({ api }));
+
+    await act(async () => {
+      await result.current.dispatchDownload(
+        makeGoogleAppsEntry("Notes.txt", "application/vnd.google-apps.document"),
+        { shiftKey: false },
+        "ds-1",
+      );
+    });
+
+    const call = api.download.mock.calls[0]?.[0] as { toPath: string };
+    expect(call.toPath).toBe("/Users/alice/Downloads/ft5/Notes.txt.docx");
+  });
+
+  it("(c) all 5 exportable subtypes append their mapped extension", async () => {
+    const cases = Object.entries(GOOGLE_APPS_EXPORT_FORMATS) as Array<
+      [string, { exportMime: string; extension: string }]
+    >;
+    expect(cases).toHaveLength(5);
+
+    for (const [mime, { extension }] of cases) {
+      const api = makeApi();
+      const { result } = renderHook(() => useDownloadOrchestrator({ api }));
+      await act(async () => {
+        await result.current.dispatchDownload(
+          makeGoogleAppsEntry("TestFile", mime),
+          { shiftKey: false },
+          "ds-1",
+        );
+      });
+      const call = api.download.mock.calls[0]?.[0] as { toPath: string };
+      expect(call.toPath).toBe(
+        `/Users/alice/Downloads/ft5/TestFile${extension}`,
+        `expected extension ${extension} for mime ${mime}`,
+      );
+    }
+  });
+
+  it("(d) binary entry (providerMetadata.mimeType = 'application/pdf') → entry.name unchanged, no append", async () => {
+    const api = makeApi();
+    const { result } = renderHook(() => useDownloadOrchestrator({ api }));
+
+    const entry: FileEntry = {
+      ...makeFileEntry("report.pdf"),
+      mimeType: null,
+      providerMetadata: { mimeType: "application/pdf" },
+    };
+
+    await act(async () => {
+      await result.current.dispatchDownload(entry, { shiftKey: false }, "ds-1");
+    });
+
+    const call = api.download.mock.calls[0]?.[0] as { toPath: string };
+    expect(call.toPath).toBe("/Users/alice/Downloads/ft5/report.pdf");
+  });
+
+  it("(e) save dialog (shiftKey=true) uses the extended basename as defaultPath", async () => {
+    const api = makeApi({
+      saveDialogResult: { canceled: false, filePath: "/tmp/picked.docx" },
+    });
+    const { result } = renderHook(() => useDownloadOrchestrator({ api }));
+
+    await act(async () => {
+      await result.current.dispatchDownload(
+        makeGoogleAppsEntry("My Doc", "application/vnd.google-apps.document"),
+        { shiftKey: true },
+        "ds-1",
+      );
+    });
+
+    expect(api.showSaveDialog).toHaveBeenCalledTimes(1);
+    const saveCall = api.showSaveDialog.mock.calls[0]?.[0] as {
+      defaultPath?: string;
+    };
+    expect(saveCall.defaultPath).toBe(
+      "/Users/alice/Downloads/ft5/My Doc.docx",
+    );
+  });
+
+  it("(e) alwaysAsk=yes also uses the extended basename as defaultPath", async () => {
+    localStorage.setItem(DOWNLOADS_ALWAYS_ASK_KEY, "yes");
+    const api = makeApi({
+      saveDialogResult: { canceled: false, filePath: "/tmp/picked.xlsx" },
+    });
+    const { result } = renderHook(() => useDownloadOrchestrator({ api }));
+
+    await act(async () => {
+      await result.current.dispatchDownload(
+        makeGoogleAppsEntry("Budget", "application/vnd.google-apps.spreadsheet"),
+        { shiftKey: false },
+        "ds-1",
+      );
+    });
+
+    const saveCall = api.showSaveDialog.mock.calls[0]?.[0] as {
+      defaultPath?: string;
+    };
+    expect(saveCall.defaultPath).toBe(
+      "/Users/alice/Downloads/ft5/Budget.xlsx",
+    );
+  });
+
+  it("(f) non-exportable Google Apps mime (vnd.google-apps.form) → no append, dispatches with entry.name", async () => {
+    const api = makeApi();
+    const { result } = renderHook(() => useDownloadOrchestrator({ api }));
+
+    await act(async () => {
+      await result.current.dispatchDownload(
+        makeGoogleAppsEntry("My Form", "application/vnd.google-apps.form"),
+        { shiftKey: false },
+        "ds-1",
+      );
+    });
+
+    const call = api.download.mock.calls[0]?.[0] as { toPath: string };
+    expect(call.toPath).toBe("/Users/alice/Downloads/ft5/My Form");
+  });
+
+  it("(g) providerMetadata.mimeType absent → no append, dispatches with entry.name, no crash", async () => {
+    const api = makeApi();
+    const { result } = renderHook(() => useDownloadOrchestrator({ api }));
+
+    const entry: FileEntry = {
+      ...makeFileEntry("NoMeta"),
+      mimeType: null,
+      providerMetadata: {},
+    };
+
+    await act(async () => {
+      await result.current.dispatchDownload(entry, { shiftKey: false }, "ds-1");
+    });
+
+    const call = api.download.mock.calls[0]?.[0] as { toPath: string };
+    expect(call.toPath).toBe("/Users/alice/Downloads/ft5/NoMeta");
+  });
+
+  it("(g) providerMetadata.mimeType is non-string (number) → no append, no crash", async () => {
+    const api = makeApi();
+    const { result } = renderHook(() => useDownloadOrchestrator({ api }));
+
+    const entry: FileEntry = {
+      ...makeFileEntry("BadMeta"),
+      mimeType: null,
+      providerMetadata: { mimeType: 42 },
+    };
+
+    await act(async () => {
+      await result.current.dispatchDownload(entry, { shiftKey: false }, "ds-1");
+    });
+
+    const call = api.download.mock.calls[0]?.[0] as { toPath: string };
+    expect(call.toPath).toBe("/Users/alice/Downloads/ft5/BadMeta");
   });
 });

@@ -57,10 +57,20 @@ interface GetStreamResponder {
     options: Record<string, unknown> | undefined,
   ) => { stream: Readable; headers: Record<string, string> };
 }
+// `files.export` responder — Google Apps export-download path. Matched by
+// fileId; the handler may assert the export `mimeType` / `signal`.
+interface ExportStreamResponder {
+  fileId: string;
+  handler: (
+    params: Record<string, unknown>,
+    options: Record<string, unknown> | undefined,
+  ) => { stream: Readable; headers: Record<string, string> };
+}
 
 let lists: ListResponder[] = [];
 let gets: FileResponder[] = [];
 let getStreams: GetStreamResponder[] = [];
+let exports: ExportStreamResponder[] = [];
 let deletes: Array<{ fileId: string; handler: DeleteHandler }> = [];
 let creates: Array<{ nameMatch: string; handler: FileHandler }> = [];
 let updates: Array<{ fileId: string; handler: FileHandler }> = [];
@@ -159,6 +169,37 @@ function buildDrive(): GoogleDriveClientLike {
           throw err;
         }
         return { data: match.handler(params) as never };
+      },
+      async export(params, options) {
+        const fileId = String(params.fileId ?? "");
+        const match = exports.find((r) => r.fileId === fileId);
+        if (!match) {
+          const err = Object.assign(
+            new Error(`no-export-responder ${fileId}`),
+            {
+              name: "GaxiosError",
+              code: "404",
+              status: 404,
+              response: {
+                status: 404,
+                headers: {},
+                data: {
+                  error: {
+                    code: 404,
+                    message: `no-export-responder ${fileId}`,
+                    errors: [{ reason: "notFound", message: "not found" }],
+                  },
+                },
+              },
+            },
+          );
+          throw err;
+        }
+        const { stream, headers } = match.handler(
+          params,
+          options as Record<string, unknown> | undefined,
+        );
+        return { data: stream as unknown, headers };
       },
       async delete(params) {
         const fileId = String(params.fileId ?? "");
@@ -363,11 +404,13 @@ const fixture: StrategyContractFixture = {
   expectedAuthErrorTag: "auth-expired",
   supportsQuota: true,
   hasPathHandleCache: true,
+  supportsGoogleAppsExport: true,
 
   resetMock() {
     lists = [];
     gets = [];
     getStreams = [];
+    exports = [];
     deletes = [];
     creates = [];
     updates = [];
@@ -792,6 +835,54 @@ const fixture: StrategyContractFixture = {
         return {
           stream,
           headers: { "content-length": String(opts.totalBytes) },
+        };
+      },
+    });
+  },
+
+  primeGoogleAppsExport(opts) {
+    const terminal = opts.path.replace(/^\//, "");
+    const fileId = "GD-CONTRACT-EXPORT";
+    const docMime = "application/vnd.google-apps.document";
+    lists.push({
+      qMatch: `name='${terminal}'`,
+      handler: () => ({
+        files: [
+          {
+            id: fileId,
+            name: terminal,
+            mimeType: docMime,
+            parents: ["root"],
+            modifiedTime: "2024-06-01T00:00:00Z",
+            createdTime: "2024-01-01T00:00:00Z",
+          },
+        ],
+      }),
+    });
+    // Metadata pre-fetch sees the Google Apps mime → the strategy routes
+    // through `files.export` instead of `files.get?alt=media`.
+    gets.push({
+      fileId,
+      handler: () => ({
+        id: fileId,
+        name: terminal,
+        mimeType: docMime,
+      }),
+    });
+    exports.push({
+      fileId,
+      handler: () => {
+        const stream = new Readable({
+          read() {
+            this.push(opts.bytes);
+            this.push(null);
+          },
+        });
+        // Export streams are server-generated; many omit Content-Length.
+        // Advertise it here so the shared scenario can assert contentLength.
+        return {
+          stream,
+          headers: { "content-length": String(opts.bytes.length) },
         };
       },
     });
