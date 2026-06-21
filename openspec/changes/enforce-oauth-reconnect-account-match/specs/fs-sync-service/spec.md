@@ -2,7 +2,7 @@
 
 ### Requirement: Reconnect threads the stored account anchor into the engine authenticate flow
 
-On a reconnect (an `sync:authenticate-start` carrying an existing `datasourceId`), the service SHALL read the datasource's stored account anchor — `StoredCredentials.authResult.meta.account` via the `CredentialStore` — and thread it into the engine auth flow as `expectedAccount` (through `factory.createForAuth(...)` / the loopback broker's `start` path). When the datasource has no stored anchor (first connect, or a pre-upgrade datasource that has not yet captured one), the service SHALL pass no anchor, and the engine performs capture only. The service SHALL NOT compare identities itself — enforcement lives in the engine's pre-persist check.
+On a reconnect (an `sync:authenticate-start` carrying an existing `datasourceId`), the service SHALL read the datasource's stored account anchor — `StoredCredentials.authResult.meta.account` via the `CredentialStore` — and thread it into the engine auth flow as `expectedAccount` (through `factory.createForAuth(...)` / the loopback broker's `start` path). An anchor is usable whenever `meta.account.sub` is a non-empty string — `sub` is the sole comparison key (per design D1); `email` is display-only and SHALL NOT gate whether the anchor is threaded (an absent / empty `email` is normalized to `""`). When the datasource has no usable anchor (first connect, a pre-upgrade datasource that has not yet captured one, or an account object with no non-empty `sub`), the service SHALL pass no anchor, and the engine performs capture only. The service SHALL NOT compare identities itself — enforcement lives in the engine's pre-persist check.
 
 #### Scenario: Reconnect passes the stored anchor down
 
@@ -14,10 +14,15 @@ On a reconnect (an `sync:authenticate-start` carrying an existing `datasourceId`
 - **WHEN** `sync:authenticate-start` is invoked for a datasource with no stored `meta.account` (a first connect, or a pre-upgrade datasource that has not yet captured one)
 - **THEN** the broker passes no `expectedAccount` to `factory.createForAuth(...)`, and the engine captures the identity without comparing
 
-#### Scenario: A malformed stored anchor is treated as absent
+#### Scenario: An anchor with no non-empty `sub` is treated as absent
 
-- **WHEN** `sync:authenticate-start` is invoked with an existing `datasourceId` whose stored `meta.account` is missing a non-empty `sub` or `email`
-- **THEN** the broker passes no `expectedAccount` (capture-only), rather than enforcing against a partial anchor
+- **WHEN** `sync:authenticate-start` is invoked with an existing `datasourceId` whose stored `meta.account` carries no non-empty `sub`
+- **THEN** the broker passes no `expectedAccount` (capture-only), rather than enforcing against an anchor with no comparison key
+
+#### Scenario: An anchor with a `sub` but no `email` still enforces (`sub` is the sole key)
+
+- **WHEN** `sync:authenticate-start` is invoked with an existing `datasourceId` whose stored `meta.account` has a non-empty `sub` but an absent or empty `email` (e.g. a Microsoft / AAD id_token that omits the `email` claim)
+- **THEN** the broker threads `expectedAccount = { sub, email: "" }` to `factory.createForAuth(...)` so the engine still enforces the same-account check on `sub` — gating on `email` would silently disable the hard block for email-less accounts
 
 ### Requirement: Loopback broker maps an engine `account-mismatch` to an `auth-failed` event tagged `account-mismatch`
 

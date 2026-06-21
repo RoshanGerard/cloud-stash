@@ -281,10 +281,10 @@ describe("OAuthLoopbackBroker — reconnect account anchor (§7)", () => {
     await broker.cancel({ correlationId });
   });
 
-  it("passes no expectedAccount when meta.account is malformed (empty/missing sub or email)", async () => {
-    // sub present but email empty → not a usable anchor → capture only.
+  it("passes no expectedAccount when meta.account.sub is empty/missing (sub is the sole comparison key)", async () => {
+    // No usable comparison key (email alone cannot anchor) → capture only.
     const { store } = makeCredentialStore(
-      rowWithAccount({ sub: "only-sub", email: "" }),
+      rowWithAccount({ sub: "", email: "owner@example.com" }),
     );
     const engineContext: EngineContext = { credentialStore: store };
     const { factory, getExpectedAccountArg } = makeFakeFactory({});
@@ -299,10 +299,43 @@ describe("OAuthLoopbackBroker — reconnect account anchor (§7)", () => {
 
     const { correlationId } = await broker.start({
       providerId: "google-drive",
-      datasourceId: "ds-malformed-1",
+      datasourceId: "ds-no-sub-1",
     });
 
     expect(getExpectedAccountArg()).toBeUndefined();
+
+    await broker.cancel({ correlationId });
+  });
+
+  it("threads the anchor with email='' when sub is present but email is absent — sub is the sole comparison key (D1; Microsoft/AAD id_tokens may omit email)", async () => {
+    // C1 regression: an email-less account (valid sub) MUST still enforce on
+    // reconnect. Gating on a non-empty email would silently disable the hard
+    // block for the exact in-scope provider (OneDrive/AAD) whose id_token can
+    // omit the `email` claim.
+    const { store } = makeCredentialStore(
+      rowWithAccount({ sub: "bound-sub-no-email" }),
+    );
+    const engineContext: EngineContext = { credentialStore: store };
+    const { factory, getExpectedAccountArg } = makeFakeFactory({});
+
+    broker = createOAuthLoopbackBroker({
+      bus,
+      engineContext,
+      factory,
+      getOAuthAppConfig: makeGetOAuthAppConfig(),
+      dataDir: "/tmp/ft5-test-data-dir",
+    });
+
+    const { correlationId } = await broker.start({
+      providerId: "google-drive",
+      datasourceId: "ds-no-email-1",
+    });
+
+    // Anchor IS threaded (enforcement fires on sub); email normalized to "".
+    expect(getExpectedAccountArg()).toEqual({
+      sub: "bound-sub-no-email",
+      email: "",
+    });
 
     await broker.cancel({ correlationId });
   });

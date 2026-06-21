@@ -248,11 +248,17 @@ export function createOAuthLoopbackBroker(
    *
    * On a reconnect (`start({ datasourceId })`), look up the datasource's
    * stored credentials and extract the bound account identity from
-   * `authResult.meta.account`. Returns a validated `{ sub, email }` ONLY when
-   * BOTH fields are non-empty strings; otherwise returns `undefined` so the
-   * engine performs capture-only (first connect, a pre-upgrade datasource
-   * with no anchor yet, or a malformed/partial anchor). `meta` is an
-   * un-narrowed `Record<string, unknown>` so we narrow at the read site.
+   * `authResult.meta.account`. Returns a validated anchor whenever `sub` is a
+   * non-empty string — `sub` is the SOLE comparison key (D1), so a present
+   * `sub` is a usable anchor even when `email` is absent (Microsoft / AAD
+   * id_tokens may omit the `email` claim). `email` is display-only and is
+   * normalized to `""` when absent or non-string. Returns `undefined` ONLY
+   * when there is no usable anchor — first connect, a pre-upgrade datasource
+   * with no `meta.account`, or an account object carrying no non-empty `sub`
+   * — so the engine performs capture-only. (Gating on a non-empty `email`
+   * here would silently disable the hard block for email-less accounts —
+   * exactly the bug this guards against.) `meta` is an un-narrowed
+   * `Record<string, unknown>` so we narrow at the read site.
    *
    * The policy of whether this is an enforced reconnect (anchor present) or a
    * first capture lives here in fs-sync — the engine strategy only compares
@@ -271,13 +277,14 @@ export function createOAuthLoopbackBroker(
       account !== null &&
       typeof account === "object" &&
       typeof (account as { sub?: unknown }).sub === "string" &&
-      typeof (account as { email?: unknown }).email === "string" &&
-      (account as { sub: string }).sub.length > 0 &&
-      (account as { email: string }).email.length > 0
+      (account as { sub: string }).sub.length > 0
     ) {
+      const emailRaw = (account as { email?: unknown }).email;
       return {
         sub: (account as { sub: string }).sub,
-        email: (account as { email: string }).email,
+        // Display-only (D1); the comparison keys on `sub` alone. Normalize an
+        // absent / non-string email to "" rather than dropping the anchor.
+        email: typeof emailRaw === "string" ? emailRaw : "",
       };
     }
     return undefined;
