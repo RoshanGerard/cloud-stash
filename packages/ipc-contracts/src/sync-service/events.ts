@@ -146,11 +146,26 @@ export type AuthFailedTag =
   | "account-mismatch";
 
 /** Service emitted `auth-failed` on loopback `state` mismatch, on a
- * `completeWith` rejection, or on engine errors during `submit`. */
+ * `completeWith` rejection, or on engine errors during `submit`.
+ *
+ * `expectedEmail` / `actualEmail` (per enforce-oauth-reconnect-account-match
+ * D5) are structured fields the loopback broker lifts off the engine's
+ * `account-mismatch` `DatasourceError.raw` and carries onto the event so the
+ * renderer can assemble surface-specific copy (the reconnect view names both
+ * accounts; the dashboard card names only the expected one). They are present
+ * ONLY for `tag: "account-mismatch"`; every other tag omits them. `message`
+ * stays the generic fallback string. */
 export interface AuthFailedPayload {
   readonly correlationId: string;
   readonly tag: AuthFailedTag;
   readonly message?: string;
+  /** The bound account email the datasource is anchored to. Present only
+   *  for `tag: "account-mismatch"` (always populated for that tag). */
+  readonly expectedEmail?: string;
+  /** The email of the account the user just authenticated as. Present only
+   *  for `tag: "account-mismatch"` (best-effort — may be absent if the
+   *  engine could not read it). */
+  readonly actualEmail?: string;
 }
 
 /** Service emitted `auth-timeout` when the OAuth loopback's 5-minute

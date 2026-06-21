@@ -416,7 +416,17 @@ export type AuthSessionState =
   | { status: "pending" }
   | { status: "completed"; datasourceId: string }
   | { status: "cancelled" }
-  | { status: "failed"; tag: AuthFailedTag; message?: string }
+  | {
+      status: "failed";
+      tag: AuthFailedTag;
+      message?: string;
+      // enforce-oauth-reconnect-account-match D5: present only for
+      // `tag: "account-mismatch"`. The reconnect surfaces assemble their own
+      // copy from these (the explorer view names both; the card names only
+      // `expectedEmail`). `message` stays the generic fallback.
+      expectedEmail?: string;
+      actualEmail?: string;
+    }
   | { status: "timeout" };
 
 type AuthSessionsAction =
@@ -434,7 +444,13 @@ type AuthSessionsAction =
     }
   | {
       type: "auth/failed";
-      payload: { correlationId: string; tag: AuthFailedTag; message?: string };
+      payload: {
+        correlationId: string;
+        tag: AuthFailedTag;
+        message?: string;
+        expectedEmail?: string;
+        actualEmail?: string;
+      };
     }
   | {
       type: "auth/timeout";
@@ -468,6 +484,12 @@ function authSessionsReducer(
         tag: action.payload.tag,
         ...(action.payload.message !== undefined
           ? { message: action.payload.message }
+          : {}),
+        ...(action.payload.expectedEmail !== undefined
+          ? { expectedEmail: action.payload.expectedEmail }
+          : {}),
+        ...(action.payload.actualEmail !== undefined
+          ? { actualEmail: action.payload.actualEmail }
           : {}),
       };
       next.set(action.payload.correlationId, sessionState);
@@ -716,6 +738,15 @@ export function DatasourcesProvider({ children }: DatasourcesProviderProps) {
               tag: event.payload.tag,
               ...(event.payload.message !== undefined
                 ? { message: event.payload.message }
+                : {}),
+              // enforce-oauth-reconnect-account-match D5 — carry the
+              // structured account-mismatch emails through to the failed
+              // session so the reconnect surfaces can name the accounts.
+              ...(event.payload.expectedEmail !== undefined
+                ? { expectedEmail: event.payload.expectedEmail }
+                : {}),
+              ...(event.payload.actualEmail !== undefined
+                ? { actualEmail: event.payload.actualEmail }
                 : {}),
             },
           });

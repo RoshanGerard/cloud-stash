@@ -43,10 +43,10 @@
 
 ## 7. fs-sync — anchor threading + broker tag mapping (`services/fs-sync`)
 
-- [ ] 7.1 (TDD) `sync:authenticate-start` reconnect path: failing test that an existing `datasourceId` with stored `meta.account` constructs the auth client with `expectedAccount`, and a datasource without one passes no anchor.
-- [ ] 7.2 Implement the anchor read (`CredentialStore` → `meta.account`) + thread into `createForAuth` / broker `start`; make 7.1 green.
-- [ ] 7.3 (TDD) Loopback broker: failing test that a `completeWith` rejection with `DatasourceError { tag: "account-mismatch" }` emits `auth-failed { tag: "account-mismatch", message }` naming the expected email, and emits no `credential-persisted`/`auth-completed`; other rejections still map to `provider-error`.
-- [ ] 7.4 Implement the broker catch mapping; make 7.3 green.
+- [x] 7.1 (TDD) `sync:authenticate-start` reconnect path: failing test that an existing `datasourceId` with stored `meta.account` constructs the auth client with `expectedAccount`, and a datasource without one passes no anchor. <!-- The OAuth reconnect path is the loopback broker (handler delegates the whole OAuth lifecycle, incl. createForAuth, to broker.start — authenticate-start.ts:139). Anchor read lives in broker.start(); tests in services/fs-sync/src/oauth/__tests__/loopback-broker-account-match.test.ts assert createForAuth's 5th arg (mock.calls[0][4]) == stored meta.account, and undefined for first-connect / legacy / malformed-anchor. -->
+- [x] 7.2 Implement the anchor read (`CredentialStore` → `meta.account`) + thread into `createForAuth` / broker `start`; make 7.1 green. <!-- broker.start() reads readExpectedAccount(datasourceId) BEFORE server bind (so a read failure can't leak a listener); validates {sub,email} both non-empty; threads as 5th arg to factory.createForAuth. Blast-radius: ConfigFileCredentialStore.get threw ENOENT on a missing file (first-connect) — fixed to honor the port's get-returns-null contract (separate Outcome-2 commit). -->
+- [x] 7.3 (TDD) Loopback broker: failing test that a `completeWith` rejection with `DatasourceError { tag: "account-mismatch" }` emits `auth-failed { tag: "account-mismatch", message }` naming the expected email, and emits no `credential-persisted`/`auth-completed`; other rejections still map to `provider-error`. <!-- Also asserts the structured expectedEmail/actualEmail lifted off err.raw, and the missing-actualEmail best-effort case. -->
+- [x] 7.4 Implement the broker catch mapping; make 7.3 green. <!-- completeWith catch inspects err instanceof DatasourceError && tag === AccountMismatch → emits auth-failed{tag:"account-mismatch", message, expectedEmail, actualEmail}; every other rejection (incl. fail-closed auth-expired) stays provider-error. exactOptionalPropertyTypes spread idiom for the optional emails. -->
 - [ ] 7.5 Code review of the fs-sync changes.
 
 ## 8. Renderer — Wrong-account callout (per design.md `## Visual direction`)

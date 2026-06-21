@@ -7,24 +7,34 @@ On a reconnect (an `sync:authenticate-start` carrying an existing `datasourceId`
 #### Scenario: Reconnect passes the stored anchor down
 
 - **WHEN** `sync:authenticate-start` is invoked with an existing `datasourceId` whose stored credentials carry `meta.account = { sub, email }`
-- **THEN** the service constructs the auth client with `expectedAccount = { sub, email }`
+- **THEN** the `OAuthLoopbackBroker` reads the stored anchor via `credentialStore.get(datasourceId)` and constructs the auth client by passing `expectedAccount = { sub, email }` as the trailing argument to `factory.createForAuth(...)`
 
 #### Scenario: First connect passes no anchor
 
-- **WHEN** `sync:authenticate-start` is invoked for a datasource with no stored `meta.account`
-- **THEN** the service constructs the auth client with no `expectedAccount`, and the engine captures the identity without comparing
+- **WHEN** `sync:authenticate-start` is invoked for a datasource with no stored `meta.account` (a first connect, or a pre-upgrade datasource that has not yet captured one)
+- **THEN** the broker passes no `expectedAccount` to `factory.createForAuth(...)`, and the engine captures the identity without comparing
+
+#### Scenario: A malformed stored anchor is treated as absent
+
+- **WHEN** `sync:authenticate-start` is invoked with an existing `datasourceId` whose stored `meta.account` is missing a non-empty `sub` or `email`
+- **THEN** the broker passes no `expectedAccount` (capture-only), rather than enforcing against a partial anchor
 
 ### Requirement: Loopback broker maps an engine `account-mismatch` to an `auth-failed` event tagged `account-mismatch`
 
-When `intent.completeWith(code)` rejects with a `DatasourceError` whose tag is `account-mismatch`, the `OAuthLoopbackBroker` SHALL emit `auth-failed` with `tag: "account-mismatch"` (a member of the `AuthFailedTag` wire taxonomy) and a `message` that names the expected account email, rather than the generic `provider-error` mapping. Other `completeWith` rejections continue to map to `provider-error` unchanged.
+When `intent.completeWith(code)` rejects with a `DatasourceError` whose tag is `account-mismatch`, the `OAuthLoopbackBroker` SHALL emit `auth-failed` with `tag: "account-mismatch"` (a member of the `AuthFailedTag` wire taxonomy), rather than the generic `provider-error` mapping. The broker SHALL lift the structured emails off the engine error's `raw` onto the event: `expectedEmail` (the bound account's email, present whenever the engine supplied it) and the optional `actualEmail` (the email of the account just signed-in-as, best-effort). `message` remains a generic fallback string. Other `completeWith` rejections — including the fail-closed `auth-expired` identity-read failure — continue to map to `provider-error` unchanged.
 
-#### Scenario: Account-mismatch surfaces a typed auth-failed event
+#### Scenario: Account-mismatch surfaces a typed auth-failed event with structured emails
 
-- **WHEN** the broker's `completeWith` rejects with `DatasourceError { tag: "account-mismatch" }` carrying expected email `E1`
-- **THEN** the broker emits `auth-failed { correlationId, tag: "account-mismatch", message }` where `message` names `E1`
+- **WHEN** the broker's `completeWith` rejects with `DatasourceError { tag: "account-mismatch" }` whose `raw` carries `expectedEmail = E1` and `actualEmail = E2`
+- **THEN** the broker emits `auth-failed { correlationId, tag: "account-mismatch", message, expectedEmail: E1, actualEmail: E2 }`
 - **AND** no `credential-persisted` / `auth-completed` pair is emitted for that correlation
+
+#### Scenario: Account-mismatch with no readable actual email still surfaces the expected email
+
+- **WHEN** the broker's `completeWith` rejects with `DatasourceError { tag: "account-mismatch" }` whose `raw` carries `expectedEmail = E1` but no `actualEmail`
+- **THEN** the broker emits `auth-failed { correlationId, tag: "account-mismatch", message, expectedEmail: E1 }` with `actualEmail` omitted
 
 #### Scenario: Other completion failures are unaffected
 
-- **WHEN** the broker's `completeWith` rejects with a non-account-mismatch error (e.g. a network or provider failure)
-- **THEN** the broker emits `auth-failed { tag: "provider-error" }` as before
+- **WHEN** the broker's `completeWith` rejects with a non-account-mismatch error (e.g. a network or provider failure, or the fail-closed `auth-expired` identity-read failure)
+- **THEN** the broker emits `auth-failed { tag: "provider-error" }` as before, with no `expectedEmail` / `actualEmail`
