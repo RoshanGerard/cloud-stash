@@ -59,11 +59,12 @@ import { randomBytes, randomUUID } from "node:crypto";
 import type { AddressInfo } from "node:net";
 
 import type {
+  AccountIdentity,
   DatasourceSummary,
   ProviderId,
   StoredCredentials,
 } from "@ft5/ipc-contracts";
-import { providers } from "@ft5/ipc-contracts";
+import { DatasourceError, DatasourceErrorTag, providers } from "@ft5/ipc-contracts";
 import type {
   ClientFactory,
   EngineContext,
@@ -243,6 +244,53 @@ export function createOAuthLoopbackBroker(
   }
 
   /**
+   * Reconnect account-anchor read (enforce-oauth-reconnect-account-match D4).
+   *
+   * On a reconnect (`start({ datasourceId })`), look up the datasource's
+   * stored credentials and extract the bound account identity from
+   * `authResult.meta.account`. Returns a validated anchor whenever `sub` is a
+   * non-empty string — `sub` is the SOLE comparison key (D1), so a present
+   * `sub` is a usable anchor even when `email` is absent (Microsoft / AAD
+   * id_tokens may omit the `email` claim). `email` is display-only and is
+   * normalized to `""` when absent or non-string. Returns `undefined` ONLY
+   * when there is no usable anchor — first connect, a pre-upgrade datasource
+   * with no `meta.account`, or an account object carrying no non-empty `sub`
+   * — so the engine performs capture-only. (Gating on a non-empty `email`
+   * here would silently disable the hard block for email-less accounts —
+   * exactly the bug this guards against.) `meta` is an un-narrowed
+   * `Record<string, unknown>` so we narrow at the read site.
+   *
+   * The policy of whether this is an enforced reconnect (anchor present) or a
+   * first capture lives here in fs-sync — the engine strategy only compares
+   * when handed an `expectedAccount`. A *successfully-read* anchor that is
+   * well-formed is always threaded; we never fall back to capture-only on a
+   * legitimate anchor (that would silently disable the hard block).
+   */
+  async function readExpectedAccount(
+    datasourceId: string,
+  ): Promise<AccountIdentity | undefined> {
+    const stored = await options.engineContext.credentialStore.get(
+      datasourceId,
+    );
+    const account = stored?.authResult?.meta?.["account"];
+    if (
+      account !== null &&
+      typeof account === "object" &&
+      typeof (account as { sub?: unknown }).sub === "string" &&
+      (account as { sub: string }).sub.length > 0
+    ) {
+      const emailRaw = (account as { email?: unknown }).email;
+      return {
+        sub: (account as { sub: string }).sub,
+        // Display-only (D1); the comparison keys on `sub` alone. Normalize an
+        // absent / non-string email to "" rather than dropping the anchor.
+        email: typeof emailRaw === "string" ? emailRaw : "",
+      };
+    }
+    return undefined;
+  }
+
+  /**
    * Attempt to read `<dataDir>/dev-credentials.json` synchronously.
    * Returns the parsed StoredCredentials when the file exists and
    * parses, or null when the file is absent or unreadable.
@@ -308,6 +356,15 @@ export function createOAuthLoopbackBroker(
       // id); otherwise mint internally for direct-broker callers.
       const correlationId = opts.correlationId ?? randomUUID();
       const state = randomBytes(32).toString("base64url");
+
+      // Reconnect account-anchor read (D4). Done BEFORE binding the loopback
+      // server so a credential-store read failure propagates without leaking
+      // a listener and without emitting any event. `undefined` on a fresh
+      // connect (no datasourceId) or a datasource that has not captured an
+      // anchor yet → engine captures only.
+      const expectedAccount = opts.datasourceId
+        ? await readExpectedAccount(opts.datasourceId)
+        : undefined;
 
       // Bind the loopback FIRST so we know the port (the strategy needs
       // it threaded through `redirect_uri` in the authorize URL).
@@ -376,6 +433,40 @@ export function createOAuthLoopbackBroker(
               summary,
             });
           } catch (err) {
+            // Reconnect wrong-account block (D5): the engine strategy throws
+            // `DatasourceError { tag: "account-mismatch" }` from inside the
+            // exchange closure BEFORE the base persists, carrying both
+            // emails (+ subs) on `raw`. Lift the emails onto a structured
+            // `auth-failed { tag: "account-mismatch" }` so the renderer can
+            // assemble its own copy. Every OTHER rejection — including the
+            // fail-closed `auth-expired` (id-token-unreadable) — keeps
+            // mapping to `provider-error` unchanged.
+            if (
+              err instanceof DatasourceError &&
+              err.tag === DatasourceErrorTag.AccountMismatch
+            ) {
+              const raw = (err.raw ?? {}) as {
+                expectedEmail?: unknown;
+                actualEmail?: unknown;
+              };
+              const expectedEmail =
+                typeof raw.expectedEmail === "string"
+                  ? raw.expectedEmail
+                  : undefined;
+              const actualEmail =
+                typeof raw.actualEmail === "string"
+                  ? raw.actualEmail
+                  : undefined;
+              options.bus.emit("auth-failed", {
+                correlationId,
+                // eslint-disable-next-line ft5/no-raw-error-tag-literal -- AuthFailedTag vocabulary (no const object) — out of scope
+                tag: "account-mismatch",
+                message: err.message,
+                ...(expectedEmail !== undefined ? { expectedEmail } : {}),
+                ...(actualEmail !== undefined ? { actualEmail } : {}),
+              });
+              return;
+            }
             options.bus.emit("auth-failed", {
               correlationId,
               // eslint-disable-next-line ft5/no-raw-error-tag-literal -- AuthFailedTag vocabulary (no const object) — out of scope
@@ -436,12 +527,17 @@ export function createOAuthLoopbackBroker(
             : {}),
         });
 
-        // Construct the engine client + acquire the AuthIntent.
+        // Construct the engine client + acquire the AuthIntent. On a
+        // reconnect with a stored anchor, `expectedAccount` is threaded as
+        // the 5th arg so the strategy hard-blocks a wrong-account swap
+        // before the base persists (D4); on a first connect it is undefined
+        // and the strategy captures only.
         const client = options.factory.createForAuth(
           opts.providerId,
           oauthAppConfig,
           options.engineContext,
           opts.datasourceId,
+          expectedAccount,
         );
         const acquired = await client.authenticate();
 

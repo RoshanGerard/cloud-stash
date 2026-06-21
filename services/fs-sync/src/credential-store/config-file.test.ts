@@ -81,6 +81,20 @@ describe("ConfigFileCredentialStore — happy-path round trip (task 4.1)", () =>
     expect(await store.get("ds-2")).toBeNull();
   });
 
+  it("get returns null when the credentials file does not exist yet (port contract)", async () => {
+    // First-connect path: no credentials.json has been written. The engine's
+    // CredentialStore port contract is "get returns null (not an error) when
+    // no row exists" — a wholly-missing file is the absence of every row, so
+    // get MUST resolve null rather than reject with ENOENT. (Regression: the
+    // reconnect account-anchor read is the first caller to invoke get() before
+    // any put(), exposing this latent ENOENT-rethrow.)
+    const dir = scratchDir();
+    const store = new ConfigFileCredentialStore({
+      filePath: path.join(dir, "credentials.json"),
+    });
+    await expect(store.get("ds-anything")).resolves.toBeNull();
+  });
+
   it("delete removes one entry but preserves the file and siblings", async () => {
     const dir = scratchDir();
     const file = path.join(dir, "credentials.json");

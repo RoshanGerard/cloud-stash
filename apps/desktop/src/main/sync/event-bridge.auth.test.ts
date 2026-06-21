@@ -413,4 +413,72 @@ describe("createSyncEventBridge — auth-event subscriptions (§16)", () => {
     },
     5000,
   );
+
+  it(
+    "forwards an `account-mismatch` auth-failed to the renderer-window subscriber WITH the structured expectedEmail/actualEmail (enforce-oauth-reconnect-account-match D5)",
+    async () => {
+      // The bridge is a generic pass-through for renderer-bound events: it
+      // relays `{ kind: name, payload }` whole (no field cherry-picking).
+      // This regression locks that the new structured email fields ride
+      // through untouched so the renderer can assemble the Wrong-account
+      // callout copy from them.
+      const pipePath = pipeFor("auth-failed-account-mismatch");
+      const stub = await startFakeService(pipePath, autoAckHandler);
+      stubs.push(stub);
+
+      const { client, socket } = await connectClient(pipePath);
+      clientSockets.push(socket);
+
+      const registry: BridgeRegistry = {
+        setStatus: vi.fn(),
+        add: vi.fn(),
+      };
+      const bridge = createSyncEventBridge(clientAsHandle(client), {
+        registry,
+        openExternal: vi.fn(async () => undefined),
+      });
+      bridges.push(bridge);
+
+      const win = makeFakeWindow();
+      bridge.registerWindow(win as unknown as import("electron").BrowserWindow);
+
+      await stub.connected;
+      await new Promise<void>((r) => setTimeout(r, 30));
+      win.webContents.send.mockClear();
+
+      stub.send({
+        kind: "event",
+        name: "auth-failed",
+        payload: {
+          correlationId: "corr-mismatch",
+          // eslint-disable-next-line ft5/no-raw-error-tag-literal -- AuthFailedTag vocabulary (no const object) — out of scope
+          tag: "account-mismatch",
+          message: "This datasource is connected to owner@example.com.",
+          expectedEmail: "owner@example.com",
+          actualEmail: "intruder@example.com",
+        },
+      });
+
+      await new Promise<void>((r) => setTimeout(r, 30));
+
+      const syncCalls = win.webContents.send.mock.calls.filter(
+        (c: unknown[]) =>
+          c[0] === SYNC_CHANNELS.event &&
+          (c[1] as { kind: string }).kind === "auth-failed",
+      );
+      expect(syncCalls).toHaveLength(1);
+      expect(syncCalls[0]![1]).toEqual({
+        kind: "auth-failed",
+        payload: {
+          correlationId: "corr-mismatch",
+          // eslint-disable-next-line ft5/no-raw-error-tag-literal -- AuthFailedTag vocabulary (no const object) — out of scope
+          tag: "account-mismatch",
+          message: "This datasource is connected to owner@example.com.",
+          expectedEmail: "owner@example.com",
+          actualEmail: "intruder@example.com",
+        },
+      });
+    },
+    5000,
+  );
 });

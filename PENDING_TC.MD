@@ -1105,6 +1105,43 @@ guard backstops enforcement regardless.
 
 **Owner:** unassigned. Bench check during the next editor session.
 
+## enforce-oauth-reconnect-account-match — §9.4 real-provider reconnect smokes + M1 (deferred 2026-06-21)
+
+Same-account reconnect binding (OIDC `sub` anchor) is automated-green end-to-end
+(engine capture + throw-before-persist enforcement + fs-sync broker mapping +
+renderer callouts; full suite 308 files / 2882 passing), but the live OAuth flow
+was never exercised against a real provider.
+
+**Scenarios** (per `tasks.md` §9.4 — run on BOTH Google Drive and OneDrive):
+
+1. Connect a datasource as account **A** (captures `meta.account.sub`).
+2. Let it expire / revoke; click Reconnect; sign in as the SAME account A →
+   reconnect SUCCEEDS, datasource still points at A's files.
+3. Reconnect again but sign in as a DIFFERENT account **B** → HARD BLOCK: the
+   datasource is left intact (still bound to A, B's tokens NOT persisted), and
+   the amber "Wrong account" callout names A (reconnect view shows A + B; card
+   shows A). Reconnect stays live to retry as A.
+4. `login_hint` pre-selects A on the consent screen.
+5. Email-less account variant (an AAD account whose id_token omits the `email`
+   claim): the block still fires on `sub`, and the callout shows the generic
+   fallback ("a different account" / "the originally-connected account") rather
+   than a blank — never "connected to ." .
+
+**Why deferred:** Requires a real GCP OAuth client + Azure app registration
+(client id / secret / redirect) AND two real accounts per provider — not
+configured in this environment. The dev-override `FT5_DEV_CREDENTIALS` path
+bypasses the real token exchange, so it cannot exercise the id_token capture or
+the `sub` comparison.
+
+**Also deferred — M1 (code-review MINOR):** no test asserts that a genuine
+`credentialStore.get` read failure (e.g. permission widening) inside
+`readExpectedAccount` propagates without leaking a bound listener / emitting an
+event. Correct by structure (the read precedes `http.createServer`), just
+untested. Add a rejecting-`get` broker test.
+
+**Status:** PENDING — needs a human with real provider credentials + accounts.
+**Owner:** unassigned.
+
 ---
 
 ## add-drive-docs-editors-export — §6.1/§6.2 Drive export manual smoke (deferred 2026-06-21)

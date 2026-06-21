@@ -31,6 +31,7 @@ import { Readable } from "node:stream";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type {
+  AuthResult,
   OAuthIntent,
   StoredCredentials,
 } from "@ft5/ipc-contracts";
@@ -41,6 +42,7 @@ import {
   appendExtensionIfMissing,
   createGoogleDriveClient,
   GoogleDriveClient,
+  isScopeSufficient,
   type GoogleDriveClientLike,
 } from "./googledrive-client.js";
 
@@ -457,6 +459,64 @@ afterEach(() => {
   createdClients.length = 0;
   vi.restoreAllMocks();
 });
+
+// ---------------------------------------------------------------------------
+// id_token (OIDC) fixtures — enforce-oauth-reconnect-account-match
+// ---------------------------------------------------------------------------
+//
+// Capture-on-exchange (D2/D3) is UNCONDITIONAL: every successful token
+// exchange now reads + validates the `id_token`. These helpers build a
+// representative Google id_token (a base64url JWT with a dummy signature —
+// the strategy never verifies the signature, per D2). `aud` defaults to the
+// `makeCreds` default clientId ("test-client-id"); `iss` is Google's issuer.
+
+/** Google's OIDC issuer. Google emits BOTH forms; tests use the https form. */
+const GOOGLE_ISSUER = "https://accounts.google.com";
+/** The clientId `makeCreds` seeds by default — id_token `aud` must equal it. */
+const DEFAULT_CLIENT_ID = "test-client-id";
+
+function b64url(obj: unknown): string {
+  return Buffer.from(JSON.stringify(obj), "utf8").toString("base64url");
+}
+
+/** Build a `header.payload.signature` JWT. Signature is a dummy constant. */
+function makeIdToken(payload: Record<string, unknown>): string {
+  const header = b64url({ alg: "RS256", typ: "JWT" });
+  const body = b64url(payload);
+  return `${header}.${body}.ZHVtbXktc2ln`;
+}
+
+/** A valid Google id_token payload; override `sub`/`email`/`aud`/`iss`/`exp`. */
+function googleIdTokenPayload(
+  overrides: Record<string, unknown> = {},
+): Record<string, unknown> {
+  return {
+    sub: "google-sub-1",
+    email: "alice@example.com",
+    aud: DEFAULT_CLIENT_ID,
+    iss: GOOGLE_ISSUER,
+    exp: Math.floor(Date.now() / 1000) + 3600,
+    ...overrides,
+  };
+}
+
+/** A 200 token-endpoint Response carrying access/refresh tokens + an
+ * id_token. Used to replace bare success mocks once capture is unconditional. */
+function tokenResponseWithIdToken(
+  idToken: string,
+  body: Record<string, unknown> = {},
+): Response {
+  return new Response(
+    JSON.stringify({
+      access_token: "new-at",
+      refresh_token: "new-rt",
+      expires_in: 3600,
+      id_token: idToken,
+      ...body,
+    }),
+    { status: 200, headers: { "Content-Type": "application/json" } },
+  );
+}
 
 // ---------------------------------------------------------------------------
 // listDirectory
@@ -1427,14 +1487,7 @@ describe("GoogleDriveClient — authenticate", () => {
   it("completeWith(code) posts to the token endpoint and returns an AuthResult", async () => {
     const { client } = makeFakeDrive({});
     const fetchImpl = vi.fn(async () =>
-      new Response(
-        JSON.stringify({
-          access_token: "new-at",
-          refresh_token: "new-rt",
-          expires_in: 3600,
-        }),
-        { status: 200, headers: { "Content-Type": "application/json" } },
-      ),
+      tokenResponseWithIdToken(makeIdToken(googleIdTokenPayload())),
     ) as unknown as typeof fetch;
     const h = makeHarness({ drive: client, fetchImpl });
     const intent = (await h.client.authenticate()) as OAuthIntent;
@@ -1509,14 +1562,10 @@ describe("GoogleDriveClient — authenticate (PKCE S256)", () => {
   it("Verifier threads into the token exchange", async () => {
     const { client } = makeFakeDrive({});
     const fetchImpl = vi.fn(async () =>
-      new Response(
-        JSON.stringify({
-          access_token: "pkce-at",
-          refresh_token: "pkce-rt",
-          expires_in: 3600,
-        }),
-        { status: 200, headers: { "Content-Type": "application/json" } },
-      ),
+      tokenResponseWithIdToken(makeIdToken(googleIdTokenPayload()), {
+        access_token: "pkce-at",
+        refresh_token: "pkce-rt",
+      }),
     ) as unknown as typeof fetch;
     const { factory, captured } = makeCapturingVerifierFactory();
     const h = makeHarness({
@@ -1569,14 +1618,10 @@ describe("GoogleDriveClient — authenticate (PKCE S256)", () => {
   it("Verifier is never stored or logged", async () => {
     const { client } = makeFakeDrive({});
     const fetchImpl = vi.fn(async () =>
-      new Response(
-        JSON.stringify({
-          access_token: "pkce-at-2",
-          refresh_token: "pkce-rt-2",
-          expires_in: 3600,
-        }),
-        { status: 200, headers: { "Content-Type": "application/json" } },
-      ),
+      tokenResponseWithIdToken(makeIdToken(googleIdTokenPayload()), {
+        access_token: "pkce-at-2",
+        refresh_token: "pkce-rt-2",
+      }),
     ) as unknown as typeof fetch;
     const { factory, captured } = makeCapturingVerifierFactory();
     const h = makeHarness({
@@ -2603,6 +2648,9 @@ describe("GoogleDriveClient — scope drift detection", () => {
           refresh_token: "exchanged-rt",
           scope: "https://www.googleapis.com/auth/drive openid email",
           expires_in: 3599,
+          // Capture-on-exchange is unconditional now — supply an id_token so
+          // the exchange does not fail closed (this test asserts scope copy).
+          id_token: makeIdToken(googleIdTokenPayload()),
         }),
         { status: 200, headers: { "Content-Type": "application/json" } },
       ),
@@ -2663,6 +2711,8 @@ describe("GoogleDriveClient — scope drift detection", () => {
           refresh_token: "exchanged-rt",
           expires_in: 3599,
           // Note: no `scope` field returned
+          // id_token still required — capture-on-exchange is unconditional.
+          id_token: makeIdToken(googleIdTokenPayload()),
         }),
         { status: 200, headers: { "Content-Type": "application/json" } },
       ),
@@ -4182,5 +4232,360 @@ describe("GoogleDriveClient — listDirectory entry.name extension repair", () =
     });
     expect(entries).toHaveLength(1);
     expect(entries[0]!.name).toBe("Report.txt");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Account identity — capture, enforce, refresh-preserve
+// (enforce-oauth-reconnect-account-match — Decisions D1–D7)
+// ---------------------------------------------------------------------------
+//
+// Capture-on-exchange is unconditional (D2/D3); enforcement (D4) applies only
+// when an `expectedAccount` anchor is injected at construction (reconnect).
+// These tests construct via the class constructor so they can pass
+// creds=null + preAuth (the createForAuth shape) + the optional
+// `expectedAccount` 5th param.
+
+describe("GoogleDriveClient — account identity (scope widening)", () => {
+  it("authorize URL requests openid + email alongside the Drive scope", async () => {
+    const { client } = makeFakeDrive({});
+    const h = makeHarness({ drive: client });
+    const intent = (await h.client.authenticate()) as OAuthIntent;
+    const scope = new URL(intent.authorizeUrl).searchParams.get("scope") ?? "";
+    const tokens = scope.split(/\s+/).filter(Boolean);
+    expect(tokens).toContain("openid");
+    expect(tokens).toContain("email");
+    // The Drive resource scope is still requested.
+    expect(tokens).toContain("https://www.googleapis.com/auth/drive");
+  });
+
+  it("isScopeSufficient still accepts the widened issued scope (superset includes Drive)", () => {
+    // The widened issued scope (openid + email + Drive) must still pass the
+    // inclusion check — sufficiency keys on Drive-scope membership, not exact
+    // equality, so existing Drive-only tokens keep working too.
+    const widened =
+      "openid email https://www.googleapis.com/auth/drive";
+    expect(isScopeSufficient(widened)).toBe(true);
+    expect(isScopeSufficient("https://www.googleapis.com/auth/drive")).toBe(
+      true,
+    );
+    expect(isScopeSufficient("openid email")).toBe(false);
+  });
+});
+
+describe("GoogleDriveClient — account identity (capture on exchange)", () => {
+  function makeAuthCtx(): {
+    ctx: BaseClientContext;
+    puts: Array<{ id: string; creds: StoredCredentials }>;
+  } {
+    const puts: Array<{ id: string; creds: StoredCredentials }> = [];
+    const store: CredentialStore = {
+      get: async () => null,
+      put: async (id, creds) => {
+        puts.push({ id, creds });
+      },
+      delete: async () => undefined,
+    };
+    return {
+      ctx: { credentialStore: store, providerDescriptor: providers["google-drive"] },
+      puts,
+    };
+  }
+
+  const preAuth = {
+    clientId: DEFAULT_CLIENT_ID,
+    clientSecret: "secret",
+    redirectUri: "http://127.0.0.1:5599/callback",
+  };
+
+  it("exchange with a valid id_token writes AuthResult.meta.account = { sub, email }", async () => {
+    const { client: drive } = makeFakeDrive({});
+    const { ctx, puts } = makeAuthCtx();
+    const fetchImpl = vi.fn(async () =>
+      tokenResponseWithIdToken(
+        makeIdToken(
+          googleIdTokenPayload({ sub: "sub-abc", email: "carol@example.com" }),
+        ),
+      ),
+    ) as unknown as typeof fetch;
+    const client = new GoogleDriveClient(
+      { datasourceId: "ds-gd-cap", ctx },
+      null,
+      { driveFactory: () => drive, fetchImpl },
+      preAuth,
+    );
+    createdClients.push(client);
+    const intent = (await client.authenticate()) as OAuthIntent;
+    const result = await intent.completeWith("auth-code-1");
+    expect(result.meta?.account).toEqual({
+      sub: "sub-abc",
+      email: "carol@example.com",
+    });
+    // The base persisted it (first-connect capture) — meta.account is on the
+    // stored credential too.
+    expect(puts).toHaveLength(1);
+    const storedMeta = puts[0]!.creds.authResult.meta as Record<string, unknown>;
+    expect(storedMeta.account).toEqual({
+      sub: "sub-abc",
+      email: "carol@example.com",
+    });
+  });
+
+  it("exchange with a malformed id_token throws a RETRYABLE DatasourceError and does NOT persist (fail-closed)", async () => {
+    const { client: drive } = makeFakeDrive({});
+    const { ctx, puts } = makeAuthCtx();
+    const fetchImpl = vi.fn(async () =>
+      tokenResponseWithIdToken("not-a-jwt"),
+    ) as unknown as typeof fetch;
+    const client = new GoogleDriveClient(
+      { datasourceId: "ds-gd-malformed", ctx },
+      null,
+      { driveFactory: () => drive, fetchImpl },
+      preAuth,
+    );
+    createdClients.push(client);
+    const intent = (await client.authenticate()) as OAuthIntent;
+    await expect(intent.completeWith("auth-code-2")).rejects.toSatisfy(
+      (e: unknown) => e instanceof DatasourceError && e.retryable === true,
+    );
+    expect(puts).toHaveLength(0);
+  });
+
+  it("exchange with an expired id_token throws a RETRYABLE DatasourceError and does NOT persist (fail-closed)", async () => {
+    const { client: drive } = makeFakeDrive({});
+    const { ctx, puts } = makeAuthCtx();
+    const fetchImpl = vi.fn(async () =>
+      tokenResponseWithIdToken(
+        makeIdToken(
+          googleIdTokenPayload({ exp: Math.floor(Date.now() / 1000) - 3600 }),
+        ),
+      ),
+    ) as unknown as typeof fetch;
+    const client = new GoogleDriveClient(
+      { datasourceId: "ds-gd-expired", ctx },
+      null,
+      { driveFactory: () => drive, fetchImpl },
+      preAuth,
+    );
+    createdClients.push(client);
+    const intent = (await client.authenticate()) as OAuthIntent;
+    await expect(intent.completeWith("auth-code-3")).rejects.toSatisfy(
+      (e: unknown) => e instanceof DatasourceError && e.retryable === true,
+    );
+    expect(puts).toHaveLength(0);
+  });
+
+  it("exchange with a bad-aud id_token throws a RETRYABLE DatasourceError and does NOT persist (fail-closed)", async () => {
+    const { client: drive } = makeFakeDrive({});
+    const { ctx, puts } = makeAuthCtx();
+    const fetchImpl = vi.fn(async () =>
+      tokenResponseWithIdToken(
+        makeIdToken(googleIdTokenPayload({ aud: "some-other-client" })),
+      ),
+    ) as unknown as typeof fetch;
+    const client = new GoogleDriveClient(
+      { datasourceId: "ds-gd-badaud", ctx },
+      null,
+      { driveFactory: () => drive, fetchImpl },
+      preAuth,
+    );
+    createdClients.push(client);
+    const intent = (await client.authenticate()) as OAuthIntent;
+    await expect(intent.completeWith("auth-code-4")).rejects.toSatisfy(
+      (e: unknown) => e instanceof DatasourceError && e.retryable === true,
+    );
+    expect(puts).toHaveLength(0);
+  });
+
+  it("exchange with a MISSING id_token throws a RETRYABLE DatasourceError and does NOT persist (fail-closed)", async () => {
+    const { client: drive } = makeFakeDrive({});
+    const { ctx, puts } = makeAuthCtx();
+    // 200 with tokens but NO id_token field.
+    const fetchImpl = vi.fn(async () =>
+      new Response(
+        JSON.stringify({
+          access_token: "at",
+          refresh_token: "rt",
+          expires_in: 3600,
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } },
+      ),
+    ) as unknown as typeof fetch;
+    const client = new GoogleDriveClient(
+      { datasourceId: "ds-gd-noidtoken", ctx },
+      null,
+      { driveFactory: () => drive, fetchImpl },
+      preAuth,
+    );
+    createdClients.push(client);
+    const intent = (await client.authenticate()) as OAuthIntent;
+    await expect(intent.completeWith("auth-code-5")).rejects.toSatisfy(
+      (e: unknown) => e instanceof DatasourceError && e.retryable === true,
+    );
+    expect(puts).toHaveLength(0);
+  });
+});
+
+describe("GoogleDriveClient — account identity (reconnect enforcement)", () => {
+  function makeAuthCtx(): {
+    ctx: BaseClientContext;
+    puts: Array<{ id: string; creds: StoredCredentials }>;
+  } {
+    const puts: Array<{ id: string; creds: StoredCredentials }> = [];
+    const store: CredentialStore = {
+      get: async () => null,
+      put: async (id, creds) => {
+        puts.push({ id, creds });
+      },
+      delete: async () => undefined,
+    };
+    return {
+      ctx: { credentialStore: store, providerDescriptor: providers["google-drive"] },
+      puts,
+    };
+  }
+
+  const preAuth = {
+    clientId: DEFAULT_CLIENT_ID,
+    clientSecret: "secret",
+    redirectUri: "http://127.0.0.1:5599/callback",
+  };
+
+  it("login_hint is present in the authorize URL when constructed with expectedAccount; absent otherwise", async () => {
+    const { client: drive } = makeFakeDrive({});
+    const { ctx } = makeAuthCtx();
+    const withAnchor = new GoogleDriveClient(
+      { datasourceId: "ds-gd-hint", ctx },
+      null,
+      { driveFactory: () => drive },
+      preAuth,
+      { sub: "anchor-sub", email: "bound@example.com" },
+    );
+    createdClients.push(withAnchor);
+    const intent1 = (await withAnchor.authenticate()) as OAuthIntent;
+    expect(new URL(intent1.authorizeUrl).searchParams.get("login_hint")).toBe(
+      "bound@example.com",
+    );
+
+    const withoutAnchor = new GoogleDriveClient(
+      { datasourceId: "ds-gd-nohint", ctx },
+      null,
+      { driveFactory: () => drive },
+      preAuth,
+    );
+    createdClients.push(withoutAnchor);
+    const intent2 = (await withoutAnchor.authenticate()) as OAuthIntent;
+    expect(
+      new URL(intent2.authorizeUrl).searchParams.has("login_hint"),
+    ).toBe(false);
+  });
+
+  it("reconnect with a MATCHING sub persists normally and preserves meta.account", async () => {
+    const { client: drive } = makeFakeDrive({});
+    const { ctx, puts } = makeAuthCtx();
+    const fetchImpl = vi.fn(async () =>
+      tokenResponseWithIdToken(
+        makeIdToken(
+          googleIdTokenPayload({ sub: "same-sub", email: "new-email@example.com" }),
+        ),
+      ),
+    ) as unknown as typeof fetch;
+    const client = new GoogleDriveClient(
+      { datasourceId: "ds-gd-match", ctx },
+      null,
+      { driveFactory: () => drive, fetchImpl },
+      preAuth,
+      { sub: "same-sub", email: "old-email@example.com" },
+    );
+    createdClients.push(client);
+    const intent = (await client.authenticate()) as OAuthIntent;
+    const result = await intent.completeWith("auth-code-match");
+    // Persisted; the freshly-captured account (current email) is the anchor.
+    expect(puts).toHaveLength(1);
+    expect(result.meta?.account).toEqual({
+      sub: "same-sub",
+      email: "new-email@example.com",
+    });
+  });
+
+  it("reconnect with a DIFFERENT sub throws DatasourceError{tag:account-mismatch} carrying both emails+subs, and does NOT persist", async () => {
+    const { client: drive } = makeFakeDrive({});
+    const { ctx, puts } = makeAuthCtx();
+    const fetchImpl = vi.fn(async () =>
+      tokenResponseWithIdToken(
+        makeIdToken(
+          googleIdTokenPayload({ sub: "intruder-sub", email: "intruder@example.com" }),
+        ),
+      ),
+    ) as unknown as typeof fetch;
+    const client = new GoogleDriveClient(
+      { datasourceId: "ds-gd-mismatch", ctx },
+      null,
+      { driveFactory: () => drive, fetchImpl },
+      preAuth,
+      { sub: "bound-sub", email: "owner@example.com" },
+    );
+    createdClients.push(client);
+    const intent = (await client.authenticate()) as OAuthIntent;
+    let caught: unknown;
+    try {
+      await intent.completeWith("auth-code-mismatch");
+    } catch (e) {
+      caught = e;
+    }
+    expect(caught).toBeInstanceOf(DatasourceError);
+    const err = caught as DatasourceError<"google-drive">;
+    expect(err.tag).toBe(DatasourceErrorTag.AccountMismatch);
+    expect(err.retryable).toBe(false);
+    const raw = err.raw as Record<string, unknown>;
+    expect(raw.expectedSub).toBe("bound-sub");
+    expect(raw.expectedEmail).toBe("owner@example.com");
+    expect(raw.actualSub).toBe("intruder-sub");
+    expect(raw.actualEmail).toBe("intruder@example.com");
+    // Throw-before-persist: the store was never touched (no rollback window).
+    expect(puts).toHaveLength(0);
+  });
+});
+
+describe("GoogleDriveClient — account identity (refresh preserves anchor)", () => {
+  it("refreshTokenImpl re-emits the stored meta.account unchanged (refresh response has no id_token)", async () => {
+    const { client: drive } = makeFakeDrive({});
+    // A refresh response WITHOUT an id_token (Google's refresh grant returns
+    // none) — the anchor must survive from the stored creds.
+    const fetchImpl = vi.fn(async () =>
+      new Response(
+        JSON.stringify({
+          access_token: "refreshed-at",
+          expires_in: 3600,
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } },
+      ),
+    ) as unknown as typeof fetch;
+    // Build creds carrying meta.account so readCredsFromStored seeds the anchor.
+    const creds: StoredCredentials = {
+      providerId: "google-drive",
+      authResult: {
+        accessToken: "access-tok",
+        refreshToken: "refresh-tok",
+        meta: {
+          clientId: DEFAULT_CLIENT_ID,
+          clientSecret: "test-client-secret",
+          redirectUri: "http://localhost:3000/oauth/callback",
+          scope: "https://www.googleapis.com/auth/drive",
+          account: { sub: "stable-sub", email: "stable@example.com" },
+        },
+      },
+      createdAt: 0,
+      updatedAt: 0,
+    };
+    const h = makeHarness({ drive, fetchImpl, creds });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const refresh = (h.client as any).refreshTokenImpl.bind(h.client);
+    const result: AuthResult = await refresh();
+    expect(result.accessToken).toBe("refreshed-at");
+    expect(result.meta?.account).toEqual({
+      sub: "stable-sub",
+      email: "stable@example.com",
+    });
   });
 });

@@ -132,18 +132,40 @@ export interface AuthCancelledPayload {
  * narrow — failure modes that are typed-error-class (e.g.,
  * `service-config-missing`) surface through the request/response path
  * NOT through events. Events cover the loopback and engine-runtime
- * failures that arrive after the response was already sent. */
+ * failures that arrive after the response was already sent.
+ *
+ * `"account-mismatch"` (per enforce-oauth-reconnect-account-match) is the
+ * wire surface of the engine's `DatasourceErrorTag.AccountMismatch`: the
+ * loopback broker maps a reconnect `completeWith` rejection whose engine tag
+ * is `account-mismatch` onto this member, with a `message` naming the bound
+ * account email. */
 export type AuthFailedTag =
   | "auth-revoked"
   | "provider-error"
-  | "engine-error";
+  | "engine-error"
+  | "account-mismatch";
 
 /** Service emitted `auth-failed` on loopback `state` mismatch, on a
- * `completeWith` rejection, or on engine errors during `submit`. */
+ * `completeWith` rejection, or on engine errors during `submit`.
+ *
+ * `expectedEmail` / `actualEmail` (per enforce-oauth-reconnect-account-match
+ * D5) are structured fields the loopback broker lifts off the engine's
+ * `account-mismatch` `DatasourceError.raw` and carries onto the event so the
+ * renderer can assemble surface-specific copy (the reconnect view names both
+ * accounts; the dashboard card names only the expected one). They are present
+ * ONLY for `tag: "account-mismatch"`; every other tag omits them. `message`
+ * stays the generic fallback string. */
 export interface AuthFailedPayload {
   readonly correlationId: string;
   readonly tag: AuthFailedTag;
   readonly message?: string;
+  /** The bound account email the datasource is anchored to. Present only
+   *  for `tag: "account-mismatch"` (always populated for that tag). */
+  readonly expectedEmail?: string;
+  /** The email of the account the user just authenticated as. Present only
+   *  for `tag: "account-mismatch"` (best-effort — may be absent if the
+   *  engine could not read it). */
+  readonly actualEmail?: string;
 }
 
 /** Service emitted `auth-timeout` when the OAuth loopback's 5-minute

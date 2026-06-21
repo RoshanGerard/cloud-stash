@@ -60,7 +60,7 @@ describe("DatasourceError — construction + shape", () => {
     expect(err.message).toContain("ds-od-3");
   });
 
-  it("supports every tag in the 8-tag taxonomy without runtime error", () => {
+  it("supports every tag in the taxonomy without runtime error", () => {
     const tags = [
       "auth-expired",
       "auth-revoked",
@@ -70,6 +70,7 @@ describe("DatasourceError — construction + shape", () => {
       "rate-limited",
       "network-error",
       "provider-error",
+      "account-mismatch",
     ] as const;
     for (const tag of tags) {
       const err = new DatasourceError({
@@ -82,6 +83,10 @@ describe("DatasourceError — construction + shape", () => {
       });
       expect(err.tag).toBe(tag);
     }
+  });
+
+  it("exposes the account-mismatch member at the documented value", () => {
+    expect(DatasourceErrorTag.AccountMismatch).toBe("account-mismatch");
   });
 
   it("preserves a usable stack trace", () => {

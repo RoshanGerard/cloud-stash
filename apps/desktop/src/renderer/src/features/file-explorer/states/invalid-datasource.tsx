@@ -147,6 +147,22 @@ export function InvalidDatasourceState({
   const reconnectDisabled = providerId === undefined;
   const reconnectLabel = isWaiting ? "Connecting…" : "Reconnect";
 
+  // enforce-oauth-reconnect-account-match §8 (design.md `## Visual direction`)
+  // — a reconnect that authenticated as the WRONG account is hard-blocked
+  // upstream and surfaces here as a failed session tagged `account-mismatch`.
+  // Narrow explicitly on the failed/`account-mismatch` discriminant (the
+  // `isFailed` umbrella also covers `cancelled`/`timeout`, which carry no
+  // `tag`/email fields). Copy is assembled from the STRUCTURED fields
+  // (`expectedEmail`/`actualEmail`) per D5 — never parsed from `message`.
+  const isAccountMismatch =
+    sessionState.status === "failed" &&
+    // eslint-disable-next-line ft5/no-raw-error-tag-literal -- AuthFailedTag vocabulary (no const object) — out of scope
+    sessionState.tag === "account-mismatch";
+  const expectedEmail = isAccountMismatch
+    ? sessionState.expectedEmail
+    : undefined;
+  const actualEmail = isAccountMismatch ? sessionState.actualEmail : undefined;
+
   // ---- Credential-form inline arm (keep header, form below) -------------
   if (
     showForm &&
@@ -240,7 +256,60 @@ export function InvalidDatasourceState({
           Remove datasource
         </Button>
       </div>
-      {isFailed ? (
+      {isAccountMismatch ? (
+        // Full amber "Wrong account" callout (below the action buttons),
+        // naming BOTH the bound account and the just-signed-in-as account.
+        // Amber signals a recoverable correction — red stays reserved for
+        // hard errors. Reconnect above stays live for a retry.
+        <div
+          data-testid="wrong-account-callout"
+          className="mt-2 flex w-full max-w-[360px] items-start gap-2 rounded-md border border-amber-300 bg-amber-50 p-3 text-left dark:border-amber-700 dark:bg-amber-600/13"
+        >
+          <Icon
+            name="alert-triangle"
+            className="mt-0.5 shrink-0 text-amber-600 dark:text-amber-400"
+            width={16}
+            height={16}
+            strokeWidth={2}
+            aria-hidden="true"
+          />
+          <div className="min-w-0">
+            <p className="text-[13px] font-semibold text-amber-800 dark:text-amber-300">
+              Wrong account
+            </p>
+            <p
+              data-testid="wrong-account-callout-body"
+              className="mt-0.5 text-[12px] text-amber-900 dark:text-amber-200"
+            >
+              {expectedEmail ? (
+                <>
+                  This datasource is connected to{" "}
+                  <strong className="font-semibold">{expectedEmail}</strong>.
+                </>
+              ) : (
+                // Email-less account (e.g. an AAD id_token with no `email`
+                // claim): the block still fires on `sub`, but we have no email
+                // to name, so fall back to a generic phrase instead of a blank.
+                <>This datasource is connected to a different account.</>
+              )}
+              {actualEmail ? (
+                <>
+                  {" "}
+                  You signed in as{" "}
+                  <strong className="font-semibold">{actualEmail}</strong>.
+                </>
+              ) : null}{" "}
+              Reconnect using{" "}
+              {expectedEmail ? (
+                <strong className="font-semibold">{expectedEmail}</strong>
+              ) : (
+                "the originally-connected account"
+              )}{" "}
+              to continue.
+            </p>
+          </div>
+        </div>
+      ) : isFailed ? (
         <p className="text-[12px] text-destructive">
           Reconnect failed — please try again.
         </p>

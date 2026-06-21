@@ -88,6 +88,12 @@ function AuthProbe({ correlationId }: { correlationId: string }) {
       {"message" in state && state.message !== undefined && (
         <span data-testid="message">{state.message}</span>
       )}
+      {"expectedEmail" in state && state.expectedEmail !== undefined && (
+        <span data-testid="expected-email">{state.expectedEmail}</span>
+      )}
+      {"actualEmail" in state && state.actualEmail !== undefined && (
+        <span data-testid="actual-email">{state.actualEmail}</span>
+      )}
     </div>
   );
 }
@@ -182,6 +188,63 @@ describe("store auth-* slice — sync.onEvent integration", () => {
     expect(screen.getByTestId("message").textContent).toBe(
       "Token was revoked by the user",
     );
+  });
+
+  it("surfaces expectedEmail + actualEmail on an account-mismatch auth-failed (enforce-oauth-reconnect-account-match)", async () => {
+    render(
+      <DatasourcesProvider>
+        <AuthProbe correlationId="corr-mismatch" />
+      </DatasourcesProvider>,
+    );
+    await act(async () => {});
+
+    act(() => {
+      syncOnEventCapture!({
+        kind: "auth-failed",
+        payload: {
+          correlationId: "corr-mismatch",
+          // eslint-disable-next-line ft5/no-raw-error-tag-literal -- AuthFailedTag vocabulary (no const object) — out of scope
+          tag: "account-mismatch",
+          message: "This datasource is connected to owner@example.com.",
+          expectedEmail: "owner@example.com",
+          actualEmail: "intruder@example.com",
+        },
+      });
+    });
+
+    expect(screen.getByTestId("status").textContent).toBe("failed");
+    expect(screen.getByTestId("tag").textContent).toBe("account-mismatch");
+    expect(screen.getByTestId("expected-email").textContent).toBe(
+      "owner@example.com",
+    );
+    expect(screen.getByTestId("actual-email").textContent).toBe(
+      "intruder@example.com",
+    );
+  });
+
+  it("omits the email fields for a non-account-mismatch failed session", async () => {
+    render(
+      <DatasourcesProvider>
+        <AuthProbe correlationId="corr-plain" />
+      </DatasourcesProvider>,
+    );
+    await act(async () => {});
+
+    act(() => {
+      syncOnEventCapture!({
+        kind: "auth-failed",
+        payload: {
+          correlationId: "corr-plain",
+          // eslint-disable-next-line ft5/no-raw-error-tag-literal -- AuthFailedTag vocabulary (no const object) — out of scope
+          tag: "provider-error",
+          message: "Something went wrong",
+        },
+      });
+    });
+
+    expect(screen.getByTestId("status").textContent).toBe("failed");
+    expect(screen.queryByTestId("expected-email")).toBeNull();
+    expect(screen.queryByTestId("actual-email")).toBeNull();
   });
 
   it("transitions to status='timeout' on auth-timeout", async () => {

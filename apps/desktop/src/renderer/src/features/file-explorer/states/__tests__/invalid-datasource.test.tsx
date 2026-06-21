@@ -461,6 +461,140 @@ describe("InvalidDatasourceState — unknown providerId does not trap the user",
   });
 });
 
+describe("InvalidDatasourceState — Wrong-account callout (enforce-oauth-reconnect-account-match §8.1)", () => {
+  // Drives the failed session to `tag: "account-mismatch"` after a reconnect
+  // click (so `correlationId !== null` and `isFailed` is true), then asserts
+  // the amber "Wrong account" callout assembled from the STRUCTURED fields
+  // (expectedEmail/actualEmail) — never parsed from `message` — per design.md
+  // D5 + `## Visual direction`. Reconnect stays live (not disabled).
+  async function renderThenFail(
+    terminalState: AuthSessionState,
+  ): Promise<void> {
+    mockSessionState = { status: "pending" };
+    const { rerender } = render(
+      <InvalidDatasourceState
+        providerId="google-drive"
+        datasourceId="ds-1"
+        onReconnectSucceeded={() => {}}
+        onRequestRemove={() => {}}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /^reconnect$/i }));
+    await waitFor(() =>
+      expect(authenticateStartMock).toHaveBeenCalledTimes(1),
+    );
+    mockSessionState = terminalState;
+    rerender(
+      <InvalidDatasourceState
+        providerId="google-drive"
+        datasourceId="ds-1"
+        onReconnectSucceeded={() => {}}
+        onRequestRemove={() => {}}
+      />,
+    );
+  }
+
+  it("renders the 'Wrong account' callout naming BOTH accounts and keeps the generic 'Reconnect failed' line OUT", async () => {
+    await renderThenFail({
+      status: "failed",
+      // eslint-disable-next-line ft5/no-raw-error-tag-literal -- AuthFailedTag vocabulary (no const object) — out of scope
+      tag: "account-mismatch",
+      expectedEmail: "acme@gmail.com",
+      actualEmail: "other@gmail.com",
+      message: "Wrong account — connect as acme@gmail.com.",
+    } as AuthSessionState);
+
+    expect(screen.getByText("Wrong account")).toBeInTheDocument();
+    // Both accounts named (split across <strong> spans → match within the
+    // accessible text via a function matcher that ignores element boundaries).
+    const body = screen.getByTestId("wrong-account-callout-body");
+    expect(body).toHaveTextContent(
+      "This datasource is connected to acme@gmail.com. You signed in as other@gmail.com. Reconnect using acme@gmail.com to continue.",
+    );
+    // The generic line MUST NOT also render for this tag (mutual exclusion).
+    expect(
+      screen.queryByText("Reconnect failed — please try again."),
+    ).not.toBeInTheDocument();
+  });
+
+  it("keeps Reconnect LIVE (not disabled) on an account-mismatch block", async () => {
+    await renderThenFail({
+      status: "failed",
+      // eslint-disable-next-line ft5/no-raw-error-tag-literal -- AuthFailedTag vocabulary (no const object) — out of scope
+      tag: "account-mismatch",
+      expectedEmail: "acme@gmail.com",
+      actualEmail: "other@gmail.com",
+    } as AuthSessionState);
+
+    const reconnectBtn = screen.getByRole("button", { name: /^reconnect$/i });
+    expect(reconnectBtn).not.toBeDisabled();
+    expect(reconnectBtn).not.toHaveAttribute("aria-disabled", "true");
+  });
+
+  it("omits the 'You signed in as' clause when actualEmail is undefined", async () => {
+    await renderThenFail({
+      status: "failed",
+      // eslint-disable-next-line ft5/no-raw-error-tag-literal -- AuthFailedTag vocabulary (no const object) — out of scope
+      tag: "account-mismatch",
+      expectedEmail: "acme@gmail.com",
+      // actualEmail intentionally absent (best-effort field may be undefined).
+    } as AuthSessionState);
+
+    const body = screen.getByTestId("wrong-account-callout-body");
+    expect(body).toHaveTextContent(
+      "This datasource is connected to acme@gmail.com. Reconnect using acme@gmail.com to continue.",
+    );
+    expect(body.textContent).not.toContain("You signed in as");
+  });
+
+  it("falls back to a generic phrase (never a blank email) when expectedEmail is empty — email-less account", async () => {
+    await renderThenFail({
+      status: "failed",
+      // eslint-disable-next-line ft5/no-raw-error-tag-literal -- AuthFailedTag vocabulary (no const object) — out of scope
+      tag: "account-mismatch",
+      expectedEmail: "",
+    } as AuthSessionState);
+
+    const body = screen.getByTestId("wrong-account-callout-body");
+    expect(body).toHaveTextContent(
+      "This datasource is connected to a different account. Reconnect using the originally-connected account to continue.",
+    );
+    // No blank-email artifacts ("connected to ." / "using  to").
+    expect(body.textContent).not.toContain("connected to .");
+    expect(body.textContent).not.toMatch(/using\s+to continue/);
+  });
+
+  it("the callout's alert-triangle icon is amber and aria-hidden (real-text alert, not icon-only)", async () => {
+    await renderThenFail({
+      status: "failed",
+      // eslint-disable-next-line ft5/no-raw-error-tag-literal -- AuthFailedTag vocabulary (no const object) — out of scope
+      tag: "account-mismatch",
+      expectedEmail: "acme@gmail.com",
+    } as AuthSessionState);
+
+    const callout = screen.getByTestId("wrong-account-callout");
+    const svg = callout.querySelector("svg");
+    expect(svg).not.toBeNull();
+    expect(svg!.getAttribute("aria-hidden")).toBe("true");
+    // Amber, NOT the destructive (red) token.
+    expect(svg!.classList.toString()).not.toContain("text-destructive");
+    expect(svg!.classList.toString()).toMatch(/amber/);
+  });
+
+  it("a NON-account-mismatch failed tag still shows the generic line and no callout", async () => {
+    await renderThenFail({
+      status: "failed",
+      // eslint-disable-next-line ft5/no-raw-error-tag-literal -- AuthFailedTag vocabulary (no const object) — out of scope
+      tag: "provider-error",
+    } as AuthSessionState);
+
+    expect(
+      screen.getByText("Reconnect failed — please try again."),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Wrong account")).not.toBeInTheDocument();
+  });
+});
+
 describe("InvalidDatasourceState — failed authenticateStart feedback (Decision 5)", () => {
   it("OAuth: authenticateStart {ok:false} surfaces an inline error instead of silently re-enabling", async () => {
     authenticateStartMock.mockResolvedValue({

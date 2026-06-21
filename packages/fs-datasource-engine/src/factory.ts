@@ -36,7 +36,11 @@
 
 import { randomUUID } from "node:crypto";
 
-import type { ProviderId, StoredCredentials } from "@ft5/ipc-contracts";
+import type {
+  AccountIdentity,
+  ProviderId,
+  StoredCredentials,
+} from "@ft5/ipc-contracts";
 import {
   DatasourceError,
   DatasourceErrorTag,
@@ -124,11 +128,23 @@ export type ProviderFactoryFn<P extends ProviderId = ProviderId> = (
  * See `openspec/changes/implement-datasource-onboarding/design.md`
  * Decision 5 for the rationale (separate factory method vs overloading
  * `create`).
+ *
+ * `expectedAccount` (enforce-oauth-reconnect-account-match D4) is the
+ * OPTIONAL reconnect same-account anchor: the `AccountIdentity` the
+ * datasource is already bound to, read by fs-sync from the stored
+ * `meta.account` and threaded down so the OAuth strategy can hard-block a
+ * reconnect that authenticates as a different account (throw-before-persist).
+ * Absent (first connect / capture-only) → no comparison. Existing provider
+ * `createForAuth` functions that take only the first three params stay
+ * assignable to this type (a function with fewer params is assignable to a
+ * type that declares more) — they begin consuming the param when each
+ * provider strategy wires it through to its constructor.
  */
 export type PreAuthFactoryFn<P extends ProviderId = ProviderId> = (
   datasourceId: string,
   preAuth: PreAuthConfig | null,
   ctx: BaseClientContext,
+  expectedAccount?: AccountIdentity,
 ) => DatasourceClient<P>;
 
 /**
@@ -237,6 +253,14 @@ export interface ClientFactory {
    * Callers with an existing id (e.g. the renderer's Reconnect path)
    * SHOULD pass it through.
    *
+   * `expectedAccount` is the OPTIONAL reconnect same-account anchor
+   * (enforce-oauth-reconnect-account-match D4). On a reconnect, fs-sync reads
+   * the datasource's stored `meta.account` and passes it here; the factory
+   * forwards it to the OAuth strategy, which after the token exchange
+   * hard-blocks (throw-before-persist) if the freshly-authenticated `sub`
+   * differs. Omitted on first connect (capture-only — no anchor to compare
+   * against). Credentials-form providers ignore it.
+   *
    * @throws DatasourceError `tag="invalid-datasource"` if:
    *   - `providerId` is not in the registry (unknown provider), OR
    *   - `providerId`'s `authKind` is `"oauth"` but `oauthAppConfig` is
@@ -249,6 +273,7 @@ export interface ClientFactory {
     oauthAppConfig: OAuthAppConfig | null,
     ctx: EngineContext,
     datasourceId?: string,
+    expectedAccount?: AccountIdentity,
   ): DatasourceClient<P>;
 }
 
@@ -342,6 +367,7 @@ export function createClientFactory(registry: ProviderRegistry): ClientFactory {
       oauthAppConfig: OAuthAppConfig | null,
       ctx: EngineContext,
       datasourceId?: string,
+      expectedAccount?: AccountIdentity,
     ): DatasourceClient<P> {
       // Mint a temporary id when the caller did not supply one. A stable
       // value matters for the lifetime of this single authenticate flow
@@ -397,7 +423,17 @@ export function createClientFactory(registry: ProviderRegistry): ClientFactory {
       // The strategy receives `preAuth` exactly as supplied — null for
       // credentials-form, non-null for OAuth — and routes via its own
       // internal precedence (see e.g. GoogleDriveClient.getOAuthAppConfig).
-      return entry.createForAuth(effectiveDatasourceId, oauthAppConfig, baseCtx);
+      // `expectedAccount` is forwarded as the 4th positional arg (the
+      // reconnect same-account anchor, enforce-oauth-reconnect-account-match
+      // D4); `undefined` on first connect. OAuth strategies that have wired
+      // it through to their constructor consume it; others (and
+      // credentials-form) ignore the extra arg.
+      return entry.createForAuth(
+        effectiveDatasourceId,
+        oauthAppConfig,
+        baseCtx,
+        expectedAccount,
+      );
     },
   };
 }

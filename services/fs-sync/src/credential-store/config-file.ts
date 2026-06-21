@@ -77,7 +77,13 @@ export class ConfigFileCredentialStore implements CredentialStore {
   }
 
   async get(datasourceId: string): Promise<StoredCredentials | null> {
-    const content = await this.read();
+    // A wholly-missing credentials file is the absence of every row, so `get`
+    // resolves `null` per the engine's `CredentialStore` port contract
+    // ("get returns null, not an error, when no row exists"). `createIfMissing`
+    // collapses ENOENT to an empty in-memory store; `assertMode` (permission
+    // widening) and the corrupt-shape guard inside `read()` still propagate, so
+    // a real read failure is NOT masked.
+    const content = await this.read({ createIfMissing: true });
     return content.credentials[datasourceId] ?? null;
   }
 

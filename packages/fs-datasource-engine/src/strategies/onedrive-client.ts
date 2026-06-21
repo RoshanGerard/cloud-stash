@@ -62,6 +62,7 @@ import { basename, posix as pathPosix } from "node:path";
 import { Readable, Transform } from "node:stream";
 
 import type {
+  AccountIdentity,
   AuthIntent,
   AuthResult,
   DatasourceStatus,
@@ -77,6 +78,7 @@ import type {
 import { DatasourceError, DatasourceErrorTag } from "@ft5/ipc-contracts";
 
 import type { PreAuthConfig } from "../auth-types.js";
+import { parseIdToken, IdTokenError } from "../oauth/id-token.js";
 import {
   BaseDatasourceClient,
   type BaseClientContext,
@@ -148,8 +150,13 @@ function clampOneDrivePageSize(requested: number): number {
   return Math.min(Math.max(Math.trunc(requested), 1), ONEDRIVE_TOP_MAX);
 }
 
-// MSAL / Graph scopes for file read/write + refresh
-const OAUTH_SCOPE = "offline_access Files.ReadWrite.All User.Read";
+// MSAL / Graph scopes for file read/write + refresh.
+//
+// `openid email` are appended (enforce-oauth-reconnect-account-match D1) so the
+// token endpoint returns an `id_token` carrying the account `sub` + `email`
+// used to capture the same-account anchor. OneDrive has no resource-scope
+// sufficiency check, so the widened request is purely additive.
+const OAUTH_SCOPE = "openid email offline_access Files.ReadWrite.All User.Read";
 
 // ---------------------------------------------------------------------------
 // Utility: path <-> Graph URL addressing
@@ -326,6 +333,50 @@ interface OneDriveCredsMeta {
   redirectUri: string;
   accessToken: string;
   refreshToken: string;
+  /** The bound account identity (enforce-oauth-reconnect-account-match D3).
+   * Populated from `authResult.meta.account` on the legacy/create path and on
+   * a successful exchange. `refreshTokenImpl` re-emits it so a refresh (whose
+   * response carries no `id_token`) does NOT erase the anchor. `undefined`
+   * for credentials connected before this shipped (capture-on-next-auth, D8). */
+  account?: AccountIdentity;
+}
+
+/**
+ * Best-effort read of the `tid` (tenant id) claim from a Microsoft `id_token`
+ * payload, WITHOUT validating any other claim. Used only to derive the one
+ * accepted issuer before handing the token to `parseIdToken` for full
+ * validation. Returns `undefined` on any structural decode failure (wrong
+ * segment count, bad base64url, non-object JSON, or non-string `tid`); the
+ * caller then fails closed (D7). Deliberately tolerant — it must never throw,
+ * so the single fail-closed catch in `captureAccountFromIdToken` owns the
+ * error path.
+ */
+function readIdTokenTid(idToken: string): string | undefined {
+  const segments = idToken.split(".");
+  const payloadSegment = segments[1];
+  if (segments.length !== 3 || payloadSegment === undefined) return undefined;
+  try {
+    const json = Buffer.from(payloadSegment, "base64url").toString("utf8");
+    const parsed: unknown = JSON.parse(json);
+    if (parsed === null || typeof parsed !== "object") return undefined;
+    const { tid } = parsed as Record<string, unknown>;
+    return typeof tid === "string" ? tid : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+/** Read `meta.account` into an `AccountIdentity` when it is a well-formed
+ * `{ sub: string; email: string }`; otherwise `undefined`. Tolerant of legacy
+ * credentials that lack the field (D8). */
+function readAccountFromMeta(
+  meta: Record<string, unknown>,
+): AccountIdentity | undefined {
+  const account = meta.account;
+  if (account === null || typeof account !== "object") return undefined;
+  const { sub, email } = account as Record<string, unknown>;
+  if (typeof sub !== "string" || sub.length === 0) return undefined;
+  return { sub, email: typeof email === "string" ? email : "" };
 }
 
 function readCredsFromStored(credentials: StoredCredentials): OneDriveCredsMeta {
@@ -346,12 +397,14 @@ function readCredsFromStored(credentials: StoredCredentials): OneDriveCredsMeta 
         "OneDrive credentials must include meta.clientId, meta.tenantId, meta.redirectUri",
     });
   }
+  const account = readAccountFromMeta(meta);
   return {
     clientId: meta.clientId,
     tenantId: meta.tenantId,
     redirectUri: meta.redirectUri,
     accessToken: authResult.accessToken,
     refreshToken: authResult.refreshToken ?? "",
+    ...(account ? { account } : {}),
   };
 }
 
@@ -416,6 +469,14 @@ export class OneDriveClient extends BaseDatasourceClient<"onedrive"> {
    * lands here without a boundary translation step.
    */
   private preAuth: PreAuthConfig | undefined;
+  /**
+   * Optional reconnect same-account anchor (enforce-oauth-reconnect-account-
+   * match D4). Seeded at construction on the reconnect createForAuth path
+   * (fs-sync reads the datasource's stored `meta.account` and threads it down).
+   * When present, the token exchange hard-blocks (throw-before-persist) if the
+   * freshly-authenticated `sub` differs. `undefined` on first connect
+   * (capture-only). Also drives the authorize-URL `login_hint` (D6). */
+  private readonly expectedAccount: AccountIdentity | undefined;
   private readonly graphFactory: GraphFactory;
   private readonly fetchImpl: typeof fetch;
   private readonly lruCap: number;
@@ -432,12 +493,15 @@ export class OneDriveClient extends BaseDatasourceClient<"onedrive"> {
     creds: OneDriveCredsMeta | null,
     options: OneDriveClientOptions = {},
     preAuth?: PreAuthConfig | null,
+    expectedAccount?: AccountIdentity,
   ) {
     super(init);
     this.creds = creds;
     // Normalise null → undefined so internal precedence checks compare
     // against a single sentinel.
     this.preAuth = preAuth ?? undefined;
+    // Reconnect same-account anchor (D4). `undefined` on first connect.
+    this.expectedAccount = expectedAccount;
     this.graphFactory = options.graphFactory ?? createDefaultGraphFactory();
     this.fetchImpl = options.fetchImpl ?? ((globalThis as { fetch: typeof fetch }).fetch).bind(globalThis);
     this.lruCap = options.lruCap ?? 512;
@@ -629,6 +693,13 @@ export class OneDriveClient extends BaseDatasourceClient<"onedrive"> {
       response_mode: "query",
       scope: OAUTH_SCOPE,
     });
+    // login_hint (D6): on a reconnect (expectedAccount present), steer the
+    // provider to pre-select the bound account so most users never hit the
+    // hard block. Steering only — D4's post-exchange check is the enforcement.
+    // Omitted on first connect, and when the anchor carries no email.
+    if (this.expectedAccount && this.expectedAccount.email !== "") {
+      params.set("login_hint", this.expectedAccount.email);
+    }
     const authorizeUrl = `https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/authorize?${params.toString()}`;
     const intent: OAuthIntent = {
       kind: "oauth",
@@ -660,10 +731,29 @@ export class OneDriveClient extends BaseDatasourceClient<"onedrive"> {
     } catch (err) {
       throw this.normalizeErrorImpl(err);
     }
-    return this.parseTokenResponse(resp);
+    // capture: true — this is the authorization-code exchange; read + validate
+    // the id_token and capture/enforce the account identity (D2/D3/D4/D7).
+    return this.parseTokenResponse(resp, { capture: true });
   }
 
-  private async parseTokenResponse(resp: Response): Promise<AuthResult> {
+  /**
+   * Parse a token-endpoint response into an `AuthResult`.
+   *
+   * `capture` selects the account-identity mode (enforce-oauth-reconnect-
+   * account-match):
+   *   - `true` (authorization-code exchange): read + validate the `id_token`
+   *     (D2), fail closed with a RETRYABLE error if it is absent/unreadable
+   *     (D7), enforce the same-account anchor when `expectedAccount` is set
+   *     (D4, throw-before-persist), and write the captured `AccountIdentity`
+   *     onto `result.meta.account` + `this.creds.account` (D3).
+   *   - `false` (refresh grant): refresh responses carry NO `id_token`; do not
+   *     require one. PRESERVE the anchor by re-emitting the stored
+   *     `this.creds.account` onto `result.meta.account` (D3).
+   */
+  private async parseTokenResponse(
+    resp: Response,
+    opts: { capture: boolean },
+  ): Promise<AuthResult> {
     const text = await resp.text();
     let parsed: Record<string, unknown>;
     try {
@@ -712,6 +802,24 @@ export class OneDriveClient extends BaseDatasourceClient<"onedrive"> {
     if (typeof expiresIn === "number") {
       result.expiresAt = Date.now() + expiresIn * 1000;
     }
+
+    // Account identity (enforce-oauth-reconnect-account-match).
+    //   - capture (exchange): read + validate the id_token, enforce the
+    //     anchor (throw-before-persist), then carry the captured identity.
+    //   - preserve (refresh): re-emit the stored anchor; refresh has no
+    //     id_token.
+    let account: AccountIdentity | undefined;
+    if (opts.capture) {
+      account = this.captureAccountFromIdToken(parsed, oauthApp.clientId);
+    } else {
+      // Refresh: anchor survives from the current creds (D3). Carry it
+      // forward so persistence does not erase it.
+      account = this.creds?.account;
+    }
+    if (account) {
+      (result.meta as Record<string, unknown>).account = account;
+    }
+
     // Update in-memory creds so subsequent Graph calls use the new token.
     // On the createForAuth path (creds: null at construction), seed a
     // fresh OneDriveCredsMeta from the AuthResult + preAuth-sourced OAuth
@@ -723,15 +831,107 @@ export class OneDriveClient extends BaseDatasourceClient<"onedrive"> {
         redirectUri: oauthApp.redirectUri,
         accessToken,
         refreshToken: typeof refreshToken === "string" ? refreshToken : "",
+        ...(account ? { account } : {}),
       };
     } else {
       this.creds = {
         ...this.creds,
         accessToken,
         ...(typeof refreshToken === "string" ? { refreshToken } : {}),
+        ...(account ? { account } : {}),
       };
     }
     return result;
+  }
+
+  /**
+   * Decode + validate the exchange response's `id_token`, enforce the
+   * reconnect same-account anchor, and return the captured `AccountIdentity`.
+   *
+   * Microsoft issuer (E1, CRITICAL): a real Microsoft v2.0 `id_token`'s `iss`
+   * is TENANT-SPECIFIC —
+   * `https://login.microsoftonline.com/{tenant-GUID}/v2.0` — and NEVER carries
+   * `common`; the matching tenant GUID is the token's own `tid` claim. We have
+   * no external source for the GUID at capture time (the createForAuth path
+   * uses the `common` authority), so the one accepted issuer is derived from
+   * the token's own `tid`. This also handles personal MSA accounts for free
+   * (`tid` = `9188040d-6c67-4c5b-b112-36a304b66dad`). Trust is the
+   * TLS-direct-exchange model (D2); the load-bearing enforcement is the `sub`
+   * comparison below.
+   *
+   * Fail-closed (D7): a missing / non-string / unparseable `id_token`, a
+   * missing / non-string `tid`, or any claim-validation failure throws a
+   * RETRYABLE `DatasourceError` — we NEVER persist credentials whose identity
+   * we could not read, so an account swap can't slip through. The `tid` read
+   * and `parseIdToken` share ONE try/catch so every failure fails closed
+   * uniformly (and we never build a `.../undefined/v2.0` issuer).
+   *
+   * Enforce (D4): when `this.expectedAccount` is set and the freshly-read
+   * `sub` differs, throw `DatasourceError{ tag: account-mismatch }` carrying
+   * BOTH emails + BOTH subs on `raw`, inside the exchange closure (before
+   * `persistCredentials`), so the throw skips persistence with no rollback
+   * window.
+   */
+  private captureAccountFromIdToken(
+    parsed: Record<string, unknown>,
+    clientId: string,
+  ): AccountIdentity {
+    let account: AccountIdentity;
+    try {
+      const idToken = parsed.id_token;
+      if (typeof idToken !== "string" || idToken.length === 0) {
+        throw new IdTokenError(
+          "malformed",
+          "token response is missing the id_token (openid scope required)",
+        );
+      }
+      // Derive the accepted issuer from the token's own tenant GUID (`tid`).
+      // Decode the payload here only to read `tid`; parseIdToken re-decodes
+      // and performs full claim validation (aud/iss/exp/sub).
+      const tid = readIdTokenTid(idToken);
+      if (typeof tid !== "string" || tid.length === 0) {
+        throw new IdTokenError(
+          "bad-iss",
+          "Microsoft id_token is missing a tenant id (tid) — cannot derive issuer",
+        );
+      }
+      account = parseIdToken(idToken, {
+        clientId,
+        issuers: [`https://login.microsoftonline.com/${tid}/v2.0`],
+      });
+    } catch (err) {
+      if (err instanceof IdTokenError) {
+        // Fail closed (D7): retryable so the user can re-consent.
+        throw new DatasourceError<"onedrive">({
+          tag: DatasourceErrorTag.AuthExpired,
+          datasourceType: "onedrive",
+          datasourceId: this.datasourceId,
+          retryable: true,
+          raw: { kind: "id-token-unreadable", reason: err.reason },
+          message:
+            "Could not read the account identity from Microsoft's response — please try connecting again.",
+        });
+      }
+      throw err;
+    }
+
+    // Enforce the same-account anchor (D4) — throw-before-persist.
+    if (this.expectedAccount && account.sub !== this.expectedAccount.sub) {
+      throw new DatasourceError<"onedrive">({
+        tag: DatasourceErrorTag.AccountMismatch,
+        datasourceType: "onedrive",
+        datasourceId: this.datasourceId,
+        retryable: false,
+        raw: {
+          expectedSub: this.expectedAccount.sub,
+          expectedEmail: this.expectedAccount.email,
+          actualSub: account.sub,
+          actualEmail: account.email,
+        },
+        message: `This datasource is connected to ${this.expectedAccount.email}. Reconnect using that account to continue.`,
+      });
+    }
+    return account;
   }
 
   // -------------------------------------------------------------------------
@@ -1537,7 +1737,9 @@ export class OneDriveClient extends BaseDatasourceClient<"onedrive"> {
     } catch (err) {
       throw this.normalizeErrorImpl(err);
     }
-    return this.parseTokenResponse(resp);
+    // capture: false — refresh responses carry no id_token; preserve the
+    // existing account anchor rather than reading one (D3).
+    return this.parseTokenResponse(resp, { capture: false });
   }
 
   // -------------------------------------------------------------------------
@@ -1761,8 +1963,19 @@ export const createOneDriveClientForAuth: PreAuthFactoryFn<"onedrive"> = (
   datasourceId,
   preAuth,
   ctx,
+  expectedAccount,
 ) => {
-  return new OneDriveClient({ datasourceId, ctx }, null, {}, preAuth);
+  // `expectedAccount` (4th positional arg per PreAuthFactoryFn) is the
+  // reconnect same-account anchor; threaded to the 5th constructor slot so the
+  // exchange can hard-block a different-account reconnect (D4). `undefined` on
+  // first connect (capture-only).
+  return new OneDriveClient(
+    { datasourceId, ctx },
+    null,
+    {},
+    preAuth,
+    expectedAccount,
+  );
 };
 
 /**

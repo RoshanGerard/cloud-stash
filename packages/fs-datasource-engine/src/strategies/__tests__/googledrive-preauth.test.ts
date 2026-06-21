@@ -30,6 +30,14 @@ import {
 // Tiny harness — just enough to construct the strategy and call authenticate
 // ---------------------------------------------------------------------------
 
+/** Build a `header.payload.signature` JWT (dummy signature; never verified —
+ * enforce-oauth-reconnect-account-match D2). */
+function makeIdToken(payload: Record<string, unknown>): string {
+  const b64url = (obj: unknown): string =>
+    Buffer.from(JSON.stringify(obj), "utf8").toString("base64url");
+  return `${b64url({ alg: "RS256", typ: "JWT" })}.${b64url(payload)}.ZHVtbXktc2ln`;
+}
+
 function makeContext(): BaseClientContext {
   const credentialStore: CredentialStore = {
     get: async () => null,
@@ -127,6 +135,16 @@ describe("GoogleDriveClient — preAuth (no creds)", () => {
           access_token: "new-at",
           refresh_token: "new-rt",
           expires_in: 3600,
+          // Capture-on-exchange is unconditional (enforce-oauth-reconnect-
+          // account-match) — supply a valid id_token whose `aud` matches the
+          // preAuth clientId so the exchange does not fail closed.
+          id_token: makeIdToken({
+            sub: "preauth-sub",
+            email: "preauth@example.com",
+            aud: "preauth-client-id",
+            iss: "https://accounts.google.com",
+            exp: Math.floor(Date.now() / 1000) + 3600,
+          }),
         }),
         { status: 200, headers: { "Content-Type": "application/json" } },
       );

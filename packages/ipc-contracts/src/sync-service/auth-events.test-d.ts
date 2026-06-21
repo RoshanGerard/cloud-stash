@@ -90,20 +90,43 @@ describe("sync-service auth-* event taxonomy — implement-datasource-onboarding
     >();
   });
 
-  it("auth-failed payload is { correlationId, tag, message? }", () => {
+  it("auth-failed payload is { correlationId, tag, message?, expectedEmail?, actualEmail? }", () => {
+    // enforce-oauth-reconnect-account-match D5: the account-mismatch tag
+    // carries the bound account email (`expectedEmail`, always present for
+    // that tag) plus the just-signed-in-as email (`actualEmail`, optional).
+    // Both are OPTIONAL on the shared payload — every other tag omits them.
     expectTypeOf<AuthFailedPayload>().toEqualTypeOf<{
       readonly correlationId: string;
       readonly tag: AuthFailedTag;
       readonly message?: string;
+      readonly expectedEmail?: string;
+      readonly actualEmail?: string;
     }>();
     expectTypeOf<EventPayloadMap["auth-failed"]>().toEqualTypeOf<
       AuthFailedPayload
     >();
   });
 
+  it("auth-failed payload exposes optional account-mismatch email fields", () => {
+    // Explicit member checks — `toEqualTypeOf` treats extra optional members
+    // as equal, so assert the fields concretely exist and are `string?`.
+    expectTypeOf<AuthFailedPayload>().toHaveProperty("expectedEmail");
+    expectTypeOf<AuthFailedPayload>().toHaveProperty("actualEmail");
+    expectTypeOf<AuthFailedPayload["expectedEmail"]>().toEqualTypeOf<
+      string | undefined
+    >();
+    expectTypeOf<AuthFailedPayload["actualEmail"]>().toEqualTypeOf<
+      string | undefined
+    >();
+  });
+
   it("AuthFailedTag union contains at least auth-revoked + provider-error", () => {
     expectTypeOf<"auth-revoked">().toMatchTypeOf<AuthFailedTag>();
     expectTypeOf<"provider-error">().toMatchTypeOf<AuthFailedTag>();
+  });
+
+  it("AuthFailedTag union admits account-mismatch (reconnect wrong-account)", () => {
+    expectTypeOf<"account-mismatch">().toMatchTypeOf<AuthFailedTag>();
   });
 
   it("auth-timeout payload is { correlationId }", () => {

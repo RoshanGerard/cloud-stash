@@ -142,10 +142,28 @@ export type FileMetadata<T extends DatasourceType> = DatasourceFileEntry<T>;
 // ---------------------------------------------------------------------------
 
 /**
+ * Durable identity of the account an OAuth datasource is bound to. OAuth
+ * strategies persist this under `AuthResult.meta.account` after validating
+ * the issued `id_token`. `sub` is the stable, provider-issued identity key
+ * used for the reconnect same-account comparison; `email` is retained for
+ * display only (it can change and MUST NOT be used as the identity key).
+ */
+export interface AccountIdentity {
+  sub: string;
+  email: string;
+}
+
+/**
  * Minimal auth result persisted by `CredentialStore` and consumed by
  * strategies. Kept flexible (`meta: Record<string, unknown>`) so providers
  * can stash tenant ids, region, and other auxiliary fields without schema
  * growth here.
+ *
+ * OAuth strategies persist the bound account under `meta.account` as an
+ * `AccountIdentity` (`sub` = durable key, `email` = display only). `meta`
+ * stays `Record<string, unknown>` (intentionally un-narrowed) so providers
+ * keep stashing arbitrary auxiliary fields; consumers that need the account
+ * read `meta.account` and narrow at the read site.
  */
 export interface AuthResult {
   accessToken: string;
@@ -212,7 +230,7 @@ export interface Quota {
 // ---------------------------------------------------------------------------
 
 /**
- * The 10-tag taxonomy every strategy's `normalizeError` MUST map onto. See
+ * The 11-tag taxonomy every strategy's `normalizeError` MUST map onto. See
  * Decision 9 in `add-fs-datasource-engine` design.md. Consumers (UI toast,
  * telemetry, audit log) switch on `tag` for presentation.
  *
@@ -227,6 +245,13 @@ export interface Quota {
  * misconfigured — registry drift, missing credential file, or wrong
  * credential shape — BEFORE any provider call goes out. Strategies'
  * `normalizeError` MUST NOT emit this tag for raw provider exceptions.
+ *
+ * `"account-mismatch"` (per enforce-oauth-reconnect-account-match) is thrown
+ * by an OAuth strategy's authenticate completion closure — NOT by
+ * `normalizeError` — when a reconnect authenticates as a different account
+ * (`sub`) than the datasource is bound to. Like `"cancelled"` and
+ * `"invalid-datasource"` it is engine-originated, raised before the base
+ * persists, so the previously-stored credentials are left intact.
  */
 export const DatasourceErrorTag = {
   AuthExpired: "auth-expired",
@@ -239,6 +264,9 @@ export const DatasourceErrorTag = {
   ProviderError: "provider-error",
   Cancelled: "cancelled",
   InvalidDatasource: "invalid-datasource",
+  /** A reconnect that authenticated as a DIFFERENT account than the
+   * datasource is bound to (fresh `sub` ≠ the bound `meta.account.sub`). */
+  AccountMismatch: "account-mismatch",
 } as const;
 export type DatasourceErrorTag =
   (typeof DatasourceErrorTag)[keyof typeof DatasourceErrorTag];
