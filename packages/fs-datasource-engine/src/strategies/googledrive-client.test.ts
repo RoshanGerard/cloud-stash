@@ -3631,20 +3631,14 @@ describe("GoogleDriveClient — doDownloadFileImpl mid-stream 401 → auth-expir
 // ---------------------------------------------------------------------------
 
 describe("GoogleDriveClient — doDownloadFileImpl Google Apps export (files.export)", () => {
-  // Derived from the shared GOOGLE_APPS_EXPORT_FORMATS const — adding a new
-  // entry to the const automatically covers it here (no manual sync needed).
-  // Guard: the set-equality assertion below + the const-driven renderer test
-  // together enforce the single-source-of-truth invariant: engine and renderer
-  // can never disagree on which subtypes are exportable or which extension applies.
+  // Derived directly from GOOGLE_APPS_EXPORT_FORMATS — adding a new entry to
+  // the const automatically covers it in the it.each below (no manual sync
+  // needed). Drift-safety is structural: both the engine (here) and the
+  // renderer read the single const generically via [mime].exportMime /
+  // [mime].extension, so there is no second list that could diverge.
   const exportableSubtypes = Object.entries(GOOGLE_APPS_EXPORT_FORMATS).map(
     ([mime, { exportMime }]) => ({ mime, exportMime }),
   );
-
-  it("exportableSubtypes covers EXACTLY the keys in GOOGLE_APPS_EXPORT_FORMATS (drift guard)", () => {
-    expect(exportableSubtypes.map((s) => s.mime).sort()).toEqual(
-      Object.keys(GOOGLE_APPS_EXPORT_FORMATS).sort(),
-    );
-  });
 
   it.each(exportableSubtypes)(
     "$mime routes through files.export with the mapped exportMime; NO alt=media call; byte-counts via onProgress; result has no contentRange",
@@ -4055,12 +4049,15 @@ describe("GoogleDriveClient — doDownloadFileImpl non-exportable Google Apps re
     } catch (err) {
       caught = err;
     }
-    expect(caught).toBeInstanceOf(Error);
-    // The error must NOT be the friendly Apps message (different code
-    // path); the fake's missing-stream responder bubbles up via
-    // normalizeErrorImpl.
-    const errMsg = (caught as Error).message ?? "";
-    expect(errMsg).not.toContain("add-drive-docs-editors-export");
+    expect(caught).toBeInstanceOf(DatasourceError);
+    // The folder mime must NOT trigger the Google Apps friendly refusal — it
+    // must fall through to the alt=media path, where the fake throws
+    // no-get-stream-responder (404/notFound), normalized to tag='not-found'.
+    // If the folder mime were wrongly caught by the Apps refusal branch,
+    // the tag would be 'unsupported' and the message check below would fail.
+    const e = caught as DatasourceError<"google-drive">;
+    expect(e.tag).toBe("not-found");
+    expect(e.message).not.toContain("Google Drive documents download not supported");
   });
 });
 
