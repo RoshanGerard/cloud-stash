@@ -30,6 +30,9 @@ describe("sync-service command contract", () => {
     // now that orchestration moved out of the engine.
     // migrate-upload-orchestration-out-of-engine §7.4 —
     // `"sync:enqueue-upload"` removed from the union (chunk F).
+    // `downloads:clear-history` was added by `add-download-history-ui`
+    // (tasks §1) — it deletes terminal `downloads` rows by the optional
+    // status/age filter.
     type Expected =
       | "sync:enqueue-mirror"
       | "sync:list-jobs"
@@ -55,6 +58,7 @@ describe("sync-service command contract", () => {
       | "files:upload"
       | "sync:cancel-download"
       | "downloads:list-active"
+      | "downloads:clear-history"
       | "uploads:list-active"
       | "sync:cancel-upload";
     expectTypeOf<CommandName>().toEqualTypeOf<Expected>();

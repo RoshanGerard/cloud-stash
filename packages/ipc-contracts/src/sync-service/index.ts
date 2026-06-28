@@ -13,6 +13,8 @@ export type {
 
 export type {
   BackoffStrategy,
+  ClearDownloadHistoryRequest,
+  ClearDownloadHistoryResponse,
   CommandError,
   CommandMap,
   CommandName,
@@ -22,6 +24,7 @@ export type {
   DownloadJob,
   DownloadsListActiveRequest,
   DownloadsListActiveResponse,
+  DownloadTerminalStatus,
   FilesCommandErrorShape,
   FilesErrorTag,
   FilesRemoveEntryResult,
