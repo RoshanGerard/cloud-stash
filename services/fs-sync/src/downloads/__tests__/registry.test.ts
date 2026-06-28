@@ -20,7 +20,7 @@
 //     abortController: AbortController;
 //   }
 //
-// API: set / update / delete / finalize / get / snapshot. See registry.ts
+// API: set / update / finalize / get / snapshot. See registry.ts
 // for full rationale on the type-narrow `update` partial and the
 // replace-don't-mutate strategy.
 //
@@ -206,28 +206,30 @@ describe("DownloadRegistry", () => {
     });
   });
 
-  describe("delete", () => {
-    it("delete removes the entry; subsequent get returns undefined", () => {
+  describe("finalize (memory removal)", () => {
+    it("finalize removes the entry; subsequent get returns undefined", () => {
       const { registry } = makeRegistry();
       registry.set(makeEntry());
-      registry.delete("job-A");
+      registry.finalize("job-A", { status: "completed" });
       expect(registry.get("job-A")).toBeUndefined();
       expect(registry.size()).toBe(0);
     });
 
-    it("delete on a missing downloadJobId is a silent no-op (no throw)", () => {
+    it("finalize on a missing downloadJobId is a silent no-op (no throw)", () => {
       const { registry } = makeRegistry();
       registry.set(makeEntry({ downloadJobId: "job-A" }));
-      expect(() => registry.delete("does-not-exist")).not.toThrow();
+      expect(() =>
+        registry.finalize("does-not-exist", { status: "completed" }),
+      ).not.toThrow();
       expect(registry.size()).toBe(1);
       expect(registry.get("job-A")).toBeDefined();
     });
 
-    it("delete then snapshot omits the entry", () => {
+    it("finalize then snapshot omits the entry", () => {
       const { registry } = makeRegistry();
       registry.set(makeEntry({ downloadJobId: "job-A", startedAt: 1_000 }));
       registry.set(makeEntry({ downloadJobId: "job-B", startedAt: 2_000 }));
-      registry.delete("job-A");
+      registry.finalize("job-A", { status: "completed" });
       const snap = registry.snapshot();
       expect(snap).toHaveLength(1);
       expect(snap[0]?.downloadJobId).toBe("job-B");
@@ -290,7 +292,7 @@ describe("DownloadRegistry", () => {
       expect(registry.get("job-A")?.bytesDownloaded).toBe(100);
     });
 
-    it("interleaved set / update / delete preserves last-writer-wins semantics", () => {
+    it("interleaved set / update / finalize preserves last-writer-wins semantics", () => {
       const { registry } = makeRegistry();
       const a1 = makeEntry({ downloadJobId: "job-A", startedAt: 1_000 });
       const b1 = makeEntry({ downloadJobId: "job-B", startedAt: 2_000 });
@@ -298,7 +300,7 @@ describe("DownloadRegistry", () => {
       registry.set(b1);
       registry.update("job-A", { bytesDownloaded: 10 });
       registry.update("job-B", { bytesDownloaded: 20 });
-      registry.delete("job-A");
+      registry.finalize("job-A", { status: "completed" });
       registry.update("job-B", { bytesDownloaded: 30 });
       const snap = registry.snapshot();
       expect(snap).toHaveLength(1);
@@ -310,8 +312,8 @@ describe("DownloadRegistry", () => {
   // §11.3 — Tiny lifecycle integration test: registry transitions match the
   // design when fed a fake engine event sequence. The registry doesn't
   // subscribe to the engine bus (that's §13.21-§13.26); this test simulates
-  // the lifecycle by manually calling set / update / delete in the order the
-  // §13 handler will eventually drive (start → progress → terminal).
+  // the lifecycle by manually calling set / update / finalize in the order the
+  // §13 handler drives (start → progress → terminal).
   describe("lifecycle integration (§11.3)", () => {
     it("start → multiple progress updates → terminal success removes the entry", () => {
       const { registry } = makeRegistry();
@@ -352,8 +354,8 @@ describe("DownloadRegistry", () => {
       expect(registry.snapshot()).toHaveLength(1);
       expect(registry.snapshot()[0]?.bytesDownloaded).toBe(1_048_576);
 
-      // 3. Terminal `delete` (driven by engine bus `file-downloaded`).
-      registry.delete("job-lifecycle");
+      // 3. Terminal `finalize` (driven by the handler's success path).
+      registry.finalize("job-lifecycle", { status: "completed" });
       expect(registry.get("job-lifecycle")).toBeUndefined();
       expect(registry.snapshot()).toEqual([]);
     });
@@ -372,9 +374,8 @@ describe("DownloadRegistry", () => {
       });
       registry.update("job-cancel", { bytesDownloaded: 1_000 });
       registry.update("job-cancel", { bytesDownloaded: 5_000 });
-      // Engine bus `download-cancelled { datasourceId, path, bytesDownloaded,
-      // bytesTotal }` → registry delete.
-      registry.delete("job-cancel");
+      // Handler cancel path → registry finalize with status 'cancelled'.
+      registry.finalize("job-cancel", { status: "cancelled" });
       expect(registry.get("job-cancel")).toBeUndefined();
     });
 
@@ -390,9 +391,13 @@ describe("DownloadRegistry", () => {
         startedAt: 7_000,
         abortController: new AbortController(),
       });
-      // Engine bus `download-failed` → fs-sync handler emits terminal and
-      // calls registry.delete (no retry path here).
-      registry.delete("job-fail");
+      // Handler terminal-failure path → emits terminal and calls
+      // registry.finalize with status 'failed' (no retry path here).
+      registry.finalize("job-fail", {
+        status: "failed",
+        failureTag: "other",
+        failureMessage: "download failed",
+      });
       expect(registry.snapshot()).toEqual([]);
     });
   });
@@ -428,7 +433,7 @@ describe("DownloadRegistry", () => {
   // callback uses it to correlate engine events back to the in-flight
   // job's `downloadJobId`. Identity fields are immutable per the §11
   // entry contract, so the reverse index is set on `set` and cleared on
-  // `delete` — `update` must NOT touch it.
+  // `finalize` — `update` must NOT touch it.
   describe("findByKey reverse index (§13.23)", () => {
     it("returns the downloadJobId for an in-flight (datasourceId, sourcePath) pair", () => {
       const { registry } = makeRegistry();
@@ -441,10 +446,10 @@ describe("DownloadRegistry", () => {
       expect(registry.findByKey("ds-ghost", "/unknown.pdf")).toBeUndefined();
     });
 
-    it("clears the mapping after delete so a fresh download can re-claim the key", () => {
+    it("clears the mapping after finalize so a fresh download can re-claim the key", () => {
       const { registry } = makeRegistry();
       registry.set(makeEntry({ downloadJobId: "job-A" }));
-      registry.delete("job-A");
+      registry.finalize("job-A", { status: "completed" });
       expect(registry.findByKey("ds-1", "/welcome.pdf")).toBeUndefined();
       // A fresh entry on the same (datasourceId, sourcePath) is now allowed.
       registry.set(
@@ -477,10 +482,10 @@ describe("DownloadRegistry", () => {
       expect(registry.findByKey("ds-2", "/other.pdf")).toBe("job-B");
     });
 
-    it("delete is a no-op on an unknown id and does not corrupt the reverse index", () => {
+    it("finalize is a no-op on an unknown id and does not corrupt the reverse index", () => {
       const { registry } = makeRegistry();
       registry.set(makeEntry({ downloadJobId: "job-A" }));
-      registry.delete("nope");
+      registry.finalize("nope", { status: "completed" });
       expect(registry.findByKey("ds-1", "/welcome.pdf")).toBe("job-A");
     });
   });
@@ -490,9 +495,8 @@ describe("DownloadRegistry", () => {
   // The in-memory Map stays authoritative; the registry is the single writer
   // to the `downloads` table. These blocks query the table directly to pin the
   // mirror behavior. `set` → in-flight row; `update` → throttled progress
-  // writes; `finalize` → forced terminal row + memory cleanup; `delete` →
-  // memory-only (leaves the row in-flight — the transitional split that lets
-  // the handler keep calling `delete`).
+  // writes; `finalize` → forced terminal row + memory cleanup (the sole
+  // terminal-status writer and the only memory-removal path).
   // ---------------------------------------------------------------------------
 
   describe("db mirror — set inserts an in-flight row", () => {
@@ -755,19 +759,6 @@ describe("DownloadRegistry", () => {
         .prepare("SELECT COUNT(*) AS n FROM downloads")
         .get() as { n: number };
       expect(count.n).toBe(0);
-    });
-
-    it("delete is transitional and memory-only: it leaves the db row in-flight (finalize is the sole terminal writer)", () => {
-      const { registry, db } = makeRegistry();
-      registry.set(makeEntry({ downloadJobId: "job-A" }));
-      registry.delete("job-A");
-      // Memory gone...
-      expect(registry.get("job-A")).toBeUndefined();
-      expect(registry.findByKey("ds-1", "/welcome.pdf")).toBeUndefined();
-      // ...but the row stays in-flight (delete does NOT write a terminal state).
-      const row = readRow(db, "job-A");
-      expect(row?.status).toBe("in-flight");
-      expect(row?.ended_at).toBeNull();
     });
   });
 });

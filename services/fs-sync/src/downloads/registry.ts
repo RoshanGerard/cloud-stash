@@ -26,9 +26,8 @@
 //   - `update` → THROTTLED UPDATE of bytes/content_length (10 MB OR 30 s).
 //   - `finalize` → FORCED UPDATE of the terminal status + final bytes +
 //                  failure metadata + `ended_at`, then memory cleanup. The
-//                  only terminal-status writer.
-//   - `delete` → memory-only (transitional; the §13 handler still calls it).
-//                Leaves the row `in-flight`.
+//                  only terminal-status writer and the only memory-removal
+//                  path (the §13 handler finalizes on every terminal path).
 //
 // Naming note. The IPC-exposed `DownloadJob` from `@ft5/ipc-contracts`
 // (sync-service/commands.ts) is the wire shape — `downloadJobId`,
@@ -136,31 +135,18 @@ export interface DownloadRegistry {
   update(downloadJobId: string, partial: DownloadJobUpdate): void;
 
   /**
-   * Removes the in-memory entry (and its reverse-index + throttle-tracker
-   * state). No-op (and no throw) if `downloadJobId` is unknown — see
-   * `update` rationale.
-   *
-   * TRANSITIONAL: `delete` is memory-only and does NOT write a terminal
-   * status to the `downloads` table — it leaves the row `in-flight`. The
-   * §13 `files-download.ts` handler still calls it; a separate step migrates
-   * those call-sites to `finalize`. `finalize` is the sole terminal-status
-   * writer.
-   */
-  delete(downloadJobId: string): void;
-
-  /**
    * Terminal transition: force-writes the terminal `status`, final
    * `bytes_downloaded`, failure metadata, and `ended_at`/`updated_at` to the
    * `downloads` row (ignoring the progress throttle), THEN removes the
-   * in-memory entry + reverse-index + throttle-tracker state (the same
-   * memory cleanup `delete` performs).
+   * in-memory entry + reverse-index + throttle-tracker state.
    *
    * No-op (and no throw) if `downloadJobId` is unknown — 0 rows touched, no
-   * memory change. (Mirrors `update`/`delete`: a terminal event for a job
-   * whose entry was already removed is a benign race.)
+   * memory change. (Mirrors `update`: a terminal call for a job whose entry
+   * was already removed is a benign race — finalizing twice writes nothing
+   * the second time, so every terminal path may finalize freely.)
    *
    * When `db` was not supplied at construction this is a memory-only
-   * removal (same observable effect as `delete`).
+   * removal.
    */
   finalize(downloadJobId: string, outcome: DownloadFinalizeOutcome): void;
 
@@ -182,7 +168,7 @@ export interface DownloadRegistry {
    * the `downloadJobId` for the in-flight `(datasourceId, sourcePath)`
    * pair, or `undefined` if no entry exists for that key. O(1) — backed
    * by a Map keyed on `${datasourceId}::${sourcePath}` updated in lockstep
-   * with `set` / `delete`.
+   * with `set` / `finalize`.
    *
    * Identity fields (`datasourceId`, `sourcePath`) are immutable across an
    * entry's lifetime per the §11 design, so the reverse-index does not
@@ -212,7 +198,7 @@ const FLUSH_BYTES_THRESHOLD = 10 * 1024 * 1024; // 10 MB
 const FLUSH_INTERVAL_MS = 30_000; // 30 s
 
 /** Per-job throttle state. Seeded on `set`, reset on each flush, cleared on
- * `delete` / `finalize`. Lives ONLY in this closure — never persisted. */
+ * `finalize`. Lives ONLY in this closure — never persisted. */
 interface ThrottleState {
   lastFlushedBytes: number;
   lastFlushedAtMs: number;
@@ -223,8 +209,8 @@ export function createDownloadRegistry(
 ): DownloadRegistry {
   const entries = new Map<string, DownloadJobEntry>();
   // Reverse index keyed `${datasourceId}::${sourcePath}` → downloadJobId.
-  // Updated in lockstep with `set` / `delete` / `finalize`. NOT touched by
-  // `update` because identity fields are immutable per the entry contract.
+  // Updated in lockstep with `set` / `finalize`. NOT touched by `update`
+  // because identity fields are immutable per the entry contract.
   const byKey = new Map<string, string>();
   // Per-job progress-throttle trackers. Present only while a job is live.
   const throttle = new Map<string, ThrottleState>();
@@ -339,22 +325,6 @@ export function createDownloadRegistry(
     tracker.lastFlushedAtMs = now;
   }
 
-  function deleteEntry(downloadJobId: string): void {
-    const prev = entries.get(downloadJobId);
-    if (prev === undefined) return;
-    entries.delete(downloadJobId);
-    throttle.delete(downloadJobId);
-    const prevKey = keyOf(prev.datasourceId, prev.sourcePath);
-    // Defensive: only delete the reverse mapping if it still points at
-    // this id (a `set` for a fresh job on the same key may have already
-    // overwritten it).
-    if (byKey.get(prevKey) === downloadJobId) {
-      byKey.delete(prevKey);
-    }
-    // TRANSITIONAL: memory-only. `delete` does NOT write a terminal status
-    // — the row stays `in-flight`. `finalize` is the sole terminal writer.
-  }
-
   function finalize(
     downloadJobId: string,
     outcome: DownloadFinalizeOutcome,
@@ -375,8 +345,7 @@ export function createDownloadRegistry(
       updatedAt: now,
     });
 
-    // Memory cleanup — identical to `delete` (entry + reverse-index +
-    // throttle tracker).
+    // Memory cleanup — removes the entry + reverse-index + throttle tracker.
     entries.delete(downloadJobId);
     throttle.delete(downloadJobId);
     const prevKey = keyOf(prev.datasourceId, prev.sourcePath);
@@ -406,7 +375,6 @@ export function createDownloadRegistry(
     set,
     get,
     update,
-    delete: deleteEntry,
     finalize,
     snapshot,
     findByKey,

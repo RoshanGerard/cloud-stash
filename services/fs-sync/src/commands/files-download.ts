@@ -110,6 +110,7 @@ import type { EventBus } from "../events/event-bus.js";
 import type {
   DownloadRegistry,
   DownloadJobEntry,
+  DownloadFinalizeOutcome,
 } from "../downloads/registry.js";
 
 import { normalizeFilesError } from "./files-error-mapping.js";
@@ -1438,8 +1439,25 @@ export function makeFilesDownloadHandler(
       // flushed before.
       progress.flush();
       const datasourceId = params.datasourceId;
+      // Authoritative final byte count for the terminal `downloads` row: the
+      // registry's last-known bytes (onProgress is more accurate than the
+      // engine bus's throttled value), falling back to `bytesWritten`.
+      const finalBytes =
+        deps.registry.get(downloadJobId)?.bytesDownloaded ?? bytesWritten;
+      // Defensive default — overwritten by EACH terminal branch below before
+      // its `return`. The `finally` finalizes EXACTLY ONCE with whatever value
+      // is set here (every branch sets one; this default only fires if a future
+      // branch forgets to). `finalBytes` is declared in the catch scope (NOT
+      // inside the inner `try`) so the `finally` at the bottom can read it.
+      let finalizeOutcome: DownloadFinalizeOutcome = {
+        status: "failed",
+        failureTag: FilesErrorTag.Other,
+        failureMessage: "download failed",
+        bytesDownloaded: finalBytes,
+      };
       try {
         if (err instanceof CancelledError || abortController.signal.aborted) {
+          finalizeOutcome = { status: "cancelled", bytesDownloaded: finalBytes };
           // Read final byte count from the registry (the onProgress
           // callback's last value is more accurate than the engine
           // bus's throttled value).
@@ -1484,6 +1502,12 @@ export function makeFilesDownloadHandler(
           });
         }
         if (err instanceof RangeNotHonoredError) {
+          finalizeOutcome = {
+            status: "failed",
+            failureTag: FilesErrorTag.Other,
+            failureMessage: "range not supported on this resource",
+            bytesDownloaded: finalBytes,
+          };
           deps.fsSyncBus.emit("download-failed", {
             downloadJobId,
             datasourceId,
@@ -1500,6 +1524,12 @@ export function makeFilesDownloadHandler(
           };
         }
         if (err instanceof RangeMismatchError) {
+          finalizeOutcome = {
+            status: "failed",
+            failureTag: FilesErrorTag.Other,
+            failureMessage: "range mismatch on this resource",
+            bytesDownloaded: finalBytes,
+          };
           deps.fsSyncBus.emit("download-failed", {
             downloadJobId,
             datasourceId,
@@ -1516,6 +1546,12 @@ export function makeFilesDownloadHandler(
           };
         }
         if (err instanceof ByteCountMismatchError) {
+          finalizeOutcome = {
+            status: "failed",
+            failureTag: FilesErrorTag.Other,
+            failureMessage: "byte count mismatch",
+            bytesDownloaded: finalBytes,
+          };
           deps.fsSyncBus.emit("download-failed", {
             downloadJobId,
             datasourceId,
@@ -1532,6 +1568,12 @@ export function makeFilesDownloadHandler(
           };
         }
         if (err instanceof IntegrityFailedError) {
+          finalizeOutcome = {
+            status: "failed",
+            failureTag: FilesErrorTag.Other,
+            failureMessage: "integrity check failed",
+            bytesDownloaded: finalBytes,
+          };
           deps.fsSyncBus.emit("download-failed", {
             downloadJobId,
             datasourceId,
@@ -1553,6 +1595,12 @@ export function makeFilesDownloadHandler(
         // discriminator lives in the message.
         if (err instanceof ExhaustedRetriesError) {
           const message = `exhausted-retries: ${err.engineCause}`;
+          finalizeOutcome = {
+            status: "failed",
+            failureTag: FilesErrorTag.ExhaustedRetries,
+            failureMessage: message,
+            bytesDownloaded: finalBytes,
+          };
           deps.fsSyncBus.emit("download-failed", {
             downloadJobId,
             datasourceId,
@@ -1570,6 +1618,12 @@ export function makeFilesDownloadHandler(
         }
         if (err instanceof WalltimeExceededError) {
           const message = `walltime-exceeded: ${err.engineCause}`;
+          finalizeOutcome = {
+            status: "failed",
+            failureTag: FilesErrorTag.ExhaustedRetries,
+            failureMessage: message,
+            bytesDownloaded: finalBytes,
+          };
           deps.fsSyncBus.emit("download-failed", {
             downloadJobId,
             datasourceId,
@@ -1587,6 +1641,12 @@ export function makeFilesDownloadHandler(
         }
         // Generic engine error.
         const norm = normalizeFilesError(err);
+        finalizeOutcome = {
+          status: "failed",
+          failureTag: norm.tag,
+          failureMessage: norm.message,
+          bytesDownloaded: finalBytes,
+        };
         deps.fsSyncBus.emit("download-failed", {
           downloadJobId,
           datasourceId,
@@ -1599,7 +1659,7 @@ export function makeFilesDownloadHandler(
         });
         return { ok: false, error: norm };
       } finally {
-        deps.registry.delete(downloadJobId);
+        deps.registry.finalize(downloadJobId, finalizeOutcome);
         inflightId.current = null;
       }
     }
@@ -1617,7 +1677,10 @@ export function makeFilesDownloadHandler(
       savedPath: effectiveTargetPath,
       bytes: bytesWritten,
     });
-    deps.registry.delete(downloadJobId);
+    deps.registry.finalize(downloadJobId, {
+      status: "completed",
+      bytesDownloaded: bytesWritten,
+    });
     inflightId.current = null;
     return {
       ok: true,

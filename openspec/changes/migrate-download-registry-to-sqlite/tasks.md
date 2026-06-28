@@ -22,13 +22,13 @@ OUT OF SCOPE — deferred to the `add-download-history-ui` stub.
 - [x] 2.3 Test (TDD): `update` throttle — repeated sub-10 MB / sub-30 s updates rewrite the in-memory slot every time but write the `downloads` row only at the 10 MB OR 30 s boundary (assert both boundaries, including the "exactly at threshold" cases).
 - [x] 2.4 Implement the per-job throttle tracker (`lastFlushedBytes`, `lastFlushedAtMs`) and the gated `UPDATE` in `update`.
 - [x] 2.5 Test (TDD): `finalize(id, outcome)` — for each outcome (`completed` / `cancelled` / `failed` + tag/message), the in-memory entry and reverse-index key are removed AND the `downloads` row is updated to the terminal status with force-flushed final `bytes_downloaded`, non-null `ended_at`, and (for `failed`) `failure_tag` / `failure_message`. Assert force-flush ignores the throttle and the tracker entry is cleared.
-- [ ] 2.6 Replace the registry's `delete(id)` with `finalize(id, outcome)` (force-flush + terminal `UPDATE` + `Map.delete` + reverse-index cleanup + tracker cleanup).
+- [x] 2.6 Replace the registry's `delete(id)` with `finalize(id, outcome)` (force-flush + terminal `UPDATE` + `Map.delete` + reverse-index cleanup + tracker cleanup).
 
 ## 3. `files:download` handler call-site migration
 
-- [ ] 3.1 Test (TDD): the handler calls `registry.finalize` with the correct outcome at each terminal path — success → `completed` (`bytesDownloaded = bytesWritten`), abort/cancel → `cancelled`, error → `failed` + normalized tag/message — via the existing handler integration test harness.
-- [ ] 3.2 Switch the terminal `registry.delete(downloadJobId)` call-sites in `services/fs-sync/src/commands/files-download.ts` (~`:1602` finally/error path, `:1620` success path) to `registry.finalize(downloadJobId, outcome)`; map the normalized error to `failureTag` / `failureMessage` on the failure path.
-- [ ] 3.3 Confirm `sync:cancel-download` still reads the live entry via `registry.get(...)` and aborts via `entry.abortController` (no change — memory path intact).
+- [x] 3.1 Test (TDD): the handler calls `registry.finalize` with the correct outcome at each terminal path — success → `completed` (`bytesDownloaded = bytesWritten`), abort/cancel → `cancelled`, error → `failed` + normalized tag/message — via the existing handler integration test harness.
+- [x] 3.2 Switch the terminal `registry.delete(downloadJobId)` call-sites in `services/fs-sync/src/commands/files-download.ts` (~`:1602` finally/error path, `:1620` success path) to `registry.finalize(downloadJobId, outcome)`; map the normalized error to `failureTag` / `failureMessage` on the failure path.
+- [x] 3.3 Confirm `sync:cancel-download` still reads the live entry via `registry.get(...)` and aborts via `entry.abortController` (no change — memory path intact).
 
 ## 4. Startup interrupted-sweep
 
