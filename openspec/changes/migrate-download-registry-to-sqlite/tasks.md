@@ -32,8 +32,8 @@ OUT OF SCOPE — deferred to the `add-download-history-ui` stub.
 
 ## 4. Startup interrupted-sweep
 
-- [ ] 4.1 Test (TDD): `sweepInterruptedDownloads(db)` transitions `in-flight` rows → `interrupted` (sets `ended_at`/`updated_at`), leaves terminal rows untouched, and does not touch files on disk.
-- [ ] 4.2 Implement `sweepInterruptedDownloads(db)` in `services/fs-sync/src/downloads/` (model on `recoverRunningJobs`).
+- [x] 4.1 Test (TDD): `sweepInterruptedDownloads(db)` transitions `in-flight` rows → `interrupted` (sets `ended_at`/`updated_at`), leaves terminal rows untouched, and does not touch files on disk.
+- [x] 4.2 Implement `sweepInterruptedDownloads(db)` in `services/fs-sync/src/downloads/` (model on `recoverRunningJobs`).
 
 ## 5. Bootstrap wiring
 
