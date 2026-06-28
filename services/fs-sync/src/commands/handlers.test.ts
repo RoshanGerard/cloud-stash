@@ -195,3 +195,39 @@ describe("sync:cancel-job", () => {
     if (!res.ok) expect(res.error.tag).toBe("not-found");
   });
 });
+
+describe("downloads:clear-history (add-download-history-ui §4)", () => {
+  function seedDownload(id: string, status: string, endedAt: number | null): void {
+    db.prepare(
+      `INSERT INTO downloads (
+         download_job_id, datasource_id, source_path, target_path,
+         bytes_downloaded, content_length, status, failure_tag,
+         failure_message, started_at, updated_at, ended_at
+       ) VALUES (@id, 'ds', '/a', '/b', 0, NULL, @status, NULL, NULL, 0, 0, @endedAt)`,
+    ).run({ id, status, endedAt });
+  }
+
+  it("is registered WITHOUT the download bundle and deletes terminal rows", async () => {
+    // The beforeEach handler set omits downloadRegistry / resolveClient, yet
+    // clear-history must still route — it needs only `db` (unconditional
+    // wiring). Pins the spec scenario "downloads:clear-history command is
+    // registered".
+    expect(handlers["downloads:clear-history"]).toBeDefined();
+
+    seedDownload("done", "completed", 1000);
+    seedDownload("live", "in-flight", null);
+
+    const res = await call("downloads:clear-history", {});
+
+    expect(res.ok).toBe(true);
+    if (!res.ok) return;
+    expect(res.result).toEqual({ deleted: 1 });
+
+    const remaining = (
+      db.prepare(`SELECT download_job_id FROM downloads`).all() as Array<{
+        download_job_id: string;
+      }>
+    ).map((r) => r.download_job_id);
+    expect(remaining).toEqual(["live"]); // in-flight survives
+  });
+});

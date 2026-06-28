@@ -38,7 +38,8 @@
 // files whose basename contains `dialog` — `settings-dialog.tsx`
 // qualifies.
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -76,6 +77,14 @@ import {
   useMotionPreference,
   type MotionPreference,
 } from "./motion-store";
+import { ClearHistoryDialog } from "./clear-history-dialog";
+import {
+  DOWNLOAD_HISTORY_DEFAULT,
+  RETENTION_DAY_OPTIONS,
+  readDownloadHistorySettings,
+  writeDownloadHistorySettings,
+  type DownloadHistorySettings,
+} from "./download-history-config";
 
 export interface SettingsDialogProps {
   open: boolean;
@@ -215,7 +224,60 @@ export function SettingsDialog({
     setAlwaysAsk(checked);
   }, []);
 
+  // Download-history retention. Unlike the other Downloads settings
+  // (localStorage), this lives in the SERVICE config (config.json) because the
+  // service prunes autonomously while the app is closed (design.md Decision 1).
+  // Loaded from `sync:get-config` when the dialog opens; writes go through the
+  // read-modify-write helper that preserves the OAuth `providers` (Decision 7).
+  const [historySettings, setHistorySettings] = useState<DownloadHistorySettings>(
+    DOWNLOAD_HISTORY_DEFAULT,
+  );
+  const [clearOpen, setClearOpen] = useState(false);
+  const clearButtonRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    void readDownloadHistorySettings().then((settings) => {
+      if (!cancelled) setHistorySettings(settings);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [open]);
+
+  // Optimistically reflect the change, then persist; surface a toast if the
+  // write fails so the setting doesn't silently snap back on reopen (the
+  // read-modify-write aborts rather than wiping providers on a read error).
+  const persistHistory = useCallback(
+    async (patch: Partial<DownloadHistorySettings>) => {
+      const res = await writeDownloadHistorySettings(patch);
+      if (!res.ok) {
+        toast.error("Couldn't save the download-history setting");
+      }
+    },
+    [],
+  );
+
+  const handleToggleAutoPrune = useCallback(
+    (checked: boolean) => {
+      setHistorySettings((prev) => ({ ...prev, autoPrune: checked }));
+      void persistHistory({ autoPrune: checked });
+    },
+    [persistHistory],
+  );
+
+  const handleRetentionChange = useCallback(
+    (value: string) => {
+      const days = Number(value) as DownloadHistorySettings["retentionDays"];
+      setHistorySettings((prev) => ({ ...prev, retentionDays: days }));
+      void persistHistory({ retentionDays: days });
+    },
+    [persistHistory],
+  );
+
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         aria-describedby="settings-dialog-description"
@@ -408,8 +470,120 @@ export function SettingsDialog({
               onCheckedChange={handleToggleAlwaysAsk}
             />
           </div>
+
+          {/* Download-history retention group (add-download-history-ui §7).
+              Unlike the rows above (localStorage), these live in the SERVICE
+              config so the service can prune autonomously while the app is
+              closed (design.md Decision 1). */}
+          <div className="border-border/60 flex flex-col gap-3 border-t pt-3">
+            <h4 className="text-xs font-semibold">Download history</h4>
+
+            {/* Auto-delete Switch row — mirrors Always-ask. */}
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex flex-col gap-1">
+                <Label
+                  htmlFor="downloads-auto-prune-toggle"
+                  className="text-xs font-medium"
+                >
+                  Auto-delete old history
+                </Label>
+                <p className="text-muted-foreground text-xs">
+                  History older than {historySettings.retentionDays} days is
+                  deleted automatically.
+                </p>
+              </div>
+              <Switch
+                id="downloads-auto-prune-toggle"
+                aria-label="Auto-delete old history"
+                checked={historySettings.autoPrune}
+                onCheckedChange={handleToggleAutoPrune}
+              />
+            </div>
+
+            {/* Retention window — mirrors the Explorer page-size dropdown.
+                Dimmed + non-interactive (native `disabled`) when auto-prune
+                is off; the disabled state is not conveyed by color alone. */}
+            <div className="flex items-center gap-3">
+              <div className="flex min-w-0 flex-1 flex-col gap-1">
+                <span className="text-xs font-medium">Keep history for</span>
+                <span className="text-muted-foreground text-xs">
+                  How long completed and failed downloads stay in the list.
+                </span>
+              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    aria-label="Keep history for"
+                    disabled={!historySettings.autoPrune}
+                    className="shrink-0"
+                  >
+                    <span className="tabular-nums">
+                      {historySettings.retentionDays} days
+                    </span>
+                    <Icon
+                      name="chevron-down"
+                      className="size-3"
+                      aria-hidden="true"
+                    />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuLabel className="text-muted-foreground text-xs uppercase tracking-wider">
+                    Retention window
+                  </DropdownMenuLabel>
+                  <DropdownMenuRadioGroup
+                    value={String(historySettings.retentionDays)}
+                    onValueChange={handleRetentionChange}
+                  >
+                    {RETENTION_DAY_OPTIONS.map((days) => (
+                      <DropdownMenuRadioItem
+                        key={days}
+                        value={String(days)}
+                        className="tabular-nums"
+                      >
+                        {days} days
+                      </DropdownMenuRadioItem>
+                    ))}
+                  </DropdownMenuRadioGroup>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+
+            {/* Clear download history — opens the filtered destructive dialog. */}
+            <div className="flex items-center gap-3">
+              <div className="flex min-w-0 flex-1 flex-col gap-1">
+                <span className="text-xs font-medium">
+                  Clear download history
+                </span>
+                <span className="text-muted-foreground text-xs">
+                  Remove past download records. Files already saved are not
+                  deleted.
+                </span>
+              </div>
+              <Button
+                ref={clearButtonRef}
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setClearOpen(true)}
+                className="text-destructive shrink-0"
+              >
+                Clear&hellip;
+              </Button>
+            </div>
+          </div>
         </section>
       </DialogContent>
     </Dialog>
+
+      <ClearHistoryDialog
+        open={clearOpen}
+        onOpenChange={setClearOpen}
+        returnFocusTo={clearButtonRef.current}
+      />
+    </>
   );
 }

@@ -16,6 +16,7 @@ export type {
 } from "../sync-service/commands.js";
 
 export type {
+  DownloadTerminalStatus,
   SerializableAuthCompletion,
   SerializableAuthIntent,
   ServiceConfig,
@@ -36,6 +37,8 @@ export type {
   SyncCancelUploadResponse,
   SyncUploadsListActiveRequest,
   SyncUploadsListActiveResponse,
+  SyncClearDownloadHistoryRequest,
+  SyncClearDownloadHistoryResponse,
   SyncAuthenticateStartRequest,
   SyncAuthenticateStartResponse,
   SyncAuthenticateCompleteRequest,

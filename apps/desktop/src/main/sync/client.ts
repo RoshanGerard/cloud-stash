@@ -333,6 +333,44 @@ export class SyncClient {
     return this.request("uploads:list-active", params, opts);
   }
 
+  /**
+   * add-download-history-ui §5 — typed wrapper for `downloads:clear-history`.
+   * Deletes terminal `downloads` rows by the optional status/age filter and
+   * returns `{ deleted }`. Effectively infallible service-side; a rejection
+   * means a transport-level failure.
+   */
+  clearDownloadHistory(
+    params: CommandParams<"downloads:clear-history">,
+    opts?: { timeoutMs?: number },
+  ): Promise<CommandResult<"downloads:clear-history">> {
+    return this.request("downloads:clear-history", params, opts);
+  }
+
+  /**
+   * add-download-history-ui §5 — typed wrapper for `sync:get-config`. Returns
+   * the parsed `ServiceConfig` (or the empty default when the file is absent).
+   * First renderer consumer of the service config (design.md Decision 8).
+   */
+  getConfig(
+    params: CommandParams<"sync:get-config">,
+    opts?: { timeoutMs?: number },
+  ): Promise<CommandResult<"sync:get-config">> {
+    return this.request("sync:get-config", params, opts);
+  }
+
+  /**
+   * add-download-history-ui §5 — typed wrapper for `sync:set-config`. Writes
+   * the full config wholesale; callers MUST preserve `providers` +
+   * `schemaVersion` (the renderer routes through a read-modify-write helper).
+   * Rejects with `SyncCommandError { tag: "io-error" }` on an invalid write.
+   */
+  setConfig(
+    params: CommandParams<"sync:set-config">,
+    opts?: { timeoutMs?: number },
+  ): Promise<CommandResult<"sync:set-config">> {
+    return this.request("sync:set-config", params, opts);
+  }
+
   authenticateStart(
     params: CommandParams<"sync:authenticate-start">,
     opts?: { timeoutMs?: number },

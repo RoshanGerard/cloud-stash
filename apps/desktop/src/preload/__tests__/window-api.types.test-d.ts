@@ -1,8 +1,11 @@
 import { describe, expectTypeOf, it } from "vitest";
 
 import type {
+  SyncClearDownloadHistoryResponse,
   SyncEvent,
+  SyncGetConfigResponse,
   SyncListJobsResponse,
+  SyncSetConfigResponse,
 } from "@ft5/ipc-contracts/sync-service-desktop";
 
 // Type-level test for the window.api.sync branch declared in window-api.d.ts.
@@ -46,6 +49,26 @@ describe("window.api.sync type declarations", () => {
   it("window.api.sync.getStatus has return type Promise<...> with no required args", () => {
     // getStatus is the void-request method — it takes no parameters
     expectTypeOf<SyncSurface["getStatus"]>().parameters.toEqualTypeOf<[]>();
+  });
+
+  // add-download-history-ui §5 — Settings → Downloads config + clear-history.
+  it("window.api.sync.getConfig is a void-request method returning Promise<SyncGetConfigResponse>", () => {
+    expectTypeOf<SyncSurface["getConfig"]>().parameters.toEqualTypeOf<[]>();
+    expectTypeOf<SyncSurface["getConfig"]>().returns.toEqualTypeOf<
+      Promise<SyncGetConfigResponse>
+    >();
+  });
+
+  it("window.api.sync.setConfig(req) returns Promise<SyncSetConfigResponse>", () => {
+    expectTypeOf<SyncSurface["setConfig"]>().returns.toEqualTypeOf<
+      Promise<SyncSetConfigResponse>
+    >();
+  });
+
+  it("window.api.sync.clearDownloadHistory(req) returns Promise<SyncClearDownloadHistoryResponse>", () => {
+    expectTypeOf<SyncSurface["clearDownloadHistory"]>().returns.toEqualTypeOf<
+      Promise<SyncClearDownloadHistoryResponse>
+    >();
   });
 
   it("authenticate (legacy) is NOT present on window.api.sync", () => {

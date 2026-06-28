@@ -107,4 +107,68 @@ describe("sync:set-config handler — implement-datasource-onboarding §12", () 
     if (res2.error.tag !== "io-error") return;
     expect(res2.error.message).toMatch(/schemaVersion/);
   });
+
+  // add-download-history-ui §2.3 — downloadHistory validation on set-config.
+  it("rejects an off-set retentionDays with io-error and does not write the file", async () => {
+    const setHandler = makeSetConfigHandler({ configStore: store });
+    const res = await setHandler(
+      {
+        config: {
+          schemaVersion: 1,
+          providers: {},
+          downloadHistory: { autoPrune: true, retentionDays: 45 },
+        } as never,
+      } as never,
+      ctx(),
+    );
+    expect(res.ok).toBe(false);
+    if (res.ok) return;
+    expect(res.error.tag).toBe("io-error");
+    // The invalid write must not touch disk — config.json stays absent.
+    await expect(fsp.stat(configPath)).rejects.toMatchObject({
+      code: "ENOENT",
+    });
+  });
+
+  it("rejects a non-boolean autoPrune with io-error", async () => {
+    const setHandler = makeSetConfigHandler({ configStore: store });
+    const res = await setHandler(
+      {
+        config: {
+          schemaVersion: 1,
+          providers: {},
+          downloadHistory: { autoPrune: "yes", retentionDays: 90 },
+        } as never,
+      } as never,
+      ctx(),
+    );
+    expect(res.ok).toBe(false);
+    if (res.ok) return;
+    expect(res.error.tag).toBe("io-error");
+  });
+
+  it("accepts a valid downloadHistory and round-trips it through get-config", async () => {
+    const setHandler = makeSetConfigHandler({ configStore: store });
+    const getHandler = makeGetConfigHandler({ configStore: store });
+
+    const setRes = await setHandler(
+      {
+        config: {
+          schemaVersion: 1,
+          providers: {},
+          downloadHistory: { autoPrune: false, retentionDays: 180 },
+        },
+      },
+      ctx(),
+    );
+    expect(setRes.ok).toBe(true);
+
+    const getRes = await getHandler({}, ctx());
+    expect(getRes.ok).toBe(true);
+    if (!getRes.ok) return;
+    expect(getRes.result.config.downloadHistory).toEqual({
+      autoPrune: false,
+      retentionDays: 180,
+    });
+  });
 });

@@ -175,10 +175,17 @@ describe("bootstrap interrupted-download sweep", () => {
 
   it("terminalizes orphaned in-flight rows to interrupted on a clean boot, leaving terminal rows untouched", async () => {
     const dbPath = path.join(scratchDir, "sync.db");
+    // `done-1`'s ended_at must be recent: the boot now ALSO runs the
+    // download-history auto-prune (default { autoPrune: true, retentionDays:
+    // 90 }, add-download-history-ui §3.4), which would delete a terminal row
+    // with an ancient ended_at. A realistically recently-completed row
+    // survives the window, isolating this assertion to the sweep's
+    // "terminal rows are untouched" guarantee.
+    const doneEndedAt = Date.now();
     seedDownloads(dbPath, [
       { id: "orphan-1", status: "in-flight", endedAt: null },
       { id: "orphan-2", status: "in-flight", endedAt: null },
-      { id: "done-1", status: "completed", endedAt: 2000 },
+      { id: "done-1", status: "completed", endedAt: doneEndedAt },
     ]);
 
     runtime = await bootstrap({
@@ -204,7 +211,10 @@ describe("bootstrap interrupted-download sweep", () => {
     expect(read("orphan-2")).toMatchObject({ status: "interrupted" });
     expect(read("orphan-2").ended_at).not.toBeNull();
     // Completed row is untouched (status + ended_at unchanged).
-    expect(read("done-1")).toMatchObject({ status: "completed", ended_at: 2000 });
+    expect(read("done-1")).toMatchObject({
+      status: "completed",
+      ended_at: doneEndedAt,
+    });
   });
 
   it("does not sweep when the PID guard is already held by another instance", async () => {
@@ -242,5 +252,139 @@ describe("bootstrap interrupted-download sweep", () => {
     } finally {
       db.close();
     }
+  });
+});
+
+describe("bootstrap download-history auto-prune (add-download-history-ui §3.4)", () => {
+  const DAY = 86_400_000;
+
+  function seedDownloads(
+    dbPath: string,
+    rows: Array<{ id: string; status: string; endedAt: number | null }>,
+  ): void {
+    const db = new Database(dbPath);
+    try {
+      applyMigrations(db);
+      const insert = db.prepare(
+        `INSERT INTO downloads (
+           download_job_id, datasource_id, source_path, target_path,
+           bytes_downloaded, content_length, status, failure_tag,
+           failure_message, started_at, updated_at, ended_at
+         ) VALUES (
+           @id, 'ds-1', '/a.bin', '/dl/a.bin', 4096, NULL, @status, NULL,
+           NULL, 1000, 1000, @endedAt
+         )`,
+      );
+      for (const r of rows) {
+        insert.run({ id: r.id, status: r.status, endedAt: r.endedAt });
+      }
+    } finally {
+      db.close();
+    }
+  }
+
+  async function writeConfig(
+    configPath: string,
+    downloadHistory: { autoPrune: boolean; retentionDays: number } | undefined,
+  ): Promise<void> {
+    await fsp.writeFile(
+      configPath,
+      JSON.stringify(
+        { schemaVersion: 1, providers: {}, downloadHistory },
+        null,
+        2,
+      ),
+      "utf8",
+    );
+  }
+
+  function exists(db: Database.Database, id: string): boolean {
+    return (
+      (
+        db
+          .prepare(
+            `SELECT COUNT(*) AS c FROM downloads WHERE download_job_id = ?`,
+          )
+          .get(id) as { c: number }
+      ).c > 0
+    );
+  }
+
+  it("prunes aged terminal rows on boot when autoPrune is on; fresh rows survive", async () => {
+    const dbPath = path.join(scratchDir, "sync.db");
+    const configPath = path.join(scratchDir, "config.json");
+    const now = Date.now();
+    seedDownloads(dbPath, [
+      { id: "aged", status: "completed", endedAt: now - 40 * DAY },
+      { id: "fresh", status: "completed", endedAt: now - 1 * DAY },
+    ]);
+    await writeConfig(configPath, { autoPrune: true, retentionDays: 30 });
+
+    runtime = await bootstrap({
+      dev: true,
+      dataDir: scratchDir,
+      configPath,
+      pidPath: path.join(scratchDir, "service-dev.pid"),
+      dbPath,
+      socketPath: pipeFor("prune-on"),
+      credentialsPath: path.join(scratchDir, "credentials.json"),
+    });
+
+    // The config-gated prune runs at stage 10c (after the interrupted sweep):
+    // the 40-day-old row is past the 30-day window, the 1-day-old one is not.
+    expect(exists(runtime.db, "aged")).toBe(false);
+    expect(exists(runtime.db, "fresh")).toBe(true);
+  });
+
+  it("still boots when config.json is malformed — auto-prune degrades, does not abort boot", async () => {
+    // Pre-change, a malformed config degraded gracefully (config is read
+    // lazily at authenticate-start). The stage-10c prune reads config eagerly;
+    // getRaw rethrows on unparseable JSON, so without a guard the boot would
+    // tear down. Review C2: the prune must swallow the read error and let the
+    // service boot.
+    const dbPath = path.join(scratchDir, "sync.db");
+    const configPath = path.join(scratchDir, "config.json");
+    seedDownloads(dbPath, [
+      { id: "x", status: "completed", endedAt: Date.now() - 1 * DAY },
+    ]);
+    await fsp.writeFile(configPath, "{ this is not valid json", "utf8");
+
+    runtime = await bootstrap({
+      dev: true,
+      dataDir: scratchDir,
+      configPath,
+      pidPath: path.join(scratchDir, "service-dev.pid"),
+      dbPath,
+      socketPath: pipeFor("prune-malformed"),
+      credentialsPath: path.join(scratchDir, "credentials.json"),
+    });
+
+    // Boot succeeded despite the unparseable config; the prune was skipped
+    // this cycle so the row is untouched.
+    expect(runtime).toBeTruthy();
+    expect(exists(runtime.db, "x")).toBe(true);
+  });
+
+  it("does NOT prune on boot when autoPrune is off", async () => {
+    const dbPath = path.join(scratchDir, "sync.db");
+    const configPath = path.join(scratchDir, "config.json");
+    const now = Date.now();
+    seedDownloads(dbPath, [
+      { id: "ancient", status: "completed", endedAt: now - 999 * DAY },
+    ]);
+    await writeConfig(configPath, { autoPrune: false, retentionDays: 30 });
+
+    runtime = await bootstrap({
+      dev: true,
+      dataDir: scratchDir,
+      configPath,
+      pidPath: path.join(scratchDir, "service-dev.pid"),
+      dbPath,
+      socketPath: pipeFor("prune-off"),
+      credentialsPath: path.join(scratchDir, "credentials.json"),
+    });
+
+    // autoPrune off → even a 999-day-old terminal row survives.
+    expect(exists(runtime.db, "ancient")).toBe(true);
   });
 });

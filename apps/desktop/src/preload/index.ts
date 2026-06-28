@@ -81,10 +81,13 @@ import type {
   SyncCancelJobResponse,
   SyncCancelUploadRequest,
   SyncCancelUploadResponse,
+  SyncClearDownloadHistoryRequest,
+  SyncClearDownloadHistoryResponse,
   SyncUploadsListActiveResponse,
   SyncEnqueueMirrorRequest,
   SyncEnqueueMirrorResponse,
   SyncEvent,
+  SyncGetConfigResponse,
   SyncGetJobRequest,
   SyncGetJobResponse,
   SyncGetRetryPolicyRequest,
@@ -92,6 +95,8 @@ import type {
   SyncGetStatusResponse,
   SyncListJobsRequest,
   SyncListJobsResponse,
+  SyncSetConfigRequest,
+  SyncSetConfigResponse,
   SyncSetRetryPolicyRequest,
   SyncSetRetryPolicyResponse,
 } from "@ft5/ipc-contracts/sync-service-desktop";
@@ -293,6 +298,20 @@ const api = {
     // mirroring the `ping()` pattern above.
     getStatus: (): Promise<SyncGetStatusResponse> =>
       ipcRenderer.invoke(SYNC_CHANNELS.getStatus),
+    // add-download-history-ui §5 — Settings → Downloads config + clear-history.
+    // FIRST renderer consumer of the service config (design.md Decision 8);
+    // the renderer routes WRITES through a read-modify-write helper that
+    // preserves `providers` (Decision 7). `getConfig` has a void request.
+    getConfig: (): Promise<SyncGetConfigResponse> =>
+      ipcRenderer.invoke(SYNC_CHANNELS.getConfig),
+    setConfig: (
+      req: SyncSetConfigRequest,
+    ): Promise<SyncSetConfigResponse> =>
+      ipcRenderer.invoke(SYNC_CHANNELS.setConfig, req),
+    clearDownloadHistory: (
+      req: SyncClearDownloadHistoryRequest,
+    ): Promise<SyncClearDownloadHistoryResponse> =>
+      ipcRenderer.invoke(SYNC_CHANNELS.clearDownloadHistory, req),
     getRetryPolicy: (
       req: SyncGetRetryPolicyRequest,
     ): Promise<SyncGetRetryPolicyResponse> =>

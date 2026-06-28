@@ -331,8 +331,10 @@ interface AuthenticateCancelCommand {
 //
 // Per-provider OAuth app config (clientId / clientSecret) is sourced from a
 // service-owned JSON file (`~/ft5/sync_app/config.json`) per design.md
-// Decision 4. These commands expose that file to the desktop for a future
-// settings UI; the renderer does NOT consume them in this change.
+// Decision 4. These commands expose that file to the desktop. The
+// `add-download-history-ui` change makes the renderer the FIRST consumer
+// (the Settings → Downloads retention controls) via a read-modify-write
+// helper, and adds the optional `downloadHistory` retention field below.
 
 /**
  * Schema-versioned per-provider OAuth app config. The file ships at
@@ -340,6 +342,16 @@ interface AuthenticateCancelCommand {
  * at `sync:authenticate-start` time. `redirectUri` is computed by the
  * loopback broker at session-start (the OS-allocated ephemeral port lands
  * inside the URL) — it is NOT persisted in the file.
+ *
+ * `downloadHistory` (add-download-history-ui, design.md Decision 2) is an
+ * OPTIONAL download-history retention policy, additive at the unchanged
+ * config `schemaVersion: 1` — an existing `config.json` without the field
+ * stays valid. It is consumed service-side by the auto-prune scheduler.
+ * Because `ServiceConfigStore.read`'s `as ServiceConfig` cast does NOT
+ * validate the field's shape, every reader applies the default
+ * `{ autoPrune: true, retentionDays: 90 }` when the field is absent OR
+ * malformed (see fs-sync-service "Service config carries optional
+ * download-history retention settings").
  */
 export type ServiceConfig = {
   readonly schemaVersion: 1;
@@ -351,6 +363,10 @@ export type ServiceConfig = {
       >
     >
   >;
+  readonly downloadHistory?: {
+    readonly autoPrune: boolean;
+    readonly retentionDays: 30 | 90 | 180 | 365;
+  };
 };
 
 export type SyncGetConfigError =
@@ -727,6 +743,62 @@ interface DownloadsListActiveCommand {
   readonly error: FilesCommandErrorShape;
 }
 
+// ---- downloads:clear-history (add-download-history-ui §1 / Decisions 5–6) -
+//
+// `downloads:clear-history` deletes terminal `downloads` rows the service
+// records durably (the table + the five-status model are owned by
+// `migrate-download-registry-to-sqlite`). The optional `filter` narrows the
+// delete by terminal status and/or age; an absent filter clears every
+// terminal row. It NEVER deletes the live `in-flight` row and NEVER touches
+// the partial files on disk — records only. The handler emits no event: the
+// renderer toaster renders only in-flight downloads, which this never
+// touches, so there is nothing to invalidate.
+
+/**
+ * The four TERMINAL download statuses, promoted to the wire for the first
+ * time by this change as the `clear-history` filter vocabulary.
+ * `migrate-download-registry-to-sqlite` keeps the full five-status set
+ * (which also includes the live `in-flight`) confined to the database;
+ * `in-flight` is deliberately excluded here — a live download is never
+ * clearable.
+ */
+export type DownloadTerminalStatus =
+  | "completed"
+  | "failed"
+  | "cancelled"
+  | "interrupted";
+
+/**
+ * Wire-shape alias for the `downloads:clear-history` request. The optional
+ * `filter` narrows the delete: `status` restricts to those terminal
+ * statuses; `olderThanMs` restricts to rows whose `ended_at` is older than
+ * `now - olderThanMs`; the two combine (AND). An absent `filter` (or an
+ * absent member) imposes no restriction on that axis, so an empty request
+ * clears all terminal rows.
+ */
+export type ClearDownloadHistoryRequest = {
+  readonly filter?: {
+    readonly status?: readonly DownloadTerminalStatus[];
+    readonly olderThanMs?: number;
+  };
+};
+
+/**
+ * Wire-shape alias for the `downloads:clear-history` response, expressed as
+ * the standard tagged envelope. `value.deleted` is the number of rows
+ * removed by the call.
+ */
+export type ClearDownloadHistoryResponse =
+  | { readonly ok: true; readonly value: { readonly deleted: number } }
+  | { readonly ok: false; readonly error: FilesCommandErrorShape };
+
+interface ClearDownloadHistoryCommand {
+  readonly command: "downloads:clear-history";
+  readonly params: ClearDownloadHistoryRequest;
+  readonly result: { readonly deleted: number };
+  readonly error: FilesCommandErrorShape;
+}
+
 // ---- uploads:* commands (migrate-upload-orchestration-out-of-engine §7) ---
 //
 // `uploads:list-active` returns the live snapshot of in-flight upload jobs
@@ -837,6 +909,7 @@ export interface CommandMap {
   "files:upload": FilesUploadCommand;
   "sync:cancel-download": SyncCancelDownloadCommand;
   "downloads:list-active": DownloadsListActiveCommand;
+  "downloads:clear-history": ClearDownloadHistoryCommand;
   "uploads:list-active": UploadsListActiveCommand;
   "sync:cancel-upload": SyncCancelUploadCommand;
 }
@@ -877,6 +950,7 @@ export const COMMAND_NAMES: ReadonlyArray<CommandName> = [
   "files:upload",
   "sync:cancel-download",
   "downloads:list-active",
+  "downloads:clear-history",
   "uploads:list-active",
   "sync:cancel-upload",
 ] as const;

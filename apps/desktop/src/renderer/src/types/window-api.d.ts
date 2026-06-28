@@ -38,9 +38,14 @@ import type {
   SyncAuthenticateStartResponse,
   SyncCancelUploadRequest,
   SyncCancelUploadResponse,
+  SyncClearDownloadHistoryRequest,
+  SyncClearDownloadHistoryResponse,
   SyncEvent,
+  SyncGetConfigResponse,
   SyncListJobsRequest,
   SyncListJobsResponse,
+  SyncSetConfigRequest,
+  SyncSetConfigResponse,
   SyncUploadsListActiveResponse,
 } from "@ft5/ipc-contracts/sync-service-desktop";
 
@@ -145,6 +150,15 @@ declare global {
         cancelUpload(
           req: SyncCancelUploadRequest,
         ): Promise<SyncCancelUploadResponse>;
+        // add-download-history-ui §5 — Settings → Downloads config +
+        // clear-history. get/set-config are the FIRST renderer consumer of the
+        // service config (design.md Decision 8); writes route through the
+        // read-modify-write helper that preserves `providers` (Decision 7).
+        getConfig(): Promise<SyncGetConfigResponse>;
+        setConfig(req: SyncSetConfigRequest): Promise<SyncSetConfigResponse>;
+        clearDownloadHistory(
+          req: SyncClearDownloadHistoryRequest,
+        ): Promise<SyncClearDownloadHistoryResponse>;
       };
       // migrate-upload-orchestration-out-of-engine §7.2 — renderer-facing
       // namespace for the new `uploads:*` commands.

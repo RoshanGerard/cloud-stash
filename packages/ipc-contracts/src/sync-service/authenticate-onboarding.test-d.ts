@@ -186,7 +186,9 @@ describe("sync:authenticate-cancel — implement-datasource-onboarding shape", (
 });
 
 describe("sync:get-config / sync:set-config — config round-trip", () => {
-  it("ServiceConfig has { schemaVersion: 1, providers: Record<ProviderId, { clientId, clientSecret }> }", () => {
+  it("ServiceConfig has { schemaVersion: 1, providers: Record<ProviderId, { clientId, clientSecret }>, downloadHistory? }", () => {
+    // add-download-history-ui (Decision 2): `downloadHistory` is an OPTIONAL
+    // additive field at the unchanged `schemaVersion: 1`.
     expectTypeOf<ServiceConfig>().toEqualTypeOf<{
       readonly schemaVersion: 1;
       readonly providers: Readonly<
@@ -197,6 +199,10 @@ describe("sync:get-config / sync:set-config — config round-trip", () => {
           >
         >
       >;
+      readonly downloadHistory?: {
+        readonly autoPrune: boolean;
+        readonly retentionDays: 30 | 90 | 180 | 365;
+      };
     }>();
   });
 
@@ -289,6 +295,7 @@ describe("CommandMap exhaustive — new commands present, retired commands gone"
       | "files:upload"
       | "sync:cancel-download"
       | "downloads:list-active"
+      | "downloads:clear-history"
       | "uploads:list-active"
       | "sync:cancel-upload";
     expectTypeOf<CommandName>().toEqualTypeOf<Expected>();
