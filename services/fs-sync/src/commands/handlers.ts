@@ -40,6 +40,7 @@ import {
   type HashComputer,
 } from "./files-download.js";
 import { makeDownloadsListActiveHandler } from "./downloads-list-active.js";
+import { makeClearDownloadHistoryHandler } from "./downloads-clear-history.js";
 import {
   createDefaultFilesUploadDeps,
   makeFilesUploadHandler,
@@ -373,6 +374,13 @@ export function buildCommandHandlers(deps: HandlersDeps): CommandHandlers {
           }),
         }
       : {}),
+    // downloads:clear-history (add-download-history-ui §4) — wired
+    // UNCONDITIONALLY: it deletes durable `downloads` rows and needs only
+    // `deps.db` (always present), independent of the registry-gated download
+    // bundle above. Never touches in-flight rows or on-disk files.
+    "downloads:clear-history": makeClearDownloadHistoryHandler({
+      db: deps.db,
+    }),
     // files:upload + sync:cancel-upload + uploads:list-active —
     // wired only when both `resolveClient` and `uploadRegistry` are
     // supplied. Mirrors the download-bundle pattern above. The legacy
