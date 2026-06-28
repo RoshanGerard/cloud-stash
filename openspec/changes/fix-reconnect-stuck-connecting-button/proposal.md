@@ -215,6 +215,11 @@ path — and its recovery UI — is never exercised.
   was built and unit-tested, but the *Testing*-mode `access_denied`
   dead-end — which preempts the token exchange the account-mismatch check
   depends on — was outside that change's tested surface.
+- **Sibling stub** `fix-insufficient-auth-scopes-recovery` (same smoke
+  session): a correctly-authenticated datasource hitting a runtime
+  "insufficient authentication scopes" 403 also lands in a no-recovery dead
+  end. Both stubs converge on the reconnect view + its message-rendering path
+  — coordinate the messaging work (this stub's Q6 ↔ that stub's Q4).
 - Related code: `apps/desktop/src/renderer/src/features/file-explorer/states/invalid-datasource.tsx`
   (reconnect view state machine),
   `apps/desktop/src/renderer/src/features/datasources/credential-forms/oauth-form.tsx`
