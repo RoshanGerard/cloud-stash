@@ -22,6 +22,8 @@ import type { ServiceConfig } from "@ft5/ipc-contracts/sync-service";
 import type { ProviderId } from "@ft5/ipc-contracts";
 import type { OAuthAppConfig } from "@ft5/fs-datasource-engine";
 
+import { isValidDownloadHistory } from "./download-history-settings.js";
+
 /**
  * Thrown by `getOAuthAppConfig` when the requested provider's app config is
  * absent, malformed, or has empty `clientId`/`clientSecret`. The `path` is
@@ -160,6 +162,19 @@ export class ServiceConfigStore {
     if (next.schemaVersion !== 1) {
       throw new Error(
         `service config schemaVersion must be 1, got ${String(next.schemaVersion)}`,
+      );
+    }
+    // add-download-history-ui §2.3 — when present, `downloadHistory` MUST be a
+    // valid retention policy (boolean `autoPrune`, `retentionDays` in
+    // 30/90/180/365). Validate BEFORE any disk write so an out-of-contract
+    // value leaves config.json untouched; the handler maps the throw to
+    // `io-error`. An absent field stays valid (additive, optional).
+    if (
+      next.downloadHistory !== undefined &&
+      !isValidDownloadHistory(next.downloadHistory)
+    ) {
+      throw new Error(
+        "service config downloadHistory is invalid; autoPrune must be a boolean and retentionDays one of 30/90/180/365",
       );
     }
     await fsp.mkdir(path.dirname(this.filePath), { recursive: true });
