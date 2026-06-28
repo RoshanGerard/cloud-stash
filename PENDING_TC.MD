@@ -1251,3 +1251,71 @@ needs a running dev build and is environment-specific. Until run, treat the
 interrupted-sweep as automated-green but NOT yet runtime-verified.
 
 **Owner:** unassigned (HUMAN). Pair with the next environment-loop pass.
+
+---
+
+## add-download-history-ui — running-system download-history controls smoke
+
+**Scenario:** start the dev build (`pnpm -F @ft5/desktop dev`, with
+`pnpm dev:sync-service`) against a `~/ft5/sync_app/config.json` that already
+holds at least one OAuth provider entry (real or fixture `clientId` /
+`clientSecret`). Open **Settings → Downloads** and confirm:
+
+1. **Auto-prune Switch + retention dropdown round-trip the service config.**
+   The Switch reflects `downloadHistory.autoPrune` (default on) and the
+   retention `DropdownMenuRadioGroup` reflects `retentionDays` (default 90).
+   Toggle the Switch off → the retention selector dims and becomes
+   non-interactive; pick `180`; re-open Settings and confirm both values
+   persisted to `config.json` (`downloadHistory: { autoPrune: false,
+   retentionDays: 180 }`).
+2. **CRITICAL — providers survive a download-history write.** After the write
+   in (1), inspect `config.json` and confirm the `providers` block (the OAuth
+   `clientId` / `clientSecret`) is byte-for-byte unchanged and `schemaVersion`
+   is still `1`. This is the read-modify-write guarantee (Decision 7) against a
+   real on-disk file — the unit suite proves it with a mocked bridge, but the
+   live `sync:set-config` wholesale-overwrite path has only been exercised
+   in-process.
+3. **Filtered Clear deletes only matching terminal rows.** Seed the
+   `downloads` table with a few terminal rows of mixed status/age (e.g. run +
+   cancel a couple of downloads). Activate "Clear download history", verify the
+   confirm dialog copy states on-disk files are NOT deleted, choose a
+   status/age filter, confirm, and check the toast reports the deleted count.
+   Inspect `sync.db` and confirm only the matching terminal rows were removed,
+   any `in-flight` row survived, and the on-disk files at those rows'
+   `target_path` are untouched.
+4. **Autonomous prune while the app is closed.** With auto-prune on and a short
+   retention window, leave a terminal row older than the window, fully close
+   the app, restart only the fs-sync-service, and confirm the aged terminal row
+   is gone after the startup prune (the scheduler's first prune runs
+   synchronously at boot, after `sweepInterruptedDownloads`).
+
+**Covered in isolation by:**
+- `apps/desktop/src/renderer/src/features/settings/__tests__/download-history-config.test.ts`
+  (read-modify-write preserves `providers` + `schemaVersion`; aborts the write
+  on a failed read so secrets are never wiped; fresh-read-before-write).
+- `apps/desktop/src/renderer/src/features/settings/__tests__/clear-history-dialog.test.tsx`
+  (confirm-copy states files-not-deleted; filtered dispatch all/by-status/by-age;
+  deleted-count toast; disabled at zero chips).
+- `services/fs-sync/src/downloads/__tests__/prune.test.ts` +
+  `prune-scheduler.test.ts` (config-gated prune, window boundary, never
+  in-flight, never files, 24h timer, cleared on shutdown, config-read failure
+  degrades to skip-cycle).
+- `services/fs-sync/src/commands/__tests__/downloads-clear-history.test.ts`
+  (no-filter=all-terminal, status filter, `olderThanMs` filter, combined,
+  never in-flight, never files, deleted count).
+- `services/fs-sync/src/config/__tests__/*` (round-trip `downloadHistory`;
+  absent/malformed → default; `retentionDays` validation rejects off-set
+  values).
+
+**Why deferred:** CLAUDE.md pre-archive step 8 asks for the feature exercised
+against a running system. Every layer (contracts, service prune/clear/config,
+desktop bridge, renderer controls + read-modify-write helper) is automated-green,
+but the feature has NOT been exercised through a live Electron build with a real
+`config.json` + `sync.db`. The providers-preservation guarantee (2) and the
+autonomous-prune-while-closed behavior (4) are the highest-value live checks —
+both depend on real on-disk round-trips the unit suite mocks. Until run, treat
+the download-history controls as automated-green but NOT yet runtime-verified.
+
+**Owner:** unassigned (HUMAN). Pair with the next environment-loop pass and the
+`migrate-download-registry-to-sqlite` interrupted-sweep smoke above (same dev
+build, same `sync.db`).
