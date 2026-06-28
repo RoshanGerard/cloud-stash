@@ -20,17 +20,63 @@
 //     abortController: AbortController;
 //   }
 //
-// API: set / update / delete / get / snapshot. See registry.ts for full
-// rationale on the type-narrow `update` partial and the replace-don't-mutate
-// strategy.
+// API: set / update / delete / finalize / get / snapshot. See registry.ts
+// for full rationale on the type-narrow `update` partial and the
+// replace-don't-mutate strategy.
+//
+// Durable mirror (migrate-download-registry-to-sqlite). The registry now
+// accepts an optional `db` handle and write-through-mirrors the download
+// lifecycle into the `downloads` table while the in-memory Map stays
+// authoritative for live state. Most tests below construct an in-memory
+// `:memory:` db via `makeRegistry()` and assert the memory contract is
+// unchanged; the DB-inspecting tests additionally query `downloads` to pin
+// the mirror behavior (set → in-flight row, throttled progress writes,
+// finalize → terminal row + memory cleanup).
 
-import { describe, expect, it } from "vitest";
+import Database from "better-sqlite3";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { applyMigrations } from "../../db/migrations.js";
 import {
   createDownloadRegistry,
+  type DownloadFinalizeOutcome,
   type DownloadJobEntry,
   type DownloadJobUpdate,
+  type DownloadRegistry,
 } from "../registry.js";
+
+/**
+ * Spins up a fresh in-memory SQLite db with the full schema applied and a
+ * registry wired to it. Returns both so DB-inspecting tests can query the
+ * `downloads` table directly. Memory-only tests destructure just `registry`.
+ */
+function makeRegistry(): { registry: DownloadRegistry; db: Database.Database } {
+  const db = new Database(":memory:");
+  applyMigrations(db);
+  return { registry: createDownloadRegistry(db), db };
+}
+
+/** Row shape of the `downloads` table (snake_case as stored). */
+interface DownloadRow {
+  download_job_id: string;
+  datasource_id: string;
+  source_path: string;
+  target_path: string;
+  bytes_downloaded: number;
+  content_length: number | null;
+  status: string;
+  failure_tag: string | null;
+  failure_message: string | null;
+  started_at: number;
+  updated_at: number;
+  ended_at: number | null;
+}
+
+function readRow(db: Database.Database, id: string): DownloadRow | undefined {
+  return db
+    .prepare("SELECT * FROM downloads WHERE download_job_id = ?")
+    .get(id) as DownloadRow | undefined;
+}
 
 function makeEntry(
   overrides: Partial<DownloadJobEntry> = {},
@@ -48,10 +94,14 @@ function makeEntry(
   };
 }
 
+afterEach(() => {
+  vi.useRealTimers();
+});
+
 describe("DownloadRegistry", () => {
   describe("set / get", () => {
     it("set adds an entry keyed by downloadJobId, retrievable via get", () => {
-      const registry = createDownloadRegistry();
+      const { registry } = makeRegistry();
       const entry = makeEntry();
       registry.set(entry);
       const got = registry.get("job-A");
@@ -69,13 +119,13 @@ describe("DownloadRegistry", () => {
     });
 
     it("get for an unknown downloadJobId returns undefined, never throws", () => {
-      const registry = createDownloadRegistry();
+      const { registry } = makeRegistry();
       expect(() => registry.get("nope")).not.toThrow();
       expect(registry.get("nope")).toBeUndefined();
     });
 
     it("set with the same downloadJobId twice replaces the entry (last write wins)", () => {
-      const registry = createDownloadRegistry();
+      const { registry } = makeRegistry();
       const first = makeEntry({ bytesDownloaded: 100 });
       const second = makeEntry({ bytesDownloaded: 200 });
       registry.set(first);
@@ -86,7 +136,7 @@ describe("DownloadRegistry", () => {
     });
 
     it("size reflects the number of entries", () => {
-      const registry = createDownloadRegistry();
+      const { registry } = makeRegistry();
       expect(registry.size()).toBe(0);
       registry.set(makeEntry({ downloadJobId: "job-A", startedAt: 1_000 }));
       registry.set(makeEntry({ downloadJobId: "job-B", startedAt: 2_000 }));
@@ -96,7 +146,7 @@ describe("DownloadRegistry", () => {
 
   describe("update", () => {
     it("update merges the partial into the existing entry", () => {
-      const registry = createDownloadRegistry();
+      const { registry } = makeRegistry();
       registry.set(makeEntry({ bytesDownloaded: 0, contentLength: null }));
       registry.update("job-A", {
         bytesDownloaded: 524_288,
@@ -114,7 +164,7 @@ describe("DownloadRegistry", () => {
     });
 
     it("update merges partial fields independently (only one of {bytesDownloaded, contentLength})", () => {
-      const registry = createDownloadRegistry();
+      const { registry } = makeRegistry();
       registry.set(makeEntry({ bytesDownloaded: 100, contentLength: 1_000 }));
       registry.update("job-A", { bytesDownloaded: 250 });
       expect(registry.get("job-A")?.bytesDownloaded).toBe(250);
@@ -123,7 +173,7 @@ describe("DownloadRegistry", () => {
     });
 
     it("update preserves the abortController reference (no cloning)", () => {
-      const registry = createDownloadRegistry();
+      const { registry } = makeRegistry();
       const entry = makeEntry();
       registry.set(entry);
       registry.update("job-A", { bytesDownloaded: 42 });
@@ -131,7 +181,7 @@ describe("DownloadRegistry", () => {
     });
 
     it("update on a missing downloadJobId is a silent no-op (no throw, registry unchanged)", () => {
-      const registry = createDownloadRegistry();
+      const { registry } = makeRegistry();
       registry.set(makeEntry());
       expect(() =>
         registry.update("does-not-exist", { bytesDownloaded: 1 }),
@@ -145,7 +195,7 @@ describe("DownloadRegistry", () => {
       // This guards the "snapshot is a stable copy" property — if `update`
       // mutated the entry in place, a snapshot taken before the update would
       // see post-update values, breaking consumers.
-      const registry = createDownloadRegistry();
+      const { registry } = makeRegistry();
       registry.set(makeEntry({ bytesDownloaded: 0 }));
       const before = registry.get("job-A");
       registry.update("job-A", { bytesDownloaded: 999 });
@@ -158,7 +208,7 @@ describe("DownloadRegistry", () => {
 
   describe("delete", () => {
     it("delete removes the entry; subsequent get returns undefined", () => {
-      const registry = createDownloadRegistry();
+      const { registry } = makeRegistry();
       registry.set(makeEntry());
       registry.delete("job-A");
       expect(registry.get("job-A")).toBeUndefined();
@@ -166,7 +216,7 @@ describe("DownloadRegistry", () => {
     });
 
     it("delete on a missing downloadJobId is a silent no-op (no throw)", () => {
-      const registry = createDownloadRegistry();
+      const { registry } = makeRegistry();
       registry.set(makeEntry({ downloadJobId: "job-A" }));
       expect(() => registry.delete("does-not-exist")).not.toThrow();
       expect(registry.size()).toBe(1);
@@ -174,7 +224,7 @@ describe("DownloadRegistry", () => {
     });
 
     it("delete then snapshot omits the entry", () => {
-      const registry = createDownloadRegistry();
+      const { registry } = makeRegistry();
       registry.set(makeEntry({ downloadJobId: "job-A", startedAt: 1_000 }));
       registry.set(makeEntry({ downloadJobId: "job-B", startedAt: 2_000 }));
       registry.delete("job-A");
@@ -186,12 +236,12 @@ describe("DownloadRegistry", () => {
 
   describe("snapshot", () => {
     it("snapshot returns [] for an empty registry", () => {
-      const registry = createDownloadRegistry();
+      const { registry } = makeRegistry();
       expect(registry.snapshot()).toEqual([]);
     });
 
     it("snapshot returns entries ordered by startedAt ascending (oldest first)", () => {
-      const registry = createDownloadRegistry();
+      const { registry } = makeRegistry();
       // Insert in non-startedAt order to prove the sort happens.
       registry.set(makeEntry({ downloadJobId: "job-C", startedAt: 3_000 }));
       registry.set(makeEntry({ downloadJobId: "job-A", startedAt: 1_000 }));
@@ -201,7 +251,7 @@ describe("DownloadRegistry", () => {
     });
 
     it("snapshot is a stable copy: mutating the returned array does not mutate the registry", () => {
-      const registry = createDownloadRegistry();
+      const { registry } = makeRegistry();
       registry.set(makeEntry({ downloadJobId: "job-A", startedAt: 1_000 }));
       registry.set(makeEntry({ downloadJobId: "job-B", startedAt: 2_000 }));
       const snap = registry.snapshot();
@@ -214,7 +264,7 @@ describe("DownloadRegistry", () => {
     });
 
     it("snapshot taken before an update is unaffected by the update (replace-don't-mutate)", () => {
-      const registry = createDownloadRegistry();
+      const { registry } = makeRegistry();
       registry.set(makeEntry({ bytesDownloaded: 0 }));
       const snap = registry.snapshot();
       registry.update("job-A", { bytesDownloaded: 500 });
@@ -231,7 +281,7 @@ describe("DownloadRegistry", () => {
       // call boundary; the property under test is that the registry's API
       // does NOT read-modify-write across awaits in a way that races. The
       // implementation is fully synchronous; this test pins that contract.
-      const registry = createDownloadRegistry();
+      const { registry } = makeRegistry();
       registry.set(makeEntry({ bytesDownloaded: 0 }));
       for (let i = 1; i <= 100; i++) {
         registry.update("job-A", { bytesDownloaded: i });
@@ -241,7 +291,7 @@ describe("DownloadRegistry", () => {
     });
 
     it("interleaved set / update / delete preserves last-writer-wins semantics", () => {
-      const registry = createDownloadRegistry();
+      const { registry } = makeRegistry();
       const a1 = makeEntry({ downloadJobId: "job-A", startedAt: 1_000 });
       const b1 = makeEntry({ downloadJobId: "job-B", startedAt: 2_000 });
       registry.set(a1);
@@ -264,7 +314,7 @@ describe("DownloadRegistry", () => {
   // §13 handler will eventually drive (start → progress → terminal).
   describe("lifecycle integration (§11.3)", () => {
     it("start → multiple progress updates → terminal success removes the entry", () => {
-      const registry = createDownloadRegistry();
+      const { registry } = makeRegistry();
 
       // 1. `set` on download start (the §13 handler mints downloadJobId and
       //    registers an entry with bytesDownloaded: 0).
@@ -309,7 +359,7 @@ describe("DownloadRegistry", () => {
     });
 
     it("start → progress → terminal cancel removes the entry", () => {
-      const registry = createDownloadRegistry();
+      const { registry } = makeRegistry();
       registry.set({
         downloadJobId: "job-cancel",
         datasourceId: "ds-1",
@@ -329,7 +379,7 @@ describe("DownloadRegistry", () => {
     });
 
     it("start → terminal failure removes the entry without intervening progress", () => {
-      const registry = createDownloadRegistry();
+      const { registry } = makeRegistry();
       registry.set({
         downloadJobId: "job-fail",
         datasourceId: "ds-1",
@@ -381,18 +431,18 @@ describe("DownloadRegistry", () => {
   // `delete` — `update` must NOT touch it.
   describe("findByKey reverse index (§13.23)", () => {
     it("returns the downloadJobId for an in-flight (datasourceId, sourcePath) pair", () => {
-      const registry = createDownloadRegistry();
+      const { registry } = makeRegistry();
       registry.set(makeEntry({ downloadJobId: "job-A" }));
       expect(registry.findByKey("ds-1", "/welcome.pdf")).toBe("job-A");
     });
 
     it("returns undefined for an unknown (datasourceId, sourcePath) pair", () => {
-      const registry = createDownloadRegistry();
+      const { registry } = makeRegistry();
       expect(registry.findByKey("ds-ghost", "/unknown.pdf")).toBeUndefined();
     });
 
     it("clears the mapping after delete so a fresh download can re-claim the key", () => {
-      const registry = createDownloadRegistry();
+      const { registry } = makeRegistry();
       registry.set(makeEntry({ downloadJobId: "job-A" }));
       registry.delete("job-A");
       expect(registry.findByKey("ds-1", "/welcome.pdf")).toBeUndefined();
@@ -404,7 +454,7 @@ describe("DownloadRegistry", () => {
     });
 
     it("is unaffected by update — identity fields are immutable per the §11 contract", () => {
-      const registry = createDownloadRegistry();
+      const { registry } = makeRegistry();
       registry.set(makeEntry({ downloadJobId: "job-A" }));
       registry.update("job-A", { bytesDownloaded: 524_288, contentLength: 1_048_576 });
       // The reverse index still resolves to "job-A" — `update` only mutates
@@ -413,7 +463,7 @@ describe("DownloadRegistry", () => {
     });
 
     it("distinct (datasourceId, sourcePath) pairs each map to their own downloadJobId", () => {
-      const registry = createDownloadRegistry();
+      const { registry } = makeRegistry();
       registry.set(makeEntry({ downloadJobId: "job-A" }));
       registry.set(
         makeEntry({
@@ -428,10 +478,296 @@ describe("DownloadRegistry", () => {
     });
 
     it("delete is a no-op on an unknown id and does not corrupt the reverse index", () => {
-      const registry = createDownloadRegistry();
+      const { registry } = makeRegistry();
       registry.set(makeEntry({ downloadJobId: "job-A" }));
       registry.delete("nope");
       expect(registry.findByKey("ds-1", "/welcome.pdf")).toBe("job-A");
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // SQLite write-through mirror (migrate-download-registry-to-sqlite).
+  // The in-memory Map stays authoritative; the registry is the single writer
+  // to the `downloads` table. These blocks query the table directly to pin the
+  // mirror behavior. `set` → in-flight row; `update` → throttled progress
+  // writes; `finalize` → forced terminal row + memory cleanup; `delete` →
+  // memory-only (leaves the row in-flight — the transitional split that lets
+  // the handler keep calling `delete`).
+  // ---------------------------------------------------------------------------
+
+  describe("db mirror — set inserts an in-flight row", () => {
+    it("set inserts a row with status='in-flight', bytes_downloaded=0, started_at set, ended_at NULL", () => {
+      const { registry, db } = makeRegistry();
+      registry.set(
+        makeEntry({
+          downloadJobId: "job-A",
+          datasourceId: "ds-1",
+          sourcePath: "/welcome.pdf",
+          targetPath: "/downloads/welcome.pdf",
+          contentLength: 1_048_576,
+          startedAt: 4_242,
+        }),
+      );
+
+      const row = readRow(db, "job-A");
+      expect(row).toBeDefined();
+      expect(row?.download_job_id).toBe("job-A");
+      expect(row?.datasource_id).toBe("ds-1");
+      expect(row?.source_path).toBe("/welcome.pdf");
+      expect(row?.target_path).toBe("/downloads/welcome.pdf");
+      expect(row?.bytes_downloaded).toBe(0);
+      expect(row?.content_length).toBe(1_048_576);
+      expect(row?.status).toBe("in-flight");
+      expect(row?.failure_tag).toBeNull();
+      expect(row?.failure_message).toBeNull();
+      expect(row?.started_at).toBe(4_242);
+      expect(row?.updated_at).toBe(4_242);
+      expect(row?.ended_at).toBeNull();
+    });
+
+    it("set persists a NULL content_length when the provider didn't advertise length", () => {
+      const { registry, db } = makeRegistry();
+      registry.set(makeEntry({ downloadJobId: "job-A", contentLength: null }));
+      expect(readRow(db, "job-A")?.content_length).toBeNull();
+    });
+
+    it("set with the same id twice resets the row to in-flight (last-writer-wins)", () => {
+      const { registry, db } = makeRegistry();
+      // First job runs, progresses, and is finalized as failed.
+      registry.set(makeEntry({ downloadJobId: "job-A", startedAt: 1_000 }));
+      registry.finalize("job-A", {
+        status: "failed",
+        failureTag: "provider-error",
+        bytesDownloaded: 500,
+      });
+      expect(readRow(db, "job-A")?.status).toBe("failed");
+
+      // A fresh download mints the same id (contract tolerates it). The row
+      // must reset to a clean in-flight state — no stale failure metadata.
+      registry.set(makeEntry({ downloadJobId: "job-A", startedAt: 2_000 }));
+      const row = readRow(db, "job-A");
+      expect(row?.status).toBe("in-flight");
+      expect(row?.bytes_downloaded).toBe(0);
+      expect(row?.failure_tag).toBeNull();
+      expect(row?.failure_message).toBeNull();
+      expect(row?.ended_at).toBeNull();
+      expect(row?.started_at).toBe(2_000);
+    });
+
+    it("set mirrors to the db while memory get/snapshot/findByKey/size still behave as before", () => {
+      const { registry, db } = makeRegistry();
+      registry.set(makeEntry({ downloadJobId: "job-A", startedAt: 1_000 }));
+      registry.set(
+        makeEntry({
+          downloadJobId: "job-B",
+          datasourceId: "ds-2",
+          sourcePath: "/other.pdf",
+          startedAt: 2_000,
+        }),
+      );
+
+      // Memory contract unchanged.
+      expect(registry.get("job-A")?.downloadJobId).toBe("job-A");
+      expect(registry.size()).toBe(2);
+      expect(registry.snapshot().map((e) => e.downloadJobId)).toEqual([
+        "job-A",
+        "job-B",
+      ]);
+      expect(registry.findByKey("ds-2", "/other.pdf")).toBe("job-B");
+
+      // Both rows mirrored.
+      const count = db
+        .prepare("SELECT COUNT(*) AS n FROM downloads")
+        .get() as { n: number };
+      expect(count.n).toBe(2);
+    });
+  });
+
+  describe("db mirror — update throttles progress writes (10 MB OR 30 s)", () => {
+    const TEN_MB = 10 * 1024 * 1024;
+
+    it("sub-10MB updates < 30s apart rewrite memory every time but only flush to the db at the 10MB boundary", () => {
+      vi.useFakeTimers();
+      const base = 1_700_000_000_000;
+      vi.setSystemTime(base);
+
+      const { registry, db } = makeRegistry();
+      registry.set(makeEntry({ downloadJobId: "job-A", contentLength: null }));
+      // Row seeded at 0 by `set`.
+      expect(readRow(db, "job-A")?.bytes_downloaded).toBe(0);
+
+      // Several sub-threshold ticks, each < 30s apart. Memory updates every
+      // time; the db row must NOT advance (delta < 10 MB, elapsed < 30 s).
+      const subThreshold = [1_000_000, 2_000_000, 5_000_000, 9_000_000];
+      for (const bytes of subThreshold) {
+        vi.setSystemTime(base + 1_000); // advance 1s — well under 30s
+        registry.update("job-A", { bytesDownloaded: bytes });
+        expect(registry.get("job-A")?.bytesDownloaded).toBe(bytes); // memory always
+        expect(readRow(db, "job-A")?.bytes_downloaded).toBe(0); // db throttled
+      }
+
+      // Crossing the 10 MB boundary (delta from last flush=0 ≥ 10 MB) flushes.
+      vi.setSystemTime(base + 2_000);
+      registry.update("job-A", { bytesDownloaded: TEN_MB });
+      expect(registry.get("job-A")?.bytesDownloaded).toBe(TEN_MB);
+      expect(readRow(db, "job-A")?.bytes_downloaded).toBe(TEN_MB);
+      expect(readRow(db, "job-A")?.updated_at).toBe(base + 2_000);
+    });
+
+    it("a sub-10MB update flushes once ≥30s has elapsed since the last flush", () => {
+      vi.useFakeTimers();
+      const base = 1_700_000_000_000;
+      vi.setSystemTime(base);
+
+      const { registry, db } = makeRegistry();
+      registry.set(makeEntry({ downloadJobId: "job-A", contentLength: null }));
+
+      // A small update shortly after set: under both thresholds → no flush.
+      vi.setSystemTime(base + 5_000);
+      registry.update("job-A", { bytesDownloaded: 1_000 });
+      expect(readRow(db, "job-A")?.bytes_downloaded).toBe(0);
+
+      // Advance past 30s from the last flush (which was `set` at `base`). Even
+      // a tiny byte delta now flushes on the time branch.
+      vi.setSystemTime(base + 31_000);
+      registry.update("job-A", { bytesDownloaded: 2_000 });
+      expect(readRow(db, "job-A")?.bytes_downloaded).toBe(2_000);
+      expect(readRow(db, "job-A")?.updated_at).toBe(base + 31_000);
+    });
+
+    it("update flushes content_length alongside bytes and a contentLength-only update does not clobber bytes", () => {
+      vi.useFakeTimers();
+      const base = 1_700_000_000_000;
+      vi.setSystemTime(base);
+
+      const { registry, db } = makeRegistry();
+      registry.set(makeEntry({ downloadJobId: "job-A", contentLength: null }));
+
+      // Force a flush via the 10MB branch carrying both fields.
+      vi.setSystemTime(base + 1_000);
+      registry.update("job-A", {
+        bytesDownloaded: TEN_MB,
+        contentLength: 50_000_000,
+      });
+      expect(readRow(db, "job-A")?.bytes_downloaded).toBe(TEN_MB);
+      expect(readRow(db, "job-A")?.content_length).toBe(50_000_000);
+
+      // A contentLength-only update that also trips the time branch must write
+      // content_length WITHOUT clobbering bytes_downloaded to NULL/undefined.
+      vi.setSystemTime(base + 40_000);
+      registry.update("job-A", { contentLength: 60_000_000 });
+      const row = readRow(db, "job-A");
+      expect(row?.content_length).toBe(60_000_000);
+      expect(row?.bytes_downloaded).toBe(TEN_MB); // preserved from memory
+    });
+
+    it("update on a missing id never touches the db (pure no-op, no stray row)", () => {
+      const { registry, db } = makeRegistry();
+      registry.update("ghost", { bytesDownloaded: 5_000 });
+      expect(readRow(db, "ghost")).toBeUndefined();
+      const count = db
+        .prepare("SELECT COUNT(*) AS n FROM downloads")
+        .get() as { n: number };
+      expect(count.n).toBe(0);
+    });
+  });
+
+  describe("db mirror — finalize writes the terminal row and clears memory", () => {
+    it("finalize completed: force-flushes final bytes (below threshold), sets ended_at, clears memory + byKey", () => {
+      vi.useFakeTimers();
+      const base = 1_700_000_000_000;
+      vi.setSystemTime(base);
+
+      const { registry, db } = makeRegistry();
+      registry.set(makeEntry({ downloadJobId: "job-A" }));
+      // A tiny progress tick that the throttle would NOT flush.
+      registry.update("job-A", { bytesDownloaded: 1_234 });
+      expect(readRow(db, "job-A")?.bytes_downloaded).toBe(0); // throttled
+
+      vi.setSystemTime(base + 7_000);
+      registry.finalize("job-A", {
+        status: "completed",
+        bytesDownloaded: 1_048_576,
+      });
+
+      const row = readRow(db, "job-A");
+      expect(row?.status).toBe("completed");
+      expect(row?.bytes_downloaded).toBe(1_048_576); // forced flush, ignores throttle
+      expect(row?.failure_tag).toBeNull();
+      expect(row?.failure_message).toBeNull();
+      expect(row?.ended_at).toBe(base + 7_000);
+      expect(row?.updated_at).toBe(base + 7_000);
+
+      // Memory + reverse index cleaned up (same as the old `delete`).
+      expect(registry.get("job-A")).toBeUndefined();
+      expect(registry.findByKey("ds-1", "/welcome.pdf")).toBeUndefined();
+      expect(registry.size()).toBe(0);
+    });
+
+    it("finalize cancelled: status cancelled, no failure metadata, memory cleared", () => {
+      const { registry, db } = makeRegistry();
+      registry.set(makeEntry({ downloadJobId: "job-A" }));
+      registry.finalize("job-A", { status: "cancelled", bytesDownloaded: 9_000 });
+
+      const row = readRow(db, "job-A");
+      expect(row?.status).toBe("cancelled");
+      expect(row?.bytes_downloaded).toBe(9_000);
+      expect(row?.failure_tag).toBeNull();
+      expect(row?.failure_message).toBeNull();
+      expect(row?.ended_at).not.toBeNull();
+      expect(registry.get("job-A")).toBeUndefined();
+    });
+
+    it("finalize failed: persists status, failure_tag, failure_message", () => {
+      const { registry, db } = makeRegistry();
+      registry.set(makeEntry({ downloadJobId: "job-A" }));
+      registry.finalize("job-A", {
+        status: "failed",
+        failureTag: "provider-error",
+        failureMessage: "503 from provider",
+        bytesDownloaded: 42,
+      });
+
+      const row = readRow(db, "job-A");
+      expect(row?.status).toBe("failed");
+      expect(row?.failure_tag).toBe("provider-error");
+      expect(row?.failure_message).toBe("503 from provider");
+      expect(row?.bytes_downloaded).toBe(42);
+      expect(row?.ended_at).not.toBeNull();
+      expect(registry.get("job-A")).toBeUndefined();
+    });
+
+    it("finalize falls back to the in-memory bytes when outcome.bytesDownloaded is omitted", () => {
+      const { registry, db } = makeRegistry();
+      registry.set(makeEntry({ downloadJobId: "job-A", bytesDownloaded: 0 }));
+      registry.update("job-A", { bytesDownloaded: 7_777 });
+      // No bytesDownloaded in the outcome → uses current memory bytes (7_777).
+      registry.finalize("job-A", { status: "completed" });
+      expect(readRow(db, "job-A")?.bytes_downloaded).toBe(7_777);
+    });
+
+    it("finalize on an unknown id is a silent no-op (no throw, 0 rows affected)", () => {
+      const { registry, db } = makeRegistry();
+      const outcome: DownloadFinalizeOutcome = { status: "completed" };
+      expect(() => registry.finalize("ghost", outcome)).not.toThrow();
+      expect(readRow(db, "ghost")).toBeUndefined();
+      const count = db
+        .prepare("SELECT COUNT(*) AS n FROM downloads")
+        .get() as { n: number };
+      expect(count.n).toBe(0);
+    });
+
+    it("delete is transitional and memory-only: it leaves the db row in-flight (finalize is the sole terminal writer)", () => {
+      const { registry, db } = makeRegistry();
+      registry.set(makeEntry({ downloadJobId: "job-A" }));
+      registry.delete("job-A");
+      // Memory gone...
+      expect(registry.get("job-A")).toBeUndefined();
+      expect(registry.findByKey("ds-1", "/welcome.pdf")).toBeUndefined();
+      // ...but the row stays in-flight (delete does NOT write a terminal state).
+      const row = readRow(db, "job-A");
+      expect(row?.status).toBe("in-flight");
+      expect(row?.ended_at).toBeNull();
     });
   });
 });

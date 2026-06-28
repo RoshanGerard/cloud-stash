@@ -17,11 +17,11 @@ OUT OF SCOPE — deferred to the `add-download-history-ui` stub.
 
 ## 2. Registry write-through (memory-authoritative + SQLite mirror)
 
-- [ ] 2.1 Test (TDD): `createDownloadRegistry(db).set(entry)` inserts an `in-flight` row (`bytes_downloaded=0`, non-null `started_at`, null `ended_at`) AND keeps the existing in-memory `get`/`snapshot`/`findByKey`/`size` behavior unchanged.
-- [ ] 2.2 Change `createDownloadRegistry()` → `createDownloadRegistry(db)`; implement the `set` INSERT alongside the existing `Map.set` + reverse-index. Keep the registry synchronous.
-- [ ] 2.3 Test (TDD): `update` throttle — repeated sub-10 MB / sub-30 s updates rewrite the in-memory slot every time but write the `downloads` row only at the 10 MB OR 30 s boundary (assert both boundaries, including the "exactly at threshold" cases).
-- [ ] 2.4 Implement the per-job throttle tracker (`lastFlushedBytes`, `lastFlushedAtMs`) and the gated `UPDATE` in `update`.
-- [ ] 2.5 Test (TDD): `finalize(id, outcome)` — for each outcome (`completed` / `cancelled` / `failed` + tag/message), the in-memory entry and reverse-index key are removed AND the `downloads` row is updated to the terminal status with force-flushed final `bytes_downloaded`, non-null `ended_at`, and (for `failed`) `failure_tag` / `failure_message`. Assert force-flush ignores the throttle and the tracker entry is cleared.
+- [x] 2.1 Test (TDD): `createDownloadRegistry(db).set(entry)` inserts an `in-flight` row (`bytes_downloaded=0`, non-null `started_at`, null `ended_at`) AND keeps the existing in-memory `get`/`snapshot`/`findByKey`/`size` behavior unchanged.
+- [x] 2.2 Change `createDownloadRegistry()` → `createDownloadRegistry(db)`; implement the `set` INSERT alongside the existing `Map.set` + reverse-index. Keep the registry synchronous.
+- [x] 2.3 Test (TDD): `update` throttle — repeated sub-10 MB / sub-30 s updates rewrite the in-memory slot every time but write the `downloads` row only at the 10 MB OR 30 s boundary (assert both boundaries, including the "exactly at threshold" cases).
+- [x] 2.4 Implement the per-job throttle tracker (`lastFlushedBytes`, `lastFlushedAtMs`) and the gated `UPDATE` in `update`.
+- [x] 2.5 Test (TDD): `finalize(id, outcome)` — for each outcome (`completed` / `cancelled` / `failed` + tag/message), the in-memory entry and reverse-index key are removed AND the `downloads` row is updated to the terminal status with force-flushed final `bytes_downloaded`, non-null `ended_at`, and (for `failed`) `failure_tag` / `failure_message`. Assert force-flush ignores the throttle and the tracker entry is cleared.
 - [ ] 2.6 Replace the registry's `delete(id)` with `finalize(id, outcome)` (force-flush + terminal `UPDATE` + `Map.delete` + reverse-index cleanup + tracker cleanup).
 
 ## 3. `files:download` handler call-site migration

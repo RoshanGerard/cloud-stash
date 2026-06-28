@@ -97,7 +97,17 @@ mechanism differs.
 ### Decision 3 — The registry is the single writer to the `downloads` table
 
 `createDownloadRegistry(db)` takes the `db` handle and owns all writes to
-the `downloads` table. Method → persistence mapping:
+the `downloads` table. The `db` parameter is **optional** for the duration
+of this transition: bootstrap always passes it (production is fully
+mirrored), but the pre-existing in-memory-only test suites
+(`files-download.test.ts`, `downloads-list-active.test.ts`,
+`download-conflict.test.ts` — ~56 call-sites that exercise only the Map
+contract) keep calling `createDownloadRegistry()` with no argument and stay
+green untouched. With `db` omitted the registry is pure in-memory (no DB
+access, no row writes); the SQLite mirror engages only when `db` is present.
+This preserves the "single writer in production" intent while keeping the
+edit blast-radius confined to `registry.ts` + its own test. Method →
+persistence mapping:
 
 | Method | In-memory | SQLite |
 |---|---|---|

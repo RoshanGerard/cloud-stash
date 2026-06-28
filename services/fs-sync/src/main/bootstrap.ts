@@ -211,7 +211,7 @@ export async function bootstrap(options: BootstrapOptions): Promise<Runtime> {
     // `downloads:list-active` handlers stay gated off in the
     // `buildCommandHandlers` map and the §13/§14 commands are
     // unreachable from `SyncClient.request(...)`.
-    const downloadRegistry = createDownloadRegistry();
+    const downloadRegistry = createDownloadRegistry(db);
     const hashComputer = createHashComputer();
     // Upload-side singleton (per migrate-upload-orchestration-out-of-engine
     // §8 + §9). Mirrors `downloadRegistry`: in-memory `Map<uploadJobId,
