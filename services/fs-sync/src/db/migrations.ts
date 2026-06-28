@@ -22,7 +22,7 @@ const __dirname = path.dirname(__filename);
 // fs-sync/, then into drizzle/.
 const MIGRATIONS_DIR = path.resolve(__dirname, "..", "..", "drizzle");
 
-export const CURRENT_SCHEMA_VERSION = 1 as const;
+export const CURRENT_SCHEMA_VERSION = 2 as const;
 
 interface MigrationsRow {
   name: string;

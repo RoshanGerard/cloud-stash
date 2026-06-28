@@ -1,13 +1,27 @@
 import { describe, expectTypeOf, it } from "vitest";
 
-import { jobs, retryPolicies, serviceMeta, syncSnapshot } from "./schema.js";
+import {
+  downloads,
+  jobs,
+  retryPolicies,
+  serviceMeta,
+  syncSnapshot,
+} from "./schema.js";
 
 describe("sync.db Drizzle schema — table+column exposure", () => {
-  it("exports all four core tables", () => {
+  it("exports all five core tables", () => {
     expectTypeOf(serviceMeta).not.toBeNullable();
     expectTypeOf(jobs).not.toBeNullable();
     expectTypeOf(syncSnapshot).not.toBeNullable();
     expectTypeOf(retryPolicies).not.toBeNullable();
+    expectTypeOf(downloads).not.toBeNullable();
+  });
+
+  it("downloads.status is the five-value enum required by the spec", () => {
+    type StatusType = typeof downloads.$inferSelect.status;
+    expectTypeOf<StatusType>().toEqualTypeOf<
+      "in-flight" | "completed" | "failed" | "cancelled" | "interrupted"
+    >();
   });
 
   it("jobs.status is the six-value enum required by the spec", () => {

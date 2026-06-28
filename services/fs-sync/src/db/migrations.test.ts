@@ -1,11 +1,20 @@
+import * as fs from "node:fs";
 import * as fsp from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
+import { fileURLToPath } from "node:url";
 
 import Database from "better-sqlite3";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { applyMigrations, CURRENT_SCHEMA_VERSION } from "./migrations.js";
+
+// The real drizzle/ dir is a sibling of src/ (services/fs-sync/drizzle).
+// This test file lives under src/db/, so walk up two levels then into drizzle/.
+function repoDrizzleDir(): string {
+  const here = path.dirname(fileURLToPath(import.meta.url));
+  return path.resolve(here, "..", "..", "drizzle");
+}
 
 let cleanup: string[] = [];
 
@@ -30,7 +39,7 @@ function scratchDbPath(): string {
 }
 
 describe("applyMigrations", () => {
-  it("creates all four core tables on a fresh DB", () => {
+  it("creates all five core tables on a fresh DB", () => {
     const db = new Database(scratchDbPath());
     try {
       applyMigrations(db);
@@ -42,6 +51,7 @@ describe("applyMigrations", () => {
       const names = rows.map((r) => r.name);
       expect(names).toEqual(
         expect.arrayContaining([
+          "downloads",
           "jobs",
           "retry_policies",
           "schema_migrations",
@@ -54,7 +64,124 @@ describe("applyMigrations", () => {
     }
   });
 
-  it("seeds service_meta with exactly one row carrying schemaVersion = 1", () => {
+  it("creates the downloads table with both indexes and schemaVersion = 2 on a fresh DB", () => {
+    const db = new Database(scratchDbPath());
+    try {
+      applyMigrations(db);
+
+      // The downloads table exists.
+      const table = db
+        .prepare(
+          "SELECT name FROM sqlite_master WHERE type='table' AND name='downloads'",
+        )
+        .get();
+      expect(table).toBeTruthy();
+
+      // Both explicit indexes exist (an implicit sqlite_autoindex for the
+      // TEXT PRIMARY KEY is also present, so assert containment, not equality).
+      const indexNames = (
+        db
+          .prepare(
+            "SELECT name FROM sqlite_master WHERE type='index' AND tbl_name='downloads'",
+          )
+          .all() as Array<{ name: string }>
+      ).map((r) => r.name);
+      expect(indexNames).toEqual(
+        expect.arrayContaining([
+          "downloads_status_idx",
+          "downloads_started_at_idx",
+        ]),
+      );
+
+      // Fresh install seeds schema_version = 2.
+      const meta = db
+        .prepare("SELECT schema_version FROM service_meta")
+        .get() as { schema_version: number };
+      expect(meta.schema_version).toBe(2);
+    } finally {
+      db.close();
+    }
+  });
+
+  it("migrates an existing v1 DB forward-only: adds downloads, records 0002, leaves other rows intact and schema_version at 1", () => {
+    const file = scratchDbPath();
+    const db = new Database(file);
+    try {
+      // Establish a faithful v1 state directly (NOT via applyMigrations, which
+      // would seed service_meta at the bumped version and defeat the premise):
+      // the 0001 tables, a recorded 0001 migration, a v1 service_meta row, and
+      // a sentinel row in another table.
+      const initialSql = fs.readFileSync(
+        path.join(repoDrizzleDir(), "0001_initial.sql"),
+        "utf8",
+      );
+      db.exec(initialSql);
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS schema_migrations (
+          name TEXT PRIMARY KEY,
+          applied_at INTEGER NOT NULL
+        );
+      `);
+      db.prepare(
+        "INSERT INTO schema_migrations (name, applied_at) VALUES (?, ?)",
+      ).run("0001_initial.sql", Date.now());
+      db.prepare(
+        "INSERT INTO service_meta (id, schema_version, installed_at, service_uuid) VALUES (?, ?, ?, ?)",
+      ).run(1, 1, Date.now(), "00000000-0000-0000-0000-000000000001");
+      db.prepare(
+        "INSERT INTO retry_policies (scope, datasource_id, max_attempts, backoff_ms, backoff_strategy, max_age_ms) VALUES (?, ?, ?, ?, ?, ?)",
+      ).run("global", "", 5, 1000, "exponential", null);
+
+      // No downloads table yet, 0002 not recorded.
+      expect(
+        db
+          .prepare(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='downloads'",
+          )
+          .get(),
+      ).toBeFalsy();
+
+      // Forward-only migration on next start.
+      applyMigrations(db);
+
+      // downloads table now exists.
+      expect(
+        db
+          .prepare(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='downloads'",
+          )
+          .get(),
+      ).toBeTruthy();
+
+      // schema_migrations now records both files.
+      const migs = (
+        db
+          .prepare("SELECT name FROM schema_migrations ORDER BY name")
+          .all() as Array<{ name: string }>
+      ).map((r) => r.name);
+      expect(migs).toEqual(["0001_initial.sql", "0002_downloads.sql"]);
+
+      // The pre-existing retry_policies sentinel row is unchanged.
+      const sentinel = db
+        .prepare(
+          "SELECT max_attempts FROM retry_policies WHERE scope='global' AND datasource_id=''",
+        )
+        .get() as { max_attempts: number };
+      expect(sentinel.max_attempts).toBe(5);
+
+      // Forward-only migrations are filename-tracked, independent of the seeded
+      // version value: the existing v1 service_meta row keeps schema_version = 1
+      // (Decision 6 — the version is not bumped on upgrade).
+      const meta = db
+        .prepare("SELECT schema_version FROM service_meta")
+        .get() as { schema_version: number };
+      expect(meta.schema_version).toBe(1);
+    } finally {
+      db.close();
+    }
+  });
+
+  it("seeds service_meta with exactly one row carrying schemaVersion = 2", () => {
     const db = new Database(scratchDbPath());
     try {
       applyMigrations(db);
@@ -110,7 +237,10 @@ describe("applyMigrations", () => {
           "SELECT name FROM schema_migrations ORDER BY name",
         )
         .all() as Array<{ name: string }>;
-      expect(rows.map((r) => r.name)).toEqual(["0001_initial.sql"]);
+      expect(rows.map((r) => r.name)).toEqual([
+        "0001_initial.sql",
+        "0002_downloads.sql",
+      ]);
     } finally {
       db.close();
     }

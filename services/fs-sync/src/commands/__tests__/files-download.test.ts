@@ -10,6 +10,7 @@
 // passes to a fake `downloadFile` (migrate-engine-events-to-consumer §1 —
 // the engine bus was removed; the handler owns the `downloading` throttle).
 
+import Database from "better-sqlite3";
 import { describe, expect, it, vi } from "vitest";
 import { Readable, Writable } from "node:stream";
 import * as nodePath from "node:path";
@@ -33,6 +34,7 @@ import {
 } from "@ft5/ipc-contracts";
 
 import { createDownloadRegistry } from "../../downloads/registry.js";
+import { applyMigrations } from "../../db/migrations.js";
 import { createEventBus } from "../../events/event-bus.js";
 import {
   makeFilesDownloadHandler,
@@ -361,6 +363,124 @@ describe("files:download — happy path (§13.1, §13.2)", () => {
     expect(registry.size()).toBe(0);
     // The reverse-index slot for (ds-1, /welcome.pdf) is also clear.
     expect(registry.findByKey("ds-1", "/welcome.pdf")).toBeUndefined();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// migrate-download-registry-to-sqlite — the handler finalizes the durable
+// `downloads` row at each terminal path. The registry write-through is
+// unit-tested in registry.test.ts; these db-backed tests prove the HANDLER
+// drives `finalize` with the correct terminal status/outcome end-to-end.
+// ---------------------------------------------------------------------------
+
+describe("files:download — finalize writes the terminal downloads row", () => {
+  function makeDbRegistry() {
+    const db = new Database(":memory:");
+    applyMigrations(db);
+    return { db, registry: createDownloadRegistry(db) };
+  }
+  function readRow(db: Database.Database, id = "job-1") {
+    return db
+      .prepare(
+        "SELECT status, bytes_downloaded, failure_tag, failure_message, ended_at FROM downloads WHERE download_job_id = ?",
+      )
+      .get(id) as
+      | {
+          status: string;
+          bytes_downloaded: number;
+          failure_tag: string | null;
+          failure_message: string | null;
+          ended_at: number | null;
+        }
+      | undefined;
+  }
+
+  it("success → status='completed', final bytes, ended_at set, no failure", async () => {
+    const { db, registry } = makeDbRegistry();
+    const fakeFs = makeFakeFs({ writableParents: [PARENT] });
+    const downloadFile = vi.fn(async (): Promise<DownloadResult> => ({
+      stream: streamFromBytes(Buffer.alloc(1024, 0xab)),
+      contentLength: 1024,
+    }));
+    const getMetadata = vi.fn().mockResolvedValue(sampleEntry);
+    const client = makeFakeClient({ downloadFile, getMetadata });
+    const handler = makeFilesDownloadHandler(
+      makeDeps({
+        resolveClient: async () => client,
+        registry,
+        fs: fakeFs,
+        hash: makeHash({ [TO_PATH]: "deadbeef" }),
+      }),
+    );
+    const result = await handler(
+      { datasourceId: "ds-1", path: "/welcome.pdf", toPath: TO_PATH },
+      ctx,
+    );
+    expect(result.ok).toBe(true);
+    const row = readRow(db);
+    expect(row?.status).toBe("completed");
+    expect(row?.bytes_downloaded).toBe(1024);
+    expect(row?.ended_at).not.toBeNull();
+    expect(row?.failure_tag).toBeNull();
+    expect(registry.size()).toBe(0);
+  });
+
+  it("byte-count-mismatch failure → status='failed' with the terminal tag/message", async () => {
+    const { db, registry } = makeDbRegistry();
+    const fakeFs = makeFakeFs({ writableParents: [PARENT] });
+    const downloadFile = vi.fn(async (): Promise<DownloadResult> => ({
+      stream: streamFromBytes(Buffer.alloc(512, 0xab)),
+      contentLength: 1024,
+    }));
+    const client = makeFakeClient({ downloadFile });
+    const handler = makeFilesDownloadHandler(
+      makeDeps({ resolveClient: async () => client, registry, fs: fakeFs }),
+    );
+    const result = await handler(
+      { datasourceId: "ds-1", path: "/welcome.pdf", toPath: TO_PATH },
+      ctx,
+    );
+    expect(result.ok).toBe(false);
+    const row = readRow(db);
+    expect(row?.status).toBe("failed");
+    expect(row?.failure_tag).toBe("other");
+    expect(row?.failure_message).toBe("byte count mismatch");
+    expect(row?.ended_at).not.toBeNull();
+    expect(registry.size()).toBe(0);
+  });
+
+  it("cancel (abort) → status='cancelled', ended_at set", async () => {
+    const { db, registry } = makeDbRegistry();
+    const fakeFs = makeFakeFs({ writableParents: [PARENT] });
+    const downloadFile = vi.fn(
+      async (_target, options): Promise<DownloadResult> => {
+        const stream = new Readable({ read() {} });
+        setTimeout(() => stream.push(Buffer.alloc(256, 0xaa)), 0);
+        options?.signal?.addEventListener("abort", () => {
+          const err = new Error("aborted");
+          err.name = "AbortError";
+          stream.destroy(err);
+        });
+        return { stream, contentLength: 1024 };
+      },
+    );
+    const client = makeFakeClient({ downloadFile });
+    const handler = makeFilesDownloadHandler(
+      makeDeps({ resolveClient: async () => client, registry, fs: fakeFs }),
+    );
+    const cancelHandler = makeSyncCancelDownloadHandler({ registry });
+    const inflight = handler(
+      { datasourceId: "ds-1", path: "/welcome.pdf", toPath: TO_PATH },
+      ctx,
+    );
+    await new Promise((resolve) => setImmediate(resolve));
+    await cancelHandler({ downloadJobId: "job-1" }, ctx);
+    const result = await inflight;
+    expect(result.ok).toBe(false);
+    const row = readRow(db);
+    expect(row?.status).toBe("cancelled");
+    expect(row?.ended_at).not.toBeNull();
+    expect(registry.size()).toBe(0);
   });
 });
 

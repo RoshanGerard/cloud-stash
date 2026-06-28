@@ -1211,3 +1211,43 @@ string the production refusal copy never contains, so the negative match is
 loosely coupled (the test's real discriminator — reaching the missing
 stream-responder path — still holds). Optional one-line fix: pin
 `not.toContain("Google Drive documents download not supported")` instead.
+
+---
+
+## migrate-download-registry-to-sqlite — real-restart interrupted-sweep smoke
+
+**Scenario:** start the dev build (`pnpm -F @ft5/desktop dev` or
+`pnpm dev:sync-service`), begin a large download so the `files:download`
+handler inserts an `in-flight` row into `~/ft5/sync_app/sync.db` `downloads`,
+then hard-kill the fs-sync-service process mid-stream (Task Manager / `kill`,
+NOT a clean SIGINT). Restart the service and confirm:
+
+1. The previously `in-flight` row is now `status='interrupted'` with a
+   non-null `ended_at` (inspect with `sqlite3 ~/ft5/sync_app/sync.db
+   "SELECT download_job_id, status, ended_at FROM downloads;"`).
+2. The partial file at the row's `target_path` is STILL on disk, untouched
+   (the sweep is bookkeeping only — no replay, no file deletion).
+3. A download that had completed before the kill keeps `status='completed'`
+   (terminal rows are untouched by the sweep).
+4. The service log has a `downloads-interrupted-sweep` line with the swept
+   `count` when ≥1 row was terminalized.
+
+**Covered in isolation by:**
+- `services/fs-sync/src/downloads/__tests__/sweep-interrupted.test.ts`
+  (in-flight→interrupted + bytes preserved; terminal rows untouched; empty-db
+  no-op; on-disk partial survives).
+- `services/fs-sync/src/main/bootstrap.test.ts` › "bootstrap
+  interrupted-download sweep" (clean boot terminalizes orphaned in-flight
+  rows; PID-guard-already-held boot does NOT sweep).
+- `services/fs-sync/src/downloads/__tests__/lifecycle.composite.test.ts`
+  (a registry-finalized `completed` row coexists with a swept `interrupted`
+  row; the sweep's `WHERE in-flight` never clobbers the completed row).
+
+**Why deferred:** CLAUDE.md pre-archive step 8 asks for the feature exercised
+against a running system; this is a restart-durability feature and has only
+been exercised via automated tests (the sweep, the bootstrap wiring, and the
+end-to-end composite are all green). The real-process-kill + restart loop
+needs a running dev build and is environment-specific. Until run, treat the
+interrupted-sweep as automated-green but NOT yet runtime-verified.
+
+**Owner:** unassigned (HUMAN). Pair with the next environment-loop pass.
