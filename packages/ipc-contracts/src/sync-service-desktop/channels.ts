@@ -41,14 +41,22 @@ export const SYNC_CHANNELS = {
   // snapshot of in-flight uploads from the service's `UploadRegistry`
   // for renderer hydrate-on-connect (Sonner toast strip).
   uploadsListActive: "uploads:list-active",
+  // add-download-history-ui §5 — renderer-facing bridge for the new
+  // `downloads:clear-history` service command. Deletes terminal `downloads`
+  // rows by the optional status/age filter; the Settings → Downloads "Clear
+  // download history" control invokes it and toasts the returned `{ deleted }`
+  // count. Never touches in-flight rows or on-disk files.
+  clearDownloadHistory: "downloads:clear-history",
   // The retired single-shot `sync:authenticate` channel was removed by
   // `implement-datasource-onboarding` per design.md Decision 9. The
   // three-command split below replaces it.
   authenticateStart: "sync:authenticate-start",
   authenticateComplete: "sync:authenticate-complete",
   authenticateCancel: "sync:authenticate-cancel",
-  // OAuth-app-config round-trip for a future settings UI; not consumed by
-  // the renderer in this change. See design.md Decision 4.
+  // OAuth-app-config round-trip. add-download-history-ui §5 makes the renderer
+  // the FIRST consumer (Settings → Downloads retention controls, via a
+  // read-modify-write config helper that preserves `providers`). See
+  // design.md Decision 4 + add-download-history-ui Decisions 7–8.
   getConfig: "sync:get-config",
   setConfig: "sync:set-config",
   // Symmetric credential cleanup invoked by `datasources:remove`.

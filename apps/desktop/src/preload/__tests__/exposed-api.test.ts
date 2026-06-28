@@ -16,6 +16,7 @@ vi.mock("electron", () => ({
 import { contextBridge, ipcRenderer } from "electron";
 
 import { DATASOURCES_CHANNELS, FILES_CHANNELS } from "@ft5/ipc-contracts";
+import { SYNC_CHANNELS } from "@ft5/ipc-contracts/sync-service-desktop";
 
 type ExposedApi = {
   ping: () => Promise<unknown>;
@@ -617,6 +618,81 @@ describe("preload exposed api", () => {
       });
 
       expect(result).toEqual(response);
+    });
+  });
+
+  // add-download-history-ui §5.3 — the Settings → Downloads config +
+  // clear-history bridge. get/set-config are the FIRST renderer exposure of
+  // the service config (design.md Decision 8).
+  describe("sync surface — config + clear-history", () => {
+    type SyncApi = {
+      getConfig: () => Promise<unknown>;
+      setConfig: (req: unknown) => Promise<unknown>;
+      clearDownloadHistory: (req: unknown) => Promise<unknown>;
+    };
+    async function loadSync(): Promise<SyncApi> {
+      const exposed = await loadExposed();
+      return (exposed as unknown as { sync: SyncApi }).sync;
+    }
+
+    it("exposes getConfig/setConfig/clearDownloadHistory as functions", async () => {
+      const sync = await loadSync();
+      expect(typeof sync.getConfig).toBe("function");
+      expect(typeof sync.setConfig).toBe("function");
+      expect(typeof sync.clearDownloadHistory).toBe("function");
+    });
+
+    it("getConfig() delegates to ipcRenderer.invoke('sync:get-config') with no second arg (void request)", async () => {
+      const invokeMock = ipcRenderer.invoke as unknown as ReturnType<typeof vi.fn>;
+      const response = {
+        ok: true,
+        result: { config: { schemaVersion: 1, providers: {} } },
+      };
+      invokeMock.mockResolvedValue(response);
+
+      const sync = await loadSync();
+      const result = await sync.getConfig();
+
+      expect(invokeMock).toHaveBeenCalledTimes(1);
+      expect(invokeMock.mock.calls[0]).toEqual([SYNC_CHANNELS.getConfig]);
+      expect(result).toBe(response);
+    });
+
+    it("setConfig(req) delegates to ipcRenderer.invoke('sync:set-config', req)", async () => {
+      const invokeMock = ipcRenderer.invoke as unknown as ReturnType<typeof vi.fn>;
+      const response = { ok: true, result: { ok: true } };
+      invokeMock.mockResolvedValue(response);
+
+      const sync = await loadSync();
+      const req = {
+        config: {
+          schemaVersion: 1,
+          providers: {},
+          downloadHistory: { autoPrune: true, retentionDays: 90 },
+        },
+      };
+      const result = await sync.setConfig(req);
+
+      expect(invokeMock).toHaveBeenCalledTimes(1);
+      expect(invokeMock.mock.calls[0]).toEqual([SYNC_CHANNELS.setConfig, req]);
+      expect(result).toBe(response);
+    });
+
+    it("clearDownloadHistory(req) delegates to ipcRenderer.invoke('downloads:clear-history', req)", async () => {
+      const invokeMock = ipcRenderer.invoke as unknown as ReturnType<typeof vi.fn>;
+      const response = { deleted: 5 };
+      invokeMock.mockResolvedValue(response);
+
+      const sync = await loadSync();
+      const req = { filter: { status: ["failed"] } };
+      const result = await sync.clearDownloadHistory(req);
+
+      expect(invokeMock).toHaveBeenCalledTimes(1);
+      expect(invokeMock.mock.calls[0]).toEqual([
+        SYNC_CHANNELS.clearDownloadHistory,
+        req,
+      ]);
+      expect(result).toBe(response);
     });
   });
 });

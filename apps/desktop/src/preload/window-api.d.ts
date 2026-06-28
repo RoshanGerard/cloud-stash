@@ -44,10 +44,13 @@ import type {
   SyncCancelJobResponse,
   SyncCancelUploadRequest,
   SyncCancelUploadResponse,
+  SyncClearDownloadHistoryRequest,
+  SyncClearDownloadHistoryResponse,
   SyncUploadsListActiveResponse,
   SyncEnqueueMirrorRequest,
   SyncEnqueueMirrorResponse,
   SyncEvent,
+  SyncGetConfigResponse,
   SyncGetJobRequest,
   SyncGetJobResponse,
   SyncGetRetryPolicyRequest,
@@ -55,6 +58,8 @@ import type {
   SyncGetStatusResponse,
   SyncListJobsRequest,
   SyncListJobsResponse,
+  SyncSetConfigRequest,
+  SyncSetConfigResponse,
   SyncSetRetryPolicyRequest,
   SyncSetRetryPolicyResponse,
 } from "@ft5/ipc-contracts/sync-service-desktop";
@@ -181,6 +186,16 @@ declare global {
         setRetryPolicy(
           req: SyncSetRetryPolicyRequest,
         ): Promise<SyncSetRetryPolicyResponse>;
+        // add-download-history-ui §5 — Settings → Downloads config +
+        // clear-history. `getConfig` has a void request; writes route through
+        // a renderer read-modify-write helper preserving `providers`.
+        getConfig(): Promise<SyncGetConfigResponse>;
+        setConfig(
+          req: SyncSetConfigRequest,
+        ): Promise<SyncSetConfigResponse>;
+        clearDownloadHistory(
+          req: SyncClearDownloadHistoryRequest,
+        ): Promise<SyncClearDownloadHistoryResponse>;
         onEvent(callback: (event: SyncEvent) => void): () => void;
       };
       // migrate-upload-orchestration-out-of-engine §7.2 / §7.9 —

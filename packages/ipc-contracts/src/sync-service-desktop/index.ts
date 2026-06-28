@@ -36,6 +36,8 @@ export type {
   SyncCancelUploadResponse,
   SyncUploadsListActiveRequest,
   SyncUploadsListActiveResponse,
+  SyncClearDownloadHistoryRequest,
+  SyncClearDownloadHistoryResponse,
   SyncAuthenticateStartRequest,
   SyncAuthenticateStartResponse,
   SyncAuthenticateCompleteRequest,

@@ -22,6 +22,7 @@ import type {
 import type {
   BackoffStrategy,
   ConflictPolicy,
+  DownloadTerminalStatus,
   JobStatus,
   JobSummary,
   NotCancelableErrorShape,
@@ -263,6 +264,26 @@ export interface SyncSetConfigRequest {
 export type SyncSetConfigResponse =
   | { readonly ok: true; readonly result: { readonly ok: true } }
   | { readonly ok: false; readonly error: SyncSetConfigError };
+
+// ---- clearDownloadHistory (add-download-history-ui §5) ------------------
+//
+// Deletes terminal `downloads` rows by the optional status/age filter. The
+// service handler is effectively infallible (always `{ deleted }`); only
+// transport-level failures (service-disconnected) surface, so the renderer
+// boundary uses the FLAT result shape (mirroring `uploads:list-active`) — a
+// rejection means transport, not a per-command error envelope. Mirrors but
+// does NOT re-export the wire `ClearDownloadHistoryRequest`/`...Response`.
+
+export interface SyncClearDownloadHistoryRequest {
+  readonly filter?: {
+    readonly status?: readonly DownloadTerminalStatus[];
+    readonly olderThanMs?: number;
+  };
+}
+
+export interface SyncClearDownloadHistoryResponse {
+  readonly deleted: number;
+}
 
 // ---- deleteCredentials (design.md Decision 12) --------------------------
 //

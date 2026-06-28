@@ -24,10 +24,12 @@ import type {
   SyncCancelDownloadRequest,
   SyncCancelJobRequest,
   SyncCancelUploadRequest,
+  SyncClearDownloadHistoryRequest,
   SyncEnqueueMirrorRequest,
   SyncGetJobRequest,
   SyncGetRetryPolicyRequest,
   SyncListJobsRequest,
+  SyncSetConfigRequest,
   SyncSetRetryPolicyRequest,
 } from "@ft5/ipc-contracts/sync-service-desktop";
 
@@ -66,6 +68,9 @@ import { handleSyncCancelDownload } from "./sync/cancel-download.js";
 import { handleSyncCancelJob } from "./sync/cancel-job.js";
 import { handleSyncCancelUpload } from "./sync/cancel-upload.js";
 import { handleUploadsListActive } from "./sync/uploads-list-active.js";
+import { handleClearDownloadHistory } from "./sync/clear-download-history.js";
+import { handleSyncGetConfig } from "./sync/get-config.js";
+import { handleSyncSetConfig } from "./sync/set-config.js";
 import { handleSyncEnqueueMirror } from "./sync/enqueue-mirror.js";
 import { handleSyncGetJob } from "./sync/get-job.js";
 import { handleSyncGetRetryPolicy } from "./sync/get-retry-policy.js";
@@ -255,6 +260,19 @@ export function registerIpcHandlers(
     SYNC_CHANNELS.setRetryPolicy,
     async (_event, req: SyncSetRetryPolicyRequest) =>
       handleSyncSetRetryPolicy(req),
+  );
+  // add-download-history-ui §5 — Settings → Downloads config + clear-history
+  // bridge. get/set-config are the FIRST renderer exposure (design.md
+  // Decision 8); get-config has a void request (channel-only invoke).
+  ipcMain.handle(SYNC_CHANNELS.getConfig, () => handleSyncGetConfig());
+  ipcMain.handle(
+    SYNC_CHANNELS.setConfig,
+    async (_event, req: SyncSetConfigRequest) => handleSyncSetConfig(req),
+  );
+  ipcMain.handle(
+    SYNC_CHANNELS.clearDownloadHistory,
+    async (_event, req: SyncClearDownloadHistoryRequest) =>
+      handleClearDownloadHistory(req),
   );
 
   // Clipboard bridge — goes through Electron's main-process `clipboard`

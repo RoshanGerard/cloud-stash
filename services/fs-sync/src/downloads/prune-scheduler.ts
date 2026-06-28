@@ -28,9 +28,14 @@ export interface PruneSchedulerDeps {
   readonly db: Database.Database;
   /** Reads the current service config (e.g. `() => configStore.getRaw()`). */
   readonly readConfig: () => Promise<ServiceConfig>;
-  readonly logger?: { info: (msg: string, meta?: unknown) => void };
+  // Structurally matches the bootstrap `BootstrapLogger` (info(msg, fields?));
+  // `| undefined` so an absent bootstrap logger threads through under
+  // `exactOptionalPropertyTypes`.
+  readonly logger?:
+    | { info(msg: string, fields?: Record<string, unknown>): void }
+    | undefined;
   /** Override the 24h cadence (tests). Defaults to {@link PRUNE_INTERVAL_MS}. */
-  readonly intervalMs?: number;
+  readonly intervalMs?: number | undefined;
 }
 
 export interface PruneScheduler {

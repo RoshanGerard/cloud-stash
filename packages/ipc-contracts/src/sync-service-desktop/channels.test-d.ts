@@ -23,6 +23,8 @@ describe("sync-service-desktop SYNC_CHANNELS constants", () => {
         "cancelDownload",
         "cancelJob",
         "cancelUpload",
+        // add-download-history-ui §5 — renderer bridge for downloads:clear-history.
+        "clearDownloadHistory",
         "deleteCredentials",
         "enqueueMirror",
         // migrate-upload-orchestration-out-of-engine §7.4 — `enqueueUpload`
@@ -70,6 +72,7 @@ describe("sync-service-desktop SYNC_CHANNELS constants", () => {
     expect(SYNC_CHANNELS.cancelDownload).toBe("sync:cancel-download");
     expect(SYNC_CHANNELS.cancelUpload).toBe("sync:cancel-upload");
     expect(SYNC_CHANNELS.uploadsListActive).toBe("uploads:list-active");
+    expect(SYNC_CHANNELS.clearDownloadHistory).toBe("downloads:clear-history");
     expect(SYNC_CHANNELS.authenticateStart).toBe("sync:authenticate-start");
     expect(SYNC_CHANNELS.authenticateComplete).toBe(
       "sync:authenticate-complete",
@@ -103,6 +106,9 @@ describe("sync-service-desktop SYNC_CHANNELS constants", () => {
     >();
     expectTypeOf<typeof SYNC_CHANNELS.uploadsListActive>().toEqualTypeOf<
       "uploads:list-active"
+    >();
+    expectTypeOf<typeof SYNC_CHANNELS.clearDownloadHistory>().toEqualTypeOf<
+      "downloads:clear-history"
     >();
     expectTypeOf<typeof SYNC_CHANNELS.authenticateStart>().toEqualTypeOf<
       "sync:authenticate-start"
