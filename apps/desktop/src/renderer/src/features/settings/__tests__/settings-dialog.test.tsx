@@ -572,3 +572,124 @@ describe("SettingsDialog — Explorer section (page size)", () => {
     expect(openIdx).toBeGreaterThan(pageSizeIdx);
   });
 });
+
+// add-download-history-ui §7.1 — the Settings → Downloads "Download history"
+// group. Unlike the localStorage-backed rows above, these read/write the
+// SERVICE config through window.api.sync.get/setConfig (the read-modify-write
+// helper), so each test installs a config mock.
+describe("SettingsDialog — Download history retention (add-download-history-ui §7)", () => {
+  let getConfigMock: Mock;
+  let setConfigMock: Mock;
+
+  function installConfigMock(downloadHistory?: {
+    autoPrune: boolean;
+    retentionDays: number;
+  }): void {
+    getConfigMock = vi.fn().mockResolvedValue({
+      ok: true,
+      result: {
+        config: {
+          schemaVersion: 1,
+          providers: {},
+          ...(downloadHistory ? { downloadHistory } : {}),
+        },
+      },
+    });
+    setConfigMock = vi
+      .fn()
+      .mockResolvedValue({ ok: true, result: { ok: true } });
+    (window as unknown as { api: unknown }).api = {
+      sync: { getConfig: getConfigMock, setConfig: setConfigMock },
+    };
+  }
+
+  afterEach(() => {
+    delete (window as unknown as { api?: unknown }).api;
+  });
+
+  it("auto-prune Switch reflects the loaded config and toggling writes via the helper (preserving providers)", async () => {
+    installConfigMock({ autoPrune: true, retentionDays: 90 });
+    render(<SettingsDialog open={true} onOpenChange={() => {}} />);
+
+    const toggle = await screen.findByRole("switch", {
+      name: /auto-delete old history/i,
+    });
+    await waitFor(() => expect(toggle.getAttribute("aria-checked")).toBe("true"));
+
+    fireEvent.click(toggle);
+
+    await waitFor(() => expect(setConfigMock).toHaveBeenCalledTimes(1));
+    expect(setConfigMock).toHaveBeenCalledWith({
+      config: {
+        schemaVersion: 1,
+        providers: {},
+        downloadHistory: { autoPrune: false, retentionDays: 90 },
+      },
+    });
+  });
+
+  it("reflects an existing autoPrune:false config (switch reads unchecked)", async () => {
+    installConfigMock({ autoPrune: false, retentionDays: 180 });
+    render(<SettingsDialog open={true} onOpenChange={() => {}} />);
+
+    const toggle = await screen.findByRole("switch", {
+      name: /auto-delete old history/i,
+    });
+    await waitFor(() =>
+      expect(toggle.getAttribute("aria-checked")).toBe("false"),
+    );
+  });
+
+  it("the retention selector is dimmed/disabled when auto-prune is off", async () => {
+    installConfigMock({ autoPrune: false, retentionDays: 90 });
+    render(<SettingsDialog open={true} onOpenChange={() => {}} />);
+
+    const keepFor = await screen.findByRole("button", {
+      name: /keep history for/i,
+    });
+    await waitFor(() => expect(keepFor).toBeDisabled());
+  });
+
+  it("the retention selector offers 30/90/180/365 and writes the chosen window", async () => {
+    installConfigMock({ autoPrune: true, retentionDays: 90 });
+    render(<SettingsDialog open={true} onOpenChange={() => {}} />);
+
+    const keepFor = await screen.findByRole("button", {
+      name: /keep history for/i,
+    });
+    await waitFor(() => expect(keepFor).not.toBeDisabled());
+    // Radix DropdownMenu opens on pointerDown(button:0), not click (jsdom).
+    fireEvent.pointerDown(keepFor, { button: 0 });
+
+    const items = await screen.findAllByRole("menuitemradio");
+    expect(items.map((i) => i.textContent)).toEqual([
+      "30 days",
+      "90 days",
+      "180 days",
+      "365 days",
+    ]);
+
+    fireEvent.click(screen.getByRole("menuitemradio", { name: "180 days" }));
+
+    await waitFor(() => expect(setConfigMock).toHaveBeenCalledTimes(1));
+    expect(setConfigMock).toHaveBeenCalledWith({
+      config: {
+        schemaVersion: 1,
+        providers: {},
+        downloadHistory: { autoPrune: true, retentionDays: 180 },
+      },
+    });
+  });
+
+  it("opens the Clear download history dialog (showing the safety copy)", async () => {
+    installConfigMock({ autoPrune: true, retentionDays: 90 });
+    render(<SettingsDialog open={true} onOpenChange={() => {}} />);
+
+    const clearBtn = await screen.findByRole("button", { name: /clear/i });
+    fireEvent.click(clearBtn);
+
+    expect(
+      await screen.findByText(/files already saved to your computer/i),
+    ).toBeInTheDocument();
+  });
+});

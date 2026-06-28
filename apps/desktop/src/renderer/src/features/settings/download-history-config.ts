@@ -12,6 +12,7 @@
 
 import type {
   ServiceConfig,
+  SyncGetConfigResponse,
   SyncSetConfigResponse,
 } from "@ft5/ipc-contracts/sync-service-desktop";
 
@@ -56,9 +57,26 @@ function resolveSettings(config: ServiceConfig): DownloadHistorySettings {
   return DOWNLOAD_HISTORY_DEFAULT;
 }
 
+// The `window.api.sync` surface this helper needs. Accessed defensively
+// (optional chaining) — `window.api` is always present in the packaged app
+// (preload runs first) but may be absent in unit tests / very early renders,
+// consistent with the rest of the renderer's `window?.api?.*` access.
+type ConfigSyncApi = {
+  getConfig: () => Promise<SyncGetConfigResponse>;
+  setConfig: (req: { config: ServiceConfig }) => Promise<SyncSetConfigResponse>;
+};
+
+function syncApi(): ConfigSyncApi | undefined {
+  return window.api?.sync as ConfigSyncApi | undefined;
+}
+
 /** Read the current download-history retention settings (defensive). */
 export async function readDownloadHistorySettings(): Promise<DownloadHistorySettings> {
-  const res = await window.api.sync.getConfig();
+  const sync = syncApi();
+  if (sync === undefined) {
+    return DOWNLOAD_HISTORY_DEFAULT;
+  }
+  const res = await sync.getConfig();
   if (!res.ok) {
     return DOWNLOAD_HISTORY_DEFAULT;
   }
@@ -75,7 +93,14 @@ export async function readDownloadHistorySettings(): Promise<DownloadHistorySett
 export async function writeDownloadHistorySettings(
   patch: Partial<DownloadHistorySettings>,
 ): Promise<SyncSetConfigResponse> {
-  const res = await window.api.sync.getConfig();
+  const sync = syncApi();
+  if (sync === undefined) {
+    return {
+      ok: false,
+      error: { tag: "io-error", message: "sync bridge unavailable" },
+    };
+  }
+  const res = await sync.getConfig();
   const current: ServiceConfig = res.ok ? res.result.config : EMPTY_CONFIG;
   const currentSettings = resolveSettings(current);
   const merged: ServiceConfig = {
@@ -83,5 +108,5 @@ export async function writeDownloadHistorySettings(
     schemaVersion: 1,
     downloadHistory: { ...currentSettings, ...patch },
   };
-  return window.api.sync.setConfig({ config: merged });
+  return sync.setConfig({ config: merged });
 }

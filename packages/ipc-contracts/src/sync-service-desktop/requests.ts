@@ -44,6 +44,7 @@ import type {
 // them from the renderer-facing subpath without reaching into the wire
 // contract directly.
 export type {
+  DownloadTerminalStatus,
   SerializableAuthCompletion,
   SerializableAuthIntent,
   ServiceConfig,
