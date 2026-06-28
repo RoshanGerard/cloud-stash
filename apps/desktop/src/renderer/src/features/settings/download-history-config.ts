@@ -30,8 +30,6 @@ export const DOWNLOAD_HISTORY_DEFAULT: DownloadHistorySettings = {
 
 export const RETENTION_DAY_OPTIONS = [30, 90, 180, 365] as const;
 
-const EMPTY_CONFIG: ServiceConfig = { schemaVersion: 1, providers: {} };
-
 /**
  * Defensive read of the retention settings from a (possibly hand-edited)
  * config — mirrors the service-side `resolveRetentionSettings` so the UI and
@@ -101,7 +99,24 @@ export async function writeDownloadHistorySettings(
     };
   }
   const res = await sync.getConfig();
-  const current: ServiceConfig = res.ok ? res.result.config : EMPTY_CONFIG;
+  if (!res.ok) {
+    // CRITICAL (Decision 7): a failed READ must NOT fall back to an empty
+    // config — `sync:get-config` already returns `{ ok: true, <empty> }` for
+    // an ABSENT file, so `!ok` is a genuine read error (malformed JSON /
+    // providers-shape validation / io-error) on a file that most likely
+    // CONTAINS the OAuth app secrets. Writing `{ providers: {} }` wholesale
+    // would wipe them. Abort the write instead — you cannot preserve what you
+    // failed to read.
+    return {
+      ok: false,
+      error: {
+        tag: "io-error",
+        message:
+          "could not read current config; download-history write aborted to preserve providers",
+      },
+    };
+  }
+  const current: ServiceConfig = res.result.config;
   const currentSettings = resolveSettings(current);
   const merged: ServiceConfig = {
     ...current,

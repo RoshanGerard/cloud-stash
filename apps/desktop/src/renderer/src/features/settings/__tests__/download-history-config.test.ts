@@ -124,6 +124,22 @@ describe("writeDownloadHistorySettings — read-modify-write (Decision 7, CRITIC
     });
   });
 
+  it("ABORTS the write (does NOT call setConfig) when getConfig fails — never wipes providers", async () => {
+    // A failed read on a file that likely contains OAuth secrets must not be
+    // overwritten with an empty config (Decision 7). Review C1/C2.
+    getConfigMock.mockResolvedValue({
+      ok: false,
+      error: { tag: "io-error", message: "config.json is corrupt" },
+    });
+
+    const res = await writeDownloadHistorySettings({ autoPrune: false });
+
+    expect(setConfigMock).not.toHaveBeenCalled();
+    expect(res.ok).toBe(false);
+    if (res.ok) return;
+    expect(res.error.tag).toBe("io-error");
+  });
+
   it("returns the setConfig response so callers can surface io-error", async () => {
     getConfigMock.mockResolvedValue({
       ok: true,

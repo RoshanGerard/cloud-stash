@@ -81,7 +81,7 @@ describe("preload sync surface", () => {
     vi.clearAllMocks();
   });
 
-  it("exposes a sync object with exactly 13 members (12 commands + onEvent), no legacy `authenticate` or `enqueueUpload`", async () => {
+  it("exposes a sync object with exactly 16 members (15 commands + onEvent), no legacy `authenticate` or `enqueueUpload`", async () => {
     const exposed = await loadExposed();
 
     expect(typeof exposed.sync).toBe("object");
@@ -96,15 +96,20 @@ describe("preload sync surface", () => {
         // dedicated cancel surface for the new `files:upload` direct
         // RPC, keyed by service-minted `uploadJobId`.
         "cancelUpload",
+        // add-download-history-ui §5 — Settings → Downloads config +
+        // clear-history bridge (first renderer consumer of get/set-config).
+        "clearDownloadHistory",
         "enqueueMirror",
         // migrate-upload-orchestration-out-of-engine §11 / §7.4 —
         // `enqueueUpload` was deleted in chunk F; the renderer's
         // upload path is `window.api.files.upload`.
+        "getConfig",
         "getJob",
         "getRetryPolicy",
         "getStatus",
         "listJobs",
         "onEvent",
+        "setConfig",
         "setRetryPolicy",
       ].sort(),
     );

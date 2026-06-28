@@ -108,6 +108,43 @@ describe("ClearHistoryDialog", () => {
     });
   });
 
+  it("includes olderThanMs (status omitted) when an 'Older than' window is chosen", async () => {
+    render(<ClearHistoryDialog open onOpenChange={() => {}} />);
+
+    // Radix DropdownMenu opens on pointerDown(button:0), not click (jsdom).
+    fireEvent.pointerDown(screen.getByRole("button", { name: /older than/i }), {
+      button: 0,
+    });
+    fireEvent.click(await screen.findByRole("menuitemradio", { name: "30 days" }));
+
+    fireEvent.click(screen.getByRole("button", { name: /clear records/i }));
+
+    await waitFor(() => expect(clearMock).toHaveBeenCalledTimes(1));
+    expect(clearMock).toHaveBeenCalledWith({
+      filter: { olderThanMs: 30 * 86_400_000 },
+    });
+  });
+
+  it("combines a status filter with an age window", async () => {
+    render(<ClearHistoryDialog open onOpenChange={() => {}} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Completed" }));
+    fireEvent.pointerDown(screen.getByRole("button", { name: /older than/i }), {
+      button: 0,
+    });
+    fireEvent.click(await screen.findByRole("menuitemradio", { name: "90 days" }));
+
+    fireEvent.click(screen.getByRole("button", { name: /clear records/i }));
+
+    await waitFor(() => expect(clearMock).toHaveBeenCalledTimes(1));
+    expect(clearMock).toHaveBeenCalledWith({
+      filter: {
+        status: ["failed", "cancelled", "interrupted"],
+        olderThanMs: 90 * 86_400_000,
+      },
+    });
+  });
+
   it("disables 'Clear records' when zero status chips are selected", () => {
     render(<ClearHistoryDialog open onOpenChange={() => {}} />);
 

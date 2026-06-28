@@ -39,6 +39,7 @@
 // qualifies.
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -245,16 +246,35 @@ export function SettingsDialog({
     };
   }, [open]);
 
-  const handleToggleAutoPrune = useCallback((checked: boolean) => {
-    setHistorySettings((prev) => ({ ...prev, autoPrune: checked }));
-    void writeDownloadHistorySettings({ autoPrune: checked });
-  }, []);
+  // Optimistically reflect the change, then persist; surface a toast if the
+  // write fails so the setting doesn't silently snap back on reopen (the
+  // read-modify-write aborts rather than wiping providers on a read error).
+  const persistHistory = useCallback(
+    async (patch: Partial<DownloadHistorySettings>) => {
+      const res = await writeDownloadHistorySettings(patch);
+      if (!res.ok) {
+        toast.error("Couldn't save the download-history setting");
+      }
+    },
+    [],
+  );
 
-  const handleRetentionChange = useCallback((value: string) => {
-    const days = Number(value) as DownloadHistorySettings["retentionDays"];
-    setHistorySettings((prev) => ({ ...prev, retentionDays: days }));
-    void writeDownloadHistorySettings({ retentionDays: days });
-  }, []);
+  const handleToggleAutoPrune = useCallback(
+    (checked: boolean) => {
+      setHistorySettings((prev) => ({ ...prev, autoPrune: checked }));
+      void persistHistory({ autoPrune: checked });
+    },
+    [persistHistory],
+  );
+
+  const handleRetentionChange = useCallback(
+    (value: string) => {
+      const days = Number(value) as DownloadHistorySettings["retentionDays"];
+      setHistorySettings((prev) => ({ ...prev, retentionDays: days }));
+      void persistHistory({ retentionDays: days });
+    },
+    [persistHistory],
+  );
 
   return (
     <>
