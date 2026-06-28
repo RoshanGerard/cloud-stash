@@ -59,6 +59,10 @@ import {
 } from "../single-instance/pid-guard.js";
 import { recoverRunningJobs } from "../startup/recovery.js";
 import { sweepInterruptedDownloads } from "../downloads/sweep-interrupted.js";
+import {
+  createPruneScheduler,
+  type PruneScheduler,
+} from "../downloads/prune-scheduler.js";
 import { createHashComputer } from "../util/hash-computer.js";
 
 export type BootstrapStage =
@@ -179,6 +183,7 @@ export async function bootstrap(options: BootstrapOptions): Promise<Runtime> {
   let scheduler: Scheduler | null = null;
   let probe: NetworkProbe | null = null;
   let server: RunningServer | null = null;
+  let pruneScheduler: PruneScheduler | null = null;
 
   try {
     // 2. apply-migrations
@@ -331,6 +336,23 @@ export async function bootstrap(options: BootstrapOptions): Promise<Runtime> {
     }
     observer?.onStage("sweep-interrupted-downloads");
 
+    // 10c. download-history auto-prune (add-download-history-ui §3.4). The
+    //      config-gated scheduler prunes once now — AFTER the interrupted
+    //      sweep above, so swept `interrupted` rows are eligible immediately —
+    //      then re-prunes every 24h, re-reading the retention policy from
+    //      config each run. Skips entirely when `autoPrune` is off; never
+    //      touches in-flight rows or on-disk files. NOT an observable
+    //      bootstrap stage (no `observer.onStage`) — it is autonomous
+    //      retention enforcement, not part of the spec's observable boot
+    //      sequence; the 24h timer is cleared on shutdown (Runtime.stop +
+    //      the mid-boot catch below).
+    pruneScheduler = createPruneScheduler({
+      db,
+      readConfig: () => serviceConfigStore.getRaw(),
+      logger,
+    });
+    await pruneScheduler.start();
+
     // 11. ipc-listen — the last observable side-effect. Subscription
     //     registry is wired here so `sync:subscribe-events` works end-to-end,
     //     but it is NOT an observer stage (not in the spec sequence).
@@ -428,6 +450,7 @@ export async function bootstrap(options: BootstrapOptions): Promise<Runtime> {
     const runtimeRelease = releasePid;
     const runtimeDb: Database.Database = db;
     const runtimeBroker = loopbackBroker;
+    const runtimePruneScheduler = pruneScheduler;
     return {
       socketPath,
       db: runtimeDb,
@@ -448,6 +471,13 @@ export async function bootstrap(options: BootstrapOptions): Promise<Runtime> {
         }
         try {
           await runtimeProbe.stop();
+        } catch {
+          /* tolerated */
+        }
+        try {
+          // Clear the 24h auto-prune interval (add-download-history-ui §3.4)
+          // before the db closes — the prune touches `runtimeDb`.
+          runtimePruneScheduler?.stop();
         } catch {
           /* tolerated */
         }
@@ -477,6 +507,13 @@ export async function bootstrap(options: BootstrapOptions): Promise<Runtime> {
     // Mid-boot failure: tear down whatever we've already built, in reverse.
     try {
       if (server) await server.close();
+    } catch {
+      /* tolerated */
+    }
+    try {
+      // Clear the auto-prune interval if it was already armed (stage 10c)
+      // before ipc-listen (stage 11) threw.
+      if (pruneScheduler) pruneScheduler.stop();
     } catch {
       /* tolerated */
     }
