@@ -1,131 +1,96 @@
 # Proposal: Migrate the fs-sync download registry from in-memory to SQLite
 
-**Status**: Stub. Spawned during `add-engine-rename-download`
-brainstorming on 2026-04-27.
+> Promoted from a stub (spawned during `add-engine-rename-download`
+> brainstorming on 2026-04-27). Open questions resolved in a
+> brainstorming session on 2026-06-28; decisions captured in `design.md`.
 
 ## Why
 
-`add-engine-rename-download` ships an **in-memory** `DownloadRegistry`
-in the fs-sync service:
+The fs-sync `DownloadRegistry` is purely in-memory
+(`Map<downloadJobId, DownloadJobEntry>`), so every completed, failed, or
+cancelled download vanishes the instant it terminates, and any download
+in flight when the service stops leaves no trace. There is no download
+**history** to surface ("your last N downloads"), and a download
+interrupted by a service crash/restart leaves an orphaned partial file
+on disk with no record that it was ever happening. This change makes the
+registry durable so the data exists for history, telemetry, and the
+already-stubbed cleanup affordance.
 
-```typescript
-Map<transactionId, DownloadJob>
-```
+## What Changes
 
-The handler updates the map on every download event (start, throttled
-progress, terminal). The `downloads:list-active` RPC returns a snapshot
-of the map. App-restart hydration on first supervisor connect reads it.
+- Add a `downloads` table to `sync.db` (new forward-only migration
+  `services/fs-sync/drizzle/0002_downloads.sql` + a Drizzle table in
+  `services/fs-sync/src/db/schema.ts`; bump `CURRENT_SCHEMA_VERSION`
+  1 -> 2). The table records the full download lifecycle with a `status`
+  of `in-flight | completed | failed | cancelled | interrupted`.
+- Make the `DownloadRegistry` a **write-through mirror**: it stays
+  in-memory and **synchronous** (it remains the source of truth for live
+  state and for `downloads:list-active`), but now also writes through to
+  the `downloads` table — `INSERT` on start, a throttled `UPDATE` on
+  progress (every 10 MB OR 30 s), and a terminal-status `UPDATE` on
+  completion/failure/cancellation. The registry's constructor takes the
+  `db` handle (`createDownloadRegistry(db)`).
+- Replace the registry's `delete(id)` with `finalize(id, outcome)`: the
+  in-memory entry is still removed, but the `downloads` row is **retained**
+  with its terminal status, byte count, and (on failure) error tag/message.
+- Sweep crash-interrupted downloads on startup: any row left `in-flight`
+  by a prior process is marked `interrupted`. The sweep runs **after** the
+  existing single-instance PID guard is acquired, so only the winning
+  service process touches the rows.
+- **No wire-contract change.** The five `status` values live only in the
+  DB. `downloads:list-active` still returns only the in-memory in-flight
+  set projected to the unchanged `DownloadJob` shape.
 
-This is correct as long as the service is running. Three gaps:
+This change stops at **durability**. Retention policy (configurable
+auto-prune), manual history clear, and any UI to view/manage history are
+deliberately deferred to the follow-up stub `add-download-history-ui`
+("this change makes the data durable; surfacing it is a separate
+follow-up"). Download-history rows are tiny (hundreds of bytes), so
+interim unbounded growth is a non-issue until that follow-up ships.
 
-1. **No durability across service restart.** If the service crashes,
-   is killed (OS shutdown, kill -9, debug-build relaunch), or is
-   upgraded, the in-memory state is lost. In-flight downloads are
-   orphaned: the partial file is stranded on disk, and the renderer
-   has no way to find out the download was happening when it
-   reconnects.
+This is **not** a breaking change. It deliberately deviates from the
+stub's original acceptance criteria ("the in-memory `Map` is deleted",
+"`list-active` reads from SQLite") — see `design.md` for the rationale
+(the live `AbortController` is non-persistable, and live-state durability
+is unactionable without replay, which is out of scope).
 
-2. **No download history.** The registry is a transient view of
-   "currently in-flight." Completed / failed / cancelled downloads
-   disappear immediately. There's no way to surface "your last 10
-   downloads" in the UI, run telemetry on success rates, or audit
-   what was downloaded when.
+## Capabilities
 
-3. **No foundation for service-crash recovery.** The follow-up
-   `add-download-resilience` originally considered service-crash
-   recovery as a scope option (replay partial files on service
-   launch, decide resume vs orphan vs complete per-entry). That
-   change explicitly excluded service-crash recovery on the
-   architectural-boundary argument ("service is the durable owner;
-   reliability bugs live in the service"). But replay would be
-   trivial to add IF the registry were already persistent — the data
-   would just be there. Migrating to SQLite is the prerequisite.
+### New Capabilities
 
-The fs-sync service already has a SQLite database at
-`~/ft5/sync_app/sync.db` with Drizzle ORM, migrations infrastructure,
-a connection pool, and existing tables for jobs and credentials. A
-new `downloads` table is incremental work on a foundation that exists.
+_None._
 
-## Out of scope
+### Modified Capabilities
 
-- Service-crash recovery (replay). Stays scoped to
-  `add-download-resilience` per the architectural boundary. This
-  change just makes the data durable; replay is a separate decision.
-- Download history UI in the renderer (a "Recent downloads" panel,
-  search, etc.). The data is available after this change; the UI to
-  surface it is a separate follow-up.
-- Cross-machine sync of the registry (e.g., if the user runs
-  ft5-cloude-sync on two laptops, share download history). Way out.
+- `fs-sync-service`: the `DownloadRegistry` requirement changes from
+  "in-memory, SHALL NOT persist to disk" to "in-memory write-through
+  mirror backed by a durable `downloads` table"; the SQLite-schema
+  requirement gains the `downloads` table; the
+  registry-transition-driving requirement changes terminal removal to a
+  terminal-status `finalize`; and one new requirement covers the startup
+  interrupted-sweep. No wire-contract (IPC command surface) change.
 
-## Open questions (resolve during `/opsx:propose`)
+## Impact
 
-1. **Throttle policy for progress updates.** Writing to SQLite on every
-   `downloading` event would be hundreds of writes per second on a
-   fast download. Recommend: write on milestones — every 10MB of
-   progress OR every 30 seconds of wall time, whichever first. The
-   in-memory tracker (kept as a write-through cache for
-   `downloads:list-active` performance, see Q4) accumulates progress
-   between flushes; loss of in-memory cache on crash means the
-   registry shows a slightly-old `bytes_downloaded` value, off by at
-   most 10MB / 30s — acceptable for a "current snapshot" view.
-
-2. **Retention of completed/failed/cancelled rows.** Three branches:
-   (a) Keep forever. Audit-friendly; eventually grows large.
-   (b) Prune after N days (e.g., 90).
-   (c) Cap by row count (e.g., last 1000 across all statuses).
-   Recommend (b) with N=90; matches typical browser download history.
-
-3. **Schema versioning.** The Drizzle migrations infrastructure is in
-   place. New table added via standard migration. No data to migrate
-   from the in-memory registry — it's transient, the upgrade window
-   between versions just drops any in-flight downloads (and
-   re-orphans their partial files, same as today).
-
-4. **In-memory cache vs SQLite-only.** Two patterns:
-   (i) SQLite-only. Every read hits the DB. Latency ≈ tens of
-       microseconds for indexed lookups; fine.
-   (ii) In-memory cache + write-through. Faster reads, slight risk
-        of cache drift on bugs.
-   Recommend (i). The `downloads:list-active` query is small and
-   indexed; complexity savings of (i) outweigh the perf gain of (ii).
-
-5. **Concurrent writes to the same row.** Multiple progress events for
-   the same `transactionId` may arrive in quick succession. Use the
-   existing better-sqlite3 transaction wrapper to serialize writes;
-   the throttle at Q1 already limits the rate.
-
-## Acceptance criteria (once promoted)
-
-- New `downloads` table in `sync.db` via Drizzle migration with the
-  schema (transaction_id PK, datasource_id, source_path, target_path,
-  bytes_downloaded, content_length, started_at, last_updated_at,
-  status enum, failure_tag, failure_message). Indexes on `status`
-  and `started_at`.
-- Service write points (start, throttled progress, terminal) all
-  flow through the new SQLite-backed registry. The in-memory `Map`
-  in `services/fs-sync/src/downloads/registry.ts` is deleted.
-- `downloads:list-active` RPC reads from SQLite via the chosen
-  pattern (Q4); response shape unchanged from the wire contract
-  established by `add-engine-rename-download`.
-- Retention pruning (Q2) implemented as a periodic background sweep
-  (e.g., on service start + every 24h) over `last_updated_at <
-  now - 90 days AND status != 'in-flight'`.
-- Performance: `downloads:list-active` returns within 5ms for typical
-  registry sizes (≤ 100 active rows + ≤ 90 days of history).
-- Existing tests for `add-engine-rename-download` § registry pass
-  unchanged at the wire level (the API stays the same).
-
-## Provenance
-
-- Spawned during `add-engine-rename-download` brainstorming on
-  2026-04-27, when the user surfaced "can we keep the state in
-  sqlite by sync service if the app got disconnected from the
-  service due to desktop app close, desktop app crash, when desktop
-  app connect back it can review the last state based on that adapt".
-- The architectural boundary set by `add-engine-rename-download`
-  (service is the durable owner; in-memory is the v1 trade-off) is
-  preserved — this change strengthens "durable" without changing
-  the boundary.
-- Foundation work for `add-download-resilience` if/when that change
-  expands scope to service-crash recovery (currently excluded on
-  the architectural-boundary argument).
+- **Code (service-internal only):**
+  - `services/fs-sync/src/db/schema.ts` — new `downloads` Drizzle table.
+  - `services/fs-sync/drizzle/0002_downloads.sql` — new migration.
+  - `services/fs-sync/src/db/migrations.ts` — `CURRENT_SCHEMA_VERSION`
+    1 -> 2.
+  - `services/fs-sync/src/downloads/registry.ts` — `createDownloadRegistry`
+    takes `db`; `update` gains the milestone throttle; `delete` -> `finalize`.
+  - `services/fs-sync/src/downloads/` — new `sweepInterruptedDownloads`
+    function.
+  - `services/fs-sync/src/commands/files-download.ts` — terminal
+    `registry.delete(...)` call-sites switch to `registry.finalize(...)`
+    with the known outcome.
+  - `services/fs-sync/src/main/bootstrap.ts` — pass `db` into the
+    registry; run the sweep after the PID guard.
+- **Wire / IPC contract:** unchanged. No `@ft5/ipc-contracts` change; the
+  desktop main and renderer are untouched.
+- **Data:** new `downloads` table only; no migration of existing data
+  (the in-memory registry was transient). Existing v1 databases gain the
+  table on next start via the forward-only migration.
+- **Follow-up:** `add-download-history-ui` (stub) owns retention
+  (configurable auto-prune), manual clear (`downloads:clear-history`),
+  and the renderer history/settings UI.
