@@ -94,6 +94,45 @@ The handler already holds the `downloadJobId` for the in-flight call in its own 
 - **WHEN** a `files:download { datasourceId: "ds-1", path: "/welcome.pdf", toPath: <…> }` is dispatched while the registry already contains an entry for `(ds-1, /welcome.pdf)`
 - **THEN** the handler rejects the second request with `{ ok: false, error: { tag: "other", message: "download already in progress for this entry", retryable: false } }`; no `engine.downloadFile` call is issued for the second request; the first download's registry entry and event stream are unaffected
 
+### Requirement: Service bootstrap composes the full runtime
+
+The service's `main/index.ts` SHALL, after migrations + integrity check + PID guard acquisition and BEFORE opening the IPC listener to new clients, construct and start the full runtime: credential store → service config store → provider registry → client factory → job repository → scheduler (with concurrency semaphore) → network probe → OAuth loopback broker (registered against the auth correlation store and the engine bus) → recovery (running-jobs re-queue) → interrupted-download sweep (terminalize any `downloads` row left `in-flight` by a prior process) → IPC server. The interrupted-download sweep SHALL run after the PID guard is acquired and after the running-jobs recovery, and before the IPC server binds. The IPC server SHALL bind only after every prior step returns without error.
+
+The service SHALL register SIGINT and SIGTERM handlers that, on signal:
+
+1. Stop accepting new connections on the IPC listener.
+2. Allow in-flight requests to complete with a bounded grace period (default 5 s).
+3. Pause the scheduler (jobs in `running` SHALL be allowed to reach their next persisted state — `completed`, `failed`, `waiting-network` — before shutdown proceeds).
+4. Cancel all active OAuth loopback sessions (the broker's `dispose()` closes every pending HTTP server and clears every timer).
+5. Close the IPC server, close the DB, release the PID guard, and exit cleanly with code 0.
+
+The service SHALL remain in its run-loop indefinitely until a signal or fatal internal error arrives. "Fatal internal error" SHALL include: IPC listener bind failure after PID-guard acquisition, unrecoverable DB error (e.g., `SQLITE_IOERR`), uncaught exception in the top-level runtime (logged + exit 1).
+
+#### Scenario: Service runs a full request after bootstrap
+
+- **WHEN** the service starts fresh (no existing data dir) with `--dev`
+- **THEN** within 3 seconds a client can connect to the dev pipe, send `sync:get-status`, and receive `{ ok: true, result: { ..., runningJobs: 0, queuedJobs: 0 } }`; the PID file exists; `service.log` has lines tagged `bootstrap-complete`
+
+#### Scenario: Bootstrap order is observable
+
+- **WHEN** a test wraps each bootstrap stage in a spy and boots the service
+- **THEN** the observed call order is: open DB → run migrations → integrity check → acquire PID guard → construct credential store → construct service config store → construct provider registry → construct client factory → construct scheduler + probe → construct OAuth loopback broker → run `recoverRunningJobs` → run `sweepInterruptedDownloads` → bind IPC listener; the IPC listener's bind SHALL be the LAST observable side-effect before the service enters its idle wait
+
+#### Scenario: SIGINT cancels active OAuth sessions before exit
+
+- **WHEN** the service has one active OAuth correlation (loopback bound, browser tab waiting) and receives SIGINT
+- **THEN** before the process exits, the loopback HTTP server is closed (its socket is no longer listening); the `auth-cancelled` event is emitted for the correlation OR no event is emitted (acceptable both ways since the listener tear-down happens during shutdown); the PID file is removed; the process exits with code 0 within 5 seconds
+
+#### Scenario: SIGINT shuts down cleanly
+
+- **WHEN** the service is running with one in-flight `sync:list-jobs` request and receives SIGINT
+- **THEN** the list-jobs response is written to the client, the listener stops accepting new connects within 100 ms, the PID file is removed, and the process exits with code 0 within 5 seconds
+
+#### Scenario: IPC bind failure after PID acquisition is fatal
+
+- **WHEN** the PID guard is acquired but binding the IPC listener fails (e.g., pipe path unwritable)
+- **THEN** the service logs a fatal error, releases the PID guard, and exits with a non-zero code (specific code = 5); a subsequent invocation SHALL not see a stale PID file
+
 ## ADDED Requirements
 
 ### Requirement: DownloadRegistry mirrors the download lifecycle to a durable `downloads` table
