@@ -137,6 +137,29 @@ describe("download-history prune scheduler", () => {
     expect(count(db)).toBe(1); // never pruned after stop
   });
 
+  it("does NOT throw when readConfig rejects — start resolves and the cycle is skipped", async () => {
+    // ServiceConfigStore.getRaw rethrows on a malformed/unparseable config
+    // (only ENOENT yields the default). Autonomous retention must degrade to
+    // "skip this cycle", never crash the service or leave an unhandled
+    // rejection on the 24h tick (review C2; Decision 2 defensive-read intent).
+    seed(db, "old", "completed", NOW - 100 * DAY);
+    const sched = createPruneScheduler({
+      db,
+      readConfig: async () => {
+        throw new Error("config.json is corrupt");
+      },
+    });
+
+    await expect(sched.start()).resolves.toBeUndefined();
+    expect(count(db)).toBe(1); // nothing pruned, nothing thrown
+
+    // A subsequent 24h tick must also swallow the rejection.
+    await vi.advanceTimersByTimeAsync(PRUNE_INTERVAL_MS);
+    expect(count(db)).toBe(1);
+
+    sched.stop();
+  });
+
   it("falls back to default (autoPrune on, 90d) when downloadHistory is absent", async () => {
     seed(db, "old", "completed", NOW - 100 * DAY);
     seed(db, "mid", "completed", NOW - 60 * DAY);

@@ -336,6 +336,35 @@ describe("bootstrap download-history auto-prune (add-download-history-ui §3.4)"
     expect(exists(runtime.db, "fresh")).toBe(true);
   });
 
+  it("still boots when config.json is malformed — auto-prune degrades, does not abort boot", async () => {
+    // Pre-change, a malformed config degraded gracefully (config is read
+    // lazily at authenticate-start). The stage-10c prune reads config eagerly;
+    // getRaw rethrows on unparseable JSON, so without a guard the boot would
+    // tear down. Review C2: the prune must swallow the read error and let the
+    // service boot.
+    const dbPath = path.join(scratchDir, "sync.db");
+    const configPath = path.join(scratchDir, "config.json");
+    seedDownloads(dbPath, [
+      { id: "x", status: "completed", endedAt: Date.now() - 1 * DAY },
+    ]);
+    await fsp.writeFile(configPath, "{ this is not valid json", "utf8");
+
+    runtime = await bootstrap({
+      dev: true,
+      dataDir: scratchDir,
+      configPath,
+      pidPath: path.join(scratchDir, "service-dev.pid"),
+      dbPath,
+      socketPath: pipeFor("prune-malformed"),
+      credentialsPath: path.join(scratchDir, "credentials.json"),
+    });
+
+    // Boot succeeded despite the unparseable config; the prune was skipped
+    // this cycle so the row is untouched.
+    expect(runtime).toBeTruthy();
+    expect(exists(runtime.db, "x")).toBe(true);
+  });
+
   it("does NOT prune on boot when autoPrune is off", async () => {
     const dbPath = path.join(scratchDir, "sync.db");
     const configPath = path.join(scratchDir, "config.json");

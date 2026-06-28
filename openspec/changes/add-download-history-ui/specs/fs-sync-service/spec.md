@@ -52,6 +52,45 @@ The service SHALL accept `sync:get-config` (no parameters) and respond with `{ o
 - **WHEN** a client sends `sync:set-config { config: { schemaVersion: 1, providers: {}, downloadHistory: { autoPrune: true, retentionDays: 45 } } }`
 - **THEN** the response is `{ ok: false, error: { tag: "io-error", message } }` and `<dataDir>/config.json` is not modified
 
+### Requirement: Service bootstrap composes the full runtime
+
+The service's `main/index.ts` SHALL, after migrations + integrity check + PID guard acquisition and BEFORE opening the IPC listener to new clients, construct and start the full runtime: credential store → service config store → provider registry → client factory → job repository → scheduler (with concurrency semaphore) → network probe → OAuth loopback broker (registered against the auth correlation store and the engine bus) → recovery (running-jobs re-queue) → interrupted-download sweep (terminalize any `downloads` row left `in-flight` by a prior process) → config-gated download-history prune (start the autonomous retention scheduler) → IPC server. The interrupted-download sweep SHALL run after the PID guard is acquired and after the running-jobs recovery, and before the IPC server binds. The config-gated download-history prune scheduler SHALL start after the interrupted-download sweep and before the IPC server binds; its first prune runs synchronously at startup, and it then re-prunes every 24 hours (see "Config-gated download-history auto-prune"). The prune scheduler is part of the composed runtime but is NOT an observable bootstrap stage — it fires no `onStage` (autonomous retention enforcement), so it does not appear in the observable stage order below. The IPC server SHALL bind only after every prior step returns without error.
+
+The service SHALL register SIGINT and SIGTERM handlers that, on signal:
+
+1. Stop accepting new connections on the IPC listener.
+2. Allow in-flight requests to complete with a bounded grace period (default 5 s).
+3. Pause the scheduler (jobs in `running` SHALL be allowed to reach their next persisted state — `completed`, `failed`, `waiting-network` — before shutdown proceeds).
+4. Cancel all active OAuth loopback sessions (the broker's `dispose()` closes every pending HTTP server and clears every timer).
+5. Clear the download-history auto-prune timer, close the IPC server, close the DB, release the PID guard, and exit cleanly with code 0.
+
+The service SHALL remain in its run-loop indefinitely until a signal or fatal internal error arrives. "Fatal internal error" SHALL include: IPC listener bind failure after PID-guard acquisition, unrecoverable DB error (e.g., `SQLITE_IOERR`), uncaught exception in the top-level runtime (logged + exit 1).
+
+#### Scenario: Service runs a full request after bootstrap
+
+- **WHEN** the service starts fresh (no existing data dir) with `--dev`
+- **THEN** within 3 seconds a client can connect to the dev pipe, send `sync:get-status`, and receive `{ ok: true, result: { ..., runningJobs: 0, queuedJobs: 0 } }`; the PID file exists; `service.log` has lines tagged `bootstrap-complete`
+
+#### Scenario: Bootstrap order is observable
+
+- **WHEN** a test wraps each bootstrap stage in a spy and boots the service
+- **THEN** the observed call order is: open DB → run migrations → integrity check → acquire PID guard → construct credential store → construct service config store → construct provider registry → construct client factory → construct scheduler + probe → construct OAuth loopback broker → run `recoverRunningJobs` → run `sweepInterruptedDownloads` → bind IPC listener; the IPC listener's bind SHALL be the LAST observable side-effect before the service enters its idle wait. (The config-gated download-history prune runs between `sweepInterruptedDownloads` and the IPC bind but fires no `onStage`, so it is not an observed stage.)
+
+#### Scenario: SIGINT cancels active OAuth sessions before exit
+
+- **WHEN** the service has one active OAuth correlation (loopback bound, browser tab waiting) and receives SIGINT
+- **THEN** before the process exits, the loopback HTTP server is closed (its socket is no longer listening); the `auth-cancelled` event is emitted for the correlation OR no event is emitted (acceptable both ways since the listener tear-down happens during shutdown); the PID file is removed; the process exits with code 0 within 5 seconds
+
+#### Scenario: SIGINT shuts down cleanly
+
+- **WHEN** the service is running with one in-flight `sync:list-jobs` request and receives SIGINT
+- **THEN** the list-jobs response is written to the client, the listener stops accepting new connects within 100 ms, the PID file is removed, and the process exits with code 0 within 5 seconds
+
+#### Scenario: IPC bind failure after PID acquisition is fatal
+
+- **WHEN** the PID guard is acquired but binding the IPC listener fails (e.g., pipe path unwritable)
+- **THEN** the service logs a fatal error, releases the PID guard, and exits with a non-zero code (specific code = 5); a subsequent invocation SHALL not see a stale PID file
+
 ## ADDED Requirements
 
 ### Requirement: Service config carries optional download-history retention settings

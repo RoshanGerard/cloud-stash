@@ -44,18 +44,30 @@ export function createPruneScheduler(deps: PruneSchedulerDeps): PruneScheduler {
   let timer: ReturnType<typeof setInterval> | undefined;
 
   async function runOnce(): Promise<void> {
-    const config = await deps.readConfig();
-    const settings = resolveRetentionSettings(config);
-    if (!settings.autoPrune) {
-      return;
-    }
-    const deleted = pruneDownloadHistory(deps.db, {
-      maxAgeMs: settings.retentionDays * DAY_MS,
-    });
-    if (deleted > 0) {
-      deps.logger?.info("downloads-history-pruned", {
-        deleted,
-        retentionDays: settings.retentionDays,
+    try {
+      const config = await deps.readConfig();
+      const settings = resolveRetentionSettings(config);
+      if (!settings.autoPrune) {
+        return;
+      }
+      const deleted = pruneDownloadHistory(deps.db, {
+        maxAgeMs: settings.retentionDays * DAY_MS,
+      });
+      if (deleted > 0) {
+        deps.logger?.info("downloads-history-pruned", {
+          deleted,
+          retentionDays: settings.retentionDays,
+        });
+      }
+    } catch (err) {
+      // Autonomous retention must NEVER crash or destabilize the service.
+      // `ServiceConfigStore.getRaw` rethrows on a malformed/unparseable
+      // config.json (only ENOENT yields the default), so an unguarded read
+      // would abort the boot at stage 10c (Decision 2's defensive-read intent
+      // is to degrade, not crash) and a rejected 24h tick (`void runOnce()`)
+      // would surface as an unhandled rejection. Degrade to "skip this cycle".
+      deps.logger?.info("downloads-history-prune-skipped", {
+        reason: err instanceof Error ? err.message : String(err),
       });
     }
   }

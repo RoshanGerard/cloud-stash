@@ -8,10 +8,15 @@
 //   → construct credential store → construct provider registry
 //   → construct client factory → construct scheduler
 //   → construct network probe → recoverRunningJobs
-//   → sweepInterruptedDownloads → ipcServer.listen
+//   → sweepInterruptedDownloads → startPruneScheduler → ipcServer.listen
+// `startPruneScheduler` (add-download-history-ui §3.4) is part of the composed
+// runtime but is NOT an observable bootstrap stage (no `onStage`) — it is
+// autonomous retention enforcement, so it does not appear in the observable
+// 14-stage order the "Bootstrap order is observable" scenario pins.
 //
 // Shutdown (Runtime.stop) reverses where dependencies allow:
-//   probe.stop → scheduler.stop → server.close → db.close → release PID.
+//   broker.dispose → probe.stop → pruneScheduler.stop → scheduler.stop
+//   → server.close → db.close → release PID.
 
 import type Database from "better-sqlite3";
 
