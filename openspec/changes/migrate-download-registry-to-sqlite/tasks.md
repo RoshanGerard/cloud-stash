@@ -42,7 +42,7 @@ OUT OF SCOPE — deferred to the `add-download-history-ui` stub.
 
 ## 6. Verification & integration
 
-- [ ] 6.1 Confirm the existing `files-download` and `downloads-list-active` tests pass UNCHANGED (wire contract intact; `list-active` still reads the in-memory snapshot).
-- [ ] 6.2 Composite test: a download runs to completion → its `downloads` row is persisted `completed`; a simulated restart leaves an `in-flight` row that the startup sweep marks `interrupted`; terminal rows are untouched by the sweep.
-- [ ] 6.3 Full verification: `services/fs-sync` test suite + workspace typecheck + lint all green.
-- [ ] 6.4 `openspec validate migrate-download-registry-to-sqlite --strict` green; reactive audit gate N/A (forward change) — confirm no unintended wire/contract drift beyond the spec delta.
+- [x] 6.1 Confirm the existing `files-download` and `downloads-list-active` tests pass UNCHANGED (wire contract intact; `list-active` still reads the in-memory snapshot).
+- [x] 6.2 Composite test: a download runs to completion → its `downloads` row is persisted `completed`; a simulated restart leaves an `in-flight` row that the startup sweep marks `interrupted`; terminal rows are untouched by the sweep.
+- [x] 6.3 Full verification: `services/fs-sync` test suite + workspace typecheck + lint all green.
+- [x] 6.4 `openspec validate migrate-download-registry-to-sqlite --strict` green; reactive audit gate N/A (forward change) — confirm no unintended wire/contract drift beyond the spec delta.
