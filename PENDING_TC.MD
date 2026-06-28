@@ -1142,6 +1142,14 @@ untested. Add a rejecting-`get` broker test.
 **Status:** PENDING — needs a human with real provider credentials + accounts.
 **Owner:** unassigned.
 
+**Surfaced a bug (2026-06-29):** the first real attempt at scenario 3 (wrong
+account) on Google Drive hit Google's *Testing*-mode `access_denied` 403 — a
+browser dead-end that preempts the token exchange the account-mismatch check
+depends on — and stranded the reconnect view on a greyed-out "Connecting…"
+button with no recovery. Filed as the stub
+`openspec/changes/fix-reconnect-stuck-connecting-button/`. The amber-callout
+arm (a successful exchange as account B) is still unexercised here.
+
 ---
 
 ## add-drive-docs-editors-export — §6.1/§6.2 Drive export manual smoke (deferred 2026-06-21)
