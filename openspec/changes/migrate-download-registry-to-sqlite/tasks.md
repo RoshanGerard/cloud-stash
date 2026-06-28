@@ -9,11 +9,11 @@ OUT OF SCOPE — deferred to the `add-download-history-ui` stub.
 
 ## 1. Schema & migration
 
-- [ ] 1.1 Add the `downloads` Drizzle table to `services/fs-sync/src/db/schema.ts` (columns + `status` enum + the two indexes per design.md Decision 6). Update `db/schema.test-d.ts` type expectations if present.
-- [ ] 1.2 Add forward-only migration `services/fs-sync/drizzle/0002_downloads.sql` creating the `downloads` table + `downloads_status_idx` + `downloads_started_at_idx`, all `IF NOT EXISTS`.
-- [ ] 1.3 Bump `CURRENT_SCHEMA_VERSION` 1 → 2 in `services/fs-sync/src/db/migrations.ts`.
-- [ ] 1.4 Grep for any assertion of `schema_version === 1` / `schemaVersion === 1` / "all four core tables" across `services/fs-sync` (notably `db/migrations.test.ts`, `db/integrity.test.ts`); update the fresh-init expectations to `schemaVersion = 2` and the five-table set.
-- [ ] 1.5 Test (TDD): fresh DB has the `downloads` table + indexes and `service_meta.schemaVersion = 2`; an existing v1 DB (no `downloads` table, `0002` not in `schema_migrations`) gains the table forward-only on next `applyMigrations`, recording `0002_downloads.sql`, leaving other tables' rows intact.
+- [x] 1.1 Add the `downloads` Drizzle table to `services/fs-sync/src/db/schema.ts` (columns + `status` enum + the two indexes per design.md Decision 6). Update `db/schema.test-d.ts` type expectations if present.
+- [x] 1.2 Add forward-only migration `services/fs-sync/drizzle/0002_downloads.sql` creating the `downloads` table + `downloads_status_idx` + `downloads_started_at_idx`, all `IF NOT EXISTS`.
+- [x] 1.3 Bump `CURRENT_SCHEMA_VERSION` 1 → 2 in `services/fs-sync/src/db/migrations.ts`.
+- [x] 1.4 Grep for any assertion of `schema_version === 1` / `schemaVersion === 1` / "all four core tables" across `services/fs-sync` (notably `db/migrations.test.ts`, `db/integrity.test.ts`); update the fresh-init expectations to `schemaVersion = 2` and the five-table set.
+- [x] 1.5 Test (TDD): fresh DB has the `downloads` table + indexes and `service_meta.schemaVersion = 2`; an existing v1 DB (no `downloads` table, `0002` not in `schema_migrations`) gains the table forward-only on next `applyMigrations`, recording `0002_downloads.sql`, leaving other tables' rows intact.
 
 ## 2. Registry write-through (memory-authoritative + SQLite mirror)
 

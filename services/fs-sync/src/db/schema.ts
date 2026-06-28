@@ -8,8 +8,11 @@
 //                    requirement
 //   sync_snapshot    PK (datasourceId, relPath) — mirror-sync diff basis
 //   retry_policies   PK (scope, datasourceId) — user-level retry override
+//   downloads        PK download_job_id — durable download-lifecycle mirror
+//                    (memory-authoritative registry write-through; D6 v2)
 
 import {
+  index,
   integer,
   primaryKey,
   sqliteTable,
@@ -82,5 +85,40 @@ export const retryPolicies = sqliteTable(
   },
   (t) => ({
     pk: primaryKey({ columns: [t.scope, t.datasourceId] }),
+  }),
+);
+
+// Durable mirror of the in-memory DownloadRegistry lifecycle (design.md D6).
+// The in-memory Map stays authoritative for live state; this table is a
+// write-through mirror written by the registry (the single writer). The
+// `status` enum is type-only — the matching CHECK constraint lives in the
+// 0002_downloads.sql migration, mirroring how `jobs.status` is handled.
+export const downloads = sqliteTable(
+  "downloads",
+  {
+    downloadJobId: text("download_job_id").primaryKey(),
+    datasourceId: text("datasource_id").notNull(),
+    sourcePath: text("source_path").notNull(),
+    targetPath: text("target_path").notNull(),
+    bytesDownloaded: integer("bytes_downloaded").notNull().default(0),
+    contentLength: integer("content_length"),
+    status: text("status", {
+      enum: [
+        "in-flight",
+        "completed",
+        "failed",
+        "cancelled",
+        "interrupted",
+      ],
+    }).notNull(),
+    failureTag: text("failure_tag"),
+    failureMessage: text("failure_message"),
+    startedAt: integer("started_at").notNull(),
+    updatedAt: integer("updated_at").notNull(),
+    endedAt: integer("ended_at"),
+  },
+  (t) => ({
+    statusIdx: index("downloads_status_idx").on(t.status),
+    startedAtIdx: index("downloads_started_at_idx").on(t.startedAt),
   }),
 );
