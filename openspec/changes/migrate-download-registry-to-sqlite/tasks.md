@@ -37,8 +37,8 @@ OUT OF SCOPE — deferred to the `add-download-history-ui` stub.
 
 ## 5. Bootstrap wiring
 
-- [ ] 5.1 Pass `db` into `createDownloadRegistry(db)` in `services/fs-sync/src/main/bootstrap.ts`.
-- [ ] 5.2 Call `sweepInterruptedDownloads(db)` AFTER the PID guard is acquired (bootstrap stage 4+); add/extend a test asserting the sweep runs only post-PID-guard.
+- [x] 5.1 Pass `db` into `createDownloadRegistry(db)` in `services/fs-sync/src/main/bootstrap.ts`.
+- [x] 5.2 Call `sweepInterruptedDownloads(db)` AFTER the PID guard is acquired (bootstrap stage 4+); add/extend a test asserting the sweep runs only post-PID-guard.
 
 ## 6. Verification & integration
 

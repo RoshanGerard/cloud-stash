@@ -7,7 +7,8 @@
 //   openDatabase → applyMigrations → integrity-ok → acquirePidGuard
 //   → construct credential store → construct provider registry
 //   → construct client factory → construct scheduler
-//   → construct network probe → recoverRunningJobs → ipcServer.listen
+//   → construct network probe → recoverRunningJobs
+//   → sweepInterruptedDownloads → ipcServer.listen
 //
 // Shutdown (Runtime.stop) reverses where dependencies allow:
 //   probe.stop → scheduler.stop → server.close → db.close → release PID.
@@ -57,6 +58,7 @@ import {
   AlreadyRunningError,
 } from "../single-instance/pid-guard.js";
 import { recoverRunningJobs } from "../startup/recovery.js";
+import { sweepInterruptedDownloads } from "../downloads/sweep-interrupted.js";
 import { createHashComputer } from "../util/hash-computer.js";
 
 export type BootstrapStage =
@@ -72,6 +74,7 @@ export type BootstrapStage =
   | "construct-network-probe"
   | "construct-loopback-broker"
   | "recover-running-jobs"
+  | "sweep-interrupted-downloads"
   | "ipc-listen";
 
 export interface BootstrapObserver {
@@ -312,6 +315,21 @@ export async function bootstrap(options: BootstrapOptions): Promise<Runtime> {
     //     the IPC listener is bound so no client can observe half-state.
     recoverRunningJobs(db);
     observer?.onStage("recover-running-jobs");
+
+    // 10b. sweep-interrupted-downloads — terminalize any `downloads` row left
+    //      `in-flight` by a prior process (crash/kill/relaunch) to the
+    //      `interrupted` status. Runs AFTER the PID guard (stage 4) so only
+    //      the single-instance-winning process mutates in-flight rows
+    //      (design.md Decision 5), and before ipc-listen so no client
+    //      observes a stale `in-flight` row that no live download backs.
+    //      Bookkeeping only — never touches the partial files on disk.
+    const sweptInterrupted = sweepInterruptedDownloads(db);
+    if (sweptInterrupted.length > 0) {
+      logger?.info("downloads-interrupted-sweep", {
+        count: sweptInterrupted.length,
+      });
+    }
+    observer?.onStage("sweep-interrupted-downloads");
 
     // 11. ipc-listen — the last observable side-effect. Subscription
     //     registry is wired here so `sync:subscribe-events` works end-to-end,
