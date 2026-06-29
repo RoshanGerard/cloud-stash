@@ -901,4 +901,43 @@ describe("InvalidDatasourceState — scope-insufficient auth-error callout (fix-
       ),
     ).toBeInTheDocument();
   });
+
+  it("after a dead-ended reconnect, the scope callout PERSISTS as the single explanation (not the dead-end line) + Try Again", async () => {
+    // The headline repro: scope-insufficient datasource → click Reconnect →
+    // Google Testing-mode dead-end (timeout/cancel, no account-mismatch). The
+    // under-scoped root cause is unchanged, so the callout must persist as the
+    // single explanation (keeping the "grant full access" steer visible right
+    // before the retry); the dead-end body line must NOT also render.
+    const props = {
+      providerId: "google-drive",
+      datasourceId: "ds-1",
+      onReconnectSucceeded: () => {},
+      onRequestRemove: () => {},
+      authErrorKind: "scope-insufficient" as const,
+      authErrorMessage: "request had insufficient authentication scopes",
+    };
+    mockSessionState = { status: "pending" };
+    const { rerender } = render(<InvalidDatasourceState {...props} />);
+    fireEvent.click(screen.getByRole("button", { name: /^reconnect$/i }));
+    await waitFor(() =>
+      expect(authenticateStartMock).toHaveBeenCalledTimes(1),
+    );
+    // Reconnect dead-ends (timeout, no account-mismatch) → showDeadEnd true,
+    // but the files-error callout is still armed.
+    mockSessionState = { status: "timeout" } as AuthSessionState;
+    rerender(<InvalidDatasourceState {...props} />);
+
+    // The scope callout persists (single root-cause explanation)...
+    expect(
+      screen.getByText("Google Drive needs full-access permission"),
+    ).toBeInTheDocument();
+    // ...and the dead-end body line is NOT also shown (no double explanation).
+    expect(
+      screen.queryByText(/Sign-in didn.t complete/i),
+    ).not.toBeInTheDocument();
+    // The primary action is the retry affordance.
+    expect(
+      screen.getByRole("button", { name: /try again/i }),
+    ).toBeInTheDocument();
+  });
 });

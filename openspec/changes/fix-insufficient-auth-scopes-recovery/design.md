@@ -224,17 +224,25 @@ and inherits the sibling change's pre-specified "Auth-error slot"
   reserved for this hard auth error (amber stays reserved for the recoverable
   wrong-account correction).
 - **Body supersede (honesty — extends D3's unified message path with a 4th case).**
-  When `authErrorKind === "scope-insufficient"`, the misleading generic body line
-  "Its connection details are missing or invalid…" is **suppressed** — the
-  credential is present, merely under-scoped, so that line would contradict the
-  callout. The heading "This datasource needs reconfiguring" stays; the callout
-  below the buttons carries the accurate explanation. This continues the sibling
-  change's principle of never showing "missing or invalid" as the explanation when
-  it is wrong.
-- **Precedence — one callout at a time.** The auth-error callout renders only when
-  `!isWaiting && !isAccountMismatch`. An in-progress reconnect (status line +
-  Cancel) or a wrong-account session failure (amber callout) takes precedence over
-  the stale initiating files-error's red callout.
+  When `authErrorKind === "scope-insufficient"`, the callout is the single
+  root-cause explanation and **suppresses BOTH** the generic body line ("Its
+  connection details are missing or invalid…") AND the dead-end line ("Sign-in
+  didn't complete…"). The body-conditional priority is `isWaiting` (status line) →
+  `showAuthError` (suppress body; callout carries it) → `showDeadEnd` (dead-end
+  line) → generic. Rationale: a dead-ended reconnect does NOT change the
+  under-scoped root cause, so the scope callout PERSISTS through a dead-end (the
+  primary button still flips to "Try Again" via `showDeadEnd`) — keeping the
+  "grant full access" steer visible exactly when the user is about to retry, which
+  is the whole loop-breaker. Showing the dead-end line's "…with the account this
+  datasource is connected to" account-framing here would both contradict the scope
+  framing and drop the steer. Continues the sibling change's principle of never
+  showing a misleading body line as the explanation when it is wrong.
+- **Precedence — one explanation at a time.** The auth-error callout renders
+  whenever `!isWaiting && !isAccountMismatch` (it is NOT gated on `!showDeadEnd` —
+  it deliberately persists through a dead-end, per Body supersede). An in-progress
+  reconnect (status line + Cancel) or a wrong-account session failure (amber
+  callout) takes precedence over the red callout; otherwise the red callout is the
+  sole explanation and its body line (generic OR dead-end) is suppressed.
 - **Primary label.** Stays **Reconnect** (the routing tag is the initial
   `auth-revoked`, not a terminal session failure — `showDeadEnd` is false, so the
   existing `primaryLabel` is already "Reconnect").

@@ -293,10 +293,15 @@ export function InvalidDatasourceState({
       <div className="text-[15px] font-semibold text-foreground">
         This datasource needs reconfiguring
       </div>
-      {/* BODY — keyed on session phase (D3 unified message path):            */}
-      {/* pending → announced status line; dead-end → honest failure copy;    */}
-      {/* scope-insufficient → suppressed (the red callout below explains);    */}
-      {/* else → the generic initial/missing-credential copy (default).       */}
+      {/* BODY — keyed on session phase (D3 unified message path), in priority   */}
+      {/* order: pending → announced status line; scope-insufficient →          */}
+      {/* SUPPRESSED (the red callout below is the single root-cause            */}
+      {/* explanation, and it must win over BOTH the dead-end line AND the      */}
+      {/* generic line — a dead-ended reconnect does not change the             */}
+      {/* under-scoped root cause, and hiding the callout here would drop the   */}
+      {/* "grant full access" steer right before the user retries, risking the  */}
+      {/* granular-consent re-deny loop); dead-end → honest failure copy;       */}
+      {/* else → the generic initial/missing-credential copy (default).         */}
       {isWaiting ? (
         <p
           role="status"
@@ -306,13 +311,12 @@ export function InvalidDatasourceState({
           Connecting… — finish signing in to {providerDisplayName} in your
           browser.
         </p>
-      ) : showDeadEnd ? (
+      ) : showAuthError ? null : showDeadEnd ? (
         <p className="max-w-[320px] text-center text-[13px] text-destructive">
           Sign-in didn&apos;t complete. Try again with the account this
           datasource is connected to.
         </p>
-      ) : showAuthError ? null : ( // credential present but under-scoped — the
-        // generic "missing or invalid" line would contradict the callout below.
+      ) : (
         <div className="max-w-[320px] text-center text-[13px] text-muted-foreground">
           Its connection details are missing or invalid. Sign in again or remove
           the datasource and add it back.
