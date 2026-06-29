@@ -1375,3 +1375,55 @@ control is tab-reachable); purely a keyboard-flow polish.
 **Owner:** unassigned (HUMAN). Pairs with the deferred real-provider smokes from
 `add-drive-oauth-browser-consent §1 HUMAN ops` and
 `enforce-oauth-reconnect-account-match §9.4` (same live OAuth setup).
+
+## fix-insufficient-auth-scopes-recovery — real-provider insufficient-scope recovery + follow-ups (deferred 2026-06-29)
+
+**Scenario (real GCP OAuth, Testing-mode):** authenticate a Google Drive
+datasource with the **correct** account but grant a NARROW scope (de-select the
+Drive permission on Google's granular-consent screen, or use a `drive.file` /
+`drive.readonly`-only client). Then *Explore* it. Confirm:
+
+1. The folder load fails with a runtime 403 (`insufficientPermissions` /
+   `ACCESS_TOKEN_SCOPE_INSUFFICIENT`) and the explorer routes to the **reconnect
+   view** (NOT the dead "Failed to load: …" state).
+2. The destructive-palette **auth-error callout** renders below the buttons:
+   headline "Google Drive needs full-access permission" + detail "Authentication
+   error: request had insufficient authentication scopes". The misleading "Its
+   connection details are missing or invalid" body line is NOT shown.
+3. Click **Reconnect** → grant **full** Drive access → the credential is
+   overwritten and the next list succeeds (no hand-deleting `credentials.json`).
+4. **Loop-breaker check:** Reconnect but AGAIN de-select the Drive scope → the
+   view returns to the same callout (deterministic re-route, no silent dead-end).
+5. **Dead-end coexistence:** click Reconnect, then dead-end the OAuth (timeout /
+   cancel, correct account) → the scope callout PERSISTS as the single
+   explanation (the dead-end "Sign-in didn't complete…" line is NOT also shown)
+   and the primary reads **Try Again**.
+
+**Covered in isolation by:** engine `googledrive-client.test.ts` (403
+insufficientPermissions / ACCESS_TOKEN_SCOPE_INSUFFICIENT → auth-revoked +
+scope-insufficient; provider-error reasons unchanged); fs-sync
+`files-error-mapping.test.ts` (authErrorKind threading + omit cases);
+`invalid-datasource.test.tsx` + `file-explorer-composite.test.tsx` (callout
+render, body-suppress, provider-param, pending/account-mismatch/dead-end
+precedence, null-message fallback, end-to-end files.list-reject → callout).
+
+**Why deferred:** requires a real GCP OAuth client + a deliberately narrow grant
+to produce the runtime 403 — not configurable in this environment. The
+classify→route→callout→overwrite flow is automated-green but never exercised
+against a real provider.
+
+**Follow-ups (non-blocking):**
+- **OneDrive equivalent.** The Graph insufficient-scope error has a different
+  shape (no Drive `reason` tokens); the `authErrorKind` contract field + renderer
+  callout are provider-agnostic and ready, but the OneDrive strategy
+  reclassification is not implemented. (design.md D6.)
+- **Q6 — why the proactive `checkScopeSufficiency` did not pre-empt.** It runs in
+  `status()` / `testConnection()`, not `listDirectory`, so the runtime 403 is the
+  backstop. Investigate whether the proactive check can run on the list path.
+- **Unify the proactive path onto the callout.** The proactive scope error routes
+  via the datasource-status path, not `files:list`, so it does NOT render the
+  reconnect-view callout today (design.md D4). A follow-up could route it through
+  the same surface.
+
+**Owner:** unassigned (HUMAN). Shares the live-OAuth setup with the
+`fix-reconnect-stuck-connecting-button §5.1` smoke above (same branch).
