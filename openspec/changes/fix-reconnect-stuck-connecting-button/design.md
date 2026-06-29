@@ -53,8 +53,18 @@ is verified to fire for reconnect sessions and remains the eventual backstop.
 While a reconnect is pending, the view exposes a **Cancel** control that calls
 `window.api.sync.authenticateCancel({ correlationId })`, resets `correlationId`
 to `null`, and returns the primary button to an actionable **"Try Again"**. On
-ANY terminal session state (`failed` / `timeout` / `cancelled`) the primary
-button is **"Try Again"**, never a disabled "Connecting…".
+a terminal session state with **no specific cause** (`failed` / `timeout` /
+`cancelled`, **excluding `account-mismatch`**) the primary button is
+**"Try Again"**, never a disabled "Connecting…".
+
+*account-mismatch is the one terminal exception:* it keeps its live **"Reconnect"**
+label (not "Try Again"). Two reasons: (1) the `account-mismatch` callout copy
+already says "Reconnect using {email} to continue", so "Reconnect" reads as the
+matching CTA; (2) the just-shipped `enforce-oauth-reconnect-account-match`
+capability's canonical tests pin this button to `/^reconnect$/i` — relabelling it
+would be a test-coverage regression of a shipped contract. The reconnect view is
+the only surface where a terminal failure can carry the `account-mismatch` tag
+(it is sourced from the auth-session, not the files envelope).
 
 *Why both:* the dead-end emits no prompt terminal event, so terminal-only
 recovery would still strand the user until the 5-minute `auth-timeout`. *Why not
@@ -172,7 +182,8 @@ The recovery affordance changes per session phase:
   **Remove**.
 - **Account-mismatch — unchanged.** The amber "Wrong account" callout
   (`border-amber-300 bg-amber-50`, dark-mode variants) renders below a live
-  primary **Try Again** + ghost **Remove**, exactly as today.
+  primary **Reconnect** + ghost **Remove**, exactly as today (the one terminal
+  case that keeps the **"Reconnect"** label rather than "Try Again" — see D1).
 - **Auth-error slot (container built here; sibling supplies copy).** A
   destructive-palette callout mirroring the amber callout's structure but
   red-keyed (`border-destructive/40 bg-destructive/5`, left accent

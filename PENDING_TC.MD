@@ -1327,3 +1327,51 @@ the download-history controls as automated-green but NOT yet runtime-verified.
 **Owner:** unassigned (HUMAN). Pair with the next environment-loop pass and the
 `migrate-download-registry-to-sqlite` interrupted-sweep smoke above (same dev
 build, same `sync.db`).
+
+---
+
+## fix-reconnect-stuck-connecting-button §5.1 — reconnect dead-end live recovery (real GCP OAuth)
+
+**Scenario:** In a live Electron build, Explore a Google Drive datasource that
+needs reconnect → click **Reconnect** → in the browser pick a wrong /
+non-allowlisted Google account so Google's *Testing*-mode `Error 403:
+access_denied` dead-ends (the browser never calls back the loopback
+`redirect_uri`, so the broker session stays `pending`). Confirm:
+
+1. The view shows a `role="status"` "Connecting… — finish signing in to Google
+   Drive in your browser." line with an actionable **Cancel** button — NOT a
+   stuck greyed "Connecting…" button.
+2. Clicking **Cancel** immediately tears down the session and the primary
+   returns to **"Try Again"** (no 5-minute wait for the broker `auth-timeout`).
+3. Leaving it without cancelling: after the broker's 5-minute `auth-timeout`
+   fires, the primary re-enables as **"Try Again"** with the honest dead-end
+   copy "Sign-in didn't complete. Try again with the account this datasource is
+   connected to." — never the blanket "Its connection details are missing or
+   invalid" as the failure explanation.
+4. Navigating away / clicking **Remove** mid-`pending` leaves no dangling
+   loopback session (the unmount-cancel effect fires `authenticateCancel`).
+
+**Covered in isolation by:**
+- `apps/desktop/src/renderer/src/features/file-explorer/states/__tests__/invalid-datasource.test.tsx`
+  — pending status-line + enabled Cancel + NO disabled primary; live Cancel →
+  `authenticateCancel({correlationId})` once + reset to "Try Again"; unmount
+  while pending → `authenticateCancel` once; terminal no-cause → "Try Again" +
+  dead-end copy; account-mismatch keeps the live "Reconnect" label + amber
+  callout (the one terminal exception).
+
+**Why deferred:** requires a real GCP OAuth client (Testing-mode app) + a
+non-allowlisted Google account to reproduce the no-callback `access_denied`
+dead-end — not configurable in this environment. The state machine is
+automated-green (24/24 unit + 14/14 real-`useAuthSession` integration), but the
+*real* no-loopback-callback path and the live 5-minute `auth-timeout` backstop
+(3) have never been exercised end-to-end.
+
+**Nice-to-have follow-up (non-blocking, from adversarial review):** restore
+keyboard focus to the newly-rendered primary/Cancel when the control swaps
+identity (Reconnect→Cancel, Cancel→Try-Again) — currently focus drops to
+`<body>` on the swap. Not below WCAG AA (`role="status"` announces, the new
+control is tab-reachable); purely a keyboard-flow polish.
+
+**Owner:** unassigned (HUMAN). Pairs with the deferred real-provider smokes from
+`add-drive-oauth-browser-consent §1 HUMAN ops` and
+`enforce-oauth-reconnect-account-match §9.4` (same live OAuth setup).

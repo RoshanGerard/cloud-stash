@@ -2,15 +2,24 @@
 //
 // implement-datasource-onboarding §27 — InvalidDatasourceState migration tests.
 //
-// 27.1: useAuthSession lifecycle — pending / completed / failed / timeout.
-//       pending → buttons disabled + label "Connecting…";
-//       completed → onReconnectSucceeded() fires exactly once;
-//       cancelled / failed / timeout → buttons re-enable + inline error line.
 // 27.2: Reconnect calls window.api.sync.authenticateStart({providerId,
 //       datasourceId}); records the returned correlationId.
 // 27.3: providerId guard — undefined providerId disables Reconnect with
 //       aria-disabled="true"; click does NOT call sync.authenticateStart.
 // 27.4: Remove button → onRequestRemove exactly once.
+//
+// fix-reconnect-stuck-connecting-button — recovery state machine (supersedes
+// the original §27.1 "pending → disabled Connecting… button" behavior):
+//   - pending → a role="status" "Connecting…" line + an actionable outline
+//     Cancel control; NO disabled/greyed primary button; Remove stays enabled.
+//   - live Cancel → window.api.sync.authenticateCancel({correlationId}), clears
+//     the session, primary returns to "Try Again".
+//   - unmount while pending → authenticateCancel fires once (no dangling
+//     loopback session) — mirrors oauth-form's unmount cleanup.
+//   - terminal cancelled/failed/timeout with NO specific cause → primary
+//     "Try Again" + honest dead-end copy (NOT the blanket "missing or invalid").
+//   - account-mismatch is the ONE terminal exception: amber callout unchanged
+//     and the primary keeps its live "Reconnect" label (not "Try Again").
 //
 // `useAuthSession` is mocked at the module boundary so we can drive
 // sessionState transitions per test without the full DatasourcesProvider tree.
@@ -44,15 +53,18 @@ vi.mock("@/features/datasources/store", () => ({
 import { InvalidDatasourceState } from "../invalid-datasource";
 
 let authenticateStartMock: Mock;
+let authenticateCancelMock: Mock;
 
 function installApiMock() {
   authenticateStartMock = vi.fn().mockResolvedValue({
     ok: true,
     result: { correlationId: "corr-1", kind: "oauth" },
   });
+  authenticateCancelMock = vi.fn().mockResolvedValue({ ok: true, result: {} });
   (window as unknown as { api: unknown }).api = {
     sync: {
       authenticateStart: authenticateStartMock,
+      authenticateCancel: authenticateCancelMock,
     },
   };
 }
@@ -125,7 +137,7 @@ describe("InvalidDatasourceState — render structure", () => {
 });
 
 describe("InvalidDatasourceState — useAuthSession lifecycle", () => {
-  it("pending: both buttons disabled and Reconnect label switches to 'Connecting…'", async () => {
+  it("pending: shows a Connecting status line + enabled Cancel, NO disabled primary, Remove enabled", async () => {
     mockSessionState = { status: "pending" };
 
     const { rerender } = render(
@@ -137,7 +149,7 @@ describe("InvalidDatasourceState — useAuthSession lifecycle", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /reconnect/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^reconnect$/i }));
     await waitFor(() =>
       expect(authenticateStartMock).toHaveBeenCalledTimes(1),
     );
@@ -151,14 +163,98 @@ describe("InvalidDatasourceState — useAuthSession lifecycle", () => {
       />,
     );
 
-    const reconnectBtn = screen.getByRole("button", { name: /connecting/i });
-    expect(reconnectBtn).toBeDisabled();
-    expect(reconnectBtn.textContent).toContain("Connecting…");
+    // "Connecting…" is an announced status line (role=status), NOT a button.
+    const status = screen.getByRole("status");
+    expect(status.textContent).toContain("Connecting");
 
-    const removeBtn = screen.getByRole("button", {
-      name: /remove datasource/i,
+    // An actionable Cancel control replaces the primary during pending.
+    const cancelBtn = screen.getByRole("button", { name: /^cancel$/i });
+    expect(cancelBtn).not.toBeDisabled();
+
+    // No disabled / greyed primary button on screen during pending.
+    expect(
+      screen.queryByRole("button", { name: /connecting/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /^reconnect$/i }),
+    ).not.toBeInTheDocument();
+
+    // Remove stays enabled during pending (design.md D6).
+    expect(
+      screen.getByRole("button", { name: /remove datasource/i }),
+    ).not.toBeDisabled();
+  });
+
+  it("live Cancel during pending calls authenticateCancel and resets to 'Try Again'", async () => {
+    const onReconnectSucceeded = vi.fn();
+    mockSessionState = { status: "pending" };
+
+    const { rerender } = render(
+      <InvalidDatasourceState
+        providerId="google-drive"
+        datasourceId="ds-1"
+        onReconnectSucceeded={onReconnectSucceeded}
+        onRequestRemove={() => {}}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /^reconnect$/i }));
+    await waitFor(() =>
+      expect(authenticateStartMock).toHaveBeenCalledTimes(1),
+    );
+
+    rerender(
+      <InvalidDatasourceState
+        providerId="google-drive"
+        datasourceId="ds-1"
+        onReconnectSucceeded={onReconnectSucceeded}
+        onRequestRemove={() => {}}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /^cancel$/i }));
+
+    // authenticateCancel fires exactly once with the live correlationId.
+    expect(authenticateCancelMock).toHaveBeenCalledTimes(1);
+    expect(authenticateCancelMock.mock.calls[0]![0]).toEqual({
+      correlationId: "corr-1",
     });
-    expect(removeBtn).toBeDisabled();
+
+    // Primary returns to an actionable "Try Again"; Remove available; no
+    // navigation; onReconnectSucceeded NOT called.
+    const tryAgain = screen.getByRole("button", { name: /try again/i });
+    expect(tryAgain).not.toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: /remove datasource/i }),
+    ).not.toBeDisabled();
+    expect(onReconnectSucceeded).not.toHaveBeenCalled();
+  });
+
+  it("unmounting during a pending reconnect cancels the in-flight session exactly once", async () => {
+    mockSessionState = { status: "pending" };
+
+    const { unmount } = render(
+      <InvalidDatasourceState
+        providerId="google-drive"
+        datasourceId="ds-1"
+        onReconnectSucceeded={() => {}}
+        onRequestRemove={() => {}}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /^reconnect$/i }));
+    await waitFor(() =>
+      expect(authenticateStartMock).toHaveBeenCalledTimes(1),
+    );
+
+    unmount();
+
+    // Mirrors oauth-form's unmount-cancel: a live correlationId is torn down
+    // so no loopback session dangles until the broker's 5-minute timeout.
+    expect(authenticateCancelMock).toHaveBeenCalledTimes(1);
+    expect(authenticateCancelMock.mock.calls[0]![0]).toEqual({
+      correlationId: "corr-1",
+    });
   });
 
   it("Reconnect calls sync.authenticateStart with {providerId, datasourceId}", async () => {
@@ -234,7 +330,7 @@ describe("InvalidDatasourceState — useAuthSession lifecycle", () => {
     ],
     ["timeout", { status: "timeout" } as AuthSessionState],
   ])(
-    "%s: re-enables both buttons and shows inline 'Reconnect failed' line",
+    "%s (no specific cause): primary relabels to 'Try Again' with the honest dead-end copy",
     async (_label, terminalState) => {
       mockSessionState = { status: "pending" };
 
@@ -247,7 +343,7 @@ describe("InvalidDatasourceState — useAuthSession lifecycle", () => {
         />,
       );
 
-      fireEvent.click(screen.getByRole("button", { name: /reconnect/i }));
+      fireEvent.click(screen.getByRole("button", { name: /^reconnect$/i }));
       await waitFor(() =>
         expect(authenticateStartMock).toHaveBeenCalledTimes(1),
       );
@@ -262,18 +358,33 @@ describe("InvalidDatasourceState — useAuthSession lifecycle", () => {
         />,
       );
 
-      const reconnectBtn = screen.getByRole("button", { name: /reconnect/i });
-      expect(reconnectBtn).not.toBeDisabled();
-      expect(reconnectBtn.textContent).toContain("Reconnect");
-
-      const removeBtn = screen.getByRole("button", {
-        name: /remove datasource/i,
-      });
-      expect(removeBtn).not.toBeDisabled();
-
+      // Primary is "Try Again" (NOT "Reconnect"), enabled.
+      const tryAgain = screen.getByRole("button", { name: /try again/i });
+      expect(tryAgain).not.toBeDisabled();
       expect(
-        screen.getByText("Reconnect failed — please try again."),
+        screen.queryByRole("button", { name: /^reconnect$/i }),
+      ).not.toBeInTheDocument();
+
+      // Remove re-enabled.
+      expect(
+        screen.getByRole("button", { name: /remove datasource/i }),
+      ).not.toBeDisabled();
+
+      // Honest dead-end copy replaces the blanket "missing or invalid" body;
+      // the old generic "Reconnect failed" line is gone.
+      expect(
+        screen.getByText(
+          "Sign-in didn't complete. Try again with the account this datasource is connected to.",
+        ),
       ).toBeInTheDocument();
+      expect(
+        screen.queryByText("Reconnect failed — please try again."),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByText(
+          "Its connection details are missing or invalid. Sign in again or remove the datasource and add it back.",
+        ),
+      ).not.toBeInTheDocument();
     },
   );
 });
@@ -581,7 +692,7 @@ describe("InvalidDatasourceState — Wrong-account callout (enforce-oauth-reconn
     expect(svg!.classList.toString()).toMatch(/amber/);
   });
 
-  it("a NON-account-mismatch failed tag still shows the generic line and no callout", async () => {
+  it("a NON-account-mismatch failed tag shows the dead-end copy + 'Try Again' and no callout", async () => {
     await renderThenFail({
       status: "failed",
       // eslint-disable-next-line ft5/no-raw-error-tag-literal -- AuthFailedTag vocabulary (no const object) — out of scope
@@ -589,9 +700,17 @@ describe("InvalidDatasourceState — Wrong-account callout (enforce-oauth-reconn
     } as AuthSessionState);
 
     expect(
-      screen.getByText("Reconnect failed — please try again."),
+      screen.getByText(
+        "Sign-in didn't complete. Try again with the account this datasource is connected to.",
+      ),
     ).toBeInTheDocument();
+    expect(
+      screen.queryByText("Reconnect failed — please try again."),
+    ).not.toBeInTheDocument();
     expect(screen.queryByText("Wrong account")).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /try again/i }),
+    ).toBeInTheDocument();
   });
 });
 

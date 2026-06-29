@@ -74,9 +74,33 @@ export function InvalidDatasourceState({
   const [correlationId, setCorrelationId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [startError, setStartError] = useState<string | null>(null);
+  // Set true when the user cancels a pending reconnect via the live Cancel
+  // control. Drives the dead-end body + "Try Again" primary even though the
+  // session was reset to no-active-session (correlationId === null).
+  const [cancelledByUser, setCancelledByUser] = useState(false);
   // Pass a sentinel when no session is active so the hook always returns a
   // well-defined `{ status: "pending" }` for the unused slot.
   const sessionState = useAuthSession(correlationId ?? "__none__");
+
+  // Cancel an in-flight reconnect on unmount (mirrors oauth-form.tsx) so that
+  // navigating away from — or Removing — the datasource mid-reconnect does not
+  // leave a dangling loopback session until the broker's 5-minute timeout. The
+  // ref holds the latest correlationId so the empty-deps cleanup sees the live
+  // value without re-subscribing every time correlationId changes.
+  const correlationIdRef = useRef<string | null>(null);
+  useEffect(() => {
+    correlationIdRef.current = correlationId;
+  }, [correlationId]);
+  useEffect(() => {
+    return () => {
+      const cid = correlationIdRef.current;
+      if (cid !== null) {
+        // authenticateCancel is idempotent — safe to call after a terminal
+        // state.
+        void window.api.sync.authenticateCancel({ correlationId: cid });
+      }
+    };
+  }, []);
 
   const isWaiting =
     correlationId !== null && sessionState.status === "pending";
@@ -101,6 +125,7 @@ export function InvalidDatasourceState({
     if (providerId === undefined) return;
     if (isWaiting) return;
     setStartError(null);
+    setCancelledByUser(false);
     // Credential-form providers reconnect via the inline form (it owns the
     // authenticateStart/Complete flow); reveal it instead of starting OAuth.
     // Gate strictly on a KNOWN form schema: an unrecognised schema (e.g.
@@ -144,8 +169,20 @@ export function InvalidDatasourceState({
     setShowForm(false);
   }, []);
 
+  // Live Cancel during a pending reconnect (D1): tear down the service-side
+  // session, clear the recorded correlationId (resetting to no-active-session),
+  // and flip the view into the recovered dead-end state so the primary returns
+  // to an actionable "Try Again".
+  const handleCancel = useCallback(() => {
+    if (correlationId !== null) {
+      void window.api.sync.authenticateCancel({ correlationId });
+    }
+    setCorrelationId(null);
+    setCancelledByUser(true);
+    setStartError(null);
+  }, [correlationId]);
+
   const reconnectDisabled = providerId === undefined;
-  const reconnectLabel = isWaiting ? "Connecting…" : "Reconnect";
 
   // enforce-oauth-reconnect-account-match §8 (design.md `## Visual direction`)
   // — a reconnect that authenticated as the WRONG account is hard-blocked
@@ -162,6 +199,14 @@ export function InvalidDatasourceState({
     ? sessionState.expectedEmail
     : undefined;
   const actualEmail = isAccountMismatch ? sessionState.actualEmail : undefined;
+
+  // account-mismatch is the ONE terminal case that keeps the live "Reconnect"
+  // label (its callout already says "Reconnect using {email}", and the shipped
+  // enforce-oauth-reconnect-account-match tests pin it to /^reconnect$/i). Every
+  // other dead-end — failed (non-mismatch) / timeout / cancelled, or a
+  // user-initiated cancel — surfaces the "Try Again" recovery label.
+  const showDeadEnd = (isFailed && !isAccountMismatch) || cancelledByUser;
+  const primaryLabel = showDeadEnd ? "Try Again" : "Reconnect";
 
   // ---- Credential-form inline arm (keep header, form below) -------------
   if (
@@ -221,36 +266,67 @@ export function InvalidDatasourceState({
       <div className="text-[15px] font-semibold text-foreground">
         This datasource needs reconfiguring
       </div>
-      <div className="max-w-[320px] text-center text-[13px] text-muted-foreground">
-        Its connection details are missing or invalid. Sign in again or remove
-        the datasource and add it back.
-      </div>
-      <div className="mt-2 flex gap-2">
-        <Button
-          type="button"
-          // When `providerId` is missing we keep the button focusable but
-          // mark it `aria-disabled` — the tooltip explains the cause. We do
-          // NOT use the native `disabled` attribute (that would remove it from
-          // the AT tree); the click handler short-circuits instead.
-          aria-disabled={reconnectDisabled || undefined}
-          title={
-            reconnectDisabled
-              ? "Provider information unavailable — return to the dashboard to reconnect"
-              : undefined
-          }
-          disabled={isWaiting}
-          onClick={() => {
-            void handleReconnect();
-          }}
+      {/* BODY — keyed on session phase (D3 unified message path):            */}
+      {/* pending → announced status line; dead-end → honest failure copy;    */}
+      {/* else → the generic initial/missing-credential copy (default).       */}
+      {isWaiting ? (
+        <p
+          role="status"
+          aria-live="polite"
+          className="max-w-[320px] text-center text-[13px] text-muted-foreground"
         >
-          {reconnectLabel}
-        </Button>
+          Connecting… — finish signing in to {providerDisplayName} in your
+          browser.
+        </p>
+      ) : showDeadEnd ? (
+        <p className="max-w-[320px] text-center text-[13px] text-destructive">
+          Sign-in didn&apos;t complete. Try again with the account this
+          datasource is connected to.
+        </p>
+      ) : (
+        <div className="max-w-[320px] text-center text-[13px] text-muted-foreground">
+          Its connection details are missing or invalid. Sign in again or remove
+          the datasource and add it back.
+        </div>
+      )}
+      <div className="mt-2 flex gap-2">
+        {isWaiting ? (
+          // Pending: an actionable Cancel REPLACES the primary — there is never
+          // a disabled/greyed "Connecting…" button on screen (D1).
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleCancel}
+          >
+            Cancel
+          </Button>
+        ) : (
+          <Button
+            type="button"
+            // When `providerId` is missing we keep the button focusable but
+            // mark it `aria-disabled` — the tooltip explains the cause. We do
+            // NOT use the native `disabled` attribute (that would remove it from
+            // the AT tree); the click handler short-circuits instead.
+            aria-disabled={reconnectDisabled || undefined}
+            title={
+              reconnectDisabled
+                ? "Provider information unavailable — return to the dashboard to reconnect"
+                : undefined
+            }
+            onClick={() => {
+              void handleReconnect();
+            }}
+          >
+            {primaryLabel}
+          </Button>
+        )}
         <Button
           type="button"
           variant="ghost"
           size="sm"
           className="text-destructive"
-          disabled={isWaiting}
+          // Remove stays enabled during pending (D6); the unmount-cancel effect
+          // tears down the in-flight session when Remove unmounts the explorer.
           onClick={onRequestRemove}
         >
           Remove datasource
@@ -309,11 +385,15 @@ export function InvalidDatasourceState({
             </p>
           </div>
         </div>
-      ) : isFailed ? (
-        <p className="text-[12px] text-destructive">
-          Reconnect failed — please try again.
-        </p>
       ) : null}
+      {/* DORMANT SEAM — fix-insufficient-auth-scopes-recovery (Change 2) slots a
+          destructive-palette auth-error callout here: a provider-parameterized
+          headline + an "Authentication error: <message>" detail line, keyed on
+          the FilesErrorEnvelope.authErrorKind discriminator it introduces
+          (design.md `## Visual direction` → "Auth-error slot"). Comment-only in
+          this change — no DOM, no field, no behavior added here. The
+          non-account-mismatch dead-end body copy above supersedes the old
+          generic "Reconnect failed" line. */}
       {startError !== null ? (
         <p className="text-[12px] text-destructive">{startError}</p>
       ) : null}
