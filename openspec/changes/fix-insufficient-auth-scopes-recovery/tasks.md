@@ -37,6 +37,6 @@
 
 ## 7. Archive + finish
 
-- [ ] 7.1 Advisor checkpoint #2 (before archive) — verify the as-built matches the artifacts. (Advisor environmentally overloaded on the apply turn — retry before archiving; the 6-lens workflow already validated as-built vs artifacts.)
+- [x] 7.1 Advisor checkpoint #2 (before archive) — DONE. The advisor caught a coexistence bug on the headline repro path (dead-ended reconnect rendered the dead-end line AND the scope callout); fixed (callout persists as the single explanation, commit `a70d49a`), TDD-tested, design + spec delta updated. Advisor pre-cleared archive after the fix. `withAuthRefresh` confirmed to pass `auth-revoked` through (no refresh).
 - [ ] 7.2 `/opsx:archive` — sync the three deltas to canonical; `openspec validate <cap> --type spec` per touched capability green.
 - [ ] 7.3 `finishing-a-development-branch` — re-verify tests + pre-handoff backstop over `git log <parent>..HEAD`, then FF/merge into the SAME parent `feature/reconnect-auth-recovery-stubs` (NOT master). Record deferred smokes (real-provider Drive insufficient-scope; OneDrive equivalent; Q6 proactive-pre-empt investigation; unify the proactive path onto the callout) in `PENDING_TC.MD`.
