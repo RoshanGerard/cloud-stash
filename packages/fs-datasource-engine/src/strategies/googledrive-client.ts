@@ -2388,6 +2388,34 @@ export class GoogleDriveClient extends BaseDatasourceClient<"google-drive"> {
       if (reason === "authError" || reason === "invalidCredentials") {
         return mk("auth-revoked", false);
       }
+      // Runtime too-narrow-grant (fix-insufficient-auth-scopes-recovery): a
+      // 403 whose reason is `insufficientPermissions` (or the newer
+      // `ACCESS_TOKEN_SCOPE_INSUFFICIENT`) means the issued OAuth grant lacks
+      // the full Drive scope — most often the user de-selected the Drive
+      // permission on Google's granular-consent screen. Reclassify to
+      // `auth-revoked` carrying the SAME `scope-insufficient` discriminator the
+      // proactive `checkScopeSufficiency` mints, so the fs-sync mapper threads
+      // `authErrorKind` and the explorer routes to the reconnect view instead
+      // of the dead `provider-error` catch-all. Constructed directly (NOT via
+      // `mk`, whose `raw` is the original gaxios error) so `raw.kind` is the
+      // structured discriminator; the provider message is preserved for the
+      // renderer's "Authentication error: <message>" detail. `actualScope` is
+      // omitted — the 403 does not carry the issued scope (the proactive path
+      // includes it).
+      if (
+        reason === "insufficientPermissions" ||
+        reason === "ACCESS_TOKEN_SCOPE_INSUFFICIENT"
+      ) {
+        return new DatasourceError<"google-drive">({
+          tag: DatasourceErrorTag.AuthRevoked,
+          datasourceType: "google-drive",
+          datasourceId: this.datasourceId,
+          retryable: false,
+          raw: { kind: "scope-insufficient", requiredScope: REQUIRED_DRIVE_SCOPE },
+          message:
+            topMessage ?? "request had insufficient authentication scopes",
+        });
+      }
       // domainPolicy / dailyLimitExceeded / quotaExceeded /
       // insufficientFilePermissions / (anything else) → provider-error
       // non-retryable. `quotaExceeded` is consistent with the OneDrive

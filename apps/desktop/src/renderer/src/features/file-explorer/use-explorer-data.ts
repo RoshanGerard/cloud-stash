@@ -53,6 +53,7 @@ export function useExplorerData(
     store.setLoading(true);
     store.setError(null);
     store.setErrorTag(null);
+    store.setAuthErrorKind(null);
 
     let cancelled = false;
 
@@ -76,6 +77,11 @@ export function useExplorerData(
         } else {
           store.setError(response.error.message);
           store.setErrorTag(response.error.tag);
+          // fix-insufficient-auth-scopes-recovery: thread the optional
+          // auth-error discriminator so the reconnect view can render its
+          // scope-insufficient callout. Absent on the overwhelming majority of
+          // envelopes → null.
+          store.setAuthErrorKind(response.error.authErrorKind ?? null);
           store.setLoading(false);
         }
       })
@@ -89,6 +95,7 @@ export function useExplorerData(
         // as "other" so the UI falls back to the generic error surface
         // rather than one of the tagged state components.
         store.setErrorTag("other");
+        store.setAuthErrorKind(null);
         store.setLoading(false);
       });
 

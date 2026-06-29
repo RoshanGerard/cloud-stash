@@ -88,6 +88,18 @@ export interface FilesErrorEnvelope {
   // `existingPath` / `retryAfterMs`. Conflicts on `files:rename` continue
   // to use `existingPath` only — rename has no job-identity concept.
   existingUploadJobId?: string;
+  // Populated only when the error is a recognized auth sub-class (per
+  // fix-insufficient-auth-scopes-recovery design.md Decision 3) — a
+  // flat-optional discriminator mirroring `existingPath` / `retryAfterMs`
+  // (NOT a discriminated union, so consumers read it without re-narrowing on
+  // `tag`). `normalizeFilesError` threads it from the engine error's
+  // `raw.kind === "scope-insufficient"`; the engine emits it for both the
+  // Google Drive runtime insufficient-scope 403 and the proactive
+  // status/testConnection scope check. The renderer's reconnect view keys its
+  // destructive-palette auth-error callout on this field. The string-literal
+  // union is seeded with a single member today; future auth sub-classes
+  // extend it additively (absent on every non-auth-sub-class envelope).
+  authErrorKind?: "scope-insufficient";
 }
 
 export type FilesEnvelope<T> =

@@ -22,6 +22,7 @@ export interface FilesErrorEnvelopeInner {
   readonly retryable: boolean;
   readonly retryAfterMs?: number;
   readonly existingPath?: string;
+  readonly authErrorKind?: "scope-insufficient";
 }
 
 // Defensive extractor for `DatasourceError.raw.existingPath`. The engine
@@ -33,6 +34,19 @@ function readExistingPath(raw: unknown): string | undefined {
   if (raw === null || typeof raw !== "object") return undefined;
   const candidate = (raw as Record<string, unknown>).existingPath;
   return typeof candidate === "string" ? candidate : undefined;
+}
+
+// Defensive extractor for `DatasourceError.raw.kind === "scope-insufficient"`
+// (fix-insufficient-auth-scopes-recovery). Mirrors `readExistingPath`: `raw`
+// is typed `unknown`, so we shape-check before reading. Both the Google Drive
+// runtime insufficient-scope 403 and the proactive status/testConnection scope
+// check throw `auth-revoked` carrying `raw: { kind: "scope-insufficient", … }`,
+// so this one extractor upgrades both paths' envelopes. Returns the literal
+// when present, else undefined (the envelope omits `authErrorKind`).
+function readAuthErrorKind(raw: unknown): "scope-insufficient" | undefined {
+  if (raw === null || typeof raw !== "object") return undefined;
+  const candidate = (raw as Record<string, unknown>).kind;
+  return candidate === "scope-insufficient" ? "scope-insufficient" : undefined;
 }
 
 // Post-archive smoke (2026-04-28): defence-in-depth for Google Drive's
@@ -105,6 +119,12 @@ export function normalizeFilesError(err: unknown): FilesErrorEnvelopeInner {
       if (existingPath !== undefined) {
         result = { ...result, existingPath };
       }
+    }
+    // Thread the scope-insufficient discriminator (kind-gated, tag-agnostic —
+    // in practice only the `auth-revoked` scope-insufficient errors carry it).
+    const authErrorKind = readAuthErrorKind(err.raw);
+    if (authErrorKind !== undefined) {
+      result = { ...result, authErrorKind };
     }
     return result;
   }

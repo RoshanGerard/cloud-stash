@@ -523,4 +523,46 @@ describe("FileExplorer composite (Subagent P)", () => {
     });
     expect(document.querySelector('[data-entry-id="x1"]')).not.toBeNull();
   });
+
+  // fix-insufficient-auth-scopes-recovery — end-to-end wiring. Exercises the two
+  // single-line seams the isolated <InvalidDatasourceState> prop-injection tests
+  // skip: use-explorer-data capturing `response.error.authErrorKind` into the
+  // store, and file-explorer.tsx threading `state.authErrorKind` + `state.error`
+  // into <InvalidDatasourceArm>. A dropped `?? null`, a renamed field, or the
+  // wrong prop would slip past every isolated test but fail here.
+  it("auth-revoked + authErrorKind scope-insufficient → reconnect view renders the auth-error callout (end-to-end)", async () => {
+    installApiMock({
+      listImpl: async () => ({
+        ok: false as const,
+        error: {
+          tag: FilesErrorTag.AuthRevoked,
+          message: "request had insufficient authentication scopes",
+          retryable: false,
+          authErrorKind: "scope-insufficient" as const,
+        },
+      }),
+    });
+
+    render(
+      <DatasourcesProvider>
+        <FileExplorer datasourceId="ds-scope-1" providerId="google-drive" />
+      </DatasourcesProvider>,
+    );
+
+    await waitFor(() =>
+      expect(
+        screen.getByTestId("file-explorer-state-invalid-datasource"),
+      ).toBeInTheDocument(),
+    );
+    // The callout headline (provider-parameterized) + the message-derived detail
+    // both render — proving authErrorKind AND message threaded end-to-end.
+    expect(
+      screen.getByText("Google Drive needs full-access permission"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Authentication error: request had insufficient authentication scopes",
+      ),
+    ).toBeInTheDocument();
+  });
 });
