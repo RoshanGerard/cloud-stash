@@ -29,10 +29,10 @@ the `credentials.json` file**. The desktop app should handle this itself.
    and renders the dead "Failed to load: \<message\>" state — no
    Reconnect/Remove affordance.
 
-3. **The reconnect view has no auth-error case.** Even when an auth tag DOES
-   route to the reconnect view (the proactive scope check already does — see
-   below), the view renders only the generic reconnect copy; it never surfaces
-   *why* (insufficient scope) or steers the user to grant full access.
+3. **The reconnect view has no auth-error case.** Even when `auth-revoked` routes
+   to the reconnect view, the view renders only the generic reconnect copy; it
+   never surfaces *why* (insufficient scope) or steers the user to grant full
+   access.
 
 **Two facts that make the fix cheap and self-contained:**
 
@@ -42,8 +42,11 @@ the `credentials.json` file**. The desktop app should handle this itself.
   throws `DatasourceError { tag: AuthRevoked, raw: { kind: "scope-insufficient",
   requiredScope, actualScope }, message: "Drive permissions are too narrow —
   reconnect with full access…" }`. The runtime 403 reclassification mirrors this
-  shape exactly, so both the proactive and runtime paths converge on one
-  discriminator (`raw.kind === "scope-insufficient"`) and one renderer callout.
+  shape exactly, so both paths converge on one discriminator
+  (`raw.kind === "scope-insufficient"`). NOTE: only the runtime path (via
+  `listDirectory` → `files:list`) reaches the renderer callout; the proactive
+  check runs in `status()` / `testConnection()` (the datasource-status path), not
+  `files:list`, so it does not render this callout (design.md D4).
 
 - **The reconnect view already routes `auth-revoked` and has a pre-built
   dormant seam.** `fix-reconnect-stuck-connecting-button` (sibling, already

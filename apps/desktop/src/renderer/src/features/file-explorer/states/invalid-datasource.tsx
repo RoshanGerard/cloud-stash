@@ -55,6 +55,22 @@ export interface InvalidDatasourceStateProps {
    * `<ConfirmRemoveDatasourceDialog>`; this component is purely the trigger.
    */
   onRequestRemove: () => void;
+  /**
+   * fix-insufficient-auth-scopes-recovery: when the initiating files-error
+   * envelope carries `authErrorKind: "scope-insufficient"` (a Google Drive
+   * runtime insufficient-scope 403, or the proactive scope check), the
+   * reconnect view fills its dormant auth-error slot with a destructive-palette
+   * callout. Threaded from the store's `authErrorKind` slot via
+   * `<InvalidDatasourceArm>`. `null` / `undefined` → no callout (the existing
+   * initial / dead-end / account-mismatch copy paths are unchanged).
+   */
+  authErrorKind?: "scope-insufficient" | null;
+  /**
+   * The engine error message (the files-error envelope `message`) rendered in
+   * the callout's "Authentication error: <message>" detail line. Only consumed
+   * when `authErrorKind === "scope-insufficient"`.
+   */
+  authErrorMessage?: string | null;
 }
 
 export function InvalidDatasourceState({
@@ -62,6 +78,8 @@ export function InvalidDatasourceState({
   datasourceId,
   onReconnectSucceeded,
   onRequestRemove,
+  authErrorKind,
+  authErrorMessage,
 }: InvalidDatasourceStateProps) {
   const descriptor =
     providerId !== undefined
@@ -208,6 +226,15 @@ export function InvalidDatasourceState({
   const showDeadEnd = (isFailed && !isAccountMismatch) || cancelledByUser;
   const primaryLabel = showDeadEnd ? "Try Again" : "Reconnect";
 
+  // fix-insufficient-auth-scopes-recovery: the destructive-palette auth-error
+  // callout renders when the initiating files-error envelope tagged the failure
+  // `scope-insufficient`. Precedence (one callout / one body-state at a time):
+  // an in-progress reconnect (`isWaiting` → the "Connecting…" status line) and a
+  // wrong-account session failure (`isAccountMismatch` → the amber callout) both
+  // take priority over the stale initiating error's red callout.
+  const showAuthError =
+    authErrorKind === "scope-insufficient" && !isWaiting && !isAccountMismatch;
+
   // ---- Credential-form inline arm (keep header, form below) -------------
   if (
     showForm &&
@@ -268,6 +295,7 @@ export function InvalidDatasourceState({
       </div>
       {/* BODY — keyed on session phase (D3 unified message path):            */}
       {/* pending → announced status line; dead-end → honest failure copy;    */}
+      {/* scope-insufficient → suppressed (the red callout below explains);    */}
       {/* else → the generic initial/missing-credential copy (default).       */}
       {isWaiting ? (
         <p
@@ -283,7 +311,8 @@ export function InvalidDatasourceState({
           Sign-in didn&apos;t complete. Try again with the account this
           datasource is connected to.
         </p>
-      ) : (
+      ) : showAuthError ? null : ( // credential present but under-scoped — the
+        // generic "missing or invalid" line would contradict the callout below.
         <div className="max-w-[320px] text-center text-[13px] text-muted-foreground">
           Its connection details are missing or invalid. Sign in again or remove
           the datasource and add it back.
@@ -386,14 +415,48 @@ export function InvalidDatasourceState({
           </div>
         </div>
       ) : null}
-      {/* DORMANT SEAM — fix-insufficient-auth-scopes-recovery (Change 2) slots a
-          destructive-palette auth-error callout here: a provider-parameterized
-          headline + an "Authentication error: <message>" detail line, keyed on
-          the FilesErrorEnvelope.authErrorKind discriminator it introduces
-          (design.md `## Visual direction` → "Auth-error slot"). Comment-only in
-          this change — no DOM, no field, no behavior added here. The
-          non-account-mismatch dead-end body copy above supersedes the old
-          generic "Reconnect failed" line. */}
+      {showAuthError ? (
+        // fix-insufficient-auth-scopes-recovery — destructive-palette auth-error
+        // callout (the red sibling of the amber wrong-account callout, below the
+        // action buttons). Provider-parameterized steering headline + a
+        // lower-emphasis "Authentication error: <engine message>" detail. The
+        // steering headline breaks the granular-consent re-deny loop (it tells
+        // the user to grant FULL access on reconnect); the detail preserves the
+        // raw provider error. Motion-free; red is reserved for hard auth errors.
+        <div
+          data-testid="auth-error-callout"
+          // Red-keyed sibling of the amber wrong-account callout. Colours mirror
+          // that callout's proven WCAG-AA approach: literal palette shades with a
+          // light-on-dark / dark-on-light pairing so the TEXT sits on the
+          // callout's OWN fixed-shade background (bg-red-50 / dark:bg-red-950),
+          // making contrast theme-independent — NOT `text-destructive` on a
+          // `bg-destructive/5` tint, which fails AA in the light + serene-blue
+          // themes (the page-background tint drops it below 4.5:1). The left
+          // accent is the red-keyed flourish.
+          className="mt-2 flex w-full max-w-[360px] items-start gap-2 rounded-md border border-red-300 border-l-2 border-l-red-500 bg-red-50 p-3 text-left dark:border-red-800 dark:border-l-red-500 dark:bg-red-950/40"
+        >
+          <Icon
+            name="alert-triangle"
+            className="mt-0.5 shrink-0 text-red-600 dark:text-red-400"
+            width={16}
+            height={16}
+            strokeWidth={2}
+            aria-hidden="true"
+          />
+          <div className="min-w-0">
+            <p className="text-[13px] font-semibold text-red-800 dark:text-red-300">
+              {providerDisplayName} needs full-access permission
+            </p>
+            <p
+              data-testid="auth-error-callout-detail"
+              className="mt-0.5 text-[12px] text-red-900 dark:text-red-200"
+            >
+              Authentication error:{" "}
+              {authErrorMessage ?? "insufficient permissions for this datasource"}
+            </p>
+          </div>
+        </div>
+      ) : null}
       {startError !== null ? (
         <p className="text-[12px] text-destructive">{startError}</p>
       ) : null}

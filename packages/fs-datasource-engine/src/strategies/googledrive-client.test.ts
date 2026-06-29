@@ -1772,6 +1772,46 @@ describe("GoogleDriveClient — normalizeError taxonomy", () => {
       const e = normalize(h.client, makeGaxiosError(403, "provider", reason));
       expect(e.tag, `reason=${reason}`).toBe("provider-error");
       expect(e.retryable).toBe(false);
+      // Negative clause of the spec scenario: a genuine provider-error 403 must
+      // NOT carry the scope-insufficient discriminator (the auth reclassification
+      // is scoped strictly to insufficientPermissions / ACCESS_TOKEN_SCOPE_INSUFFICIENT).
+      expect(
+        (e.raw as { kind?: string } | undefined)?.kind,
+        `reason=${reason}`,
+      ).not.toBe("scope-insufficient");
+    }
+  });
+
+  it("403 insufficientPermissions / ACCESS_TOKEN_SCOPE_INSUFFICIENT → auth-revoked + scope-insufficient (carries provider message)", () => {
+    // fix-insufficient-auth-scopes-recovery: a runtime too-narrow-grant 403
+    // (the user de-selected the Drive scope on Google's granular-consent
+    // screen) must reclassify to auth-revoked carrying the scope-insufficient
+    // discriminator — mirroring the proactive checkScopeSufficiency shape — so
+    // it routes to the reconnect view instead of the dead "provider-error"
+    // catch-all. The original provider message is preserved for the renderer's
+    // "Authentication error: <message>" detail line.
+    const { client } = makeFakeDrive({});
+    const h = makeHarness({ drive: client });
+    for (const reason of [
+      "insufficientPermissions",
+      "ACCESS_TOKEN_SCOPE_INSUFFICIENT",
+    ]) {
+      const e = normalize(
+        h.client,
+        makeGaxiosError(
+          403,
+          "request had insufficient authentication scopes",
+          reason,
+        ),
+      );
+      expect(e.tag, `reason=${reason}`).toBe("auth-revoked");
+      expect(e.retryable, `reason=${reason}`).toBe(false);
+      const raw = e.raw as { kind?: string; requiredScope?: string };
+      expect(raw?.kind, `reason=${reason}`).toBe("scope-insufficient");
+      expect(raw?.requiredScope).toBe("https://www.googleapis.com/auth/drive");
+      expect(e.message, `reason=${reason}`).toBe(
+        "request had insufficient authentication scopes",
+      );
     }
   });
 

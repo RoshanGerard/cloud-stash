@@ -756,6 +756,15 @@ describe("entries / loading / error setters", () => {
     store.setError(null);
     expect(snap(store).error).toBeNull();
   });
+
+  it("authErrorKind starts null; setAuthErrorKind sets and clears it (fix-insufficient-auth-scopes-recovery)", () => {
+    const store = makeStore("ds-1");
+    expect(snap(store).authErrorKind).toBeNull();
+    store.setAuthErrorKind("scope-insufficient");
+    expect(snap(store).authErrorKind).toBe("scope-insufficient");
+    store.setAuthErrorKind(null);
+    expect(snap(store).authErrorKind).toBeNull();
+  });
 });
 
 describe("toggleDetailsPane", () => {

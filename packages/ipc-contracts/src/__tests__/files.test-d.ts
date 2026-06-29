@@ -182,6 +182,7 @@ describe("ipc-contracts files request/response pairs", () => {
             existingSize?: number;
             existingModifiedAt?: string;
             existingUploadJobId?: string;
+            authErrorKind?: "scope-insufficient";
           };
         }
     >();
@@ -216,6 +217,7 @@ describe("ipc-contracts files request/response pairs", () => {
             existingSize?: number;
             existingModifiedAt?: string;
             existingUploadJobId?: string;
+            authErrorKind?: "scope-insufficient";
           };
         }
     >();
@@ -278,6 +280,7 @@ describe("ipc-contracts files request/response pairs", () => {
             existingSize?: number;
             existingModifiedAt?: string;
             existingUploadJobId?: string;
+            authErrorKind?: "scope-insufficient";
           };
         }
     >();
@@ -375,6 +378,7 @@ describe("ipc-contracts files request/response pairs", () => {
             existingSize?: number;
             existingModifiedAt?: string;
             existingUploadJobId?: string;
+            authErrorKind?: "scope-insufficient";
           };
         }
     >();
@@ -454,6 +458,7 @@ describe("ipc-contracts files request/response pairs", () => {
             existingSize?: number;
             existingModifiedAt?: string;
             existingUploadJobId?: string;
+            authErrorKind?: "scope-insufficient";
           };
         }
     >();
@@ -529,6 +534,46 @@ describe("ipc-contracts files request/response pairs", () => {
     expect(otherErr.existingPath).toBeUndefined();
 
     expectTypeOf<FilesErrorEnvelope>().toMatchTypeOf<{ existingPath?: string }>();
+  });
+
+  it("FilesErrorEnvelope optionally carries authErrorKind: \"scope-insufficient\" for insufficient-scope auth errors", () => {
+    // fix-insufficient-auth-scopes-recovery: a flat-optional discriminator
+    // mirroring the existingPath? / retryAfterMs? precedent (NOT a
+    // discriminated union). Threaded onto the envelope by normalizeFilesError
+    // from the engine error's `raw.kind === "scope-insufficient"`. Absent on
+    // every envelope that is not a recognized auth sub-class.
+    const scopeErr: FilesErrorEnvelope = {
+      tag: FilesErrorTag.AuthRevoked,
+      message: "request had insufficient authentication scopes",
+      retryable: false,
+      authErrorKind: "scope-insufficient",
+    };
+    expect(scopeErr.authErrorKind).toBe("scope-insufficient");
+
+    // Structurally optional — other envelopes omit it.
+    const otherErr: FilesErrorEnvelope = {
+      tag: FilesErrorTag.Other,
+      message: "boom",
+      retryable: false,
+    };
+    expect(otherErr.authErrorKind).toBeUndefined();
+
+    // Only the documented literal is accepted today.
+    const wrong: FilesErrorEnvelope = {
+      tag: FilesErrorTag.AuthRevoked,
+      message: "x",
+      retryable: false,
+      // @ts-expect-error — only "scope-insufficient" is a valid authErrorKind today
+      authErrorKind: "account-mismatch",
+    };
+    void wrong;
+
+    expectTypeOf<FilesErrorEnvelope["authErrorKind"]>().toEqualTypeOf<
+      "scope-insufficient" | undefined
+    >();
+    expectTypeOf<FilesErrorEnvelope>().toMatchTypeOf<{
+      authErrorKind?: "scope-insufficient";
+    }>();
   });
 
   it("rename: FilesRenameResponse migrates to FilesEnvelope<FilesRenameValue>", () => {

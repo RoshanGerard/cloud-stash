@@ -744,3 +744,161 @@ describe("InvalidDatasourceState — failed authenticateStart feedback (Decision
     ).toBeInTheDocument();
   });
 });
+
+describe("InvalidDatasourceState — scope-insufficient auth-error callout (fix-insufficient-auth-scopes-recovery)", () => {
+  it("renders the steering headline + raw 'Authentication error' detail, keeping Reconnect + Remove", () => {
+    render(
+      <InvalidDatasourceState
+        providerId="google-drive"
+        datasourceId="ds-1"
+        onReconnectSucceeded={() => {}}
+        onRequestRemove={() => {}}
+        authErrorKind="scope-insufficient"
+        authErrorMessage="request had insufficient authentication scopes"
+      />,
+    );
+    expect(
+      screen.getByText("Google Drive needs full-access permission"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Authentication error: request had insufficient authentication scopes",
+      ),
+    ).toBeInTheDocument();
+    // The routing tag is the initial auth-revoked (not a terminal session), so
+    // the primary keeps the "Reconnect" label and Remove stays present.
+    expect(
+      screen.getByRole("button", { name: /^reconnect$/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /remove datasource/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("suppresses the misleading generic 'missing or invalid' body when the callout shows", () => {
+    render(
+      <InvalidDatasourceState
+        providerId="google-drive"
+        datasourceId="ds-1"
+        onReconnectSucceeded={() => {}}
+        onRequestRemove={() => {}}
+        authErrorKind="scope-insufficient"
+        authErrorMessage="request had insufficient authentication scopes"
+      />,
+    );
+    expect(
+      screen.queryByText(
+        "Its connection details are missing or invalid. Sign in again or remove the datasource and add it back.",
+      ),
+    ).not.toBeInTheDocument();
+  });
+
+  it("parameterizes the headline by provider display name (OneDrive, not hard-coded Drive)", () => {
+    render(
+      <InvalidDatasourceState
+        providerId="onedrive"
+        datasourceId="ds-1"
+        onReconnectSucceeded={() => {}}
+        onRequestRemove={() => {}}
+        authErrorKind="scope-insufficient"
+        authErrorMessage="insufficient scope"
+      />,
+    );
+    expect(
+      screen.getByText("OneDrive needs full-access permission"),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText("Google Drive needs full-access permission"),
+    ).not.toBeInTheDocument();
+  });
+
+  it("does NOT render the callout when authErrorKind is absent (generic copy unchanged)", () => {
+    render(
+      <InvalidDatasourceState
+        providerId="google-drive"
+        datasourceId="ds-1"
+        onReconnectSucceeded={() => {}}
+        onRequestRemove={() => {}}
+      />,
+    );
+    expect(
+      screen.queryByText(/needs full-access permission/i),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Its connection details are missing or invalid. Sign in again or remove the datasource and add it back.",
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("does NOT render the callout while a reconnect is pending (precedence: status line wins)", async () => {
+    mockSessionState = { status: "pending" };
+    render(
+      <InvalidDatasourceState
+        providerId="google-drive"
+        datasourceId="ds-1"
+        onReconnectSucceeded={() => {}}
+        onRequestRemove={() => {}}
+        authErrorKind="scope-insufficient"
+        authErrorMessage="request had insufficient authentication scopes"
+      />,
+    );
+    // Start a reconnect → correlationId recorded → isWaiting true → the
+    // "Connecting…" status line takes precedence over the auth-error callout.
+    fireEvent.click(screen.getByRole("button", { name: /^reconnect$/i }));
+    await waitFor(() =>
+      expect(authenticateStartMock).toHaveBeenCalledTimes(1),
+    );
+    expect(
+      await screen.findByRole("status"),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText("Google Drive needs full-access permission"),
+    ).not.toBeInTheDocument();
+  });
+
+  it("does NOT render the callout when the session failed account-mismatch (precedence: amber wins, one callout at a time)", () => {
+    // Both conditions co-present from independent sources: the initiating
+    // files-error armed authErrorKind, AND a subsequent reconnect failed
+    // wrong-account. The amber callout must win; the red one is suppressed.
+    mockSessionState = {
+      status: "failed",
+      // eslint-disable-next-line ft5/no-raw-error-tag-literal -- AuthFailedTag vocabulary (no const object) — out of scope
+      tag: "account-mismatch",
+      expectedEmail: "acme@gmail.com",
+      actualEmail: "other@gmail.com",
+      message: "Wrong account — connect as acme@gmail.com.",
+    } as AuthSessionState;
+    render(
+      <InvalidDatasourceState
+        providerId="google-drive"
+        datasourceId="ds-1"
+        onReconnectSucceeded={() => {}}
+        onRequestRemove={() => {}}
+        authErrorKind="scope-insufficient"
+        authErrorMessage="request had insufficient authentication scopes"
+      />,
+    );
+    expect(screen.getByText("Wrong account")).toBeInTheDocument();
+    expect(
+      screen.queryByText("Google Drive needs full-access permission"),
+    ).not.toBeInTheDocument();
+  });
+
+  it("falls back to a generic detail when authErrorMessage is absent", () => {
+    render(
+      <InvalidDatasourceState
+        providerId="google-drive"
+        datasourceId="ds-1"
+        onReconnectSucceeded={() => {}}
+        onRequestRemove={() => {}}
+        authErrorKind="scope-insufficient"
+      />,
+    );
+    expect(
+      screen.getByText(
+        "Authentication error: insufficient permissions for this datasource",
+      ),
+    ).toBeInTheDocument();
+  });
+});

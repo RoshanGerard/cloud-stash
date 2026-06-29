@@ -213,11 +213,15 @@ function InvalidDatasourceArm({
   datasourceId,
   onReconnectSucceeded,
   onDatasourceRemoved,
+  authErrorKind,
+  authErrorMessage,
 }: {
   providerId?: string;
   datasourceId: string;
   onReconnectSucceeded: () => void;
   onDatasourceRemoved?: () => void;
+  authErrorKind?: "scope-insufficient" | null;
+  authErrorMessage?: string | null;
 }) {
   const [removeDialogOpen, setRemoveDialogOpen] = useState(false);
   const actions = useDatasourceActions();
@@ -228,6 +232,8 @@ function InvalidDatasourceArm({
         datasourceId={datasourceId}
         onReconnectSucceeded={onReconnectSucceeded}
         onRequestRemove={() => setRemoveDialogOpen(true)}
+        authErrorKind={authErrorKind}
+        authErrorMessage={authErrorMessage}
       />
       <ConfirmRemoveDatasourceDialog
         open={removeDialogOpen}
@@ -849,6 +855,8 @@ export function FileExplorer({
                   datasourceId={datasourceId}
                   onReconnectSucceeded={() => store.retryLoad()}
                   onDatasourceRemoved={onDatasourceRemoved}
+                  authErrorKind={state.authErrorKind}
+                  authErrorMessage={state.error}
                 />
               );
             }

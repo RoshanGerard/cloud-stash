@@ -119,9 +119,16 @@ existing `readExistingPath`): when `raw` is an object with
 `authErrorKind: "scope-insufficient"`; otherwise the field is omitted. The
 function remains **pure** — no `credentialStore`, no side effects, so the
 `files:list` handler's deps (`{ resolveClient }`) are unchanged and no eviction is
-threaded onto the read path. Because both the runtime-403 path (D1) and the
-proactive `checkScopeSufficiency` path already throw `auth-revoked` + the same
-`raw.kind`, this single thread upgrades **both** paths' callouts at once.
+threaded onto the read path. The thread is origin-agnostic at the mapper layer:
+any engine error carrying `raw.kind === "scope-insufficient"` gets the
+discriminator. In practice only the runtime-403 path (D1, via `listDirectory` →
+`files:list`) reaches this mapper and the renderer callout. The proactive
+`checkScopeSufficiency` throws from `doStatusImpl` / `doTestConnectionImpl`
+([`googledrive-client.ts:1074-1083`](../../../packages/fs-datasource-engine/src/strategies/googledrive-client.ts#L1074-L1083))
+— the datasource status / connection-check path, NOT `listDirectory` — so it does
+not flow through `files:list` / `normalizeFilesError` and does **not** render this
+callout. (Routing that proactive error to the same callout would be a separate
+follow-up; it is out of scope here.)
 
 ### D5 — Renderer fills the dormant auth-error slot; steering headline + raw detail
 The store gains an `authErrorKind` slot (parallel to the existing
@@ -156,12 +163,14 @@ existing 403-`reason` cases.
   `error.status`/`error.details`) → match both documented `reason` tokens; pin
   the exact extraction with test fixtures during apply, and keep the catch-all
   `provider-error` as the safety net for any unrecognized 403.
-- **Proactive-path detail-line redundancy** → the proactive `checkScopeSufficiency`
-  path carries the steering string as its `message`, so its callout detail reads
-  "Authentication error: Drive permissions are too narrow…" — mildly redundant
-  with the steering headline. Accepted: it is honest and we do NOT change a
-  shipped path's message. Only the runtime-403 path (the reported repro) carries
-  the raw Google string in the detail.
+- **Proactive scope-check path does NOT surface this callout** → the proactive
+  `checkScopeSufficiency` runs only in `status()` / `testConnection()` (the
+  datasource-status / connection-check path), not `listDirectory`, so its
+  `auth-revoked` + `scope-insufficient` error never flows through `files:list` /
+  `normalizeFilesError` and the renderer callout is not rendered for it.
+  Accepted: the runtime-403 backstop is the deliverable for the reported repro
+  (Explore → `files:list`). Unifying the proactive path onto the same callout is
+  a noted follow-up, not this change.
 - **A genuine provider-error must not be reclassified** → the new branch matches
   ONLY `insufficientPermissions` / `ACCESS_TOKEN_SCOPE_INSUFFICIENT`; quota,
   domainPolicy, dailyLimitExceeded, insufficientFilePermissions stay
@@ -195,14 +204,25 @@ and inherits the sibling change's pre-specified "Auth-error slot"
   BELOW the primary **Reconnect** + ghost **Remove** row — structurally identical
   to where the amber "Wrong account" callout sits (file-explorer canonical
   requirement "Reconnect view renders the account-mismatch callout").
-- **Container/palette (red-keyed mirror of the amber callout).** A bordered block,
-  `border-destructive/40 bg-destructive/5` with a left accent `border-l-2
-  border-destructive`. **Headline:** provider-parameterized, `text-destructive`
-  semibold — "{Provider} needs full-access permission" (e.g. "Google Drive needs
-  full-access permission"), derived from `providerDisplayName`. **Detail:** a
-  smaller, lower-emphasis line "Authentication error: \<message\>" rendering the
-  engine message verbatim. Red is reserved for this hard auth error (amber stays
-  reserved for the recoverable wrong-account correction).
+- **Container/palette (red-keyed mirror of the amber callout — AA-safe literal
+  shades).** A bordered block using the SAME approach as the shipped amber
+  callout: literal palette shades with dark-text-on-light-fill so the text sits on
+  the callout's OWN fixed-shade background, making contrast theme-independent.
+  `border border-red-300 bg-red-50 dark:border-red-800 dark:bg-red-950/40`, with a
+  red-keyed left accent `border-l-2 border-l-red-500`. **Headline:**
+  provider-parameterized, `text-red-800 dark:text-red-300` semibold 13px —
+  "{Provider} needs full-access permission" (e.g. "Google Drive needs full-access
+  permission"), derived from `providerDisplayName`. **Detail:** a smaller (12px,
+  regular weight), lower-emphasis line `text-red-900 dark:text-red-200` —
+  "Authentication error: \<message\>" rendering the engine message verbatim. Icon
+  `text-red-600 dark:text-red-400`. *Deviation from the sibling slot's original
+  `text-destructive` on `bg-destructive/5`:* the adversarial a11y review proved
+  that approach fails WCAG AA in the light + `serene-blue` themes (the
+  page-background-derived tint drops `text-destructive` below 4.5:1, worsened by
+  the `/90` opacity on the detail). The literal-shade mirror of the amber callout
+  is AA across all themes (~8–10:1 on its own `red-50` / `red-950` fill). Red is
+  reserved for this hard auth error (amber stays reserved for the recoverable
+  wrong-account correction).
 - **Body supersede (honesty — extends D3's unified message path with a 4th case).**
   When `authErrorKind === "scope-insufficient"`, the misleading generic body line
   "Its connection details are missing or invalid…" is **suppressed** — the
@@ -220,7 +240,10 @@ and inherits the sibling change's pre-specified "Auth-error slot"
   existing `primaryLabel` is already "Reconnect").
 
 **A11y / motion:** the view's `role="alert"` `aria-live="polite"` semantics are
-preserved; the destructive-red headline + detail pass WCAG AA on the
-`bg-destructive/5` tint in light and dark themes; any decorative icon is
+preserved; the headline (`text-red-800` / `dark:text-red-300`) and detail
+(`text-red-900` / `dark:text-red-200`) pass WCAG AA on the callout's own
+`bg-red-50` / `dark:bg-red-950` fill across ALL themes (light, dark, serene-blue)
+— the text-on-fill pairing is theme-independent because the fill is a fixed
+literal shade, not a page-background-derived tint; any decorative icon is
 `aria-hidden`; the callout is **motion-free** (no `animate-spin` — enforced by
 `scripts/motion-budget.test.ts`).

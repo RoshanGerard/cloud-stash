@@ -259,6 +259,76 @@ describe("normalizeFilesError", () => {
     expect(result.message).not.toContain("Google Drive documents");
   });
 
+  it("threads authErrorKind from raw.kind === 'scope-insufficient' (fix-insufficient-auth-scopes-recovery)", () => {
+    // The Drive runtime insufficient-scope 403 (and the proactive scope check)
+    // throw auth-revoked carrying raw.kind === "scope-insufficient". The
+    // mapper threads that discriminator onto the envelope's authErrorKind so
+    // the renderer can render its auth-error callout, while preserving the
+    // original provider message for the "Authentication error: <message>"
+    // detail line.
+    const err = new DatasourceError({
+      tag: DatasourceErrorTag.AuthRevoked,
+      datasourceType: "google-drive",
+      datasourceId: "ds-1",
+      retryable: false,
+      raw: {
+        kind: "scope-insufficient",
+        requiredScope: "https://www.googleapis.com/auth/drive",
+      },
+      message: "request had insufficient authentication scopes",
+    });
+    const result = normalizeFilesError(err);
+    expect(result.tag).toBe("auth-revoked");
+    expect(result.message).toBe(
+      "request had insufficient authentication scopes",
+    );
+    expect(result.authErrorKind).toBe("scope-insufficient");
+  });
+
+  it("omits authErrorKind when raw is absent, non-object, or lacks the scope-insufficient kind", () => {
+    const plainRevoked = new DatasourceError({
+      tag: DatasourceErrorTag.AuthRevoked,
+      datasourceType: "google-drive",
+      datasourceId: "ds-1",
+      retryable: false,
+      message: "refresh token revoked",
+    });
+    expect("authErrorKind" in normalizeFilesError(plainRevoked)).toBe(false);
+
+    const otherKind = new DatasourceError({
+      tag: DatasourceErrorTag.ProviderError,
+      datasourceType: "google-drive",
+      datasourceId: "ds-1",
+      retryable: false,
+      raw: { kind: "something-else" },
+      message: "boom",
+    });
+    expect("authErrorKind" in normalizeFilesError(otherKind)).toBe(false);
+
+    const nonObjectRaw = new DatasourceError({
+      tag: DatasourceErrorTag.AuthRevoked,
+      datasourceType: "google-drive",
+      datasourceId: "ds-1",
+      retryable: false,
+      raw: "opaque-provider-string",
+      message: "x",
+    });
+    expect("authErrorKind" in normalizeFilesError(nonObjectRaw)).toBe(false);
+
+    // `raw: null` — the load-bearing `=== null` guard in readAuthErrorKind
+    // (typeof null === "object") must not throw and must omit the field.
+    const nullRaw = new DatasourceError({
+      tag: DatasourceErrorTag.AuthRevoked,
+      datasourceType: "google-drive",
+      datasourceId: "ds-1",
+      retryable: false,
+      raw: null,
+      message: "x",
+    });
+    expect(() => normalizeFilesError(nullRaw)).not.toThrow();
+    expect("authErrorKind" in normalizeFilesError(nullRaw)).toBe(false);
+  });
+
   it("omits retryAfterMs when the DatasourceError did not carry one", () => {
     const err = new DatasourceError({
       tag: DatasourceErrorTag.RateLimited,

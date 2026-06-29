@@ -184,6 +184,14 @@ export interface ExplorerState {
    */
   errorTag: FilesErrorTag | null;
   /**
+   * The files-error envelope's optional `authErrorKind` discriminator
+   * (fix-insufficient-auth-scopes-recovery), captured alongside `error` /
+   * `errorTag` from the list response. Drives the reconnect view's
+   * destructive-palette auth-error callout. `null` when the failure is not a
+   * recognized auth sub-class (the overwhelming majority of cases).
+   */
+  authErrorKind: "scope-insufficient" | null;
+  /**
    * Monotonic counter bumped by `retryLoad()` to trigger a re-fetch in
    * `useExplorerData` without changing `currentPath`. Starts at 0.
    */
@@ -244,6 +252,7 @@ export interface ExplorerStore {
   setLoading(loading: boolean): void;
   setError(error: string | null): void;
   setErrorTag(tag: FilesErrorTag | null): void;
+  setAuthErrorKind(kind: "scope-insufficient" | null): void;
 
   // --- Pagination (add-engine-listdirectory-pagination §8) ---------------
 
@@ -536,6 +545,7 @@ export function createExplorerStore(datasourceId: string): ExplorerStore {
     loading: false,
     error: null,
     errorTag: null,
+    authErrorKind: null,
     nextCursor: null,
     loadingMore: false,
     loadMoreError: null,
@@ -830,6 +840,10 @@ export function createExplorerStore(datasourceId: string): ExplorerStore {
 
   function setErrorTag(errorTag: FilesErrorTag | null): void {
     set({ ...state, errorTag }, false);
+  }
+
+  function setAuthErrorKind(authErrorKind: "scope-insufficient" | null): void {
+    set({ ...state, authErrorKind }, false);
   }
 
   function retryLoad(): void {
@@ -1419,6 +1433,7 @@ export function createExplorerStore(datasourceId: string): ExplorerStore {
     setLoading,
     setError,
     setErrorTag,
+    setAuthErrorKind,
     retryLoad,
     applyInitialPage,
     loadMore,
