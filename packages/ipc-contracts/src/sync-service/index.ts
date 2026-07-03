@@ -21,6 +21,8 @@ export type {
   CommandParams,
   CommandResult,
   ConflictPolicy,
+  DeletePartialRequest,
+  DeletePartialResponse,
   DownloadJob,
   DownloadsListActiveRequest,
   DownloadsListActiveResponse,

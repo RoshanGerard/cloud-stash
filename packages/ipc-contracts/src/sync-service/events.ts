@@ -271,6 +271,18 @@ export interface DownloadFailedPayload {
   readonly tag: "auth-revoked" | "disconnected" | "rate-limited" | "other"
     | "invalid-datasource" | "exhausted-retries";
   readonly message: string;
+  /**
+   * OPTIONAL UI hint (add-failed-download-cleanup-affordance). `true` when a
+   * deletable partial file was KEPT on disk for this terminal failure — i.e.
+   * the terminal cause is NOT in the delete-on-terminal disposition set AND
+   * at least one byte was written. Absent / `false` otherwise (a
+   * delete-disposition failure, or a failure before any byte reached disk).
+   * The renderer uses it to gate the failure toast's "Delete partial" action;
+   * it does NOT alter the disposition policy. Optional + default-false keeps
+   * the event backward compatible — a hydrated toast or an event from a
+   * service that predates this field simply omits it.
+   */
+  readonly partialKept?: boolean;
 }
 
 /** Streaming-style retry signal emitted at the START of each

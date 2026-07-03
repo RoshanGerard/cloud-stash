@@ -799,6 +799,44 @@ interface ClearDownloadHistoryCommand {
   readonly error: FilesCommandErrorShape;
 }
 
+// ---- downloads:delete-partial (add-failed-download-cleanup-affordance) -----
+//
+// Deletes the partial file left on disk after a KEPT-disposition terminal
+// download failure. Keyed on `downloadJobId` — the handler resolves the
+// partial's `target_path` server-side from the durable `downloads` row, so
+// NO filesystem path crosses IPC. Guard is "terminal + recorded": the row
+// must exist AND its `status` must NOT be `in-flight` (never unlink a file
+// that is actively being written). An unknown `downloadJobId` is a no-op
+// success (`{ deleted: false }`); an already-gone file (ENOENT) resolves as
+// `{ deleted: true }` (desired end state reached); EACCES/EPERM surface an
+// error envelope the failure toast renders inline.
+
+/**
+ * Wire-shape alias for the `downloads:delete-partial` request. The path to
+ * delete is NOT part of the wire shape — the service resolves it from the
+ * durable `downloads` row keyed by `downloadJobId`.
+ */
+export type DeletePartialRequest = {
+  readonly downloadJobId: string;
+};
+
+/**
+ * Wire-shape alias for the `downloads:delete-partial` response, expressed as
+ * the standard tagged envelope. `value.deleted` is `true` when the partial
+ * is gone after the call (unlinked, or already absent), `false` for a no-op
+ * (no recorded row).
+ */
+export type DeletePartialResponse =
+  | { readonly ok: true; readonly value: { readonly deleted: boolean } }
+  | { readonly ok: false; readonly error: FilesCommandErrorShape };
+
+interface DeletePartialCommand {
+  readonly command: "downloads:delete-partial";
+  readonly params: DeletePartialRequest;
+  readonly result: { readonly deleted: boolean };
+  readonly error: FilesCommandErrorShape;
+}
+
 // ---- uploads:* commands (migrate-upload-orchestration-out-of-engine §7) ---
 //
 // `uploads:list-active` returns the live snapshot of in-flight upload jobs
@@ -910,6 +948,7 @@ export interface CommandMap {
   "sync:cancel-download": SyncCancelDownloadCommand;
   "downloads:list-active": DownloadsListActiveCommand;
   "downloads:clear-history": ClearDownloadHistoryCommand;
+  "downloads:delete-partial": DeletePartialCommand;
   "uploads:list-active": UploadsListActiveCommand;
   "sync:cancel-upload": SyncCancelUploadCommand;
 }
@@ -951,6 +990,7 @@ export const COMMAND_NAMES: ReadonlyArray<CommandName> = [
   "sync:cancel-download",
   "downloads:list-active",
   "downloads:clear-history",
+  "downloads:delete-partial",
   "uploads:list-active",
   "sync:cancel-upload",
 ] as const;

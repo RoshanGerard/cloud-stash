@@ -286,6 +286,26 @@ export interface SyncClearDownloadHistoryResponse {
   readonly deleted: number;
 }
 
+// ---- deletePartial (add-failed-download-cleanup-affordance §4) -----------
+//
+// Deletes the partial file left on disk after a KEPT-disposition terminal
+// download failure, keyed by `downloadJobId` (the path is resolved
+// service-side from the durable `downloads` row — never passed over the
+// renderer boundary). Uses the FLAT result shape (`{ deleted }`) like
+// `clearDownloadHistory`: on success it resolves; a meaningful failure
+// (in-flight refusal, EACCES/EPERM) rejects via the service error envelope
+// (`SyncCommandError`, message carrying the reason), which the failure
+// toast surfaces inline. Mirrors but does NOT re-export the wire
+// `DeletePartialRequest`/`...Response`.
+
+export interface SyncDeletePartialRequest {
+  readonly downloadJobId: string;
+}
+
+export interface SyncDeletePartialResponse {
+  readonly deleted: boolean;
+}
+
 // ---- deleteCredentials (design.md Decision 12) --------------------------
 //
 // Symmetric counterpart of authenticate. The desktop's `datasources:remove`

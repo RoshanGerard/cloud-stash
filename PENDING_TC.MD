@@ -1435,3 +1435,40 @@ against a real provider.
 
 **Owner:** unassigned (HUMAN). Shares the live-OAuth setup with the
 `fix-reconnect-stuck-connecting-button §5.1` smoke above (same branch).
+
+---
+
+## add-failed-download-cleanup-affordance — §6.3 running-system Delete-partial smoke (deferred)
+
+**Scenario.** In a running build, start a download that fails mid-stream with a
+KEEP-disposition terminal cause (e.g. environmental-budget/wall-time exhaustion,
+`auth-revoked` after ≥1 byte, or byte-count-mismatch) so a partial file is left
+on disk. Confirm:
+1. The failure toast renders the red custom card with **"Delete partial"** beside
+   **"Retry"** (VD1–VD3), NOT the single-action `toast.error`.
+2. Clicking **Delete partial** unlinks the partial at its `target_path` and
+   dismisses the card (the file is gone from the Downloads folder).
+3. A DELETE-disposition failure (range-mismatch / integrity-failed) shows only
+   **Retry** — no Delete-partial (the partial was already unlinked service-side).
+4. Force a permission error on the unlink (e.g. the file is locked) → the card
+   stays, showing "Couldn't delete the partial file: <reason>" inline, Retry
+   intact (VD4).
+
+**Why deferred.** Reproducing a KEEP-disposition mid-stream failure that leaves a
+real partial requires a live provider + injected network/stream fault — not
+reproducible in this environment (same class as
+`wire-packaged-build-download-resilience`).
+
+**Unit/integration coverage proving the path in isolation:**
+- Backend handler: `services/fs-sync/src/commands/downloads-delete-partial.test.ts`
+  (recorded+terminal unlink; ENOENT→success; unknown→no-op; in-flight refuse;
+  EACCES→error) + `handlers.test.ts` dispatcher-registration.
+- Emit-site `partialKept` per disposition class:
+  `services/fs-sync/src/commands/__tests__/files-download.test.ts` (byte-count-mismatch
+  KEEP→true; range-mismatch/integrity DELETE→false; auth-revoked pre-stream 0-byte→false).
+- Four-layer bridge: `sync-surface.test.ts` round-trip + `channels.test-d.ts` +
+  `window-api.types.test-d.ts` + `main/ipc/sync/__tests__/delete-partial.test.ts`.
+- Renderer custom card + click dispatch + inline-error re-render:
+  `download-job-toast.test.ts` (d3–d7).
+
+**Owner:** unassigned (HUMAN). To do during the next environment-loop pass.

@@ -108,6 +108,13 @@ export type DownloadEvent =
           | "other"
           | "invalid-datasource";
         readonly message: string;
+        // add-failed-download-cleanup-affordance §5 — OPTIONAL UI hint from
+        // the service: `true` when a deletable partial file was KEPT on disk
+        // for this terminal failure. Gates the failure toast's "Delete
+        // partial" action. Absent / `false` → no such action (a
+        // delete-disposition failure, a pre-stream 0-byte failure, or an
+        // event from a service that predates the field).
+        readonly partialKept?: boolean;
       };
     }
   | {
@@ -196,10 +203,16 @@ export interface ToastApi {
       duration?: number;
       // Test-only ergonomics: the actions map is surfaced on the
       // options bag so consumers can verify wiring without rendering
-      // the React tree. Sonner ignores unknown options.
+      // the React tree. Sonner ignores unknown options. The success card
+      // wires { onOpen, onShowInFolder }; the failure-with-kept-partial
+      // card (add-failed-download-cleanup-affordance §5) wires
+      // { onRetry, onDeletePartial } — all optional so each render surfaces
+      // only its own actions.
       actions?: {
-        onOpen: () => void;
-        onShowInFolder: () => void;
+        onOpen?: () => void;
+        onShowInFolder?: () => void;
+        onRetry?: () => void;
+        onDeletePartial?: () => void;
       };
     },
   ): string | number;
@@ -250,6 +263,17 @@ export interface FilesActionsApi {
  */
 export interface SyncActionsApi {
   cancelDownload(req: { downloadJobId: string }): Promise<unknown>;
+  /**
+   * add-failed-download-cleanup-affordance §5 — deletes the partial file
+   * recorded for a KEPT-disposition terminal download failure. The failure
+   * toast's "Delete partial" action wires its onClick to
+   * `syncApi.deletePartial({ downloadJobId })`. Resolves `{ deleted }` on
+   * success; rejects (SyncCommandError) on a meaningful failure (in-flight
+   * refusal, EACCES/EPERM) or a transport failure — the toast renders the
+   * rejection reason inline and stays open. Production resolves
+   * `window.api.sync.deletePartial` lazily (mirroring `cancelDownload`).
+   */
+  deletePartial(req: { downloadJobId: string }): Promise<unknown>;
 }
 
 export interface DownloadToasterDeps {
@@ -381,14 +405,14 @@ function resolveSyncApi(
   // toast. End-to-end test coverage in
   // `preload/__tests__/sync-surface.test.ts` and the §12.6.x toaster
   // tests below.
-  type CancelFn = (req: { downloadJobId: string }) => Promise<unknown>;
+  type SyncFn = (req: { downloadJobId: string }) => Promise<unknown>;
   return {
     async cancelDownload(req) {
       const fn = (
         globalThis as unknown as {
           window?: {
             api?: {
-              sync?: { cancelDownload?: CancelFn };
+              sync?: { cancelDownload?: SyncFn };
             };
           };
         }
@@ -396,6 +420,27 @@ function resolveSyncApi(
       if (typeof fn !== "function") {
         throw new Error(
           "createDownloadJobToaster: window.api.sync.cancelDownload is unavailable",
+        );
+      }
+      return fn(req);
+    },
+    // add-failed-download-cleanup-affordance §5 — same lazy-resolution
+    // pattern as cancelDownload: look up `window.api.sync.deletePartial` at
+    // click time so the toaster mounts safely in test harnesses without the
+    // preload. Throwing at the click site keeps the failure diagnosable.
+    async deletePartial(req) {
+      const fn = (
+        globalThis as unknown as {
+          window?: {
+            api?: {
+              sync?: { deletePartial?: SyncFn };
+            };
+          };
+        }
+      ).window?.api?.sync?.deletePartial;
+      if (typeof fn !== "function") {
+        throw new Error(
+          "createDownloadJobToaster: window.api.sync.deletePartial is unavailable",
         );
       }
       return fn(req);
@@ -893,6 +938,76 @@ export function createDownloadJobToaster(
       // — instant auth-revoked / immediate validation reject), no
       // correlation happened and Retry falls back to dismiss-only.
       const retry = existing?.retry;
+      const message = event.payload.message;
+
+      // add-failed-download-cleanup-affordance §5 — when the service reports a
+      // KEPT partial file on disk (`partialKept: true`), render a fresh-id
+      // custom card (design.md VD1) offering a one-click "Delete partial"
+      // beside Retry. Failures with no kept partial keep the existing
+      // single-action `toast.error` path below (unchanged). The fresh id
+      // mirrors the success toast: dismiss the loading toast first so the
+      // spinner chrome doesn't overlap, then spawn on `<loadingId>-failed`.
+      if (event.payload.partialKept === true) {
+        const loadingId = existing?.toastId;
+        const failedId =
+          loadingId !== undefined
+            ? `${String(loadingId)}-failed`
+            : generateToastId();
+        const onRetry = () => {
+          toast.dismiss(failedId);
+          if (retry !== undefined) {
+            retry();
+          }
+        };
+        // Re-usable spawn so the delete-error path can re-render the SAME
+        // card with an inline error (VD4). References `onDeletePartial`
+        // (declared below) only inside the render closure — resolved at
+        // click time, never at declaration.
+        const spawnCard = (deleteError?: string): void => {
+          toast.custom(
+            (id) =>
+              buildFailureWithDeleteRender(
+                id,
+                message,
+                onRetry,
+                onDeletePartial,
+                deleteError,
+              ),
+            {
+              id: failedId,
+              duration: Number.POSITIVE_INFINITY,
+              actions: { onRetry, onDeletePartial },
+            },
+          );
+        };
+        const onDeletePartial = () => {
+          void syncApi.deletePartial({ downloadJobId }).then(
+            () => {
+              // Success — the partial is gone; clear the whole card.
+              toast.dismiss(failedId);
+            },
+            (err: unknown) => {
+              // Keep the card; re-render with an inline error, Retry intact.
+              const reason =
+                err instanceof Error ? err.message : "unknown error";
+              spawnCard(reason);
+            },
+          );
+        };
+        // Tear down the loading toast BEFORE spawning the fresh-id card.
+        if (existing !== undefined) {
+          toast.dismiss(loadingId!);
+        }
+        tracker.set(downloadJobId, {
+          toastId: failedId,
+          basename,
+          retry,
+          terminal: true,
+        });
+        spawnCard();
+        return;
+      }
+
       const toastId = existing?.toastId ?? generateToastId();
       tracker.set(downloadJobId, {
         toastId,
@@ -1042,6 +1157,82 @@ function buildSuccessRender(
             "bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-8 items-center justify-center rounded-md px-3 text-sm font-medium",
         },
         "Open",
+      ),
+    ),
+  );
+}
+
+// add-failed-download-cleanup-affordance §5 (design.md ## Visual direction).
+// The failure card shown when the service reports a KEPT partial file
+// (`partialKept: true`). A fresh-id `toast.custom` render mirroring
+// `buildSuccessRender`'s structure so the fresh id sidesteps the iter-3
+// same-id type-merge leak. Visual direction:
+//   - VD2: red error card via literal palette on a fixed fill (WCAG-AA in
+//     both themes) — no lucide icon, matching buildSuccessRender's
+//     icon-free text idiom (the red fill + red "Download failed:" heading
+//     conveys the error state; keeps the render node-test-serializable).
+//   - VD3: Retry primary (right, filled); "Delete partial" quiet-destructive
+//     (left, red text, underline-on-hover) — mirrors the success card's
+//     quiet "Show in folder" + filled "Open".
+//   - VD4: on a delete failure the "Delete partial" control is replaced by an
+//     inline error line; Retry is preserved.
+//   - VD5: role="alert"; both controls are real <button>s with accessible
+//     names. Nothing is auto-focused (toasts don't steal focus), so the
+//     destructive control is never the default Enter target.
+//
+//   ┌──────────────────────────────────────────────┐
+//   │ Download failed: <message>                    │
+//   │  Delete partial            [    Retry    ]    │
+//   └──────────────────────────────────────────────┘
+function buildFailureWithDeleteRender(
+  _id: string | number,
+  message: string,
+  onRetry: () => void,
+  onDeletePartial: () => void,
+  deleteError?: string,
+): React.ReactElement {
+  const deleteControl =
+    deleteError === undefined
+      ? React.createElement(
+          "button",
+          {
+            type: "button",
+            onClick: onDeletePartial,
+            className:
+              "text-red-700 dark:text-red-300 text-xs underline-offset-2 hover:underline",
+          },
+          "Delete partial",
+        )
+      : React.createElement(
+          "span",
+          { className: "text-red-700 dark:text-red-300 text-xs" },
+          `Couldn't delete the partial file: ${deleteError}`,
+        );
+  return React.createElement(
+    "div",
+    {
+      className:
+        "border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-950/40 flex flex-col gap-3 rounded-md border p-4 shadow-md",
+      role: "alert",
+    },
+    React.createElement(
+      "div",
+      { className: "text-red-800 dark:text-red-200 text-sm font-medium" },
+      `Download failed: ${message}`,
+    ),
+    React.createElement(
+      "div",
+      { className: "flex items-center justify-end gap-3" },
+      deleteControl,
+      React.createElement(
+        "button",
+        {
+          type: "button",
+          onClick: onRetry,
+          className:
+            "bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-8 items-center justify-center rounded-md px-3 text-sm font-medium",
+        },
+        "Retry",
       ),
     ),
   );

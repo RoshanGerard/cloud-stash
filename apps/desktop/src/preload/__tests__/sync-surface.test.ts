@@ -41,6 +41,8 @@ import type {
   SyncGetRetryPolicyResponse,
   SyncSetRetryPolicyRequest,
   SyncSetRetryPolicyResponse,
+  SyncDeletePartialRequest,
+  SyncDeletePartialResponse,
 } from "@ft5/ipc-contracts/sync-service-desktop";
 
 type ExposedSync = {
@@ -59,6 +61,9 @@ type ExposedSync = {
   getStatus: () => Promise<SyncGetStatusResponse>;
   getRetryPolicy: (req: SyncGetRetryPolicyRequest) => Promise<SyncGetRetryPolicyResponse>;
   setRetryPolicy: (req: SyncSetRetryPolicyRequest) => Promise<SyncSetRetryPolicyResponse>;
+  deletePartial: (
+    req: SyncDeletePartialRequest,
+  ) => Promise<SyncDeletePartialResponse>;
   onEvent: (callback: (event: SyncEvent) => void) => () => void;
 };
 
@@ -81,7 +86,7 @@ describe("preload sync surface", () => {
     vi.clearAllMocks();
   });
 
-  it("exposes a sync object with exactly 16 members (15 commands + onEvent), no legacy `authenticate` or `enqueueUpload`", async () => {
+  it("exposes a sync object with exactly 17 members (16 commands + onEvent), no legacy `authenticate` or `enqueueUpload`", async () => {
     const exposed = await loadExposed();
 
     expect(typeof exposed.sync).toBe("object");
@@ -99,6 +104,9 @@ describe("preload sync surface", () => {
         // add-download-history-ui §5 — Settings → Downloads config +
         // clear-history bridge (first renderer consumer of get/set-config).
         "clearDownloadHistory",
+        // add-failed-download-cleanup-affordance §4 — download failure
+        // toast's "Delete partial" bridge for downloads:delete-partial.
+        "deletePartial",
         "enqueueMirror",
         // migrate-upload-orchestration-out-of-engine §11 / §7.4 —
         // `enqueueUpload` was deleted in chunk F; the renderer's
@@ -349,6 +357,25 @@ describe("preload sync surface", () => {
 
       expect(invokeMock).toHaveBeenCalledTimes(1);
       expect(invokeMock.mock.calls[0]).toEqual([SYNC_CHANNELS.setRetryPolicy, req]);
+      expect(result).toBe(response);
+    });
+
+    // add-failed-download-cleanup-affordance §4 — the download failure toast's
+    // "Delete partial" action routes through this binding.
+    it("deletePartial(req) invokes SYNC_CHANNELS.deletePartial with req and returns the resolved value", async () => {
+      const invokeMock = ipcRenderer.invoke as unknown as ReturnType<typeof vi.fn>;
+      const response: SyncDeletePartialResponse = { deleted: true };
+      invokeMock.mockResolvedValue(response);
+
+      const exposed = await loadExposed();
+      const req: SyncDeletePartialRequest = { downloadJobId: "d-1" };
+      const result = await exposed.sync.deletePartial(req);
+
+      expect(invokeMock).toHaveBeenCalledTimes(1);
+      expect(invokeMock.mock.calls[0]).toEqual([
+        SYNC_CHANNELS.deletePartial,
+        req,
+      ]);
       expect(result).toBe(response);
     });
   });

@@ -347,6 +347,20 @@ export class SyncClient {
   }
 
   /**
+   * add-failed-download-cleanup-affordance §4 — typed wrapper for
+   * `downloads:delete-partial`. Deletes the recorded partial file for a
+   * terminal download (keyed by `downloadJobId`) and returns `{ deleted }`.
+   * Resolves on success; rejects with `SyncCommandError` on a meaningful
+   * failure (in-flight refusal, EACCES/EPERM) or a transport-level failure.
+   */
+  deletePartial(
+    params: CommandParams<"downloads:delete-partial">,
+    opts?: { timeoutMs?: number },
+  ): Promise<CommandResult<"downloads:delete-partial">> {
+    return this.request("downloads:delete-partial", params, opts);
+  }
+
+  /**
    * add-download-history-ui §5 — typed wrapper for `sync:get-config`. Returns
    * the parsed `ServiceConfig` (or the empty default when the file is absent).
    * First renderer consumer of the service config (design.md Decision 8).

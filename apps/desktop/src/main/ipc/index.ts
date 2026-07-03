@@ -25,6 +25,7 @@ import type {
   SyncCancelJobRequest,
   SyncCancelUploadRequest,
   SyncClearDownloadHistoryRequest,
+  SyncDeletePartialRequest,
   SyncEnqueueMirrorRequest,
   SyncGetJobRequest,
   SyncGetRetryPolicyRequest,
@@ -69,6 +70,7 @@ import { handleSyncCancelJob } from "./sync/cancel-job.js";
 import { handleSyncCancelUpload } from "./sync/cancel-upload.js";
 import { handleUploadsListActive } from "./sync/uploads-list-active.js";
 import { handleClearDownloadHistory } from "./sync/clear-download-history.js";
+import { handleDeletePartial } from "./sync/delete-partial.js";
 import { handleSyncGetConfig } from "./sync/get-config.js";
 import { handleSyncSetConfig } from "./sync/set-config.js";
 import { handleSyncEnqueueMirror } from "./sync/enqueue-mirror.js";
@@ -273,6 +275,10 @@ export function registerIpcHandlers(
     SYNC_CHANNELS.clearDownloadHistory,
     async (_event, req: SyncClearDownloadHistoryRequest) =>
       handleClearDownloadHistory(req),
+  );
+  ipcMain.handle(
+    SYNC_CHANNELS.deletePartial,
+    async (_event, req: SyncDeletePartialRequest) => handleDeletePartial(req),
   );
 
   // Clipboard bridge — goes through Electron's main-process `clipboard`

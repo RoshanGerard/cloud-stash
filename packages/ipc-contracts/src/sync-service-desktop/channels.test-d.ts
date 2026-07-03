@@ -25,6 +25,9 @@ describe("sync-service-desktop SYNC_CHANNELS constants", () => {
         "cancelUpload",
         // add-download-history-ui §5 — renderer bridge for downloads:clear-history.
         "clearDownloadHistory",
+        // add-failed-download-cleanup-affordance §4 — renderer bridge for
+        // downloads:delete-partial.
+        "deletePartial",
         "deleteCredentials",
         "enqueueMirror",
         // migrate-upload-orchestration-out-of-engine §7.4 — `enqueueUpload`

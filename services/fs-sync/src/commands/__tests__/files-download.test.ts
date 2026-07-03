@@ -869,6 +869,12 @@ describe("files:download — handler-owned auth refresh (§4 / Decision 5)", () 
     const failed = events.filter((e) => e.name === "download-failed");
     expect(failed).toHaveLength(1);
     expect(failed[0]?.payload).toMatchObject({ tag: FilesErrorTag.AuthRevoked });
+    // add-failed-download-cleanup-affordance §3 — auth-revoked is a KEEP
+    // disposition, but the token died PRE-STREAM so zero bytes reached disk:
+    // there is no partial worth deleting, so partialKept === false.
+    expect(
+      (failed[0]?.payload as { partialKept?: boolean }).partialKept,
+    ).toBe(false);
   });
 });
 
@@ -1036,6 +1042,12 @@ describe("files:download — range-mismatch detection (§13.9, §13.10)", () => 
     }
     const terminal = events.filter((e) => e.name === "download-failed");
     expect(terminal).toHaveLength(1);
+    // add-failed-download-cleanup-affordance §3 — range-mismatch is a DELETE
+    // disposition (the partial was unlinked before emit), so there is nothing
+    // deletable: partialKept === false.
+    expect(
+      (terminal[0]?.payload as { partialKept?: boolean }).partialKept,
+    ).toBe(false);
   });
 });
 
@@ -1072,6 +1084,12 @@ describe("files:download — byte-count assertion (§13.11, §13.12)", () => {
     }
     const terminal = events.filter((e) => e.name === "download-failed");
     expect(terminal).toHaveLength(1);
+    // add-failed-download-cleanup-affordance §3 — byte-count-mismatch is a
+    // KEEP disposition and 512 bytes reached disk, so the kept partial is
+    // deletable: partialKept === true.
+    expect(
+      (terminal[0]?.payload as { partialKept?: boolean }).partialKept,
+    ).toBe(true);
   });
 });
 
@@ -1107,6 +1125,11 @@ describe("files:download — post-download integrity check (§13.13, §13.14)", 
     }
     const terminal = events.filter((e) => e.name === "download-failed");
     expect(terminal).toHaveLength(1);
+    // add-failed-download-cleanup-affordance §3 — integrity-failed is a DELETE
+    // disposition (the partial was unlinked before emit): partialKept === false.
+    expect(
+      (terminal[0]?.payload as { partialKept?: boolean }).partialKept,
+    ).toBe(false);
   });
 
   it("skips the integrity check when the provider does not advertise a comparable hash", async () => {
