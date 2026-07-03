@@ -70,3 +70,50 @@ auto-refreshes; auth refresh is the one-shot inner ring, environmental retry
 the outer ring). A non-retryable failure (`retryable: false`) — including
 OneDrive's deterministic malformed-cursor `provider-error` — surfaces
 immediately without consuming the retry budget.
+
+## Auth & scopes
+
+### OneDrive has no insufficient-scope recovery (Drive-only, deliberately not mirrored)
+
+`fix-insufficient-auth-scopes-recovery` (2026-06) added, **for Google Drive
+only**, a runtime recovery for a too-narrow OAuth grant: the Drive strategy
+reclassifies a 403 `insufficientPermissions` / `ACCESS_TOKEN_SCOPE_INSUFFICIENT`
+to `auth-revoked` + `raw.kind: "scope-insufficient"`, which threads
+`FilesErrorEnvelope.authErrorKind` and routes the explorer to the reconnect view
+with a "needs full-access permission" callout. The `authErrorKind` contract
+field, the fs-sync `normalizeFilesError` thread, and the renderer callout are all
+**provider-agnostic and already shipped** — only the engine-side *detection* is
+Drive-specific.
+
+OneDrive was investigated (2026-06) and the insufficient-scope recovery was
+**deliberately NOT built**, for three reasons:
+
+1. **No clean runtime signal.** Drive surfaces a too-narrow grant with a
+   documented, unambiguous inner reason token (`insufficientPermissions`).
+   Microsoft Graph does not: an insufficient delegated scope surfaces as the
+   **overloaded** 403 `accessDenied` / `Authorization_RequestDenied` — the same
+   codes Graph uses for SharePoint/OneDrive sharing-policy denials, admin-consent
+   gaps, and wrong-audience tokens. The strategy deliberately keeps those as
+   `provider-error` (`onedrive-client.ts` 403 branch). A runtime heuristic on
+   `accessDenied` would **over-match a common case** (sharing-policy denials —
+   which a reconnect cannot fix) to catch a rare one, routing common errors into
+   a useless "reconnect" loop.
+2. **Rare scenario.** Microsoft's delegated consent is largely all-or-nothing
+   (no per-scope granular-consent checkboxes like Google's). The granted scope
+   almost always equals the requested `Files.ReadWrite.All`; a narrow grant only
+   arises from incremental-consent gaps or admin restrictions. OneDrive captures
+   and validates no resource scope today (`onedrive-client.ts:157-159`), by
+   design.
+3. **Untestable without a real provider.** With no clean signal and no live
+   OneDrive/Graph provider in the test environment, a runtime detection's tests
+   would encode a *guessed* error signature rather than observed behavior.
+
+**If a real need surfaces,** the honest mechanism is a *proactive* scope check
+(mirroring Drive's `checkScopeSufficiency`): capture the granted `scope` from the
+OneDrive token response (the `scp` claim is the one clean, testable signal),
+validate it contains `Files.ReadWrite.All`, and throw `auth-revoked` +
+`scope-insufficient` — deterministic and testable against the captured scope
+string. That requires new scope-capture in OneDrive's auth exchange (it captures
+none today). Until a real OneDrive narrow-grant case is observed, building
+speculative detection is not worth the over-match regression risk. See
+`PENDING_TC.MD` (fix-insufficient-auth-scopes-recovery follow-ups).
