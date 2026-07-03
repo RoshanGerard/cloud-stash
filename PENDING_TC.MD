@@ -1413,10 +1413,18 @@ classify→route→callout→overwrite flow is automated-green but never exercis
 against a real provider.
 
 **Follow-ups (non-blocking):**
-- **OneDrive equivalent.** The Graph insufficient-scope error has a different
-  shape (no Drive `reason` tokens); the `authErrorKind` contract field + renderer
-  callout are provider-agnostic and ready, but the OneDrive strategy
-  reclassification is not implemented. (design.md D6.)
+- **OneDrive equivalent — INVESTIGATED + DEFERRED 2026-06-29 (do NOT build
+  speculatively).** Full rationale in `docs/design_limitations.md` → "OneDrive
+  has no insufficient-scope recovery". Summary: Graph has NO clean insufficient-
+  scope signal (overloaded 403 `accessDenied` / `Authorization_RequestDenied`
+  shared with sharing-policy denials — a runtime heuristic would over-match a
+  common case); Microsoft consent is all-or-nothing so the narrow-grant scenario
+  is rare; and it's untestable without a live provider. The `authErrorKind`
+  contract field + renderer callout are provider-agnostic and ready. If a real
+  narrow-grant case is ever observed, the honest path is a **proactive scope
+  check** (capture the granted `scp` scope from the token response + validate
+  `Files.ReadWrite.All`), NOT a runtime 403 heuristic. Advisor-reviewed;
+  user-decided to defer.
 - **Q6 — why the proactive `checkScopeSufficiency` did not pre-empt.** It runs in
   `status()` / `testConnection()`, not `listDirectory`, so the runtime 403 is the
   backstop. Investigate whether the proactive check can run on the list path.
