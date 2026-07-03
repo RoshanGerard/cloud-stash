@@ -231,3 +231,23 @@ describe("downloads:clear-history (add-download-history-ui §4)", () => {
     expect(remaining).toEqual(["live"]); // in-flight survives
   });
 });
+
+describe("downloads:delete-partial (add-failed-download-cleanup-affordance §2)", () => {
+  it("is registered WITHOUT the download bundle (unconditional db-only wiring)", async () => {
+    // Pins the spec scenario "downloads:delete-partial command is
+    // registered". The beforeEach handler set omits downloadRegistry /
+    // resolveClient, yet delete-partial must still route — like clear-history
+    // it needs only `db`. An unknown downloadJobId is a fully-hermetic no-op
+    // success (no row → no unlink attempted), so this asserts routing without
+    // touching the filesystem.
+    expect(handlers["downloads:delete-partial"]).toBeDefined();
+
+    const res = await call("downloads:delete-partial", {
+      downloadJobId: "no-such-job",
+    });
+
+    expect(res.ok).toBe(true);
+    if (!res.ok) return;
+    expect(res.result).toEqual({ deleted: false });
+  });
+});

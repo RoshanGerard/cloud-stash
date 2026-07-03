@@ -11,9 +11,9 @@ code to pass. Contract → service → emit → bridge → renderer → verify.
 
 ## 2. Service — `downloads:delete-partial` handler (TDD)
 
-- [ ] 2.1 RED: unit tests for the handler covering all guard/mapping branches: (a) recorded + terminal row with existing file → unlinks + `{ deleted: true }`; (b) `unlink` ENOENT → `{ deleted: true }`; (c) unknown `downloadJobId` (no row) → `{ deleted: false }` no-op; (d) row `status === 'in-flight'` → refuse, unlink nothing, error envelope; (e) `unlink` EACCES/EPERM → error envelope.
-- [ ] 2.2 GREEN: implement `services/fs-sync/src/downloads/delete-partial.ts` — read `target_path` + `status` from the `downloads` table by `downloadJobId`, apply the terminal+recorded guard, `unlink` via the fs boundary, map ENOENT→success and EACCES/EPERM→error.
-- [ ] 2.3 Register the command in the dispatcher (`services/fs-sync/src/commands/handlers.ts`) wired like `downloads:clear-history` — needs `deps.db` + an fs `unlink`, NOT `resolveClient`/engine. Add the dispatcher command-name-set test asserting `"downloads:delete-partial"` is present.
+- [x] 2.1 RED: unit tests for the handler covering all guard/mapping branches: (a) recorded + terminal row with existing file → unlinks + `{ deleted: true }`; (b) `unlink` ENOENT → `{ deleted: true }`; (c) unknown `downloadJobId` (no row) → `{ deleted: false }` no-op; (d) row `status === 'in-flight'` → refuse, unlink nothing, error envelope; (e) `unlink` EACCES/EPERM → error envelope.
+- [x] 2.2 GREEN: implement the handler in `services/fs-sync/src/commands/downloads-delete-partial.ts` (co-located with the other command handlers; a single SELECT + unlink didn't warrant a separate `downloads/` SQL-core module) — read `target_path` + `status` from the `downloads` table by `downloadJobId`, apply the terminal+recorded guard, `unlink` via the injectable fs boundary, map ENOENT→success and EACCES/EPERM→error.
+- [x] 2.3 Register the command in the dispatcher (`services/fs-sync/src/commands/handlers.ts`) wired like `downloads:clear-history` — needs `deps.db` + an fs `unlink`, NOT `resolveClient`/engine. Add the dispatcher command-name-set test asserting `"downloads:delete-partial"` is present.
 
 ## 3. Service — `partialKept` on `download-failed` emit (TDD)
 

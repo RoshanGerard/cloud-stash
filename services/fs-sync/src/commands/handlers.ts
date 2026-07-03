@@ -41,6 +41,7 @@ import {
 } from "./files-download.js";
 import { makeDownloadsListActiveHandler } from "./downloads-list-active.js";
 import { makeClearDownloadHistoryHandler } from "./downloads-clear-history.js";
+import { makeDeletePartialHandler } from "./downloads-delete-partial.js";
 import {
   createDefaultFilesUploadDeps,
   makeFilesUploadHandler,
@@ -379,6 +380,14 @@ export function buildCommandHandlers(deps: HandlersDeps): CommandHandlers {
     // `deps.db` (always present), independent of the registry-gated download
     // bundle above. Never touches in-flight rows or on-disk files.
     "downloads:clear-history": makeClearDownloadHistoryHandler({
+      db: deps.db,
+    }),
+    // downloads:delete-partial (add-failed-download-cleanup-affordance §2) —
+    // wired UNCONDITIONALLY like clear-history: it reads the durable
+    // `downloads` row for `downloadJobId` and unlinks the recorded
+    // `target_path`, needing only `deps.db` (always present) + an fs unlink,
+    // independent of the registry-gated download bundle above.
+    "downloads:delete-partial": makeDeletePartialHandler({
       db: deps.db,
     }),
     // files:upload + sync:cancel-upload + uploads:list-active —
