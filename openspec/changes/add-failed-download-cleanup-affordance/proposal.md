@@ -1,134 +1,88 @@
-# Proposal: UI affordance to delete partial files left after a failed download
+# Proposal: UI affordance to delete a partial file left after a failed download
 
-**Status**: Stub. Spawned during `add-download-resilience` brainstorming
-on 2026-04-30.
+**Status**: Phase 1 (of 2). Spawned during `add-download-resilience`
+brainstorming on 2026-04-30; artifacts regenerated 2026-07-03 after
+code-grounding proved the original stub substantially stale.
 
 ## Why
 
-`add-download-resilience` ships a partial-file disposition policy:
+`add-download-resilience` KEEPS the partial file on disk for most
+terminal download failures (environmental-budget / wall-time /
+`auth-revoked` / user-cancel / byte-count-mismatch), to preserve the
+user's bandwidth investment. But a kept partial has no recovery
+affordance today:
 
-| Terminal cause | Disposition |
-|---|---|
-| Environmental budget exhausted | **Keep** |
-| Wall-time ceiling reached | **Keep** |
-| `auth-revoked` | **Keep** |
-| User cancellation | **Keep** |
-| Range-not-honored | Delete |
-| Range-mismatch | Delete |
-| Byte-count-mismatch | Delete |
-| Integrity-failed | Delete |
+- The failure toast shows only "Retry" — and a Retry never resumes from
+  the kept partial anyway. Because `finalize` deletes the in-memory
+  registry entry, a user-initiated Retry re-runs the destination-conflict
+  gate, finds the partial on disk, and returns `tag: "conflict"` — which
+  pops the ConflictResolutionDialog (overwrite / keep-both / cancel).
+  So the kept partial's real effect is to **impose a conflict prompt on
+  the next download of that file**, not to enable resume.
+- A 240 MB partial at `~/Downloads/seed.mp4` is indistinguishable from a
+  complete download; once the toast is dismissed there is no trail.
 
-The "keep" cases preserve the user's bandwidth investment so a future
-attempt can resume from where the previous one stopped. The downside
-is **orphan partial files accumulating** on the user's filesystem
-when:
+This change gives the user a one-click way to discard the orphan directly
+from the failure toast: reclaim the disk and clear the conflict friction.
+Deleting is safe — the source is still on the provider and Retry
+re-downloads from byte 0 regardless — so it is a low-stakes, one-click
+action.
 
-- Resume isn't attempted (user gives up after a transient failure).
-- The user has no programmatic way to discover which files on disk
-  are "partial downloads from a failed attempt" vs "intentional files."
-- A 240MB file at `~/Downloads/seed.mp4` looks identical to a
-  successful 240MB download — the toast disappears once dismissed,
-  and there's no metadata trail.
+## What Changes
 
-Browser convention (Chrome's `.crdownload`, Firefox's `.part`) is to
-suffix partial files so they're recognizable. We don't do that — the
-file lives at the user-chosen `toPath` directly so the disposition is
-"the file the user asked for, just incomplete."
+- Add an OPTIONAL `partialKept?: boolean` field to the `download-failed`
+  IPC event, computed service-side at emit time from the disposition the
+  handler already knows. Optional + default-false keeps it backward
+  compatible (hydrated / older-service events render no button).
+- Add a new IPC command `downloads:delete-partial { downloadJobId } →
+  { deleted: boolean }` that deletes the recorded partial file for a
+  terminal download. It is keyed on `downloadJobId` (no filesystem path
+  crosses IPC); the handler resolves `target_path` from the durable
+  `downloads` SQLite table and `unlink`s it.
+- The download failure toast renders a one-click **"Delete partial"**
+  action beside "Retry" when `partialKept` is true. Success dismisses the
+  toast; a permission error surfaces inline.
+- **Non-breaking**: no existing command / event field is removed or
+  changed in meaning; the new event field is additive and optional.
 
-This change adds two affordances that close the gap:
+Out of scope (Phase 2 / follow-up stub):
 
-1. **A "Delete partial file" button** on the failure toast, next to
-   "Retry." Clicking it unlinks `toPath` and dismisses the toast.
-2. **Aggregate cleanup** of orphaned partials in the Downloads
-   settings panel — surfaces a list of "kept partials from past
-   failures" with bulk-delete + per-row delete, sourced from the
-   download history (which lands in `migrate-download-registry-to-sqlite`,
-   so this change has a sequencing dependency).
+- Aggregate cleanup of orphaned partials from past sessions in the
+  Settings → Downloads panel. That needs a net-new `downloads:list-history`
+  read command and a new list UI, and only covers failures the user did
+  not witness live.
+- Auto-cleanup on app launch; renaming partials to `.part` / `.crdownload`;
+  resume-from-partial semantics; telemetry (no pipeline exists in the app).
 
-The first is implementable today with no infrastructure changes. The
-second waits on durable history.
+## Capabilities
 
-## Out of scope
+### New Capabilities
 
-- Auto-cleanup on app launch (sweeping orphans without user consent).
-  Aggressive; risks deleting files the user wants to keep. Manual
-  affordance only.
-- Renaming partials to `.crdownload` or similar. Diverges from the
-  current behavior where the partial lives at the chosen `toPath`,
-  which is itself a deliberate choice in `add-engine-rename-download`
-  (the user knows where their file went).
-- Resuming a kept partial via "the next download attempt picks up
-  where the last one left off automatically." Different change —
-  would require the registry to outlive the toast and offer "Resume"
-  semantics. Today, the user clicks Retry and the handler starts
-  fresh.
+- None. This change extends two existing capabilities.
 
-## Open questions (resolve during `/opsx:propose`)
+### Modified Capabilities
 
-1. **Phase 1 scope vs full scope.** Phase 1 = just the toast button
-   (no infra dependency). Phase 2 = the settings panel (depends on
-   `migrate-download-registry-to-sqlite`). Recommend shipping Phase 1
-   in this change; spawn a third stub for Phase 2 once the SQLite
-   migration lands.
+- `fs-sync-service`: adds the `downloads:delete-partial` command to the
+  IPC command surface, adds the `partialKept` field to the `download-failed`
+  event payload, and specifies the delete-partial handler's behavior
+  (recorded + terminal guard, ENOENT-as-success, permission-error envelope).
+- `file-explorer`: the download failure toast gains a one-click
+  "Delete partial" action, gated on `partialKept`, wired through all four
+  layers to the new command.
 
-2. **Toast button placement.** Three layouts on the failure toast:
-   - "Retry" + "Delete partial" + "Dismiss" (3 actions).
-   - "Retry" + overflow menu containing "Delete partial" (compact).
-   - Two separate toasts: one for the failure ("Retry"), one for
-     the partial ("Delete file?"). Most intrusive.
-   Recommend the first — explicit, discoverable, low cognitive load.
-   The toast width accommodates 3 actions; existing `Sonner` API
-   supports it.
+## Impact
 
-3. **Confirmation prompt before delete.** Two-click vs one-click:
-   - One-click: "Delete partial" deletes immediately, toast dismisses.
-   - Two-click: "Delete partial" → secondary toast "Delete 240MB
-     partial file? [Yes / Cancel]" → confirm to delete.
-   Recommend one-click for partials < 1GB, two-click for ≥ 1GB.
-   Threshold avoids the destruction-by-accident risk on big files
-   while keeping common cases frictionless.
-
-4. **What if the partial is already gone?** User manually deleted the
-   file via Finder / Explorer between the toast appearing and the
-   delete-button click. Handler's `unlink` rejects with ENOENT.
-   Recommend treating ENOENT as success (the desired state is
-   reached) — toast dismisses without an error message. Other
-   failures (EACCES, EPERM) surface as a discreet "Could not delete:
-   <reason>" inline in the toast.
-
-5. **Telemetry.** Track click-through on "Delete partial" to confirm
-   demand. If usage is < 1% of failed downloads, the affordance is
-   removed in a follow-up. If usage is ≥ 10%, we know to invest in
-   Phase 2's settings panel sooner. Recommend a single anonymous
-   counter (no file paths / sizes) emitted to whatever telemetry
-   pipeline the desktop app uses.
-
-## Acceptance criteria (once promoted)
-
-- The download failure toast (`apps/desktop/src/renderer/src/features/file-explorer/download-job-toast.ts`)
-  renders a "Delete partial file" action alongside "Retry" when the
-  failure's disposition is "kept" (per the matrix above). The action
-  is hidden for "deleted" dispositions (no partial to delete).
-- Clicking the action calls a new IPC command `files:delete-partial`
-  with the `toPath`. The handler validates that the path is within
-  the user's expected download directory (security guard reused from
-  `validateToPath`), then `unlink`s.
-- Per Q3, partials ≥ 1GB get a confirmation step.
-- Per Q4, ENOENT is treated as success.
-- Toast dismisses on success; reports inline error on failure.
-- Phase 2 (settings panel for aggregate cleanup) is deferred to a
-  follow-up stub spawned post-merge of `migrate-download-registry-to-sqlite`.
-- Telemetry counter wired per Q5.
-
-## Provenance
-
-- Spawned during `add-download-resilience` brainstorming on 2026-04-30
-  when the user approved the Q5 disposition policy. The "keep on
-  failure" choice creates an orphan-partial problem that the proposal
-  acknowledged ("a UI affordance 'Delete partial file' is wireable
-  as a follow-up if telemetry shows users want it"). Rather than
-  ship blind, this change makes the affordance a deliberate
-  follow-up.
-- Phase 2 (settings panel) depends on
-  `migrate-download-registry-to-sqlite` for durable history. Phase 1
-  (toast button) ships independently.
+- **Wire contract** (`packages/ipc-contracts`): `DownloadFailedPayload`
+  gains `partialKept?: boolean`; a new `downloads:delete-partial`
+  request/response pair in the sync-service command map.
+- **Service** (`services/fs-sync`): new `downloads/delete-partial.ts`
+  handler + dispatcher registration (wired like `downloads:clear-history`
+  — needs `deps.db` + an fs `unlink`, not the engine); `files-download.ts`
+  emit sites set `partialKept`.
+- **Desktop main + preload**: new IPC bridge + `window.api` binding for
+  the command.
+- **Renderer** (`apps/desktop/.../file-explorer`): `download-job-toast.ts`
+  threads `partialKept` and renders the conditional "Delete partial"
+  action.
+- No new runtime dependencies. No DB schema change (reuses the existing
+  `downloads` table's `target_path` / `status`).
