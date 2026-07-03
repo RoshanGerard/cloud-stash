@@ -22,10 +22,10 @@ code to pass. Contract → service → emit → bridge → renderer → verify.
 
 ## 4. Desktop main + preload bridge
 
-- [ ] 4.1 Add the `ipcMain.handle` bridge for the delete-partial command under `apps/desktop/src/main/` (proxy to `SyncClient.request('downloads:delete-partial', { downloadJobId })`), registered in the IPC registration index.
-- [ ] 4.2 Add the preload binding on `window.api` (sync/downloads surface, mirroring `clearDownloadHistory`) via `contextBridge`.
-- [ ] 4.3 Add the `window.api` type declaration (`apps/desktop/src/renderer/src/types/window-api.d.ts`).
-- [ ] 4.4 Extend the four-layer wiring test to assert the delete-partial command has a contract type, a main handler, a preload binding, and a renderer call site.
+- [x] 4.1 Add the `ipcMain.handle` bridge for the delete-partial command under `apps/desktop/src/main/` (`ipc/sync/delete-partial.ts` → `SyncClient.deletePartial`), registered in the IPC index; add `SYNC_CHANNELS.deletePartial` + `SyncDeletePartial{Request,Response}` desktop-facing types + `SyncClient.deletePartial`. Proxy test mirrors `clear-download-history.test.ts`.
+- [x] 4.2 Add the preload binding `window.api.sync.deletePartial` (mirroring `clearDownloadHistory`) via `contextBridge`.
+- [x] 4.3 Add the `window.api` type declaration in BOTH `apps/desktop/src/preload/window-api.d.ts` and `apps/desktop/src/renderer/src/types/window-api.d.ts`.
+- [x] 4.4 Four-layer wiring assertions: `channels.test-d.ts` exact-set (+`deletePartial`), `sync-surface.test.ts` exact-member-set (16→17) + round-trip test, `window-api.types.test-d.ts` return-type test. (Renderer call site lands in Task 5.)
 
 ## 5. Renderer — failure-toast Delete-partial action (TDD)
 

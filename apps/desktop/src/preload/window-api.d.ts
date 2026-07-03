@@ -46,6 +46,8 @@ import type {
   SyncCancelUploadResponse,
   SyncClearDownloadHistoryRequest,
   SyncClearDownloadHistoryResponse,
+  SyncDeletePartialRequest,
+  SyncDeletePartialResponse,
   SyncUploadsListActiveResponse,
   SyncEnqueueMirrorRequest,
   SyncEnqueueMirrorResponse,
@@ -196,6 +198,9 @@ declare global {
         clearDownloadHistory(
           req: SyncClearDownloadHistoryRequest,
         ): Promise<SyncClearDownloadHistoryResponse>;
+        deletePartial(
+          req: SyncDeletePartialRequest,
+        ): Promise<SyncDeletePartialResponse>;
         onEvent(callback: (event: SyncEvent) => void): () => void;
       };
       // migrate-upload-orchestration-out-of-engine §7.2 / §7.9 —

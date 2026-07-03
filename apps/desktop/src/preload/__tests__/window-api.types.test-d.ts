@@ -2,6 +2,7 @@ import { describe, expectTypeOf, it } from "vitest";
 
 import type {
   SyncClearDownloadHistoryResponse,
+  SyncDeletePartialResponse,
   SyncEvent,
   SyncGetConfigResponse,
   SyncListJobsResponse,
@@ -68,6 +69,12 @@ describe("window.api.sync type declarations", () => {
   it("window.api.sync.clearDownloadHistory(req) returns Promise<SyncClearDownloadHistoryResponse>", () => {
     expectTypeOf<SyncSurface["clearDownloadHistory"]>().returns.toEqualTypeOf<
       Promise<SyncClearDownloadHistoryResponse>
+    >();
+  });
+
+  it("window.api.sync.deletePartial(req) returns Promise<SyncDeletePartialResponse>", () => {
+    expectTypeOf<SyncSurface["deletePartial"]>().returns.toEqualTypeOf<
+      Promise<SyncDeletePartialResponse>
     >();
   });
 

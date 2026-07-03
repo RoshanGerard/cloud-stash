@@ -83,6 +83,8 @@ import type {
   SyncCancelUploadResponse,
   SyncClearDownloadHistoryRequest,
   SyncClearDownloadHistoryResponse,
+  SyncDeletePartialRequest,
+  SyncDeletePartialResponse,
   SyncUploadsListActiveResponse,
   SyncEnqueueMirrorRequest,
   SyncEnqueueMirrorResponse,
@@ -312,6 +314,10 @@ const api = {
       req: SyncClearDownloadHistoryRequest,
     ): Promise<SyncClearDownloadHistoryResponse> =>
       ipcRenderer.invoke(SYNC_CHANNELS.clearDownloadHistory, req),
+    deletePartial: (
+      req: SyncDeletePartialRequest,
+    ): Promise<SyncDeletePartialResponse> =>
+      ipcRenderer.invoke(SYNC_CHANNELS.deletePartial, req),
     getRetryPolicy: (
       req: SyncGetRetryPolicyRequest,
     ): Promise<SyncGetRetryPolicyResponse> =>

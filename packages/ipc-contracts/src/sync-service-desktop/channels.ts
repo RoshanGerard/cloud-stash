@@ -47,6 +47,11 @@ export const SYNC_CHANNELS = {
   // download history" control invokes it and toasts the returned `{ deleted }`
   // count. Never touches in-flight rows or on-disk files.
   clearDownloadHistory: "downloads:clear-history",
+  // add-failed-download-cleanup-affordance §4 — renderer-facing bridge for the
+  // new `downloads:delete-partial` service command. Deletes the recorded
+  // partial file for a terminal download (keyed by `downloadJobId`); the
+  // download failure toast's "Delete partial" action invokes it.
+  deletePartial: "downloads:delete-partial",
   // The retired single-shot `sync:authenticate` channel was removed by
   // `implement-datasource-onboarding` per design.md Decision 9. The
   // three-command split below replaces it.

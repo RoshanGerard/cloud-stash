@@ -40,6 +40,8 @@ import type {
   SyncCancelUploadResponse,
   SyncClearDownloadHistoryRequest,
   SyncClearDownloadHistoryResponse,
+  SyncDeletePartialRequest,
+  SyncDeletePartialResponse,
   SyncEvent,
   SyncGetConfigResponse,
   SyncListJobsRequest,
@@ -159,6 +161,9 @@ declare global {
         clearDownloadHistory(
           req: SyncClearDownloadHistoryRequest,
         ): Promise<SyncClearDownloadHistoryResponse>;
+        deletePartial(
+          req: SyncDeletePartialRequest,
+        ): Promise<SyncDeletePartialResponse>;
       };
       // migrate-upload-orchestration-out-of-engine §7.2 — renderer-facing
       // namespace for the new `uploads:*` commands.
