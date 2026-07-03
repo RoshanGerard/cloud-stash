@@ -75,10 +75,10 @@ A client subscribed via `sync:subscribe-events` for a specific `datasourceId` SH
 
 The service SHALL accept a command `downloads:delete-partial` with params `{ downloadJobId: string }` and respond `{ ok: true, value: { deleted: boolean } }` on success. The handler SHALL resolve the partial file's path server-side from the durable `downloads` table row for `downloadJobId` — clients SHALL NOT pass a filesystem path over IPC. The handler SHALL be dispatched with access to the durable `downloads` table and a filesystem `unlink`, and SHALL NOT resolve an engine client.
 
-The handler SHALL apply a "terminal + recorded" guard and map filesystem errors:
+The handler SHALL apply a "recorded + KEEP-eligible-terminal" guard and map filesystem errors:
 
 1. If no `downloads` row exists for `downloadJobId`, respond `{ ok: true, value: { deleted: false } }` (no-op success — nothing is recorded to delete).
-2. If the row's `status === 'in-flight'`, unlink nothing and respond with an error envelope whose `error` carries a message (the file is being actively written and MUST NOT be removed).
+2. If the row's `status` is NOT a KEEP-eligible terminal status — i.e. it is `in-flight` (the file is being actively written) or `completed` (the `target_path` is a full, successful download, NOT a partial) — unlink nothing and respond with an error envelope whose `error` carries a message. Only `failed`, `cancelled`, and `interrupted` rows leave a deletable partial.
 3. Otherwise `unlink` the row's `target_path`:
    - success → `{ ok: true, value: { deleted: true } }`;
    - `ENOENT` (file already gone) → `{ ok: true, value: { deleted: true } }` (the desired end state is reached);
@@ -105,6 +105,11 @@ The command SHALL NOT distinguish kept-vs-deleted disposition from the database 
 
 - **WHEN** a `downloads:delete-partial { downloadJobId }` arrives for a row whose `status === 'in-flight'`
 - **THEN** the handler unlinks nothing and responds with an error envelope (`ok: false`) whose `error` carries a message
+
+#### Scenario: Completed download is refused (not a deletable partial)
+
+- **WHEN** a `downloads:delete-partial { downloadJobId }` arrives for a row whose `status === 'completed'` (a full, successful download)
+- **THEN** the handler unlinks nothing and responds with an error envelope (`ok: false`) whose `error` carries a message; the completed file is left intact
 
 #### Scenario: Permission error surfaces as an error envelope
 

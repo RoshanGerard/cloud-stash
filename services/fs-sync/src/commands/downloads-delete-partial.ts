@@ -61,14 +61,28 @@ export function makeDeletePartialHandler(
       return { ok: true, result: { deleted: false } };
     }
 
-    // Never unlink a file that is still being actively written.
-    if (row.status === "in-flight") {
+    // Only a KEEP-eligible TERMINAL download leaves a deletable partial:
+    // `failed` / `cancelled` / `interrupted`. Refuse everything else —
+    // `in-flight` (the file is being actively written) AND `completed` (the
+    // target_path is a full, successful download, NOT a partial). Gating on
+    // "not in-flight" alone would let a caller unlink a completed download's
+    // file; this stricter guard keeps the primitive safe for a future
+    // Phase-2 caller (settings-list) that might pass any recorded
+    // downloadJobId.
+    if (
+      row.status !== "failed" &&
+      row.status !== "cancelled" &&
+      row.status !== "interrupted"
+    ) {
+      const message =
+        row.status === "in-flight"
+          ? "download is still in flight; cannot delete the partial file"
+          : "download did not leave a deletable partial file";
       return {
         ok: false,
         error: {
           tag: FilesErrorTag.Other,
-          message:
-            "download is still in flight; cannot delete the partial file",
+          message,
           retryable: false,
         },
       };

@@ -116,6 +116,42 @@ describe("downloads:delete-partial handler", () => {
     expect(unlink).not.toHaveBeenCalled();
   });
 
+  it("refuses a COMPLETED row (a full download is not a deletable partial) — no unlink", async () => {
+    // Guard is "KEEP-eligible terminal", not merely "not in-flight": a
+    // `completed` row's target_path is the fully-downloaded file, NOT a
+    // partial. The primitive must never unlink it (defence-in-depth for a
+    // future Phase-2 caller that might pass any recorded downloadJobId).
+    seed(db, "done", "completed", "/downloads/done.mp4");
+    const unlink = vi.fn(async () => void 0);
+
+    const res = await makeDeletePartialHandler({ db, fs: { unlink } })(
+      { downloadJobId: "done" },
+      ctx(),
+    );
+
+    expect(res.ok).toBe(false);
+    if (res.ok) return;
+    expect(res.error.tag).toBe("other");
+    expect(res.error.message).toMatch(/partial/i);
+    expect(res.error.retryable).toBe(false);
+    expect(unlink).not.toHaveBeenCalled();
+  });
+
+  it("deletes a cancelled row's kept partial (user-cancel keeps the partial)", async () => {
+    seed(db, "cx", "cancelled", "/downloads/cx.part");
+    const unlink = vi.fn(async () => void 0);
+
+    const res = await makeDeletePartialHandler({ db, fs: { unlink } })(
+      { downloadJobId: "cx" },
+      ctx(),
+    );
+
+    expect(res.ok).toBe(true);
+    if (!res.ok) return;
+    expect(res.result).toEqual({ deleted: true });
+    expect(unlink).toHaveBeenCalledWith("/downloads/cx.part");
+  });
+
   it("surfaces a permission error (EACCES) as an error envelope", async () => {
     seed(db, "job-A", "failed", "/downloads/seed.mp4");
     const unlink = vi.fn(errnoUnlink("EACCES"));

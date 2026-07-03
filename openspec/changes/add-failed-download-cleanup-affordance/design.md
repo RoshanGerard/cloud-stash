@@ -79,11 +79,21 @@ and `unlink`s it. **No filesystem path ever crosses IPC.**
   makes the guard "we only delete a path we recorded" — inherently safer —
   and always targets the real landing path.
 
-### D2 — Guard is "terminal + recorded", not "kept"
+### D2 — Guard is "recorded + KEEP-eligible-terminal", not "kept"
 
 The handler proceeds iff (a) a `downloads` row exists for `downloadJobId`
-(recorded) AND (b) its `status !== 'in-flight'` (terminal — never unlink a
-file that is actively being written). Row-not-found → no-op success.
+(recorded) AND (b) its `status` is a KEEP-eligible terminal state —
+`failed` / `cancelled` / `interrupted`. Row-not-found → no-op success;
+`in-flight` (being actively written) OR `completed` (the `target_path` is a
+full, successful download, NOT a partial) → refuse.
+
+- *Refined post-advisor (2026-07-04):* the guard was initially
+  `status !== 'in-flight'`, which admitted `completed` — so the primitive
+  would have `unlink`ed a *successful* download if handed its `downloadJobId`.
+  Unreachable from Phase 1 (only failure toasts call it, with failed ids), but
+  this primitive is deliberately Phase-2-reusable (a settings-list caller could
+  pass any recorded id), so the guard is tightened to the KEEP-eligible
+  terminal set now, while spec + handler + one test are cheap to touch.
 
 - The DB *cannot* distinguish kept-vs-deleted (byte-count-mismatch KEEP and
   range-mismatch/integrity DELETE all persist `failure_tag = 'other'`; no
