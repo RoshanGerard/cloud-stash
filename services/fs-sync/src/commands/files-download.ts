@@ -1487,13 +1487,13 @@ export function makeFilesDownloadHandler(
         // `download-failed` and inspecting disk sees the consistent
         // post-disposition state. Failure is non-fatal — logged-warn
         // and the user may clean up manually.
-        if (
+        const isDeleteDisposition =
           err !== null &&
           typeof err === "object" &&
           DELETE_ON_TERMINAL.has(
             (err as { constructor: ErrorConstructor }).constructor,
-          )
-        ) {
+          );
+        if (isDeleteDisposition) {
           await deps.fs.unlink(effectiveTargetPath).catch((unlinkErr) => {
             console.warn(
               `[files-download] unlink(${effectiveTargetPath}) failed after terminal ${(err as Error).name}:`,
@@ -1501,6 +1501,20 @@ export function makeFilesDownloadHandler(
             );
           });
         }
+        // add-failed-download-cleanup-affordance §3 — the failure toast's
+        // "Delete partial" affordance keys on this hint. A partial is
+        // deletable only when the disposition KEEPS it (i.e. NOT a
+        // delete-disposition, so it was not unlinked above) AND at least one
+        // byte actually reached disk. We test `bytesWritten` — the last
+        // `statSize` of the target file — rather than `finalBytes` (the
+        // registry-tracked progress count) because it is the authoritative
+        // "bytes on disk" signal: it is non-zero exactly when a non-empty
+        // partial file exists at `effectiveTargetPath`, whereas the registry
+        // count can lag the disk if progress ticks were not recorded.
+        // Computed here, where disposition is known in-process, then threaded
+        // onto every `download-failed` emit below. UI hint only — it does not
+        // alter the disposition policy.
+        const partialKept = !isDeleteDisposition && bytesWritten > 0;
         if (err instanceof RangeNotHonoredError) {
           finalizeOutcome = {
             status: "failed",
@@ -1513,6 +1527,7 @@ export function makeFilesDownloadHandler(
             datasourceId,
             tag: FilesErrorTag.Other,
             message: "range not supported on this resource",
+            partialKept,
           });
           return {
             ok: false,
@@ -1535,6 +1550,7 @@ export function makeFilesDownloadHandler(
             datasourceId,
             tag: FilesErrorTag.Other,
             message: "range mismatch on this resource",
+            partialKept,
           });
           return {
             ok: false,
@@ -1557,6 +1573,7 @@ export function makeFilesDownloadHandler(
             datasourceId,
             tag: FilesErrorTag.Other,
             message: "byte count mismatch",
+            partialKept,
           });
           return {
             ok: false,
@@ -1579,6 +1596,7 @@ export function makeFilesDownloadHandler(
             datasourceId,
             tag: FilesErrorTag.Other,
             message: "integrity check failed",
+            partialKept,
           });
           return {
             ok: false,
@@ -1606,6 +1624,7 @@ export function makeFilesDownloadHandler(
             datasourceId,
             tag: FilesErrorTag.ExhaustedRetries,
             message,
+            partialKept,
           });
           return {
             ok: false,
@@ -1629,6 +1648,7 @@ export function makeFilesDownloadHandler(
             datasourceId,
             tag: FilesErrorTag.ExhaustedRetries,
             message,
+            partialKept,
           });
           return {
             ok: false,
@@ -1656,6 +1676,7 @@ export function makeFilesDownloadHandler(
               ? "other"
               : norm.tag,
           message: norm.message,
+          partialKept,
         });
         return { ok: false, error: norm };
       } finally {

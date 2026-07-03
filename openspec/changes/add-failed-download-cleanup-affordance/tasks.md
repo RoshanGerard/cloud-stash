@@ -17,8 +17,8 @@ code to pass. Contract → service → emit → bridge → renderer → verify.
 
 ## 3. Service — `partialKept` on `download-failed` emit (TDD)
 
-- [ ] 3.1 RED: tests pinning `partialKept` per disposition class at the `download-failed` emit sites: KEEP causes (exhausted-retries / walltime / auth-revoked / byte-count-mismatch) with `bytesDownloaded > 0` → `partialKept: true`; DELETE causes (range-mismatch / integrity-failed) → `false`/absent; pre-write failure (`bytesDownloaded === 0`) → `false`/absent.
-- [ ] 3.2 GREEN: compute and set `partialKept` at each `download-failed` emit in `services/fs-sync/src/commands/files-download.ts` from the disposition already known there (`!DELETE_ON_TERMINAL.has(err.constructor) && bytesDownloaded > 0`). No disposition-policy change.
+- [x] 3.1 RED: tests pinning `partialKept` per disposition class at the `download-failed` emit sites: KEEP + bytes (byte-count-mismatch, 512 B) → `true`; DELETE causes (range-mismatch / integrity-failed) → `false`; KEEP but pre-stream 0-byte (auth-revoked) → `false`.
+- [x] 3.2 GREEN: compute and set `partialKept` at each of the 7 `download-failed` emits in `services/fs-sync/src/commands/files-download.ts` from the disposition already known there: `!isDeleteDisposition && bytesWritten > 0`. Uses `bytesWritten` (the target's actual `statSize` — the authoritative "bytes on disk" signal) rather than the registry-tracked count, which can lag disk. No disposition-policy change.
 
 ## 4. Desktop main + preload bridge
 
