@@ -176,10 +176,18 @@ the download failure toast's new "Delete partial" action.
   To read as an error (matching the no-partial `richColors` red toast) and
   hit WCAG-AA theme-independently, the card reuses the established literal-red
   family proven in the reconnect callout: fill `bg-red-50 dark:bg-red-950/40`,
-  border `border-red-300 dark:border-red-800`, an `OctagonX` icon in
-  `text-red-600 dark:text-red-400`, and the "Download failed: <message>" line
-  in `text-red-800 dark:text-red-200`. No `text-destructive`-on-tint (that
-  failed AA in light + serene-blue themes in a prior change).
+  border `border-red-300 dark:border-red-800`, and the "Download failed:
+  <message>" line in `text-red-800 dark:text-red-200`. No
+  `text-destructive`-on-tint (that failed AA in light + serene-blue themes in
+  a prior change).
+  - **As-built deviation (2026-07-04):** the originally-planned `OctagonX`
+    icon was **omitted** to match `buildSuccessRender`'s deliberate icon-free
+    text idiom — the red fill + red "Download failed:" heading already convey
+    the error state, and staying icon-free keeps the `React.createElement`
+    render tree `JSON.stringify`-serializable for the node-style toaster tests
+    (importing a lucide component into the render would defeat that). The
+    no-partial `toast.error` toast keeps Sonner's built-in `OctagonX`; the two
+    failure renders differ slightly here, an accepted M2 trade-off.
 
 - **VD3 — Actions: Retry primary (right), Delete partial quiet-destructive
   (left).** Mirrors the success card's "Show in folder" (quiet, left) +

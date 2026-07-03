@@ -29,9 +29,9 @@ code to pass. Contract → service → emit → bridge → renderer → verify.
 
 ## 5. Renderer — failure-toast Delete-partial action (TDD)
 
-- [ ] 5.1 RED: toaster tests — `download-failed { partialKept: true }` renders a "Delete partial" action beside "Retry"; `partialKept` absent/false renders only "Retry"; clicking "Delete partial" invokes the binding once with the correct `downloadJobId`; a `{ deleted: true }` response dismisses the toast; an error response keeps the toast and surfaces the reason inline; no Cancel action is added.
-- [ ] 5.2 GREEN: thread `partialKept` from the `download-failed` event into the toaster's `ToastEntry` and render the conditional two-action failure toast (moving off the single-slot `toast.error` to the fresh-id `toast.custom` pattern the success toast uses via `buildSuccessRender`, per the visual-refinement decisions in `design.md` `## Visual direction`).
-- [ ] 5.3 Wire the "Delete partial" onClick to the preload binding; dismiss on success; render inline error on failure.
+- [x] 5.1 RED: toaster tests (d3–d7) — `download-failed { partialKept: true }` renders a fresh-id custom card with Retry + Delete partial (no Cancel); `partialKept: false` stays on `toast.error`; clicking Delete partial invokes `syncApi.deletePartial({ downloadJobId })` once and dismisses on success; a rejection keeps the card and re-renders an inline error with Retry intact.
+- [x] 5.2 GREEN: add `partialKept?` to the renderer `DownloadEvent`; branch the `download-failed` handler — kept → fresh-id `toast.custom` via new `buildFailureWithDeleteRender` (red literal-palette card per `design.md ## Visual direction`); non-kept → existing `toast.error` (unchanged).
+- [x] 5.3 Add `deletePartial` to `SyncActionsApi` + the production `resolveSyncApi` resolver (`window.api.sync.deletePartial`, lazy like `cancelDownload`); wire onClick → dismiss on success, inline error on failure. Production toaster is `createDownloadJobToaster()` (no deps) so the default resolver handles it. All 47 toaster tests green.
 
 ## 6. Verification
 

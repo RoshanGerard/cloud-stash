@@ -123,6 +123,7 @@ function makeEventApi(): MockEventApi {
 
 interface MockSyncApi extends SyncActionsApi {
   cancelDownload: Mock;
+  deletePartial: Mock;
 }
 
 function makeSyncApi(): MockSyncApi {
@@ -133,7 +134,12 @@ function makeSyncApi(): MockSyncApi {
     ok: true,
     result: { cancelled: true },
   }));
-  return { cancelDownload };
+  // add-failed-download-cleanup-affordance §5 — default resolves { deleted:
+  // true }; tests that exercise the error path override with mockRejectedValue.
+  const deletePartial: Mock = vi.fn(async (_req: { downloadJobId: string }) => ({
+    deleted: true,
+  }));
+  return { cancelDownload, deletePartial };
 }
 
 function downloadingEvent(
@@ -651,6 +657,153 @@ describe("createDownloadJobToaster (§24.1)", () => {
     ];
     errorCall[1].action!.onClick();
     expect(toast.dismiss).toHaveBeenCalledTimes(1);
+  });
+
+  // --- add-failed-download-cleanup-affordance §5 — Delete-partial card ---
+
+  function emitKeptFailure(jobId: string): void {
+    eventApi.emit(
+      downloadingEvent(jobId, { progress: 40, path: "/welcome.pdf" }),
+    );
+    eventApi.emit({
+      kind: "download-failed",
+      payload: {
+        downloadJobId: jobId,
+        datasourceId: "ds-1",
+        tag: FilesErrorTag.ExhaustedRetries,
+        message: "exhausted-retries: network-error",
+        partialKept: true,
+      },
+    });
+  }
+
+  it("(d3) download-failed with partialKept:true renders a fresh-id custom card (NOT toast.error) with Retry + Delete partial, no Cancel", () => {
+    toast.loading.mockReturnValueOnce("toast-A");
+    const toaster = createDownloadJobToaster({
+      toast,
+      eventApi,
+      syncApi: makeSyncApi(),
+    });
+    toaster.registerRetry("ds-1", "/welcome.pdf", vi.fn());
+
+    emitKeptFailure("job-A");
+
+    // Custom card, NOT the built-in red error template.
+    expect(toast.error).not.toHaveBeenCalled();
+    expect(toast.custom).toHaveBeenCalledTimes(1);
+    const [renderFn, opts] = toast.custom.mock.calls[0] as [
+      (id: string | number) => unknown,
+      {
+        id?: string | number;
+        duration?: number;
+        actions?: { onRetry?: () => void; onDeletePartial?: () => void };
+      },
+    ];
+    // Fresh id — the loading toast is dismissed first (dismiss-animation race).
+    expect(opts.id).toBe("toast-A-failed");
+    expect(opts.id).not.toBe("toast-A");
+    expect(opts.duration).toBe(Number.POSITIVE_INFINITY);
+    expect(toast.dismiss).toHaveBeenCalledWith("toast-A");
+    // Both actions wired; no cancel action.
+    expect(typeof opts.actions?.onRetry).toBe("function");
+    expect(typeof opts.actions?.onDeletePartial).toBe("function");
+    // Render tree carries the copy.
+    const serialized = JSON.stringify(renderFn(opts.id!));
+    expect(serialized).toContain("Download failed");
+    expect(serialized).toContain("Retry");
+    expect(serialized).toContain("Delete partial");
+    expect(serialized).not.toMatch(/cancel/i);
+  });
+
+  it("(d4) download-failed with partialKept:false stays on the toast.error path (no custom card)", () => {
+    toast.loading.mockReturnValueOnce("toast-A");
+    createDownloadJobToaster({ toast, eventApi, syncApi: makeSyncApi() });
+
+    eventApi.emit(
+      downloadingEvent("job-A", { progress: 40, path: "/welcome.pdf" }),
+    );
+    eventApi.emit({
+      kind: "download-failed",
+      payload: {
+        downloadJobId: "job-A",
+        datasourceId: "ds-1",
+        tag: FilesErrorTag.Other,
+        message: "integrity check failed",
+        partialKept: false,
+      },
+    });
+
+    expect(toast.error).toHaveBeenCalledTimes(1);
+    expect(toast.custom).not.toHaveBeenCalled();
+  });
+
+  it("(d5) clicking Delete partial dispatches deletePartial({downloadJobId}) and dismisses the card on success", async () => {
+    toast.loading.mockReturnValueOnce("toast-A");
+    const syncApi = makeSyncApi();
+    createDownloadJobToaster({ toast, eventApi, syncApi });
+
+    emitKeptFailure("job-A");
+
+    const opts = toast.custom.mock.calls[0]![1] as {
+      actions?: { onDeletePartial?: () => void };
+    };
+    toast.dismiss.mockClear(); // ignore the loading-toast dismiss
+    opts.actions!.onDeletePartial!();
+    await new Promise((r) => setTimeout(r, 0)); // flush the deletePartial promise
+
+    expect(syncApi.deletePartial).toHaveBeenCalledTimes(1);
+    expect(syncApi.deletePartial).toHaveBeenCalledWith({ downloadJobId: "job-A" });
+    expect(toast.dismiss).toHaveBeenCalledWith("toast-A-failed");
+  });
+
+  it("(d6) when deletePartial rejects, the card is NOT dismissed and re-renders with an inline error, keeping Retry", async () => {
+    toast.loading.mockReturnValueOnce("toast-A");
+    const syncApi = makeSyncApi();
+    syncApi.deletePartial.mockRejectedValueOnce(
+      new Error("EACCES: permission denied"),
+    );
+    createDownloadJobToaster({ toast, eventApi, syncApi });
+
+    emitKeptFailure("job-A");
+
+    const opts = toast.custom.mock.calls[0]![1] as {
+      actions?: { onDeletePartial?: () => void };
+    };
+    toast.dismiss.mockClear();
+    opts.actions!.onDeletePartial!();
+    await new Promise((r) => setTimeout(r, 0));
+
+    // Not dismissed — the partial is still there.
+    expect(toast.dismiss).not.toHaveBeenCalledWith("toast-A-failed");
+    // Re-rendered on the SAME id, now showing the inline error + still Retry.
+    expect(toast.custom).toHaveBeenCalledTimes(2);
+    const [reRender, reOpts] = toast.custom.mock.calls[1] as [
+      (id: string | number) => unknown,
+      { id?: string | number },
+    ];
+    expect(reOpts.id).toBe("toast-A-failed");
+    const serialized = JSON.stringify(reRender(reOpts.id!));
+    expect(serialized).toMatch(/couldn.t delete|permission|EACCES/i);
+    expect(serialized).toContain("Retry");
+  });
+
+  it("(d7) clicking Retry on the custom card dismisses it and fires the registered retry", () => {
+    toast.loading.mockReturnValueOnce("toast-A");
+    const syncApi = makeSyncApi();
+    const toaster = createDownloadJobToaster({ toast, eventApi, syncApi });
+    const retry: Mock = vi.fn();
+    toaster.registerRetry("ds-1", "/welcome.pdf", retry);
+
+    emitKeptFailure("job-A");
+
+    const opts = toast.custom.mock.calls[0]![1] as {
+      actions?: { onRetry?: () => void };
+    };
+    toast.dismiss.mockClear();
+    opts.actions!.onRetry!();
+
+    expect(toast.dismiss).toHaveBeenCalledWith("toast-A-failed");
+    expect(retry).toHaveBeenCalledTimes(1);
   });
 
   it("(e) terminal download-cancelled silently dismisses the toast", () => {
