@@ -5,9 +5,9 @@ code to pass. Contract → service → emit → bridge → renderer → verify.
 
 ## 1. Wire contract (`packages/ipc-contracts`)
 
-- [ ] 1.1 Add `partialKept?: boolean` (optional) to `DownloadFailedPayload` in `packages/ipc-contracts/src/sync-service/events.ts`; extend the payload type test to cover the optional field.
-- [ ] 1.2 Add the `downloads:delete-partial` command to the sync-service command map: request `{ downloadJobId: string }`, success `value: { deleted: boolean }`, and an error envelope carrying a `message`. Add it to `COMMAND_NAMES` and any channel constant. Add a type test for the new request/response pair.
-- [ ] 1.3 Rebuild the package (`pnpm --filter @ft5/ipc-contracts build`) so downstream value/type imports resolve.
+- [x] 1.1 Add `partialKept?: boolean` (optional) to `DownloadFailedPayload` in `packages/ipc-contracts/src/sync-service/events.ts`; extend the payload type test to cover the optional field.
+- [x] 1.2 Add the `downloads:delete-partial` command to the sync-service command map: request `{ downloadJobId: string }`, success `value: { deleted: boolean }`, and an error envelope carrying a `message`. Add it to `COMMAND_NAMES` and any channel constant. Add a type test for the new request/response pair.
+- [x] 1.3 Rebuild the package (`pnpm --filter @ft5/ipc-contracts build`) so downstream value/type imports resolve.
 
 ## 2. Service — `downloads:delete-partial` handler (TDD)
 

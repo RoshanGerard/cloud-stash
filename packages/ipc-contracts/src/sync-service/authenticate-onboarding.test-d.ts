@@ -296,6 +296,7 @@ describe("CommandMap exhaustive — new commands present, retired commands gone"
       | "sync:cancel-download"
       | "downloads:list-active"
       | "downloads:clear-history"
+      | "downloads:delete-partial"
       | "uploads:list-active"
       | "sync:cancel-upload";
     expectTypeOf<CommandName>().toEqualTypeOf<Expected>();
