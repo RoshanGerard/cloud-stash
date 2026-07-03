@@ -35,6 +35,6 @@ code to pass. Contract → service → emit → bridge → renderer → verify.
 
 ## 6. Verification
 
-- [ ] 6.1 Full test suite + typecheck + lint green (run with node ABI: `pnpm abi:node` first).
-- [ ] 6.2 `openspec validate add-failed-download-cleanup-affordance --strict` green; per-capability spec validates after sync.
-- [ ] 6.3 Exercise end-to-end against a running build: fail a download leaving a kept partial, click "Delete partial", confirm the file is unlinked and the toast dismisses; confirm a delete-disposition failure shows no button. If a running-system smoke is not feasible this session, record it as a deferred smoke in `PENDING_TC.MD`.
+- [x] 6.1 Full test suite + typecheck + lint green (node ABI): full repo 326 files / 3108 passed / 0 failed / no type errors; `tsc -b` clean; `eslint .` clean.
+- [x] 6.2 `openspec validate add-failed-download-cleanup-affordance --strict` green; per-capability spec validates after sync (archive step).
+- [x] 6.3 Running-system smoke DEFERRED to `PENDING_TC.MD` — a real-provider download failure leaving a KEPT partial is not reproducible in this environment (needs a live provider + mid-stream fault). The full delete-partial + partialKept path is unit/integration covered end-to-end (backend handler, emit-site disposition, four-layer bridge, renderer custom card + click dispatch + inline error).
