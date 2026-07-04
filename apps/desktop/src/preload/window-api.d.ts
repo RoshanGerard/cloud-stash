@@ -82,6 +82,20 @@ declare global {
   interface Window {
     api: {
       ping(): Promise<PingResponse>;
+      // Static platform tag (add-frameless-window-chrome) — lets the renderer
+      // gate window-control rendering per OS at first paint. `NodeJS.Platform`
+      // resolves via @types/node (already in the desktop tsconfig).
+      platform: NodeJS.Platform;
+      // Window-controls surface for the frameless main window. minimize /
+      // toggleMaximize / close are void-returning invoke round-trips;
+      // onMaximizeChange subscribes to the one-way main→renderer push and
+      // returns a dispose fn (mirrors sync.onEvent).
+      window: {
+        minimize(): Promise<void>;
+        toggleMaximize(): Promise<void>;
+        close(): Promise<void>;
+        onMaximizeChange(callback: (maximized: boolean) => void): () => void;
+      };
       datasources: {
         list(): Promise<DatasourcesListResponse>;
         add(req: DatasourcesAddRequest): Promise<DatasourcesAddResponse>;

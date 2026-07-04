@@ -127,3 +127,38 @@ describe("window.api.datasources surface (post-§19)", () => {
     expectTypeOf<keyof DatasourcesSurface>().not.toEqualTypeOf<"onEvent">();
   });
 });
+
+// add-frameless-window-chrome — type-level guard for the window-controls
+// surface + the static platform tag declared in window-api.d.ts.
+type WindowSurface = Window["api"]["window"];
+
+describe("window.api.window surface (add-frameless-window-chrome)", () => {
+  it("window.api.window is NOT any (guard: catches missing window-controls declaration)", () => {
+    expectTypeOf<WindowSurface>().not.toBeAny();
+  });
+
+  it("window.api.platform is NodeJS.Platform", () => {
+    expectTypeOf<Window["api"]["platform"]>().toEqualTypeOf<NodeJS.Platform>();
+  });
+
+  it("minimize / toggleMaximize / close return Promise<void>", () => {
+    expectTypeOf<WindowSurface["minimize"]>().returns.toEqualTypeOf<
+      Promise<void>
+    >();
+    expectTypeOf<WindowSurface["toggleMaximize"]>().returns.toEqualTypeOf<
+      Promise<void>
+    >();
+    expectTypeOf<WindowSurface["close"]>().returns.toEqualTypeOf<
+      Promise<void>
+    >();
+  });
+
+  it("onMaximizeChange takes a (maximized: boolean) callback and returns a dispose fn", () => {
+    expectTypeOf<WindowSurface["onMaximizeChange"]>()
+      .parameter(0)
+      .toEqualTypeOf<(maximized: boolean) => void>();
+    expectTypeOf<WindowSurface["onMaximizeChange"]>().returns.toEqualTypeOf<
+      () => void
+    >();
+  });
+});

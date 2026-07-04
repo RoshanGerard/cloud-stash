@@ -4,6 +4,7 @@ import {
   DATASOURCES_CHANNELS,
   FILES_CHANNELS,
   SYNC_CHANNELS,
+  WINDOW_CHANNELS,
 } from "@cloudstash/ipc-contracts";
 import type {
   DatasourcesActionRequest,
@@ -80,6 +81,12 @@ import { handleSyncGetRetryPolicy } from "./sync/get-retry-policy.js";
 import { handleSyncGetStatus } from "./sync/get-status.js";
 import { handleSyncListJobs } from "./sync/list-jobs.js";
 import { handleSyncSetRetryPolicy } from "./sync/set-retry-policy.js";
+import {
+  handleWindowClose,
+  handleWindowMinimize,
+  handleWindowToggleMaximize,
+  wireMaximizeChange,
+} from "./window.js";
 
 // Central IPC handler registration. Called once from `main/index.ts` after
 // `app.whenReady()`. Keeping the `ipcMain.handle` calls here (rather than
@@ -96,6 +103,21 @@ export function registerIpcHandlers(
   targetWindow: BrowserWindow | null = null,
 ): void {
   ipcMain.handle("ping", () => handlePing());
+
+  // Window-controls IPC (add-frameless-window-chrome) — the frameless main
+  // window's caption controls. `targetWindow` is the same window this
+  // registration is bound to. minimize/toggle-maximize/close are invoke
+  // handlers; `wireMaximizeChange` attaches the window's maximize/unmaximize
+  // events to a one-way `window:maximize-change` push so the renderer swaps
+  // the maximize/restore glyph. All tolerate a null window.
+  ipcMain.handle(WINDOW_CHANNELS.minimize, () =>
+    handleWindowMinimize(targetWindow),
+  );
+  ipcMain.handle(WINDOW_CHANNELS.toggleMaximize, () =>
+    handleWindowToggleMaximize(targetWindow),
+  );
+  ipcMain.handle(WINDOW_CHANNELS.close, () => handleWindowClose(targetWindow));
+  wireMaximizeChange(targetWindow);
 
   ipcMain.handle(DATASOURCES_CHANNELS.list, () => handleDatasourcesList());
 

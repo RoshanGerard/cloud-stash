@@ -5,6 +5,16 @@ export interface PingResponse {
   ts: number;
 }
 
+// Window-controls IPC surface (add-frameless-window-chrome). Renderer + main
+// facing, like `ping` — re-exported at the top-level barrel so the preload and
+// desktop main reach `WINDOW_CHANNELS` / `WindowMaximizeChangePayload` without
+// a subpath import.
+export { WINDOW_CHANNELS } from "./window-controls.js";
+export type {
+  WindowChannelName,
+  WindowMaximizeChangePayload,
+} from "./window-controls.js";
+
 // `ConsentEvent`, `DatasourcesStartConsent{Request,Response}`,
 // `DatasourcesCancelConsent{Request,Response}` were retired by
 // `implement-datasource-onboarding`. The replacement surface is

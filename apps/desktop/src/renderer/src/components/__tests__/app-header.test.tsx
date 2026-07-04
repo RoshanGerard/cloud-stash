@@ -5,8 +5,14 @@
 // test-mounted in isolation; integration with RootLayout is exercised
 // indirectly via the dashboard tests.
 
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 
 import { AppHeader } from "../app-header";
@@ -106,5 +112,77 @@ describe("AppHeader — brand chrome (Decision 14)", () => {
     const position = settings.compareDocumentPosition(theme);
     // Node.DOCUMENT_POSITION_FOLLOWING = 4 → `theme` follows `settings`.
     expect(position & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+});
+
+// add-frameless-window-chrome — the header is now the window's unified title
+// bar: the OS drag region, with a per-OS window-controls affordance on the
+// right (custom on Windows/Linux, none on macOS where native traffic lights
+// live). Platform is read from the preload bridge post-mount.
+describe("AppHeader — window chrome (add-frameless-window-chrome)", () => {
+  function stubApi(platform: string) {
+    (window as unknown as { api: unknown }).api = {
+      platform,
+      window: {
+        minimize: vi.fn(),
+        toggleMaximize: vi.fn(),
+        close: vi.fn(),
+        onMaximizeChange: vi.fn(() => () => {}),
+      },
+    };
+  }
+
+  afterEach(() => {
+    delete (window as unknown as { api?: unknown }).api;
+  });
+
+  it("the header itself is the OS drag region", () => {
+    const { container } = render(<AppHeader />);
+    expect(container.querySelector("header")).toHaveClass("app-drag");
+  });
+
+  it("the settings button and theme switcher sit inside an app-no-drag region", () => {
+    render(<AppHeader />);
+    const settings = screen.getByRole("button", { name: /open settings/i });
+    const theme = screen.getByRole("button", { name: /toggle theme/i });
+    expect(settings.closest(".app-no-drag")).not.toBeNull();
+    expect(theme.closest(".app-no-drag")).not.toBeNull();
+  });
+
+  it("renders custom window controls on Windows", async () => {
+    stubApi("win32");
+    render(<AppHeader />);
+    expect(await screen.findByTestId("window-controls")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /^minimize$/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /^maximize$/i }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^close$/i })).toBeInTheDocument();
+  });
+
+  it("renders custom window controls on Linux", async () => {
+    stubApi("linux");
+    render(<AppHeader />);
+    expect(await screen.findByTestId("window-controls")).toBeInTheDocument();
+  });
+
+  it("renders NO custom controls on macOS and reserves left inset for the traffic lights", async () => {
+    stubApi("darwin");
+    render(<AppHeader />);
+    const leftGroup = screen.getByText(/^CloudStash$/).closest("div");
+    await waitFor(() => expect(leftGroup).toHaveClass("pl-20"));
+    expect(screen.queryByTestId("window-controls")).toBeNull();
+  });
+
+  it("renders NO custom controls and no inset when there is no platform bridge", async () => {
+    render(<AppHeader />);
+    await waitFor(() =>
+      expect(screen.getByText(/^CloudStash$/).closest("div")).not.toHaveClass(
+        "pl-20",
+      ),
+    );
+    expect(screen.queryByTestId("window-controls")).toBeNull();
   });
 });

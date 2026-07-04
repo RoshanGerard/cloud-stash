@@ -1582,3 +1582,37 @@ is self-hosted with zero runtime fetch. The monochrome look itself was visually
 validated in the approved visual-refinement mockup before implementation.
 
 **Owner:** unassigned (HUMAN). To do during the next environment-loop / packaged pass.
+
+## DEFERRED — frameless window chrome running-system smoke (`add-frameless-window-chrome` §5.2)
+
+**What.** Launch the running app per OS and confirm: (a) the main window is frameless
+(no native OS title bar) yet keeps native resize borders + OS snap; (b) dragging the
+app header moves the window and the settings/theme/window-control buttons remain
+clickable (drag vs no-drag regions); (c) on **Windows/Linux** the custom minimize /
+maximize-restore / close controls work, the maximize glyph swaps to restore on
+maximize/double-click/OS-snap, and close-hover shows the red affordance; (d) on
+**macOS** the native traffic lights render (inset), NO custom controls appear, and
+the wordmark clears the traffic lights (left inset); (e) `:focus-visible` ring +
+close-hover contrast spot-check in BOTH themes.
+
+**Why deferred.** Needs a real packaged Electron window on each OS — `titleBarStyle:
+'hidden'` (Win/Linux) vs `'hiddenInset'` (macOS), native non-client drag/resize, and
+the traffic lights are all OS-native surfaces not exercisable in the vitest/jsdom
+environment. macOS/Linux behaviour is unverifiable on the dev host anyway (see
+design.md Risks — documented, not blocking).
+
+**By-construction coverage (already green).** `window-options.test.ts` asserts the
+exact `titleBarStyle` per platform (`hidden` on win32/linux, `hiddenInset` on darwin)
+AND that the four hardened `webPreferences` flags survive; the window-controls IPC is
+unit-tested end-to-end (`ipc/__tests__/window.test.ts` handlers + maximize-change
+push, `preload/__tests__/exposed-api.test.ts` bindings, `window-controls.test.ts` +
+`window-api.types.test-d.ts` contract/type guards); the renderer component tests
+cover drag/no-drag regions, platform-gated rendering (controls on win32/linux, none
+on darwin + macOS inset), aria-labels, keyboard activation, and the maximize↔restore
+glyph swap; WCAG contrast pre-verified numerically (dark close-hover **6.90:1**,
+light **4.83:1**, focus rings 13–16:1 — all ≥ AA / 3:1). The visual treatment was
+validated in the approved visual-refinement mockup before implementation.
+
+**Owner:** unassigned (HUMAN). To do during the next environment-loop / packaged pass
+(pair with the two `restyle-cloudstash-monochrome` smokes above — same real-Electron
+boot).
