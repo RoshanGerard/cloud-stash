@@ -2,7 +2,7 @@
 
 ### Requirement: Main window is frameless with a custom unified title bar
 
-The main `BrowserWindow` SHALL be constructed without the native OS title bar, using `titleBarStyle: 'hidden'` on Windows and Linux and `titleBarStyle: 'hiddenInset'` on macOS. The window SHALL retain native resize borders and OS snap behavior (drag-to-edge / keyboard snap); the four hardened `webPreferences` flags (`contextIsolation`, `nodeIntegration: false`, `sandbox`, `webSecurity`) SHALL remain unchanged. The renderer's persistent app header SHALL serve as the unified title bar: the header container SHALL be marked `-webkit-app-region: drag`, and every interactive child (wordmark link if any, settings button, theme switcher, window controls) SHALL be marked `-webkit-app-region: no-drag`. On Windows and Linux the header SHALL render custom window controls (minimize, maximize-restore, close); on macOS it SHALL NOT render custom controls and SHALL reserve left inset padding so the wordmark clears the native traffic lights. There SHALL be exactly one title bar surface (no native frame AND no second custom strip above the header).
+The main `BrowserWindow` SHALL be constructed without the native OS title bar, using `titleBarStyle: 'hidden'` on Windows and Linux and `titleBarStyle: 'hiddenInset'` on macOS. The window SHALL retain native resize borders and OS snap behavior (drag-to-edge / keyboard snap); the four hardened `webPreferences` flags (`contextIsolation`, `nodeIntegration: false`, `sandbox`, `webSecurity`) SHALL remain unchanged. The renderer's persistent app header SHALL serve as the unified title bar: the header container SHALL be marked `-webkit-app-region: drag`, and every interactive child (wordmark link if any, settings button, theme switcher, window controls) SHALL be marked `-webkit-app-region: no-drag`. On Windows and Linux the header SHALL render custom window controls (minimize, maximize-restore, close); on macOS it SHALL NOT render custom controls and SHALL reserve left inset padding so the wordmark clears the native traffic lights. The renderer SHALL determine the host OS from a synchronous preload-exposed `window.api.platform` value (a static string tag, not an async call) to gate this per-OS rendering; absent the bridge (e.g. a non-Electron/browser context) it SHALL render no custom controls. There SHALL be exactly one title bar surface (no native frame AND no second custom strip above the header).
 
 #### Scenario: Windows/Linux window is frameless with hidden title bar
 
@@ -18,6 +18,11 @@ The main `BrowserWindow` SHALL be constructed without the native OS title bar, u
 
 - **WHEN** a Vitest/jsdom test renders the app header
 - **THEN** the header root element carries a `-webkit-app-region: drag` style (or equivalent class), and each interactive control (settings button, theme switcher, and — on Windows/Linux — each window-control button) carries `-webkit-app-region: no-drag`
+
+#### Scenario: Renderer gates window controls on the platform bridge
+
+- **WHEN** the app header mounts and reads the preload-exposed `window.api.platform`
+- **THEN** it renders the custom window controls only when the platform is `win32` or `linux`, renders none on `darwin` (reserving the macOS left inset instead), and renders none when the bridge is absent (non-Electron context)
 
 ### Requirement: Window controls IPC drives minimize, maximize-restore, and close
 
