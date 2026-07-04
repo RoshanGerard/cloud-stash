@@ -9,9 +9,24 @@
 //
 // The live `in-flight` row is NEVER deleted — the `status != 'in-flight'`
 // guard leads every query, so even a hostile `status: ['in-flight']` filter
-// (an empty intersection) or `olderThanMs: 0` leaves it intact. Being pure SQL
-// over the `downloads` table, this structurally cannot touch on-disk files.
+// (an empty intersection) or `olderThanMs: 0` leaves it intact.
 // `Date.now()` is read internally; the age tests pin it with fake timers.
+//
+// add-leftover-download-cleanup §4 (contract change): BEFORE the DELETE, this
+// unlinks the on-disk `target_path` of every KEEP-eligible terminal row
+// (`failed`/`cancelled`/`interrupted`) in the computed delete set — clearing
+// history also reclaims the leftover partial files it forgets. Completed
+// rows' saved files are NEVER unlinked: the pre-delete SELECT restricts to the
+// KEEP-eligible statuses with a LITERAL `status IN (...)`, so a completed row
+// (or even a hostile `filter.status: ['completed']`) can never enter the
+// unlink set, even though the row DELETE below still removes it. The unlink is
+// best-effort — any error (ENOENT/EACCES/EPERM/…) is tolerated and never
+// blocks the deletion nor alters the returned count (rows removed). This
+// reverses the former "pure SQL, structurally cannot touch on-disk files"
+// property; the filesystem `unlink` is injected (defaults to node's fs) so
+// tests stay hermetic.
+
+import { unlink as nodeUnlink } from "node:fs/promises";
 
 import type Database from "better-sqlite3";
 
@@ -22,14 +37,24 @@ export interface ClearHistoryFilter {
   readonly olderThanMs?: number;
 }
 
+/** Minimal filesystem port — injected in tests, defaults to node's fs. */
+export interface ClearHistoryFs {
+  unlink(path: string): Promise<void>;
+}
+
+const defaultUnlinkFs: ClearHistoryFs = { unlink: (p) => nodeUnlink(p) };
+
 /**
- * Deletes matching terminal download-history rows; returns the count removed.
- * Synchronous (better-sqlite3).
+ * Deletes matching terminal download-history rows and unlinks the on-disk
+ * partials of the KEEP-eligible subset (completed rows' files are never
+ * touched); returns the count of rows removed. Async — the best-effort
+ * unlinks run before the (synchronous better-sqlite3) DELETE.
  */
-export function clearDownloadHistory(
+export async function clearDownloadHistory(
   db: Database.Database,
   filter?: ClearHistoryFilter,
-): number {
+  fs: ClearHistoryFs = defaultUnlinkFs,
+): Promise<number> {
   const clauses: string[] = ["status != 'in-flight'"];
   const args: Array<string | number> = [];
 
@@ -49,8 +74,28 @@ export function clearDownloadHistory(
     args.push(Date.now() - filter.olderThanMs);
   }
 
-  const result = db
-    .prepare(`DELETE FROM downloads WHERE ${clauses.join(" AND ")}`)
-    .run(...args);
+  const where = clauses.join(" AND ");
+
+  // Collect the KEEP-eligible subset of the delete set and unlink their
+  // on-disk partials before the DELETE. The trailing `status IN (...)` is a
+  // LITERAL — it is NOT derived from `filter.status` — so `completed` rows can
+  // never appear here (that literal AND is the whole proof completed files are
+  // never unlinked). Same `where`/`args` as the DELETE keeps the sets aligned,
+  // including a single consistent age cutoff.
+  const keepEligible = db
+    .prepare(
+      `SELECT target_path FROM downloads
+        WHERE ${where}
+          AND status IN ('failed', 'cancelled', 'interrupted')`,
+    )
+    .all(...args) as Array<{ target_path: string }>;
+
+  // Best-effort: allSettled tolerates every unlink rejection so a missing /
+  // permission-denied partial never blocks the row deletion nor throws.
+  await Promise.allSettled(
+    keepEligible.map((row) => fs.unlink(row.target_path)),
+  );
+
+  const result = db.prepare(`DELETE FROM downloads WHERE ${where}`).run(...args);
   return result.changes;
 }

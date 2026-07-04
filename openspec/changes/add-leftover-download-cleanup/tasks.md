@@ -27,9 +27,9 @@ Discipline: TDD (RED → watch fail → GREEN) on every code task; worktree at `
 
 ## 4. Contract change — `clearDownloadHistory` unlinks KEEP-eligible partials (services/fs-sync)
 
-- [ ] 4.1 RED: extend `commands/downloads-clear-history.test.ts` (and/or the `downloads/clear-history` unit test) — a `failed` row's partial is unlinked while a `completed` row's file is kept; both rows deleted; unlink `EACCES` is best-effort (row still deleted, no throw); `deleted` counts rows.
-- [ ] 4.2 GREEN: add a filesystem port to `downloads/clear-history.ts`; before the DELETE, SELECT the KEEP-eligible (`failed`/`cancelled`/`interrupted`) `target_path`s in the computed delete set, `unlink` each best-effort (tolerate ENOENT/EACCES/EPERM), then DELETE the rows. Completed files never touched.
-- [ ] 4.3 Thread the fs port through `makeClearDownloadHistoryHandler` and its `handlers.ts` wiring (default to `node:fs/promises`).
+- [x] 4.1 RED: extend `commands/downloads-clear-history.test.ts` (and/or the `downloads/clear-history` unit test) — a `failed` row's partial is unlinked while a `completed` row's file is kept; both rows deleted; unlink `EACCES` is best-effort (row still deleted, no throw); `deleted` counts rows.
+- [x] 4.2 GREEN: add a filesystem port to `downloads/clear-history.ts`; before the DELETE, SELECT the KEEP-eligible (`failed`/`cancelled`/`interrupted`) `target_path`s in the computed delete set, `unlink` each best-effort (tolerate ENOENT/EACCES/EPERM), then DELETE the rows. Completed files never touched.
+- [x] 4.3 Thread the fs port through `makeClearDownloadHistoryHandler` and its `handlers.ts` wiring (default to `node:fs/promises`).
 
 ## 5. Contract change — `pruneDownloadHistory` skips on-disk partials (services/fs-sync)
 

@@ -379,7 +379,10 @@ export function buildCommandHandlers(deps: HandlersDeps): CommandHandlers {
     // downloads:clear-history (add-download-history-ui §4) — wired
     // UNCONDITIONALLY: it deletes durable `downloads` rows and needs only
     // `deps.db` (always present), independent of the registry-gated download
-    // bundle above. Never touches in-flight rows or on-disk files.
+    // bundle above. Never touches in-flight rows. Per
+    // add-leftover-download-cleanup §4 it now ALSO unlinks the on-disk partials
+    // of the KEEP-eligible rows it deletes (best-effort; completed rows' saved
+    // files are never touched) via an fs port that defaults to node's fs.
     "downloads:clear-history": makeClearDownloadHistoryHandler({
       db: deps.db,
     }),
