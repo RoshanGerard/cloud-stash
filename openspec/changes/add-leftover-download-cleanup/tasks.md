@@ -39,12 +39,12 @@ Discipline: TDD (RED → watch fail → GREEN) on every code task; worktree at `
 
 ## 6. Renderer — Review-leftover-files button + dialog (apps/desktop renderer)
 
-- [ ] 6.1 Add `listLeftover` to the renderer sync-api resolver used by Settings (lazy `window.api.sync.listLeftover`).
-- [ ] 6.2 RED+GREEN: fetch the leftover list when the Settings dialog opens; render a "Review leftover files (N)" button that carries the count and is hidden when N = 0.
-- [ ] 6.3 RED+GREEN: `LeftoverFilesDialog` — lists each entry (file name, on-disk size, failure reason per visual direction), focus-restores to the opening button. Per-row Delete → `downloads:delete-partial { downloadJobId }`, remove row on success.
-- [ ] 6.4 RED+GREEN: bulk "Delete all" behind a destructive confirm; client-loops `downloads:delete-partial` over the shown `downloadJobId`s; reports a deleted-vs-failed aggregate (one `EACCES` ≠ "all cleared").
-- [ ] 6.5 Copy edits per visual direction: `clear-history-dialog.tsx` → "Saved files are kept; incomplete leftover files are removed"; auto-delete toggle helper text → records-only + points to Review leftover files.
-- [ ] 6.6 Tests: button count/visibility (0 hidden, N shown), dialog list render, per-row delete removes row, bulk aggregate distinguishes deleted vs failed.
+- [x] 6.1 Add `listLeftover` to the renderer sync-api resolver used by Settings (lazy `window.api.sync.listLeftover`).
+- [x] 6.2 RED+GREEN: fetch the leftover list when the Settings dialog opens; render a "Review leftover files (N)" button that carries the count and is hidden when N = 0.
+- [x] 6.3 RED+GREEN: `LeftoverFilesDialog` — lists each entry (file name, on-disk size, failure reason per visual direction), focus-restores to the opening button. Per-row Delete → `downloads:delete-partial { downloadJobId }`, remove row on success.
+- [x] 6.4 RED+GREEN: bulk "Delete all" behind a destructive confirm; client-loops `downloads:delete-partial` over the shown `downloadJobId`s; reports a deleted-vs-failed aggregate (one `EACCES` ≠ "all cleared").
+- [x] 6.5 Copy edits per visual direction: `clear-history-dialog.tsx` → "Saved files are kept; incomplete leftover files are removed"; auto-delete toggle helper text → records-only + points to Review leftover files.
+- [x] 6.6 Tests: button count/visibility (0 hidden, N shown), dialog list render, per-row delete removes row, bulk aggregate distinguishes deleted vs failed.
 
 ## 7. Verification & pre-archive
 

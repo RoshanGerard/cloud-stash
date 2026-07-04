@@ -681,15 +681,106 @@ describe("SettingsDialog — Download history retention (add-download-history-ui
     });
   });
 
-  it("opens the Clear download history dialog (showing the safety copy)", async () => {
+  it("opens the Clear download history dialog (showing the updated safety copy)", async () => {
     installConfigMock({ autoPrune: true, retentionDays: 90 });
     render(<SettingsDialog open={true} onOpenChange={() => {}} />);
 
     const clearBtn = await screen.findByRole("button", { name: /clear/i });
     fireEvent.click(clearBtn);
 
+    // add-leftover-download-cleanup VD6 — copy shifted from "files already
+    // saved … are not deleted" to the leftover-aware wording.
     expect(
-      await screen.findByText(/files already saved to your computer/i),
+      await screen.findByText(/saved files are kept/i),
+    ).toBeInTheDocument();
+  });
+
+  it("the auto-delete helper copy clarifies it removes records (not on-disk files) and points to Review leftover files", async () => {
+    installConfigMock({ autoPrune: true, retentionDays: 90 });
+    render(<SettingsDialog open={true} onOpenChange={() => {}} />);
+
+    await screen.findByRole("switch", { name: /auto-delete old history/i });
+    const text = document.body.textContent ?? "";
+    expect(text).toMatch(/record/i);
+    expect(text).toMatch(/review leftover files/i);
+  });
+});
+
+// add-leftover-download-cleanup §6.2/§6.6 — the "Review leftover files"
+// affordance in the Download-history group. The button carries the count
+// obtained from `downloads:list-leftover` on open, is hidden at count 0, and
+// opens the LeftoverFilesDialog. The list dialog itself is unit-tested in
+// leftover-files-dialog.test.tsx; here we cover the button wiring.
+describe("SettingsDialog — Review leftover files button (add-leftover-download-cleanup §6.2)", () => {
+  let listLeftoverMock: Mock;
+
+  interface LeftoverStub {
+    downloadJobId: string;
+    datasourceId: string;
+    sourcePath: string;
+    targetPath: string;
+    sizeOnDisk: number;
+    failureTag: string | null;
+    failureMessage: string | null;
+    endedAt: number | null;
+  }
+
+  function stub(id: string): LeftoverStub {
+    return {
+      downloadJobId: id,
+      datasourceId: "ds-1",
+      sourcePath: `/remote/${id}.bin`,
+      targetPath: `/Users/alice/Downloads/${id}.bin`,
+      sizeOnDisk: 5_000_000,
+      failureTag: "exhausted-retries",
+      failureMessage: "ran out of retries",
+      endedAt: Date.now() - 86_400_000,
+    };
+  }
+
+  function installLeftoverApi(entries: LeftoverStub[]): void {
+    listLeftoverMock = vi.fn().mockResolvedValue({ entries });
+    (window as unknown as { api: unknown }).api = {
+      sync: {
+        // Config helpers so the retention rows read cleanly.
+        getConfig: vi.fn().mockResolvedValue({
+          ok: true,
+          result: { config: { schemaVersion: 1, providers: {} } },
+        }),
+        setConfig: vi.fn().mockResolvedValue({ ok: true, result: { ok: true } }),
+        listLeftover: listLeftoverMock,
+        deletePartial: vi.fn().mockResolvedValue({ deleted: true }),
+      },
+    };
+  }
+
+  afterEach(() => {
+    delete (window as unknown as { api?: unknown }).api;
+  });
+
+  it("hides the Review-leftover-files button when the count is 0", async () => {
+    installLeftoverApi([]);
+    render(<SettingsDialog open={true} onOpenChange={() => {}} />);
+
+    await waitFor(() => expect(listLeftoverMock).toHaveBeenCalled());
+    expect(
+      screen.queryByRole("button", { name: /review leftover files/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("shows 'Review leftover files (N)' with the count and opens the dialog", async () => {
+    installLeftoverApi([stub("a"), stub("b"), stub("c")]);
+    render(<SettingsDialog open={true} onOpenChange={() => {}} />);
+
+    const btn = await screen.findByRole("button", {
+      name: /review leftover files \(3\)/i,
+    });
+    expect(btn).toBeInTheDocument();
+
+    fireEvent.click(btn);
+
+    expect(
+      await screen.findByRole("heading", { name: /leftover download files/i }),
     ).toBeInTheDocument();
   });
 });

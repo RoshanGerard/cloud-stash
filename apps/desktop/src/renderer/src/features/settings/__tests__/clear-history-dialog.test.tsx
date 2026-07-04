@@ -66,11 +66,16 @@ afterEach(() => {
 });
 
 describe("ClearHistoryDialog", () => {
-  it("states explicitly that files already saved to disk are NOT deleted", () => {
+  it("states that saved files are kept while incomplete leftover files are removed", () => {
+    // add-leftover-download-cleanup VD6 — Clear… now unlinks KEEP-eligible
+    // partials, so the safety note shifted from "saved files are NOT deleted"
+    // to the leftover-aware wording.
     render(<ClearHistoryDialog open onOpenChange={() => {}} />);
-    const note = screen.getByText(/files already saved to your computer/i);
+    // "Saved files are kept" sits in a <strong>; resolve to the enclosing
+    // paragraph so both halves of the sentence are asserted together.
+    const note = screen.getByText(/saved files are kept/i).closest("p")!;
     expect(note).toBeInTheDocument();
-    expect(note).toHaveTextContent(/not.*deleted/i);
+    expect(note).toHaveTextContent(/leftover files are removed/i);
   });
 
   it("renders all four status chips pressed by default", () => {
