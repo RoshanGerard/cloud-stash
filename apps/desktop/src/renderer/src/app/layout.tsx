@@ -15,6 +15,13 @@ import { DiagnosticsShortcut } from "../features/diagnostics/diagnostics-shortcu
 export const metadata: Metadata = {
   title: "cloudstash",
   description: "CloudStash desktop shell",
+  // Favicon / window icon: the CloudStash Monochrome app-tile (graphite tile +
+  // cloud/silver-fold mark), vendored to public/brand/ and served at
+  // app://local/brand/… . A self-contained SVG loaded via <link rel="icon">
+  // (no id-collision risk vs. inlining). The rasterised OS icon pack
+  // (ico/icns/png + electron-builder wiring) is a packaged-build follow-up
+  // (PENDING_TC) — the SVG sources ship here for it.
+  icons: { icon: "/brand/cloudstash-app-tile-dark.svg" },
 };
 
 export const viewport: Viewport = {

@@ -1,0 +1,17 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="CloudStash app tile dark">
+  <defs><linearGradient id="tile" x1="130" y1="80" x2="900" y2="940"><stop stop-color="#202733"/><stop offset="1" stop-color="#06090D"/></linearGradient></defs>
+  <rect x="90" y="90" width="844" height="844" rx="180" fill="url(#tile)" stroke="#343D49" stroke-width="2"/>
+  <svg x="152" y="152" width="720" height="720" viewBox="0 0 1024 1024">
+    <defs>
+      <linearGradient id="cloudBack" x1="248" y1="236" x2="782" y2="782" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#4A505B"/><stop offset=".55" stop-color="#121821"/><stop offset="1" stop-color="#06090D"/></linearGradient>
+      <linearGradient id="cloudFront" x1="220" y1="366" x2="721" y2="846" gradientUnits="userSpaceOnUse"><stop stop-color="#333A45"/><stop offset=".35" stop-color="#141A22"/><stop offset="1" stop-color="#05080C"/></linearGradient>
+      <linearGradient id="fold" x1="272" y1="336" x2="774" y2="680" gradientUnits="userSpaceOnUse"><stop stop-color="#F6F7F9"/><stop offset=".18" stop-color="#AEB5C0"/><stop offset=".62" stop-color="#838B96"/><stop offset="1" stop-color="#5A626E"/></linearGradient>
+      <filter id="s"><feDropShadow dx="0" dy="36" stdDeviation="34" flood-opacity=".65"/></filter>
+    </defs>
+    <g filter="url(#s)">
+      <path d="M194 670C117 665 62 607 62 535C62 458 126 396 207 394C225 287 318 205 431 205C534 205 622 273 649 368C677 354 710 346 744 346C846 346 929 426 929 524C929 622 846 702 744 702H246C227 702 209 690 194 670Z" fill="url(#cloudBack)"/>
+      <path d="M85 574C92 493 159 429 243 422H353C424 422 488 463 518 527L622 752C638 786 614 825 576 825H241C154 825 82 760 76 678L75 659C73 627 78 598 85 574Z" fill="url(#cloudFront)"/>
+      <path d="M197 410C317 431 434 491 548 583C628 647 684 650 754 613C724 662 681 695 619 697C561 699 519 670 466 627C359 539 278 458 197 410Z" fill="url(#fold)"/>
+    </g>
+  </svg>
+</svg>

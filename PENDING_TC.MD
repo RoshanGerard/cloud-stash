@@ -1527,3 +1527,26 @@ and was already failing this way in the pristine pre-change baseline — so it i
 NOT introduced by `add-leftover-download-cleanup`. Same family as the documented
 `scripts/render-budget.test.tsx` load flake. A reactive fix (bump this one test's
 timeout, or make the identity check synchronous) is possible later — out of scope here.
+
+---
+
+## DEFERRED — CloudStash OS icon pack + tray (`restyle-cloudstash-monochrome` §4.2)
+
+**What.** The rasterised operating-system icon pack — Windows `.ico`, macOS `.icns`,
+Linux `.png` set — generated from the CloudStash app-tile SVG, plus wiring
+`apps/desktop/electron-builder.yml` `icon:` (currently unset → electron default) and
+any tray icon.
+
+**Shipped now (NOT deferred).** The in-app favicon / window-title icon IS wired:
+`apps/desktop/src/renderer/public/brand/cloudstash-app-tile-dark.svg` +
+`metadata.icons` in `layout.tsx`, verified in the renderer build (asset copied to
+`out/brand/…` and `<link rel="icon" href="/brand/cloudstash-app-tile-dark.svg">`
+emitted). Only the packaged OS icons are deferred.
+
+**Why deferred.** Only visible in a *packaged* build (installer / exe / dock /
+taskbar), which is out of this dev cycle's verification scope; needs a rasteriser
+dependency (e.g. `sharp` / `electron-icon-builder`) + a packaged build to verify.
+Same class as `wire-packaged-build-download-resilience`. The SVG sources ship in the
+design pack + `apps/desktop/src/renderer/public/brand/`.
+
+**Owner:** unassigned (HUMAN). Bundle with the next packaged-build lane.

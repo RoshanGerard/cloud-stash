@@ -10,15 +10,15 @@
 
 ## 3. Palette rebuild (globals.css)
 
-- [ ] 3.1 Rebuild `.dark` as canonical CloudStash graphite (canvas `#080F14`, surface ramp, silver text ramp) and `:root` as monochrome light — as `oklch()`, every shadcn token name preserved.
-- [ ] 3.2 Remove the `[data-theme="serene-blue"]` block and the crimson `--brand-primary` token; set accent/ring to silver; primary button → inverted silver on ink.
-- [ ] 3.3 Retire Serene Blue across the FULL surface (design Decision 6): `globals.css` block; `theme-switcher.tsx` option + `case`; `theme-store.ts` `ThemePreference` union + parse/apply; `theme-script.ts` bootstrap branch; `sonner.tsx` mapping; `icon.tsx` `droplets` (if now unused). Plus tests for "no theme beyond Light/Dark/System".
+- [x] 3.1 Rebuilt `.dark` as canonical CloudStash graphite + `:root` as monochrome light — oklch, every shadcn token name preserved (commit `8887ac9`).
+- [x] 3.2 Removed the `[data-theme="serene-blue"]` block; accent/ring → silver (dark) / graphite (light); primary button → FLAT inverted silver/ink (commit `8887ac9`). The crimson `--brand-primary` token was RETAINED in §3 (logo still used it) and removed in §4.1 (commit `7f4ab1b`).
+- [x] 3.3 Retired Serene Blue across the FULL surface — `globals.css` block, `theme-switcher.tsx` option+`case`, `theme-store.ts` union+parse/apply, `theme-script.ts` bootstrap branch, `sonner.tsx` mapping, `icon.tsx` `droplets` (removed, was unused). `monochrome-identity.test.ts` + rewritten theme-switcher/no-fouc tests (commit `8887ac9`).
 
 ## 4. Brand mark + display type
 
-- [ ] 4.1 Swap `CloudStashLogo` artwork: pack ships `cloudstash-mark-dark.svg` / `cloudstash-mark-light.svg` / `cloudstash-glyph.svg` / `cloudstash-app-tile-dark.svg` (confirmed present — a swap, not authoring). Theme-swapped mark + `currentColor` glyph for 16–32px; mark hex stays in `.svg` files (not `.tsx` — literal-ban). Rewrite `cloudstash-logo.test.tsx` (asserts crimson fill).
-- [ ] 4.2 Generate favicon / tray / OS icons from the mark/app-tile (justify `sharp`/packer dep in design.md if added).
-- [ ] 4.3 Add Bricolage Grotesque via `@fontsource`/`next/font` (self-hosted, OFL); apply to wordmark + headings; keep Geist Sans (UI) + Geist Mono (mono). Verify no runtime font fetch.
+- [x] 4.1 Swapped `CloudStashLogo` to theme-swapped `mark-dark`/`mark-light` `<img>` (in `public/brand/`, `.dark`-variant toggle, FOUC-free) + inline `currentColor` `CloudStashGlyph` for 16–32px; removed `--brand-primary`; rewrote `cloudstash-logo.test.tsx` + added the no-crimson palette-scan test; build smoke green (commit `7f4ab1b`; a11y decision recorded `bf86e84`).
+- [x] 4.2 Favicon wired: CloudStash app-tile SVG vendored to `public/brand/cloudstash-app-tile-dark.svg` + `metadata.icons` in `layout.tsx` (served via `app://`, root-relative); regression guard `app/__tests__/favicon.test.ts`. NO rasteriser dep added. **DEFERRED to PENDING_TC:** rasterised OS icon pack (ico/icns/png) + electron-builder `icon:` wiring + tray icon — packaged-build-only, needs a rasteriser + packaged verification (SVG sources ship in `public/brand/`).
+- [x] 4.3 Added Bricolage Grotesque via `next/font/local` (vendored `@fontsource-variable/bricolage-grotesque` woff2 → `src/fonts/bricolage/`, self-hosted, OFL); applied `font-display` to wordmark + `DialogTitle` + dashboard `<h1>` + explore `<h2>`; kept Geist Sans/Mono; `typography.test.ts` + build smoke confirm self-hosted, zero runtime fetch (commit `027bf0d`).
 
 ## 5. Spec sync + Purpose direct-edit
 
