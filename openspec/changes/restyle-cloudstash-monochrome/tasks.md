@@ -1,22 +1,22 @@
 ## 1. Pre-flight (post-rename dependency)
 
-- [ ] 1.1 Confirm `rebrand-to-cloudstash` merged; worktree at `.worktrees/restyle-cloudstash-monochrome/` off post-rename `master`; `pnpm install`.
-- [ ] 1.2 Pre-apply staleness check: `globals.css`, `cloudstash-logo.tsx`, `app-header.tsx`, the `cloudstash.*` theme key, and `next/font` wiring still match `design.md`.
+- [x] 1.1 `rebrand-to-cloudstash` merged (`9fc1aa0`); worktree at `.worktrees/restyle-cloudstash-monochrome/` off post-rename `master` (rebased → `da4f02f`); `pnpm install` DONE (exit 0).
+- [x] 1.2 Pre-apply staleness check DONE: MODIFIED header matches canonical `datasources-ui:194`; `--brand-primary` consumers = `globals.css` + `cloudstash-logo.tsx:78` only; Serene Blue surface mapped (design Decision 6); `cloudstash.theme` key present (`theme-store.ts:26`); Geist `next/font` wired. All match `design.md`.
 
 ## 2. Visual-refinement pass (MANDATORY GATE — before any restyle code)
 
-- [ ] 2.1 Run `superpowers:brainstorming` visual-refinement (Visual Companion): resolve the ONE open fork — radii/density reconciliation (design.md Open Questions) — and produce browser mockups of the dashboard + a card + the header in CloudStash Monochrome (dark + light).
-- [ ] 2.2 Record the resolution in `design.md` `## Visual direction`; if the pack-radii alternative is chosen, add the MODIFIED "Visual direction" delta to `specs/datasources-ui/spec.md` and re-run `openspec validate` before proceeding.
+- [x] 2.1 Visual-refinement pass DONE — interactive mockup (theme + radii toggle on the real dashboard: header + dense `DatasourceCard`s in connected/syncing/paused/error/usage states, dark + light). Resolved the one open fork (radii/density) and surfaced the flat-primary-button refinement.
+- [x] 2.2 Resolution recorded in `design.md` `## Visual direction`: **dense-quiet radii retained → "Visual direction" requirement UNCHANGED, NO MODIFIED delta**. Advisor-flagged spec reword applied to the ADDED requirement (per-theme accent: silver-on-dark / graphite-on-light; flat inverted-monochrome primary); `openspec validate` green.
 
 ## 3. Palette rebuild (globals.css)
 
 - [ ] 3.1 Rebuild `.dark` as canonical CloudStash graphite (canvas `#080F14`, surface ramp, silver text ramp) and `:root` as monochrome light — as `oklch()`, every shadcn token name preserved.
 - [ ] 3.2 Remove the `[data-theme="serene-blue"]` block and the crimson `--brand-primary` token; set accent/ring to silver; primary button → inverted silver on ink.
-- [ ] 3.3 Drop any Serene Blue option from the theme switcher code.
+- [ ] 3.3 Retire Serene Blue across the FULL surface (design Decision 6): `globals.css` block; `theme-switcher.tsx` option + `case`; `theme-store.ts` `ThemePreference` union + parse/apply; `theme-script.ts` bootstrap branch; `sonner.tsx` mapping; `icon.tsx` `droplets` (if now unused). Plus tests for "no theme beyond Light/Dark/System".
 
 ## 4. Brand mark + display type
 
-- [ ] 4.1 Swap `CloudStashLogo` artwork: theme-swapped `mark-dark.svg` / `mark-light.svg` (fixed multi-gradient, not token-tinted) + a `currentColor` `glyph.svg` for 16–32px; wire theme swap.
+- [ ] 4.1 Swap `CloudStashLogo` artwork: pack ships `cloudstash-mark-dark.svg` / `cloudstash-mark-light.svg` / `cloudstash-glyph.svg` / `cloudstash-app-tile-dark.svg` (confirmed present — a swap, not authoring). Theme-swapped mark + `currentColor` glyph for 16–32px; mark hex stays in `.svg` files (not `.tsx` — literal-ban). Rewrite `cloudstash-logo.test.tsx` (asserts crimson fill).
 - [ ] 4.2 Generate favicon / tray / OS icons from the mark/app-tile (justify `sharp`/packer dep in design.md if added).
 - [ ] 4.3 Add Bricolage Grotesque via `@fontsource`/`next/font` (self-hosted, OFL); apply to wordmark + headings; keep Geist Sans (UI) + Geist Mono (mono). Verify no runtime font fetch.
 

@@ -47,9 +47,9 @@ Primitives SHALL meet a defined accessibility baseline: every interactive primit
 
 ## ADDED Requirements
 
-### Requirement: CloudStash brand identity — monochrome palette, silver accent, mark, and display type
+### Requirement: CloudStash brand identity — monochrome palette, flat monochrome accent, mark, and display type
 
-The renderer SHALL present the **CloudStash Monochrome** visual identity. The palette SHALL be monochrome graphite with silver accents and status colours only: a dark canvas and layered graphite surfaces, a silver text ramp, a silver accent for focus/active/selection, and the four status hues (success/warning/danger/info) reserved for status only. There SHALL be no crimson brand colour and no chromatic (blue/coloured) accent; the previous `--brand-primary` crimson token SHALL be removed and no feature code SHALL depend on it. The primary button SHALL use an inverted-silver treatment (light silver fill on ink foreground) rather than a coloured fill. All identity colours SHALL meet WCAG AA text/UI contrast in both the light and dark themes.
+The renderer SHALL present the **CloudStash Monochrome** visual identity. The palette SHALL be monochrome graphite with a monochrome accent and status colours only. On the dark (canonical) theme: a dark canvas, layered graphite surfaces, a silver text ramp, and a silver accent for focus/active/selection. On the light theme, the inverse: a light canvas, layered surfaces, an ink/graphite text ramp, and a graphite accent — the accent darkens on the light ground so it stays AA-legible (silver has insufficient contrast on a light surface). The four status hues (success/warning/danger/info) SHALL be reserved for status only. The accent SHALL be a monochrome neutral in BOTH themes; there SHALL be no crimson brand colour and no chromatic (blue/coloured) accent; the previous `--brand-primary` crimson token SHALL be removed and no feature code SHALL depend on it. The primary button SHALL use a flat inverted-monochrome treatment — a solid single-tone fill with no gradient or embossed highlight: a light-silver fill on ink foreground on the dark theme, and the inverse (an ink/graphite fill on light foreground) on the light theme — rather than a coloured fill. All identity colours SHALL meet WCAG AA text/UI contrast in both the light and dark themes.
 
 The CloudStash **mark** SHALL be shipped as fixed SVG artwork swapped by theme (a dark-optimised mark on the dark theme and a light-optimised mark on the light theme) rather than tinted through a single colour token, because the mark is a multi-gradient asset that is not `currentColor`-tintable. A `currentColor` **glyph** variant SHALL be provided for small surfaces (16–32px: favicon, tray) so those inherit the theme foreground. The header wordmark SHALL render the CloudStash name (no Forti5 identity remains).
 
@@ -58,7 +58,7 @@ Typography SHALL layer a distinctive display typeface for the wordmark and secti
 #### Scenario: Palette is monochrome with no crimson brand token
 
 - **WHEN** a Vitest test scans the renderer's global stylesheet
-- **THEN** the light and dark theme variable sets define a monochrome graphite/silver palette with status hues reserved for status tokens; no `--brand-primary` (crimson) token is defined or referenced by any feature `.tsx`; the accent/ring tokens resolve to silver, not blue or crimson
+- **THEN** the light and dark theme variable sets define a monochrome graphite/silver palette with status hues reserved for status tokens; no `--brand-primary` (crimson) token is defined or referenced by any feature `.tsx`; the accent/ring tokens resolve to a monochrome neutral (silver on the dark theme, graphite on the light theme), not blue or crimson
 
 #### Scenario: Mark is theme-swapped SVG artwork with a currentColor glyph
 
