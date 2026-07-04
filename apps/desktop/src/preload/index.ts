@@ -85,6 +85,7 @@ import type {
   SyncClearDownloadHistoryResponse,
   SyncDeletePartialRequest,
   SyncDeletePartialResponse,
+  SyncListLeftoverResponse,
   SyncUploadsListActiveResponse,
   SyncEnqueueMirrorRequest,
   SyncEnqueueMirrorResponse,
@@ -318,6 +319,11 @@ const api = {
       req: SyncDeletePartialRequest,
     ): Promise<SyncDeletePartialResponse> =>
       ipcRenderer.invoke(SYNC_CHANNELS.deletePartial, req),
+    // add-leftover-download-cleanup §2.4 — Settings → "Review leftover files"
+    // reads this on open. Void request (channel-only invoke, mirrors
+    // getStatus/getConfig); resolves the flat `{ entries }` snapshot.
+    listLeftover: (): Promise<SyncListLeftoverResponse> =>
+      ipcRenderer.invoke(SYNC_CHANNELS.listLeftover),
     getRetryPolicy: (
       req: SyncGetRetryPolicyRequest,
     ): Promise<SyncGetRetryPolicyResponse> =>

@@ -78,6 +78,7 @@ import {
   type MotionPreference,
 } from "./motion-store";
 import { ClearHistoryDialog } from "./clear-history-dialog";
+import { LeftoverFilesDialog } from "./leftover-files-dialog";
 import {
   DOWNLOAD_HISTORY_DEFAULT,
   RETENTION_DAY_OPTIONS,
@@ -85,6 +86,27 @@ import {
   writeDownloadHistorySettings,
   type DownloadHistorySettings,
 } from "./download-history-config";
+
+// The `window.api.sync.listLeftover` method, accessed defensively. Optional-CALL
+// (`?.()`) not just optional-chain: in unit tests `window.api.sync` may exist
+// while `listLeftover` is absent, and `sync?.listLeftover()` on an undefined
+// method throws a TypeError — `?.()` short-circuits to `undefined` instead.
+function readLeftoverCount(): Promise<number> {
+  const fn = (
+    window as unknown as {
+      api?: {
+        sync?: {
+          listLeftover?: () => Promise<{ readonly entries: readonly unknown[] }>;
+        };
+      };
+    }
+  ).api?.sync?.listLeftover;
+  return Promise.resolve(typeof fn === "function" ? fn() : undefined)
+    .then((res) => res?.entries.length ?? 0)
+    // A transport-level failure means we simply can't show a count — degrade
+    // to 0 (button hidden) rather than surface an unhandled rejection.
+    .catch(() => 0);
+}
 
 export interface SettingsDialogProps {
   open: boolean;
@@ -235,6 +257,14 @@ export function SettingsDialog({
   const [clearOpen, setClearOpen] = useState(false);
   const clearButtonRef = useRef<HTMLButtonElement>(null);
 
+  // Leftover-files affordance (add-leftover-download-cleanup §6.2 / VD1). The
+  // count comes from `downloads:list-leftover` when the Settings dialog opens;
+  // the button is hidden when the count is 0. It also re-fetches when the
+  // leftover dialog closes so the count reflects any deletions made there.
+  const [leftoverCount, setLeftoverCount] = useState(0);
+  const [leftoverOpen, setLeftoverOpen] = useState(false);
+  const reviewButtonRef = useRef<HTMLButtonElement>(null);
+
   useEffect(() => {
     if (!open) return;
     let cancelled = false;
@@ -245,6 +275,20 @@ export function SettingsDialog({
       cancelled = true;
     };
   }, [open]);
+
+  // Re-fetch the leftover count on Settings-open AND whenever the leftover
+  // dialog closes (leftoverOpen → false), so per-row / bulk deletions there
+  // update the button count without reopening Settings.
+  useEffect(() => {
+    if (!open || leftoverOpen) return;
+    let cancelled = false;
+    void readLeftoverCount().then((count) => {
+      if (!cancelled) setLeftoverCount(count);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [open, leftoverOpen]);
 
   // Optimistically reflect the change, then persist; surface a toast if the
   // write fails so the setting doesn't silently snap back on reopen (the
@@ -488,8 +532,11 @@ export function SettingsDialog({
                   Auto-delete old history
                 </Label>
                 <p className="text-muted-foreground text-xs">
-                  History older than {historySettings.retentionDays} days is
-                  deleted automatically.
+                  History <strong>records</strong> older than{" "}
+                  {historySettings.retentionDays} days are removed
+                  automatically. This never deletes files on disk &mdash;
+                  leftover files are handled under &ldquo;Review leftover
+                  files.&rdquo;
                 </p>
               </div>
               <Switch
@@ -552,6 +599,33 @@ export function SettingsDialog({
               </DropdownMenu>
             </div>
 
+            {/* Review leftover files — opens the leftover-cleanup dialog
+                (add-leftover-download-cleanup §6.2 / VD1). Sits directly above
+                the Clear row (the two cleanup actions read together) and is
+                hidden entirely when there is nothing to review (count 0). */}
+            {leftoverCount > 0 && (
+              <div className="flex items-center gap-3">
+                <div className="flex min-w-0 flex-1 flex-col gap-1">
+                  <span className="text-xs font-medium">
+                    Review leftover files
+                  </span>
+                  <span className="text-muted-foreground text-xs">
+                    Incomplete files left on disk by past failed downloads.
+                  </span>
+                </div>
+                <Button
+                  ref={reviewButtonRef}
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setLeftoverOpen(true)}
+                  className="shrink-0"
+                >
+                  Review leftover files ({leftoverCount})
+                </Button>
+              </div>
+            )}
+
             {/* Clear download history — opens the filtered destructive dialog. */}
             <div className="flex items-center gap-3">
               <div className="flex min-w-0 flex-1 flex-col gap-1">
@@ -583,6 +657,12 @@ export function SettingsDialog({
         open={clearOpen}
         onOpenChange={setClearOpen}
         returnFocusTo={clearButtonRef.current}
+      />
+
+      <LeftoverFilesDialog
+        open={leftoverOpen}
+        onOpenChange={setLeftoverOpen}
+        returnFocusTo={reviewButtonRef.current}
       />
     </>
   );

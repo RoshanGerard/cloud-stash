@@ -220,10 +220,12 @@ export function ClearHistoryDialog({
           </DropdownMenu>
         </div>
 
-        {/* Safety note — the load-bearing reassurance (Visual direction). */}
+        {/* Safety note — the load-bearing reassurance (Visual direction).
+            add-leftover-download-cleanup VD6: Clear… now unlinks KEEP-eligible
+            partials while leaving completed (saved) files untouched. */}
         <p className="text-muted-foreground bg-muted/50 rounded-md p-3 text-xs">
-          Files already saved to your computer are <strong>not</strong> deleted
-          — this only removes the history records.
+          <strong>Saved files are kept</strong>; incomplete leftover files are
+          removed.
         </p>
 
         <DialogFooter>

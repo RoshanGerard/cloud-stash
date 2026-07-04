@@ -1472,3 +1472,58 @@ reproducible in this environment (same class as
   `download-job-toast.test.ts` (d3–d7).
 
 **Owner:** unassigned (HUMAN). To do during the next environment-loop pass.
+
+---
+
+## add-leftover-download-cleanup §7.3 — "Review leftover files" running-system smoke (deferred)
+
+**Scenario.** With the desktop app running against a live service that has ≥1
+orphaned KEPT partial on disk from a PRIOR-session failed/cancelled/interrupted
+download: open Settings → Downloads; confirm the "Review leftover files (N)"
+button shows the correct count (and is hidden when 0); open the dialog and
+confirm each row shows filename + on-disk size + failure reason; click a row's
+Delete → the file is unlinked and the row disappears; use "Delete all" → confirm
+dialog → the aggregate toast ("Deleted N files" / "Deleted N · M couldn't be
+removed") and the "all cleaned up" empty state. Separately: confirm the manual
+"Clear download history" now ALSO removes on-disk KEEP-eligible partials while
+completed saved files remain; and that the headless 24h auto-prune RETAINS an
+aged on-disk leftover row (does not delete its file) while pruning aged completed
++ already-gone rows.
+
+**Why deferred.** Requires a live service + real orphaned partials from prior
+sessions (a KEEP-disposition mid-stream failure leaving a real partial) — not
+reproducible in this environment (same class as
+`add-failed-download-cleanup-affordance §6.3` and
+`wire-packaged-build-download-resilience`).
+
+**Unit/integration coverage proving the paths in isolation:**
+- Read command: `services/fs-sync/src/commands/downloads-list-leftover.test.ts`
+  (KEEP-eligible + on-disk only; ENOENT/any-stat-error excluded; completed/in-flight
+  excluded; `ended_at` DESC; empty result; never throws) + `handlers.test.ts` registration.
+- clear-history file-deletion: `services/fs-sync/src/commands/downloads-clear-history.test.ts`
+  (unlinks KEEP-eligible partial, keeps completed file; best-effort EACCES; deleted = rows).
+- prune skip: `services/fs-sync/src/downloads/__tests__/prune.test.ts` +
+  `prune-scheduler.test.ts` (retains aged on-disk leftover; prunes aged completed +
+  gone-file leftover; never unlinks; per-row stat error degrades to gone).
+- Four-layer bridge: `sync-surface.test.ts` (surface 17→18) + `channels.test-d.ts` +
+  `window-api.types.test-d.ts` + `main/ipc/sync/__tests__/list-leftover.test.ts`.
+- Renderer dialog + per-row/bulk delete + aggregate + empty state:
+  `apps/desktop/src/renderer/src/features/settings/__tests__/leftover-files-dialog.test.tsx`
+  (7 tests) + `settings-dialog.test.tsx` (button count/visibility) +
+  `clear-history-dialog.test.tsx` (updated safety copy).
+
+**Owner:** unassigned (HUMAN). To do during the next environment-loop pass.
+
+---
+
+## KNOWN FLAKE — `channels.test-d.ts` "reachable from top-level re-export" (load-induced timeout)
+
+`packages/ipc-contracts/src/sync-service-desktop/channels.test-d.ts:153`
+(`const root = await import("../index.js"); expect(root.SYNC_CHANNELS).toBe(SYNC_CHANNELS)`)
+intermittently times out at the 5s test-timeout under the FULL parallel workspace
+`pnpm -w test` run (heavy `collect`/transform load starves the dynamic barrel
+import). It PASSES in isolation in ~37 ms (`pnpm -w test --run channels.test-d`)
+and was already failing this way in the pristine pre-change baseline — so it is
+NOT introduced by `add-leftover-download-cleanup`. Same family as the documented
+`scripts/render-budget.test.tsx` load flake. A reactive fix (bump this one test's
+timeout, or make the identity check synchronous) is possible later — out of scope here.

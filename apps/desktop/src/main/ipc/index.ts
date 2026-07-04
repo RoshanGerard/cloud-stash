@@ -71,6 +71,7 @@ import { handleSyncCancelUpload } from "./sync/cancel-upload.js";
 import { handleUploadsListActive } from "./sync/uploads-list-active.js";
 import { handleClearDownloadHistory } from "./sync/clear-download-history.js";
 import { handleDeletePartial } from "./sync/delete-partial.js";
+import { handleListLeftover } from "./sync/list-leftover.js";
 import { handleSyncGetConfig } from "./sync/get-config.js";
 import { handleSyncSetConfig } from "./sync/set-config.js";
 import { handleSyncEnqueueMirror } from "./sync/enqueue-mirror.js";
@@ -280,6 +281,11 @@ export function registerIpcHandlers(
     SYNC_CHANNELS.deletePartial,
     async (_event, req: SyncDeletePartialRequest) => handleDeletePartial(req),
   );
+  // add-leftover-download-cleanup §2.2 — desktop bridge for the new
+  // `downloads:list-leftover` service command. Void request (channel-only
+  // invoke, mirrors getStatus/getConfig); returns the flat `{ entries }`
+  // snapshot of KEEP-eligible downloads whose partial still exists on disk.
+  ipcMain.handle(SYNC_CHANNELS.listLeftover, () => handleListLeftover());
 
   // Clipboard bridge — goes through Electron's main-process `clipboard`
   // module rather than `navigator.clipboard.writeText` in the renderer.

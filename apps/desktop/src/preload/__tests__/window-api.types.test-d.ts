@@ -6,6 +6,7 @@ import type {
   SyncEvent,
   SyncGetConfigResponse,
   SyncListJobsResponse,
+  SyncListLeftoverResponse,
   SyncSetConfigResponse,
 } from "@ft5/ipc-contracts/sync-service-desktop";
 
@@ -75,6 +76,15 @@ describe("window.api.sync type declarations", () => {
   it("window.api.sync.deletePartial(req) returns Promise<SyncDeletePartialResponse>", () => {
     expectTypeOf<SyncSurface["deletePartial"]>().returns.toEqualTypeOf<
       Promise<SyncDeletePartialResponse>
+    >();
+  });
+
+  // add-leftover-download-cleanup §2.5 — Settings → "Review leftover files"
+  // reads this on open. Void-request method (no params), mirroring getStatus.
+  it("window.api.sync.listLeftover is a void-request method returning Promise<SyncListLeftoverResponse>", () => {
+    expectTypeOf<SyncSurface["listLeftover"]>().parameters.toEqualTypeOf<[]>();
+    expectTypeOf<SyncSurface["listLeftover"]>().returns.toEqualTypeOf<
+      Promise<SyncListLeftoverResponse>
     >();
   });
 
