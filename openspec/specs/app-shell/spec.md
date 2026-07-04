@@ -3,9 +3,7 @@
 ## Purpose
 
 The `app-shell` capability covers the Electron desktop application's shell: the single main window, the secure `webPreferences` defaults, the `app://` protocol handler that serves the Next.js static export, the ping IPC round-trip that proves four-layer wiring (main / preload / ipc-contracts / renderer), and the renderer's import bans that keep the renderer isolated from OS and database access.
-
 ## Requirements
-
 ### Requirement: Desktop app launches with a single main window
 
 The desktop app SHALL, when launched on macOS, Windows, or Linux, open exactly one `BrowserWindow` that loads the renderer via a custom `app://` protocol handler registered in the main process. The app SHALL NOT expose a local HTTP dev server in production builds. The window's initial route SHALL be `app://./`, which the renderer maps to the datasources dashboard; the ping-wiring probe is relocated to `app://./diagnostics` and is no longer the home view.
@@ -76,7 +74,7 @@ The renderer bundle SHALL NOT import `fs`, `child_process`, `electron`, any path
 
 ### Requirement: Native module dependencies are ready after a clean install
 
-After a fresh `pnpm install` on a clean clone — with no prior `pnpm approve-builds` step, no prior `pnpm rebuild`, and no prior `pnpm --filter @ft5/desktop run postinstall` — the workspace SHALL be in a state where:
+After a fresh `pnpm install` on a clean clone — with no prior `pnpm approve-builds` step, no prior `pnpm rebuild`, and no prior `pnpm --filter @cloudstash/desktop run postinstall` — the workspace SHALL be in a state where:
 
 1. The Electron binary is present and `require('electron')` from a Node process inside the workspace resolves to a real binary path (i.e. Electron's `install.js` script has executed and written `node_modules/.pnpm/electron@<version>/node_modules/electron/path.txt`).
 2. Every native addon depended on by the main process (currently `better-sqlite3`) loads under Electron without an ABI-mismatch error (e.g. without `Error: The module '…better_sqlite3.node' was compiled against a different Node.js version`).
@@ -85,7 +83,7 @@ This SHALL be achieved by an explicit `pnpm.onlyBuiltDependencies` allowlist in 
 
 #### Scenario: Fresh clone can load better-sqlite3 under Electron without manual intervention
 
-- **WHEN** a developer clones the repository, runs `pnpm install`, and then runs `pnpm --filter @ft5/desktop exec electron -e "require('better-sqlite3')"`
+- **WHEN** a developer clones the repository, runs `pnpm install`, and then runs `pnpm --filter @cloudstash/desktop exec electron -e "require('better-sqlite3')"`
 - **THEN** the Electron process exits with code 0 and prints no error on stderr, with no prior `pnpm approve-builds`, `pnpm rebuild`, or targeted postinstall run
 
 #### Scenario: Allowlist is defined in source, not per-user pnpm configuration
@@ -97,3 +95,4 @@ This SHALL be achieved by an explicit `pnpm.onlyBuiltDependencies` allowlist in 
 
 - **WHEN** any commit removes the `pnpm` block from root `package.json`, or drops any of the required packages from the `onlyBuiltDependencies` array
 - **THEN** `scripts/pnpm-built-deps.test.ts` fails and `pnpm -w test` exits non-zero
+

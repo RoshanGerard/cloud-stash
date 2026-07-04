@@ -99,8 +99,8 @@ Adding a new provider type to the system SHALL require exactly (a) adding a `Pro
 
 #### Scenario: OAuth form surfaces service-config-missing with file path + README pointer
 
-- **WHEN** the renderer calls `window.api.sync.authenticateStart({ providerId: "google-drive" })` and the response is `{ ok: false, error: { tag: "service-config-missing", path: "/home/u/ft5/sync_app/config.json", providerId: "google-drive" } }`
-- **THEN** the form renders inline copy: "Service configuration missing. Add OAuth credentials to `/home/u/ft5/sync_app/config.json` (rendered as inline `<code>`). See README §Provider OAuth registration."; the path string is selectable text; no anchor tag points to the README (sandboxed renderer with no off-domain navigation); a Retry button is present
+- **WHEN** the renderer calls `window.api.sync.authenticateStart({ providerId: "google-drive" })` and the response is `{ ok: false, error: { tag: "service-config-missing", path: "/home/u/cloudstash/sync_app/config.json", providerId: "google-drive" } }`
+- **THEN** the form renders inline copy: "Service configuration missing. Add OAuth credentials to `/home/u/cloudstash/sync_app/config.json` (rendered as inline `<code>`). See README §Provider OAuth registration."; the path string is selectable text; no anchor tag points to the README (sandboxed renderer with no off-domain navigation); a Retry button is present
 
 #### Scenario: Non-OAuth submission flows through sync.authenticateStart + authenticateComplete
 
@@ -155,7 +155,7 @@ The engine-bus event types (`DatasourceEvent` / `AnyDatasourceEvent` / `PayloadM
 
 #### Scenario: authenticateStart, authenticateComplete, authenticateCancel are first-class on sync surface
 
-- **WHEN** a type test imports `SyncAuthenticateStartRequest`, `SyncAuthenticateCompleteRequest`, `SyncAuthenticateCancelRequest` from `@ft5/ipc-contracts/sync-service-desktop`
+- **WHEN** a type test imports `SyncAuthenticateStartRequest`, `SyncAuthenticateCompleteRequest`, `SyncAuthenticateCancelRequest` from `@cloudstash/ipc-contracts/sync-service-desktop`
 - **THEN** all three types are present, the preload exposes the matching methods on `window.api.sync`, the renderer call sites compile under strict mode, and each method has a typed response
 
 ### Requirement: Upload action opens the in-app Upload dialog

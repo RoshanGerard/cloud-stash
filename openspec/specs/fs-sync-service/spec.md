@@ -2,11 +2,11 @@
 
 ## Purpose
 
-The `fs-sync-service` capability is the per-user background daemon that owns manual upload and one-way mirror-sync jobs for the `ft5-cloude-sync` desktop app. It runs independently of Electron (installed as a Scheduled Task on Windows, a LaunchAgent on macOS, or a `systemd --user` unit on Linux), so jobs continue after the app closes. It consumes `@ft5/fs-datasource-engine` for every provider call, persists jobs + a local-to-cloud sync snapshot in its own SQLite database at `$HOME/ft5/sync_app/sync.db`, exposes a newline-delimited JSON IPC surface over a named pipe (`\\.\pipe\ft5-sync` on Windows, `$HOME/ft5/sync_app/sync.sock` on Unix), enforces a global concurrency cap of 2 via a semaphore, applies a retry split (system-level network / rate-limit / auth-expired vs. user-configurable provider-error), and ships a plaintext `ConfigFileCredentialStore` with `0600` / user-ACL enforcement as its v1 `CredentialStore` binding. An input port (`MonitorEventSource`) is declared for a future `services/fs-monitor` change; in v1 the port is bound to a no-op and auto-sync commands are NOT exposed.
+The `fs-sync-service` capability is the per-user background daemon that owns manual upload and one-way mirror-sync jobs for the `cloudstash` desktop app. It runs independently of Electron (installed as a Scheduled Task on Windows, a LaunchAgent on macOS, or a `systemd --user` unit on Linux), so jobs continue after the app closes. It consumes `@cloudstash/fs-datasource-engine` for every provider call, persists jobs + a local-to-cloud sync snapshot in its own SQLite database at `$HOME/cloudstash/sync_app/sync.db`, exposes a newline-delimited JSON IPC surface over a named pipe (`\\.\pipe\cloudstash-sync` on Windows, `$HOME/cloudstash/sync_app/sync.sock` on Unix), enforces a global concurrency cap of 2 via a semaphore, applies a retry split (system-level network / rate-limit / auth-expired vs. user-configurable provider-error), and ships a plaintext `ConfigFileCredentialStore` with `0600` / user-ACL enforcement as its v1 `CredentialStore` binding. An input port (`MonitorEventSource`) is declared for a future `services/fs-monitor` change; in v1 the port is bound to a no-op and auto-sync commands are NOT exposed.
 ## Requirements
 ### Requirement: Service is a framework-agnostic, per-user Node.js daemon
 
-The sync service SHALL live at `services/fs-sync/` as a pnpm workspace entry. It SHALL import only from `@ft5/ipc-contracts`, `@ft5/fs-datasource-engine`, Drizzle ORM (`drizzle-orm`, `better-sqlite3`), Node.js built-ins (`net`, `fs`, `fs/promises`, `crypto`, `path`, `dns/promises`, `os`, `child_process`), and its own internal modules. It SHALL NOT import from `electron`, `@electron/*`, any path under `apps/desktop/`, or any renderer-scoped specifier. The service SHALL run under the identity of the current OS user and SHALL NOT require elevated privileges (no Administrator on Windows, no root on macOS/Linux) to start, serve requests, or execute jobs.
+The sync service SHALL live at `services/fs-sync/` as a pnpm workspace entry. It SHALL import only from `@cloudstash/ipc-contracts`, `@cloudstash/fs-datasource-engine`, Drizzle ORM (`drizzle-orm`, `better-sqlite3`), Node.js built-ins (`net`, `fs`, `fs/promises`, `crypto`, `path`, `dns/promises`, `os`, `child_process`), and its own internal modules. It SHALL NOT import from `electron`, `@electron/*`, any path under `apps/desktop/`, or any renderer-scoped specifier. The service SHALL run under the identity of the current OS user and SHALL NOT require elevated privileges (no Administrator on Windows, no root on macOS/Linux) to start, serve requests, or execute jobs.
 
 #### Scenario: No Electron or desktop-app imports in the service
 
@@ -18,28 +18,14 @@ The sync service SHALL live at `services/fs-sync/` as a pnpm workspace entry. It
 - **WHEN** the service binary is launched in a CI container running as a non-root user with no sudoers entry
 - **THEN** the service enters its main loop, opens its IPC listener, and serves a subsequent `sync:get-job` command for a nonexistent id with a `not-found` response
 
-### Requirement: Data directory layout at `$HOME/ft5/sync_app`
-
-The service SHALL create and use a data directory at `$HOME/ft5/sync_app/` (resolved via `os.homedir()`; on Windows this resolves to `%USERPROFILE%\ft5\sync_app\`). The directory SHALL contain the files `credentials.json`, `sync.db`, `service.pid`, `service.log`, and (on Unix prod only) `sync.sock`. The environment variable `FT5_SYNC_DATA_DIR`, when set, SHALL override the data directory root for the lifetime of the process. The service SHALL create any missing directories or files on first start, with directory mode `0700` on Unix and a user-only ACL on Windows.
-
-#### Scenario: Data dir is created on first start
-
-- **WHEN** the service starts with `$HOME/ft5/sync_app/` not present and `FT5_SYNC_DATA_DIR` unset
-- **THEN** the directory is created with mode `0700`, and subsequent file writes inside it succeed
-
-#### Scenario: `FT5_SYNC_DATA_DIR` override is honoured
-
-- **WHEN** the service starts with `FT5_SYNC_DATA_DIR=/tmp/ft5-test-$RANDOM`
-- **THEN** `credentials.json`, `sync.db`, and all runtime files are created under that directory; nothing is written to `$HOME/ft5/sync_app/`
-
 ### Requirement: Named-pipe JSON-line IPC transport
 
-The service SHALL listen for client connections on a named-pipe path. In production mode the path SHALL be `\\.\pipe\ft5-sync` on Windows and `$HOME/ft5/sync_app/sync.sock` on Unix. In development mode the path SHALL be `\\.\pipe\ft5-sync-dev` on Windows and `$HOME/ft5/sync_app/sync-dev.sock` on Unix. The protocol SHALL be newline-delimited JSON frames; each frame is one of `Request { id, kind: "request", command, params }`, `Response { id, kind: "response", ok, result | error }`, or `Event { kind: "event", name, payload }`. The connection SHALL be bidirectional: the client writes requests; the server writes responses AND unsolicited event frames on the same stream. Request/response correlation SHALL use the `id` field. On Unix, the socket file SHALL be created with mode `0600`.
+The service SHALL listen for client connections on a named-pipe path. In production mode the path SHALL be `\\.\pipe\cloudstash-sync` on Windows and `$HOME/cloudstash/sync_app/sync.sock` on Unix. In development mode the path SHALL be `\\.\pipe\cloudstash-sync-dev` on Windows and `$HOME/cloudstash/sync_app/sync-dev.sock` on Unix. The protocol SHALL be newline-delimited JSON frames; each frame is one of `Request { id, kind: "request", command, params }`, `Response { id, kind: "response", ok, result | error }`, or `Event { kind: "event", name, payload }`. The connection SHALL be bidirectional: the client writes requests; the server writes responses AND unsolicited event frames on the same stream. Request/response correlation SHALL use the `id` field. On Unix, the socket file SHALL be created with mode `0600`.
 
 #### Scenario: Prod service listens on the production pipe
 
 - **WHEN** the service starts without `--dev`
-- **THEN** `net.connect('\\\\.\\pipe\\ft5-sync')` succeeds on Windows and `net.connect($HOME + '/ft5/sync_app/sync.sock')` succeeds on Unix
+- **THEN** `net.connect('\\\\.\\pipe\\cloudstash-sync')` succeeds on Windows and `net.connect($HOME + '/cloudstash/sync_app/sync.sock')` succeeds on Unix
 
 #### Scenario: Dev service listens on the dev pipe only
 
@@ -53,12 +39,12 @@ The service SHALL listen for client connections on a named-pipe path. In product
 
 #### Scenario: Unix socket file permissions
 
-- **WHEN** the service starts on Linux or macOS and creates `$HOME/ft5/sync_app/sync.sock`
+- **WHEN** the service starts on Linux or macOS and creates `$HOME/cloudstash/sync_app/sync.sock`
 - **THEN** `fs.stat` of the socket reports mode bits with no group or other access (`(stat.mode & 0o077) === 0`)
 
 ### Requirement: IPC command surface
 
-The service SHALL accept and correctly respond to the following commands on its IPC channel: `sync:enqueue-mirror`, `sync:list-jobs`, `sync:get-job`, `sync:cancel-job`, `sync:cancel-upload`, `sync:cancel-download`, `sync:subscribe-events`, `sync:unsubscribe-events`, `sync:set-retry-policy`, `sync:get-retry-policy`, `sync:authenticate-start`, `sync:authenticate-complete`, `sync:authenticate-cancel`, `sync:get-config`, `sync:set-config`, `sync:delete-credentials`, `sync:get-status`, `files:list`, `files:stat`, `files:search`, `files:remove`, `files:rename`, `files:download`, `files:upload`, `downloads:list-active`, `downloads:clear-history`, `downloads:delete-partial`, `downloads:list-leftover`, `uploads:list-active`. The previous `sync:enqueue-upload` command SHALL NOT be present (replaced by `files:upload` per this change). Request and response types for every command SHALL be declared in `@ft5/ipc-contracts/sync-service` as discriminated unions, keyed by the `command` field. Any command frame whose `command` is not in this enumerated set SHALL receive a response with `ok: false, error.tag === 'unknown-command'`.
+The service SHALL accept and correctly respond to the following commands on its IPC channel: `sync:enqueue-mirror`, `sync:list-jobs`, `sync:get-job`, `sync:cancel-job`, `sync:cancel-upload`, `sync:cancel-download`, `sync:subscribe-events`, `sync:unsubscribe-events`, `sync:set-retry-policy`, `sync:get-retry-policy`, `sync:authenticate-start`, `sync:authenticate-complete`, `sync:authenticate-cancel`, `sync:get-config`, `sync:set-config`, `sync:delete-credentials`, `sync:get-status`, `files:list`, `files:stat`, `files:search`, `files:remove`, `files:rename`, `files:download`, `files:upload`, `downloads:list-active`, `downloads:clear-history`, `downloads:delete-partial`, `downloads:list-leftover`, `uploads:list-active`. The previous `sync:enqueue-upload` command SHALL NOT be present (replaced by `files:upload` per this change). Request and response types for every command SHALL be declared in `@cloudstash/ipc-contracts/sync-service` as discriminated unions, keyed by the `command` field. Any command frame whose `command` is not in this enumerated set SHALL receive a response with `ok: false, error.tag === 'unknown-command'`.
 
 The new `files:upload` command SHALL accept `{ datasourceId, sourcePath, targetPath, conflictPolicy }` and resolve the engine client for that `datasourceId` via the service's existing `ClientFactory`. The response envelope is the standard discriminated union with `value: { uploadJobId: string }` on success. Error tags include the existing taxonomy plus `"conflict"` (carrying `existingUploadJobId` and `targetPath` for the concurrent-target case).
 
@@ -94,7 +80,7 @@ The new `files:upload` command SHALL accept `{ datasourceId, sourcePath, targetP
 
 ### Requirement: Single-instance guard via PID file
 
-On startup, the service SHALL write its PID to `$HOME/ft5/sync_app/service.pid` (prod) or `service-dev.pid` (dev). If the PID file exists and references a currently-live process whose executable image name matches the service binary name, the new instance SHALL log the collision and exit with code `3`. If the referenced PID is not alive, OR it is alive but has a non-matching image name (stale reuse), the new instance SHALL overwrite the PID file and proceed normally.
+On startup, the service SHALL write its PID to `$HOME/cloudstash/sync_app/service.pid` (prod) or `service-dev.pid` (dev). If the PID file exists and references a currently-live process whose executable image name matches the service binary name, the new instance SHALL log the collision and exit with code `3`. If the referenced PID is not alive, OR it is alive but has a non-matching image name (stale reuse), the new instance SHALL overwrite the PID file and proceed normally.
 
 #### Scenario: Second instance refuses to start
 
@@ -108,7 +94,7 @@ On startup, the service SHALL write its PID to `$HOME/ft5/sync_app/service.pid` 
 
 ### Requirement: `ConfigFileCredentialStore` implements the engine's `CredentialStore` port
 
-The service SHALL provide a class `ConfigFileCredentialStore` in `services/fs-sync/src/credential-store/config-file.ts` implementing the engine's `CredentialStore` interface exactly. Storage SHALL be plaintext JSON at `$HOME/ft5/sync_app/credentials.json` in the shape `{ "schemaVersion": 1, "credentials": { [datasourceId]: StoredCredentials } }`. Writes SHALL be atomic (write to a `credentials.json.tmp` sibling, then `fs.rename`). After every write on Unix, the file SHALL be `fchmod`-ed to `0600`. The store SHALL NOT depend on `electron` or `safeStorage`.
+The service SHALL provide a class `ConfigFileCredentialStore` in `services/fs-sync/src/credential-store/config-file.ts` implementing the engine's `CredentialStore` interface exactly. Storage SHALL be plaintext JSON at `$HOME/cloudstash/sync_app/credentials.json` in the shape `{ "schemaVersion": 1, "credentials": { [datasourceId]: StoredCredentials } }`. Writes SHALL be atomic (write to a `credentials.json.tmp` sibling, then `fs.rename`). After every write on Unix, the file SHALL be `fchmod`-ed to `0600`. The store SHALL NOT depend on `electron` or `safeStorage`.
 
 #### Scenario: Credentials round-trip through the store
 
@@ -141,11 +127,11 @@ On Unix, the `ConfigFileCredentialStore` SHALL `fs.stat` the credentials file be
 
 ### Requirement: SQLite database schema and migrations
 
-The service SHALL open a SQLite database at `$HOME/ft5/sync_app/sync.db` using `better-sqlite3`, with `journal_mode = WAL` and `synchronous = NORMAL`. Schema SHALL be defined via Drizzle ORM at `services/fs-sync/src/db/schema.ts` and SHALL include at least the tables `service_meta`, `jobs`, `sync_snapshot`, `retry_policies`, `downloads`. Migrations SHALL live under `services/fs-sync/drizzle/` and run forward-only on service start. The `downloads` table SHALL be introduced by a new forward-only migration `services/fs-sync/drizzle/0002_downloads.sql`, and `CURRENT_SCHEMA_VERSION` SHALL be `2`. The service SHALL run `PRAGMA integrity_check` on startup and, if the result is not `"ok"`, SHALL log a fatal error and exit with code `4`.
+The service SHALL open a SQLite database at `$HOME/cloudstash/sync_app/sync.db` using `better-sqlite3`, with `journal_mode = WAL` and `synchronous = NORMAL`. Schema SHALL be defined via Drizzle ORM at `services/fs-sync/src/db/schema.ts` and SHALL include at least the tables `service_meta`, `jobs`, `sync_snapshot`, `retry_policies`, `downloads`. Migrations SHALL live under `services/fs-sync/drizzle/` and run forward-only on service start. The `downloads` table SHALL be introduced by a new forward-only migration `services/fs-sync/drizzle/0002_downloads.sql`, and `CURRENT_SCHEMA_VERSION` SHALL be `2`. The service SHALL run `PRAGMA integrity_check` on startup and, if the result is not `"ok"`, SHALL log a fatal error and exit with code `4`.
 
 #### Scenario: Fresh database is initialized on first start
 
-- **WHEN** the service starts against an empty `FT5_SYNC_DATA_DIR`
+- **WHEN** the service starts against an empty `CLOUDSTASH_SYNC_DATA_DIR`
 - **THEN** `sync.db` is created, all five core tables (`service_meta`, `jobs`, `sync_snapshot`, `retry_policies`, `downloads`) exist (verifiable via `sqlite_master`), and `service_meta` has exactly one row with `schemaVersion = 2`
 
 #### Scenario: Existing v1 database gains the downloads table on upgrade
@@ -343,7 +329,7 @@ When a mirror-sync job transitions `waiting-network → queued` and is subsequen
 
 ### Requirement: Service consumes the engine only through `ClientFactory`
 
-Every `DatasourceClient<T>` used by any executor SHALL be obtained by calling `ClientFactory.create(providerId, credentials, { bus, credentialStore })` from `@ft5/fs-datasource-engine`. No executor SHALL instantiate a concrete client class (`S3Client`, `OneDriveClient`, `GoogleDriveClient`) directly. No file under `services/fs-sync/src/` SHALL import from `@aws-sdk/client-s3`, `@microsoft/microsoft-graph-client`, or `googleapis`.
+Every `DatasourceClient<T>` used by any executor SHALL be obtained by calling `ClientFactory.create(providerId, credentials, { bus, credentialStore })` from `@cloudstash/fs-datasource-engine`. No executor SHALL instantiate a concrete client class (`S3Client`, `OneDriveClient`, `GoogleDriveClient`) directly. No file under `services/fs-sync/src/` SHALL import from `@aws-sdk/client-s3`, `@microsoft/microsoft-graph-client`, or `googleapis`.
 
 #### Scenario: Factory is the single entry point
 
@@ -382,21 +368,21 @@ On service startup, AFTER migrations and integrity check but BEFORE the IPC list
 
 The `apps/desktop` electron-builder configuration SHALL invoke platform-specific post-install and post-uninstall hooks that register or deregister the sync service as a per-user OS service:
 
-- **Windows:** post-install runs `schtasks /Create /SC ONLOGON /TN "ft5-sync" /TR <servicePath> /RL LIMITED /F`; post-uninstall runs `schtasks /Delete /TN "ft5-sync" /F`. Both commands SHALL execute under the current user context and SHALL NOT require Administrator elevation.
-- **macOS:** post-install writes `~/Library/LaunchAgents/tech.forti5.ft5-sync.plist` with `RunAtLoad=true` and `KeepAlive=true`, then runs `launchctl load ~/Library/LaunchAgents/tech.forti5.ft5-sync.plist`; post-uninstall runs `launchctl unload ...` and deletes the plist.
-- **Linux:** post-install writes `~/.config/systemd/user/ft5-sync.service`, runs `systemctl --user enable --now ft5-sync.service`, and runs `loginctl enable-linger <user>`; post-uninstall runs `systemctl --user disable --now ft5-sync.service` and deletes the unit.
+- **Windows:** post-install runs `schtasks /Create /SC ONLOGON /TN "cloudstash-sync" /TR <servicePath> /RL LIMITED /F`; post-uninstall runs `schtasks /Delete /TN "cloudstash-sync" /F`. Both commands SHALL execute under the current user context and SHALL NOT require Administrator elevation.
+- **macOS:** post-install writes `~/Library/LaunchAgents/com.cloudstash.sync.plist` with `RunAtLoad=true` and `KeepAlive=true`, then runs `launchctl load ~/Library/LaunchAgents/com.cloudstash.sync.plist`; post-uninstall runs `launchctl unload ...` and deletes the plist.
+- **Linux:** post-install writes `~/.config/systemd/user/cloudstash-sync.service`, runs `systemctl --user enable --now cloudstash-sync.service`, and runs `loginctl enable-linger <user>`; post-uninstall runs `systemctl --user disable --now cloudstash-sync.service` and deletes the unit.
 
 No third-party service-manager library SHALL be introduced; only OS-native CLIs SHALL be used.
 
 #### Scenario: Windows install creates the scheduled task
 
 - **WHEN** the installer post-install hook runs on Windows in a test container with the user in scope
-- **THEN** `schtasks /Query /TN "ft5-sync"` returns exit code 0 and the task's "Run as user" field matches the current user; no UAC prompt occurred
+- **THEN** `schtasks /Query /TN "cloudstash-sync"` returns exit code 0 and the task's "Run as user" field matches the current user; no UAC prompt occurred
 
 #### Scenario: macOS install loads the launchd agent
 
 - **WHEN** the installer post-install hook runs on macOS in a test VM
-- **THEN** `launchctl list | grep tech.forti5.ft5-sync` finds a matching line, and the corresponding plist file exists at `~/Library/LaunchAgents/tech.forti5.ft5-sync.plist`
+- **THEN** `launchctl list | grep com.cloudstash.sync` finds a matching line, and the corresponding plist file exists at `~/Library/LaunchAgents/com.cloudstash.sync.plist`
 
 #### Scenario: Uninstall removes all traces
 
@@ -405,7 +391,7 @@ No third-party service-manager library SHALL be introduced; only OS-native CLIs 
 
 ### Requirement: Dev mode uses distinct pipe, data dir, and PID file
 
-When launched with `--dev`, the service SHALL (a) listen on the dev pipe path (see transport requirement), (b) use `FT5_SYNC_DATA_DIR=$HOME/ft5/sync_app/dev/` by default (overridable), (c) write its PID to `service-dev.pid`, (d) log at `debug` level to stderr in addition to `service.log`. A dev-mode service SHALL coexist with a prod-mode service on the same machine without interference: starting a dev service with a prod service already running SHALL succeed, and vice versa.
+When launched with `--dev`, the service SHALL (a) listen on the dev pipe path (see transport requirement), (b) use `CLOUDSTASH_SYNC_DATA_DIR=$HOME/cloudstash/sync_app/dev/` by default (overridable), (c) write its PID to `service-dev.pid`, (d) log at `debug` level to stderr in addition to `service.log`. A dev-mode service SHALL coexist with a prod-mode service on the same machine without interference: starting a dev service with a prod service already running SHALL succeed, and vice versa.
 
 #### Scenario: Dev and prod services coexist
 
@@ -518,7 +504,7 @@ The OAuth-class loopback callback path (inside the service) drives the OAuth com
 
 #### Scenario: Service-config-missing on OAuth start
 
-- **WHEN** a client sends `sync:authenticate-start { providerId: "google-drive" }` and `~/ft5/sync_app/config.json` does not exist (or has empty `clientId`)
+- **WHEN** a client sends `sync:authenticate-start { providerId: "google-drive" }` and `~/cloudstash/sync_app/config.json` does not exist (or has empty `clientId`)
 - **THEN** the response is `{ ok: false, error: { tag: "service-config-missing", path: <abs path>, providerId: "google-drive" } }`; no engine client is constructed; no event is emitted; no loopback server is bound
 
 #### Scenario: Cancel is idempotent and emits exactly once per active correlation
@@ -596,63 +582,15 @@ The broker SHALL NEVER write to `ConfigFileCredentialStore` directly — the eng
 - **WHEN** the broker has three active sessions and `broker.dispose()` is called
 - **THEN** all three HTTP servers are closed; all three timers are cleared; the pending-session map is empty; subsequent `start(...)` / `cancel(...)` calls are no-ops or throw documented errors
 
-### Requirement: `ServiceConfigStore` reads `~/ft5/sync_app/config.json` for OAuth app config
-
-The service SHALL own a `ServiceConfigStore` module under `services/fs-sync/src/config/`. The store SHALL be constructed at bootstrap and SHALL be the single point of truth for per-provider OAuth app configuration during the service's process lifetime.
-
-The store SHALL read from `<dataDir>/config.json` (where `dataDir` is the same directory that contains `credentials.json`). The schema SHALL be:
-
-```json
-{
-  "schemaVersion": 1,
-  "providers": {
-    "<providerId>": { "clientId": "<string>", "clientSecret": "<string>" }
-  }
-}
-```
-
-`getOAuthAppConfig(providerId): OAuthAppConfig` SHALL:
-- Return `{ clientId, clientSecret, redirectUri }` for the requested provider when the file exists, parses successfully, and the provider entry has non-empty `clientId` and `clientSecret`. The `redirectUri` field is computed by the broker at session-start time, NOT stored in the file.
-- Throw `ServiceConfigMissingError` (a typed error class with `path` and `providerId` fields) when (a) the file is absent, OR (b) the file exists but cannot be parsed, OR (c) the file parses but does not contain an entry for `providerId`, OR (d) the provider entry's `clientId` or `clientSecret` is the empty string.
-
-The store SHALL NEVER auto-create the config file. The repo SHALL ship a committed template at `services/fs-sync/config.example.json` containing the provider keys (`google-drive`, `onedrive`) with empty values.
-
-A `getRaw()` method SHALL return the parsed file content for the `sync:get-config` handler. A `setRaw(next)` method SHALL atomically write the file (write-to-tmp + rename) with mode 0o600 on Unix, mirroring the existing `ConfigFileCredentialStore` pattern.
-
-#### Scenario: getOAuthAppConfig returns the populated entry
-
-- **WHEN** the file exists with `providers["google-drive"] = { clientId: "abc", clientSecret: "def" }` and a test calls `store.getOAuthAppConfig("google-drive")` (with a redirectUri-injecting closure)
-- **THEN** the call resolves with `{ clientId: "abc", clientSecret: "def", redirectUri: <the-injected-uri> }`
-
-#### Scenario: getOAuthAppConfig throws ServiceConfigMissingError when file is absent
-
-- **WHEN** `<dataDir>/config.json` does not exist and a test calls `store.getOAuthAppConfig("google-drive")`
-- **THEN** the call throws `ServiceConfigMissingError` whose `path` is the absolute resolved file path and `providerId` is `"google-drive"`
-
-#### Scenario: getOAuthAppConfig throws when entry has empty clientId
-
-- **WHEN** the file exists with `providers["google-drive"] = { clientId: "", clientSecret: "def" }` and a test calls `store.getOAuthAppConfig("google-drive")`
-- **THEN** the call throws `ServiceConfigMissingError`; the error's `providerId` is `"google-drive"`
-
-#### Scenario: getRaw + setRaw round-trip
-
-- **WHEN** a test calls `store.setRaw({ schemaVersion: 1, providers: { "google-drive": { clientId: "x", clientSecret: "y" } } })` and then `store.getRaw()`
-- **THEN** the round-tripped value matches; the file at `<dataDir>/config.json` exists with mode 0o600 on Unix; a subsequent `store.getOAuthAppConfig("google-drive")` (with redirectUri injection) succeeds
-
-#### Scenario: Committed template exists and parses
-
-- **WHEN** a test reads `services/fs-sync/config.example.json` from the repo
-- **THEN** the file is valid JSON; the parsed object has `schemaVersion === 1` and a `providers` object with at least `google-drive` and `onedrive` keys; both keys have empty-string `clientId` and `clientSecret` values
-
 ### Requirement: `service-config-missing` is the canonical error tag for absent or incomplete OAuth app config
 
-The service's authenticate-start handler SHALL surface `ServiceConfigMissingError` as the wire error `{ tag: "service-config-missing", path: string, providerId: string }`. The tag SHALL be a member of the `SyncAuthenticateStartErrorTag` discriminated union exported from `@ft5/ipc-contracts/sync-service`. The tag SHALL NOT appear on the credentials-form path (S3, custom) — those providers do not consult the OAuth app config.
+The service's authenticate-start handler SHALL surface `ServiceConfigMissingError` as the wire error `{ tag: "service-config-missing", path: string, providerId: string }`. The tag SHALL be a member of the `SyncAuthenticateStartErrorTag` discriminated union exported from `@cloudstash/ipc-contracts/sync-service`. The tag SHALL NOT appear on the credentials-form path (S3, custom) — those providers do not consult the OAuth app config.
 
 The renderer's `oauth-form` failure-state rendering SHALL recognize the tag and surface user-facing copy that includes the absolute file `path` and a pointer to the per-provider OAuth registration section in `README.md`.
 
 #### Scenario: Tag is exposed by the contract
 
-- **WHEN** a contract type test imports `SyncAuthenticateStartErrorTag` from `@ft5/ipc-contracts/sync-service`
+- **WHEN** a contract type test imports `SyncAuthenticateStartErrorTag` from `@cloudstash/ipc-contracts/sync-service`
 - **THEN** the union contains `"service-config-missing"`; the corresponding error shape includes `path: string` and `providerId: string`
 
 #### Scenario: OAuth start returns the typed error when config is incomplete
@@ -723,11 +661,11 @@ The service event stream (delivered to subscribed clients via `SYNC_CHANNELS.eve
 
 `auth-completed` and `credential-persisted` SHALL fire as a pair (both, in either order) at every successful authenticate completion. Their distinct identities exist so the desktop event-bridge can filter `oauth-open-url` and `credential-persisted` out of the renderer-bound forward (they are bridge-only) while still letting the renderer consume `auth-completed`.
 
-The event union type SHALL be exported from `@ft5/ipc-contracts/sync-service` as a discriminated union keyed by `event` with the corresponding payload field at the top level (consistent with the existing job-* events).
+The event union type SHALL be exported from `@cloudstash/ipc-contracts/sync-service` as a discriminated union keyed by `event` with the corresponding payload field at the top level (consistent with the existing job-* events).
 
 #### Scenario: All seven events are present in the contract
 
-- **WHEN** a contract type test imports the `SyncEvent` union from `@ft5/ipc-contracts/sync-service`
+- **WHEN** a contract type test imports the `SyncEvent` union from `@cloudstash/ipc-contracts/sync-service`
 - **THEN** every event name in the table above is a member of the union; payloads narrow correctly under `switch (e.event)` in TypeScript
 
 #### Scenario: auth-completed and credential-persisted fire together on OAuth success
@@ -739,25 +677,6 @@ The event union type SHALL be exported from `@ft5/ipc-contracts/sync-service` as
 
 - **WHEN** a desktop event-bridge test subscribes to `oauth-open-url` and `credential-persisted` AND has a renderer-window subscriber registered
 - **THEN** the bridge's renderer-forward path forwards every `auth-*` event but does NOT forward `oauth-open-url` or `credential-persisted`; the bridge-internal path consumes both bridge-only events for `shell.openExternal` and `registry.add` respectively
-
-### Requirement: Development builds may bypass authenticate via `FT5_DEV_CREDENTIALS` (service-side)
-
-When the service process starts with `process.env.FT5_DEV_CREDENTIALS === "1"`, the OAuth loopback broker SHALL log a single warning line (`⚠ FT5_DEV_CREDENTIALS active — browser consent bypassed`) on first `start(...)` call within the process, and subsequent `start(...)` calls for OAuth-class providers SHALL: (a) read `<dataDir>/dev-credentials.json` via the existing `ConfigFileCredentialStore` shape; (b) skip HTTP server binding and `oauth-open-url` emission; (c) emit `auth-completed` and `credential-persisted` synchronously (next tick) using the file-derived credentials; (d) NOT bind a loopback listener, NOT generate state, NOT emit `oauth-open-url`. In packaged production builds the env var SHALL NEVER be set — the service installer SHALL NOT propagate it into the service's runtime environment.
-
-#### Scenario: Dev override short-circuits the browser flow
-
-- **WHEN** a test starts the service with `FT5_DEV_CREDENTIALS=1`, a valid `dev-credentials.json` in the fixture data dir, and a stubbed loopback HTTP-server constructor
-- **THEN** a `sync:authenticate-start { providerId: "google-drive" }` resolves; no HTTP server is bound; no `oauth-open-url` event is emitted; the next events on the stream are `auth-completed` and `credential-persisted` (carrying a synthetic correlationId) within one tick
-
-#### Scenario: Production service does not propagate the env var
-
-- **WHEN** a smoke test inspects the packaged service binary's embedded env / startup logs
-- **THEN** `FT5_DEV_CREDENTIALS` is not in the packaged process env; the warning line is NOT printed on production startup
-
-#### Scenario: Startup warning fires once when dev override is active
-
-- **WHEN** the service starts with `FT5_DEV_CREDENTIALS=1` and three `sync:authenticate-start` calls run in sequence
-- **THEN** exactly one log line matching `/FT5_DEV_CREDENTIALS active/` is emitted across the lifetime of the broker; no further warnings fire on subsequent `start(...)` calls
 
 ### Requirement: `files:rename` and `files:download` RPC commands delegate to the engine
 
@@ -819,7 +738,7 @@ The `downloadJobId` SHALL be the canonical job key for cancel and progress corre
 
 #### Scenario: Successful download streams from engine to disk
 
-- **WHEN** a client sends `files:download { datasourceId: "ds-1", path: "/welcome.pdf", toPath: "/Users/alice/Downloads/ft5/welcome.pdf", conflictPolicy: "fail" }` and no file exists at the destination
+- **WHEN** a client sends `files:download { datasourceId: "ds-1", path: "/welcome.pdf", toPath: "/Users/alice/Downloads/CloudStash/welcome.pdf", conflictPolicy: "fail" }` and no file exists at the destination
 - **THEN** `toPath` validation passes; the conflict gate sees no file at the destination; the handler mints `downloadJobId`, creates the registry entry with `targetPath === toPath`, calls `engine.downloadFile(target, { rangeStart: 0, signal, onProgress })`; `engine.downloadFile` resolves with `{ stream, contentLength: N }`; the handler pipes the stream to `fs.createWriteStream(toPath, { flags: "w", start: 0 })`; on stream end the handler reads `fs.stat(toPath).size === N`; integrity check passes; the handler emits `file-downloaded { downloadJobId, savedPath: toPath, bytes: N }` and replies `{ ok: true, value: { savedPath: toPath, bytes: N } }`; the registry entry is removed
 
 #### Scenario: Pre-stream auth-expired refreshes then retries
@@ -884,7 +803,7 @@ before opening any write stream. Validations:
 3. The parent directory exists and is writable
    (`fs.access(parent, fs.constants.W_OK)` succeeds).
 4. The path does not write inside the service's own data directory
-   (`~/ft5/sync_app/`). Service-private paths are off-limits to
+   (`~/cloudstash/sync_app/`). Service-private paths are off-limits to
    download writes.
 
 Validation failure SHALL produce `{ ok: false, error: { tag: "other",
@@ -903,7 +822,7 @@ without opening any provider request.
 
 #### Scenario: Write into service data dir is rejected
 
-- **WHEN** a client sends `files:download` with `toPath: "$HOME/ft5/sync_app/credentials.json"`
+- **WHEN** a client sends `files:download` with `toPath: "$HOME/cloudstash/sync_app/credentials.json"`
 - **THEN** the handler rejects with `tag: "other", message: "toPath validation: cannot write inside service data directory"`
 
 ### Requirement: In-memory `DownloadRegistry` tracks active downloads
@@ -1183,13 +1102,13 @@ This requirement SHALL NOT affect the terminal-disposition path: range-not-honor
 
 ### Requirement: `FilesErrorTag` includes `exhausted-retries`
 
-The wire-level `FilesErrorTag` enumeration in `@ft5/ipc-contracts` SHALL include the value `"exhausted-retries"`. This tag SHALL be emitted exclusively by the `files:download` handler's environmental-retry exhaustion paths (consecutive-failure budget exhausted OR wall-time ceiling exceeded). Both exhaustion modes share the same tag; the discriminator (count vs wall-time) lives in the message field as `"exhausted-retries: <engineCause>"` or `"walltime-exceeded: <engineCause>"`.
+The wire-level `FilesErrorTag` enumeration in `@cloudstash/ipc-contracts` SHALL include the value `"exhausted-retries"`. This tag SHALL be emitted exclusively by the `files:download` handler's environmental-retry exhaustion paths (consecutive-failure budget exhausted OR wall-time ceiling exceeded). Both exhaustion modes share the same tag; the discriminator (count vs wall-time) lives in the message field as `"exhausted-retries: <engineCause>"` or `"walltime-exceeded: <engineCause>"`.
 
 The renderer's `download-failed` toast logic SHALL recognize `tag: "exhausted-retries"` and present the existing Retry affordance; the failure presentation SHALL include the message text so the user can read what kind of exhaustion occurred.
 
 #### Scenario: Tag is exposed at the wire level
 
-- **WHEN** TypeScript code imports `FilesErrorTag` from `@ft5/ipc-contracts`
+- **WHEN** TypeScript code imports `FilesErrorTag` from `@cloudstash/ipc-contracts`
 - **THEN** `"exhausted-retries"` is one of the type's literal members; tools that exhaustively switch on `FilesErrorTag` see it as a required case
 
 #### Scenario: Renderer treats the new tag like an existing failure
@@ -1575,7 +1494,7 @@ The handler already holds the `downloadJobId` for the in-flight call in its own 
 
 Every TypeScript source and test file SHALL reference `FilesErrorTag`
 values through the `FilesErrorTag` const object exported from
-`@ft5/ipc-contracts` (e.g. `FilesErrorTag.Disconnected`) — across the
+`@cloudstash/ipc-contracts` (e.g. `FilesErrorTag.Disconnected`) — across the
 workspace (`packages/`, `services/`, `apps/`, `scripts/`, `tools/`) — rather than
 the equivalent raw string literal (e.g. `"disconnected"`) in any
 error-tag context: construction (`tag: ...`), comparison (`tag === ...` /
@@ -1589,7 +1508,7 @@ agree on the same tag vocabulary and field set:
 - The const-convention **guard test**
   (`packages/ipc-contracts/src/__tests__/error-tag-const-convention.test.ts`)
   — a non-bypassable CI/test-time backstop that grep-scans the workspace.
-- A custom **ESLint rule** `ft5/no-raw-error-tag-literal`
+- A custom **ESLint rule** `cloudstash/no-raw-error-tag-literal`
   (`tools/eslint-rules/no-raw-error-tag-literal.mjs`, wired as an inline
   plugin in `eslint.config.mjs`) — an AST rule providing editor-time
   feedback and opt-in suggestions. It is syntactic (no type services); it
@@ -1616,7 +1535,7 @@ The following are explicitly EXEMPT and MAY remain raw strings:
   the string. `AuthFailedTag` (the `auth-failed` event payload) is a plain
   type union with no const object and is out of scope; its `auth-revoked` /
   `provider-error` literals stay raw — recorded in the guard allowlist and
-  carrying an `// eslint-disable-next-line ft5/no-raw-error-tag-literal --
+  carrying an `// eslint-disable-next-line cloudstash/no-raw-error-tag-literal --
   <reason>` for the rule.
 
 Because the five values shared with `DatasourceErrorTag` (`auth-revoked`,
@@ -1637,8 +1556,8 @@ does not distinguish them, so enum-correctness is review-enforced.
 
 #### Scenario: ESLint rule enforces the `FilesErrorTag` convention in the editor
 
-- **WHEN** a developer writes a `FilesErrorTag` value (e.g. `tag: "disconnected"`) as a raw literal in an enforced error-tag context and ESLint evaluates `ft5/no-raw-error-tag-literal`
-- **THEN** the rule reports the violation and offers an opt-in suggestion to `FilesErrorTag.Disconnected` (inserting the `@ft5/ipc-contracts` import if absent); for one of the five shared values it offers both the `FilesErrorTag.*` and `DatasourceErrorTag.*` suggestions; the rule never applies a fix via `eslint --fix`
+- **WHEN** a developer writes a `FilesErrorTag` value (e.g. `tag: "disconnected"`) as a raw literal in an enforced error-tag context and ESLint evaluates `cloudstash/no-raw-error-tag-literal`
+- **THEN** the rule reports the violation and offers an opt-in suggestion to `FilesErrorTag.Disconnected` (inserting the `@cloudstash/ipc-contracts` import if absent); for one of the five shared values it offers both the `FilesErrorTag.*` and `DatasourceErrorTag.*` suggestions; the rule never applies a fix via `eslint --fix`
 
 ### Requirement: Reconnect threads the stored account anchor into the engine authenticate flow
 
@@ -1727,7 +1646,7 @@ On startup, after the single-instance PID guard is acquired, the service SHALL r
 
 ### Requirement: Service config carries optional download-history retention settings
 
-`ServiceConfig` (in `@ft5/ipc-contracts/sync-service`) SHALL gain an optional field `downloadHistory?: { autoPrune: boolean; retentionDays: 30 | 90 | 180 | 365 }`. The field is additive at the unchanged config `schemaVersion: 1` (an existing `config.json` without the field remains valid). When the field is absent OR malformed (wrong shape, `retentionDays` out of the preset set, or `autoPrune` non-boolean), every reader SHALL fall back to the default `{ autoPrune: true, retentionDays: 90 }`. The default SHALL be applied at the read site (the prune scheduler and the set-config validator), because `ServiceConfigStore.read`'s `as ServiceConfig` cast does not validate the field's shape.
+`ServiceConfig` (in `@cloudstash/ipc-contracts/sync-service`) SHALL gain an optional field `downloadHistory?: { autoPrune: boolean; retentionDays: 30 | 90 | 180 | 365 }`. The field is additive at the unchanged config `schemaVersion: 1` (an existing `config.json` without the field remains valid). When the field is absent OR malformed (wrong shape, `retentionDays` out of the preset set, or `autoPrune` non-boolean), every reader SHALL fall back to the default `{ autoPrune: true, retentionDays: 90 }`. The default SHALL be applied at the read site (the prune scheduler and the set-config validator), because `ServiceConfigStore.read`'s `as ServiceConfig` cast does not validate the field's shape.
 
 #### Scenario: Absent downloadHistory yields the default
 
@@ -1813,7 +1732,7 @@ Before deleting the matched rows, the handler SHALL unlink the recorded `target_
 
 ### Requirement: `DownloadTerminalStatus` is the wire vocabulary for terminal download statuses
 
-`@ft5/ipc-contracts/sync-service` SHALL export `DownloadTerminalStatus = 'completed' | 'failed' | 'cancelled' | 'interrupted'` (the four terminal `downloads.status` values; `in-flight` is excluded). This is the first promotion of the download-status vocabulary to the wire — `migrate-download-registry-to-sqlite` keeps the five statuses confined to the database. `DownloadTerminalStatus` SHALL be the type of the `status` filter on `downloads:clear-history`.
+`@cloudstash/ipc-contracts/sync-service` SHALL export `DownloadTerminalStatus = 'completed' | 'failed' | 'cancelled' | 'interrupted'` (the four terminal `downloads.status` values; `in-flight` is excluded). This is the first promotion of the download-status vocabulary to the wire — `migrate-download-registry-to-sqlite` keeps the five statuses confined to the database. `DownloadTerminalStatus` SHALL be the type of the `status` filter on `downloads:clear-history`.
 
 #### Scenario: The terminal-status type excludes in-flight
 
@@ -1915,4 +1834,85 @@ Each `LeftoverEntry` SHALL carry `{ downloadJobId, datasourceId, sourcePath, tar
 
 - **WHEN** a client sends `downloads:list-leftover` and no KEEP-eligible row has an on-disk partial
 - **THEN** the response is `{ ok: true, value: { entries: [] } }`
+
+### Requirement: Data directory layout at `$HOME/cloudstash/sync_app`
+
+The service SHALL create and use a data directory at `$HOME/cloudstash/sync_app/` (resolved via `os.homedir()`; on Windows this resolves to `%USERPROFILE%\cloudstash\sync_app\`). The directory SHALL contain the files `credentials.json`, `sync.db`, `service.pid`, `service.log`, and (on Unix prod only) `sync.sock`. The environment variable `CLOUDSTASH_SYNC_DATA_DIR`, when set, SHALL override the data directory root for the lifetime of the process. The service SHALL create any missing directories or files on first start, with directory mode `0700` on Unix and a user-only ACL on Windows.
+
+#### Scenario: Data dir is created on first start
+
+- **WHEN** the service starts with `$HOME/cloudstash/sync_app/` not present and `CLOUDSTASH_SYNC_DATA_DIR` unset
+- **THEN** the directory is created with mode `0700`, and subsequent file writes inside it succeed
+
+#### Scenario: `CLOUDSTASH_SYNC_DATA_DIR` override is honoured
+
+- **WHEN** the service starts with `CLOUDSTASH_SYNC_DATA_DIR=/tmp/cloudstash-test-$RANDOM`
+- **THEN** `credentials.json`, `sync.db`, and all runtime files are created under that directory; nothing is written to `$HOME/cloudstash/sync_app/`
+
+### Requirement: `ServiceConfigStore` reads `~/cloudstash/sync_app/config.json` for OAuth app config
+
+The service SHALL own a `ServiceConfigStore` module under `services/fs-sync/src/config/`. The store SHALL be constructed at bootstrap and SHALL be the single point of truth for per-provider OAuth app configuration during the service's process lifetime.
+
+The store SHALL read from `<dataDir>/config.json` (where `dataDir` is the same directory that contains `credentials.json`). The schema SHALL be:
+
+```json
+{
+  "schemaVersion": 1,
+  "providers": {
+    "<providerId>": { "clientId": "<string>", "clientSecret": "<string>" }
+  }
+}
+```
+
+`getOAuthAppConfig(providerId): OAuthAppConfig` SHALL:
+- Return `{ clientId, clientSecret, redirectUri }` for the requested provider when the file exists, parses successfully, and the provider entry has non-empty `clientId` and `clientSecret`. The `redirectUri` field is computed by the broker at session-start time, NOT stored in the file.
+- Throw `ServiceConfigMissingError` (a typed error class with `path` and `providerId` fields) when (a) the file is absent, OR (b) the file exists but cannot be parsed, OR (c) the file parses but does not contain an entry for `providerId`, OR (d) the provider entry's `clientId` or `clientSecret` is the empty string.
+
+The store SHALL NEVER auto-create the config file. The repo SHALL ship a committed template at `services/fs-sync/config.example.json` containing the provider keys (`google-drive`, `onedrive`) with empty values.
+
+A `getRaw()` method SHALL return the parsed file content for the `sync:get-config` handler. A `setRaw(next)` method SHALL atomically write the file (write-to-tmp + rename) with mode 0o600 on Unix, mirroring the existing `ConfigFileCredentialStore` pattern.
+
+#### Scenario: getOAuthAppConfig returns the populated entry
+
+- **WHEN** the file exists with `providers["google-drive"] = { clientId: "abc", clientSecret: "def" }` and a test calls `store.getOAuthAppConfig("google-drive")` (with a redirectUri-injecting closure)
+- **THEN** the call resolves with `{ clientId: "abc", clientSecret: "def", redirectUri: <the-injected-uri> }`
+
+#### Scenario: getOAuthAppConfig throws ServiceConfigMissingError when file is absent
+
+- **WHEN** `<dataDir>/config.json` does not exist and a test calls `store.getOAuthAppConfig("google-drive")`
+- **THEN** the call throws `ServiceConfigMissingError` whose `path` is the absolute resolved file path and `providerId` is `"google-drive"`
+
+#### Scenario: getOAuthAppConfig throws when entry has empty clientId
+
+- **WHEN** the file exists with `providers["google-drive"] = { clientId: "", clientSecret: "def" }` and a test calls `store.getOAuthAppConfig("google-drive")`
+- **THEN** the call throws `ServiceConfigMissingError`; the error's `providerId` is `"google-drive"`
+
+#### Scenario: getRaw + setRaw round-trip
+
+- **WHEN** a test calls `store.setRaw({ schemaVersion: 1, providers: { "google-drive": { clientId: "x", clientSecret: "y" } } })` and then `store.getRaw()`
+- **THEN** the round-tripped value matches; the file at `<dataDir>/config.json` exists with mode 0o600 on Unix; a subsequent `store.getOAuthAppConfig("google-drive")` (with redirectUri injection) succeeds
+
+#### Scenario: Committed template exists and parses
+
+- **WHEN** a test reads `services/fs-sync/config.example.json` from the repo
+- **THEN** the file is valid JSON; the parsed object has `schemaVersion === 1` and a `providers` object with at least `google-drive` and `onedrive` keys; both keys have empty-string `clientId` and `clientSecret` values
+
+### Requirement: Development builds may bypass authenticate via `CLOUDSTASH_DEV_CREDENTIALS` (service-side)
+
+When the service process starts with `process.env.CLOUDSTASH_DEV_CREDENTIALS === "1"`, the OAuth loopback broker SHALL log a single warning line (`⚠ CLOUDSTASH_DEV_CREDENTIALS active — browser consent bypassed`) on first `start(...)` call within the process, and subsequent `start(...)` calls for OAuth-class providers SHALL: (a) read `<dataDir>/dev-credentials.json` via the existing `ConfigFileCredentialStore` shape; (b) skip HTTP server binding and `oauth-open-url` emission; (c) emit `auth-completed` and `credential-persisted` synchronously (next tick) using the file-derived credentials; (d) NOT bind a loopback listener, NOT generate state, NOT emit `oauth-open-url`. In packaged production builds the env var SHALL NEVER be set — the service installer SHALL NOT propagate it into the service's runtime environment.
+
+#### Scenario: Dev override short-circuits the browser flow
+
+- **WHEN** a test starts the service with `CLOUDSTASH_DEV_CREDENTIALS=1`, a valid `dev-credentials.json` in the fixture data dir, and a stubbed loopback HTTP-server constructor
+- **THEN** a `sync:authenticate-start { providerId: "google-drive" }` resolves; no HTTP server is bound; no `oauth-open-url` event is emitted; the next events on the stream are `auth-completed` and `credential-persisted` (carrying a synthetic correlationId) within one tick
+
+#### Scenario: Production service does not propagate the env var
+
+- **WHEN** a smoke test inspects the packaged service binary's embedded env / startup logs
+- **THEN** `CLOUDSTASH_DEV_CREDENTIALS` is not in the packaged process env; the warning line is NOT printed on production startup
+
+#### Scenario: Startup warning fires once when dev override is active
+
+- **WHEN** the service starts with `CLOUDSTASH_DEV_CREDENTIALS=1` and three `sync:authenticate-start` calls run in sequence
+- **THEN** exactly one log line matching `/CLOUDSTASH_DEV_CREDENTIALS active/` is emitted across the lifetime of the broker; no further warnings fire on subsequent `start(...)` calls
 
