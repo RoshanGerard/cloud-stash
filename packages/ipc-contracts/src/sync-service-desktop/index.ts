@@ -13,6 +13,11 @@ export type {
   JobKind,
   JobStatus,
   JobSummary,
+  // add-leftover-download-cleanup §2.1 — the per-leftover row shape carried
+  // by `SyncListLeftoverResponse.entries`. Re-exported here so the renderer's
+  // Review-leftover dialog imports it from the renderer-facing barrel rather
+  // than reaching into the wire subpath.
+  LeftoverEntry,
 } from "../sync-service/commands.js";
 
 export type {
@@ -41,6 +46,8 @@ export type {
   SyncClearDownloadHistoryResponse,
   SyncDeletePartialRequest,
   SyncDeletePartialResponse,
+  SyncListLeftoverRequest,
+  SyncListLeftoverResponse,
   SyncAuthenticateStartRequest,
   SyncAuthenticateStartResponse,
   SyncAuthenticateCompleteRequest,

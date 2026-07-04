@@ -361,6 +361,23 @@ export class SyncClient {
   }
 
   /**
+   * add-leftover-download-cleanup §2.3 — typed wrapper for
+   * `downloads:list-leftover`. Returns the flat `{ entries }` snapshot of
+   * KEEP-eligible terminal downloads whose partial file still exists on disk
+   * (the service stats each `target_path`; gone-file rows are excluded).
+   * Effectively infallible service-side (stat errors are per-row skips, never
+   * a command failure); a rejection means a transport-level failure. The
+   * desktop bridge `handleListLeftover` and the renderer's Settings
+   * Review-leftover affordance delegate here.
+   */
+  listLeftover(
+    params: CommandParams<"downloads:list-leftover">,
+    opts?: { timeoutMs?: number },
+  ): Promise<CommandResult<"downloads:list-leftover">> {
+    return this.request("downloads:list-leftover", params, opts);
+  }
+
+  /**
    * add-download-history-ui §5 — typed wrapper for `sync:get-config`. Returns
    * the parsed `ServiceConfig` (or the empty default when the file is absent).
    * First renderer consumer of the service config (design.md Decision 8).

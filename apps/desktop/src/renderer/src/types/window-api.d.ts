@@ -42,6 +42,7 @@ import type {
   SyncClearDownloadHistoryResponse,
   SyncDeletePartialRequest,
   SyncDeletePartialResponse,
+  SyncListLeftoverResponse,
   SyncEvent,
   SyncGetConfigResponse,
   SyncListJobsRequest,
@@ -164,6 +165,10 @@ declare global {
         deletePartial(
           req: SyncDeletePartialRequest,
         ): Promise<SyncDeletePartialResponse>;
+        // add-leftover-download-cleanup §2.4 — Settings → "Review leftover
+        // files" reads this on open (count-bearing button + dialog list).
+        // Void request; resolves the flat `{ entries }` snapshot.
+        listLeftover(): Promise<SyncListLeftoverResponse>;
       };
       // migrate-upload-orchestration-out-of-engine §7.2 — renderer-facing
       // namespace for the new `uploads:*` commands.

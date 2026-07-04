@@ -43,6 +43,7 @@ import type {
   SyncSetRetryPolicyResponse,
   SyncDeletePartialRequest,
   SyncDeletePartialResponse,
+  SyncListLeftoverResponse,
 } from "@ft5/ipc-contracts/sync-service-desktop";
 
 type ExposedSync = {
@@ -64,6 +65,7 @@ type ExposedSync = {
   deletePartial: (
     req: SyncDeletePartialRequest,
   ) => Promise<SyncDeletePartialResponse>;
+  listLeftover: () => Promise<SyncListLeftoverResponse>;
   onEvent: (callback: (event: SyncEvent) => void) => () => void;
 };
 
@@ -86,7 +88,7 @@ describe("preload sync surface", () => {
     vi.clearAllMocks();
   });
 
-  it("exposes a sync object with exactly 17 members (16 commands + onEvent), no legacy `authenticate` or `enqueueUpload`", async () => {
+  it("exposes a sync object with exactly 18 members (17 commands + onEvent), no legacy `authenticate` or `enqueueUpload`", async () => {
     const exposed = await loadExposed();
 
     expect(typeof exposed.sync).toBe("object");
@@ -116,6 +118,9 @@ describe("preload sync surface", () => {
         "getRetryPolicy",
         "getStatus",
         "listJobs",
+        // add-leftover-download-cleanup §2.4 — Settings → "Review leftover
+        // files" bridge for downloads:list-leftover (void read command).
+        "listLeftover",
         "onEvent",
         "setConfig",
         "setRetryPolicy",
@@ -376,6 +381,23 @@ describe("preload sync surface", () => {
         SYNC_CHANNELS.deletePartial,
         req,
       ]);
+      expect(result).toBe(response);
+    });
+
+    // add-leftover-download-cleanup §2.4 — Settings → "Review leftover files"
+    // reads this on open. Void request: invoked with the channel only (no
+    // second arg), mirroring the getStatus() pattern.
+    it("listLeftover() invokes SYNC_CHANNELS.listLeftover with no args (void request) and returns the resolved value", async () => {
+      const invokeMock = ipcRenderer.invoke as unknown as ReturnType<typeof vi.fn>;
+      const response: SyncListLeftoverResponse = { entries: [] };
+      invokeMock.mockResolvedValue(response);
+
+      const exposed = await loadExposed();
+      const result = await exposed.sync.listLeftover();
+
+      expect(invokeMock).toHaveBeenCalledTimes(1);
+      // Single-arg call (no second arg) — mirrors the getStatus() pattern.
+      expect(invokeMock.mock.calls[0]).toEqual([SYNC_CHANNELS.listLeftover]);
       expect(result).toBe(response);
     });
   });

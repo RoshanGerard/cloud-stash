@@ -25,6 +25,7 @@ import type {
   DownloadTerminalStatus,
   JobStatus,
   JobSummary,
+  LeftoverEntry,
   NotCancelableErrorShape,
   RetryPolicy,
   RetryPolicyScope,
@@ -304,6 +305,32 @@ export interface SyncDeletePartialRequest {
 
 export interface SyncDeletePartialResponse {
   readonly deleted: boolean;
+}
+
+// ---- listLeftover (add-leftover-download-cleanup §2.1) -------------------
+//
+// Renderer-facing bridge over the `downloads:list-leftover` service command.
+// Returns the snapshot of KEEP-eligible terminal downloads whose partial file
+// still exists on disk — the service stats each `target_path`, so rows whose
+// file is gone are excluded (the renderer has no filesystem access). The
+// Settings → "Review leftover files" affordance reads it on open; per-row
+// cleanup reuses `downloads:delete-partial` UNCHANGED.
+//
+// INFALLIBLE read: the service handler never throws (stat errors are per-row
+// skips), so the renderer boundary uses the FLAT result shape (`{ entries }`)
+// — mirroring `uploads:list-active`'s `{ jobs }` and `clear-history`'s
+// `{ deleted }`. A rejection means a transport-level failure, not a
+// per-command error envelope. Request is `void` (empty params over the wire),
+// mirroring `getStatus` / `uploads:list-active`.
+//
+// `LeftoverEntry` lives in the wire-side `commands.ts` (consistent with
+// `UploadJob` / `DownloadJob`); callers reach it through the renderer-facing
+// barrel re-export in `index.ts`.
+
+export type SyncListLeftoverRequest = void;
+
+export interface SyncListLeftoverResponse {
+  readonly entries: readonly LeftoverEntry[];
 }
 
 // ---- deleteCredentials (design.md Decision 12) --------------------------

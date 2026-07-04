@@ -12,11 +12,11 @@ Discipline: TDD (RED → watch fail → GREEN) on every code task; worktree at `
 
 ## 2. Desktop channel + four-layer bridge (sync-service-desktop + apps/desktop)
 
-- [ ] 2.1 Add `SyncListLeftoverRequest`/`SyncListLeftoverResponse` (flat `{ entries }` desktop shape) to `sync-service-desktop/requests.ts`; add `SYNC_CHANNELS.listLeftover = "downloads:list-leftover"` to `channels.ts`; export from `index.ts`; update the exact-key-set assertion in `channels.test-d.ts`.
-- [ ] 2.2 Add `apps/desktop/src/main/ipc/sync/list-leftover.ts` (`handleListLeftover`, proxies to `SyncClient.listLeftover`) and register `ipcMain.handle(SYNC_CHANNELS.listLeftover, …)` in `main/ipc/index.ts`.
-- [ ] 2.3 Add the `listLeftover(params)` typed wrapper to `main/sync/client.ts`.
-- [ ] 2.4 Add the `window.api.sync.listLeftover` binding in `preload/index.ts` and the types in `preload/window-api.d.ts` + `renderer/src/types/window-api.d.ts`.
-- [ ] 2.5 Bump the preload sync-surface count test (`preload/__tests__/sync-surface.test.ts`) 17→18; add the round-trip test, the `window-api.types.test-d.ts` type test, and `main/ipc/sync/__tests__/list-leftover.test.ts` (proxy test).
+- [x] 2.1 Add `SyncListLeftoverRequest`/`SyncListLeftoverResponse` (flat `{ entries }` desktop shape) to `sync-service-desktop/requests.ts`; add `SYNC_CHANNELS.listLeftover = "downloads:list-leftover"` to `channels.ts`; export from `index.ts`; update the exact-key-set assertion in `channels.test-d.ts`.
+- [x] 2.2 Add `apps/desktop/src/main/ipc/sync/list-leftover.ts` (`handleListLeftover`, proxies to `SyncClient.listLeftover`) and register `ipcMain.handle(SYNC_CHANNELS.listLeftover, …)` in `main/ipc/index.ts`.
+- [x] 2.3 Add the `listLeftover(params)` typed wrapper to `main/sync/client.ts`.
+- [x] 2.4 Add the `window.api.sync.listLeftover` binding in `preload/index.ts` and the types in `preload/window-api.d.ts` + `renderer/src/types/window-api.d.ts`.
+- [x] 2.5 Bump the preload sync-surface count test (`preload/__tests__/sync-surface.test.ts`) 17→18; add the round-trip test, the `window-api.types.test-d.ts` type test, and `main/ipc/sync/__tests__/list-leftover.test.ts` (proxy test).
 
 ## 3. Service handler — `downloads:list-leftover` (services/fs-sync)
 

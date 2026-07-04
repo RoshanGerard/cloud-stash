@@ -52,6 +52,12 @@ export const SYNC_CHANNELS = {
   // partial file for a terminal download (keyed by `downloadJobId`); the
   // download failure toast's "Delete partial" action invokes it.
   deletePartial: "downloads:delete-partial",
+  // add-leftover-download-cleanup §2.1 — renderer-facing bridge for the new
+  // `downloads:list-leftover` service command. Returns the KEEP-eligible
+  // terminal downloads whose partial file still exists on disk (service-side
+  // stat); the Settings → "Review leftover files" affordance reads it on open.
+  // Void request (channel-only invoke); flat `{ entries }` response.
+  listLeftover: "downloads:list-leftover",
   // The retired single-shot `sync:authenticate` channel was removed by
   // `implement-datasource-onboarding` per design.md Decision 9. The
   // three-command split below replaces it.

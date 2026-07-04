@@ -38,6 +38,9 @@ describe("sync-service-desktop SYNC_CHANNELS constants", () => {
         "getRetryPolicy",
         "getStatus",
         "listJobs",
+        // add-leftover-download-cleanup §2.1 — renderer bridge for
+        // downloads:list-leftover.
+        "listLeftover",
         "setConfig",
         "setRetryPolicy",
         "uploadsListActive",
@@ -76,6 +79,7 @@ describe("sync-service-desktop SYNC_CHANNELS constants", () => {
     expect(SYNC_CHANNELS.cancelUpload).toBe("sync:cancel-upload");
     expect(SYNC_CHANNELS.uploadsListActive).toBe("uploads:list-active");
     expect(SYNC_CHANNELS.clearDownloadHistory).toBe("downloads:clear-history");
+    expect(SYNC_CHANNELS.listLeftover).toBe("downloads:list-leftover");
     expect(SYNC_CHANNELS.authenticateStart).toBe("sync:authenticate-start");
     expect(SYNC_CHANNELS.authenticateComplete).toBe(
       "sync:authenticate-complete",
@@ -112,6 +116,9 @@ describe("sync-service-desktop SYNC_CHANNELS constants", () => {
     >();
     expectTypeOf<typeof SYNC_CHANNELS.clearDownloadHistory>().toEqualTypeOf<
       "downloads:clear-history"
+    >();
+    expectTypeOf<typeof SYNC_CHANNELS.listLeftover>().toEqualTypeOf<
+      "downloads:list-leftover"
     >();
     expectTypeOf<typeof SYNC_CHANNELS.authenticateStart>().toEqualTypeOf<
       "sync:authenticate-start"
