@@ -37,13 +37,6 @@
   --input: oklch(0.843 0.0129 255.5); /* #C6CCD4 */
   --ring: oklch(0.268 0.0241 264); /* #202632 — graphite accent (AA on light) */
   --radius: 0.5rem;
-
-  /* Retained temporarily: the crimson brand token still consumed by
-     <CloudStashLogo> (`fill="var(--brand-primary)"`). It is REMOVED by the
-     later logo-swap task, which replaces the tinted mark with theme-swapped
-     SVG artwork; kept here only so the logo renders until then. Not part of
-     the monochrome palette above. */
-  --brand-primary: oklch(0.585 0.220 27);
 }
 
 /* Canonical CloudStash graphite Dark (Decision 1): a near-black canvas,
@@ -70,10 +63,6 @@
   --input: oklch(0.359 0.0304 261.9); /* #343D4D */
   --ring: oklch(0.933 0.0075 260.7); /* #E6E9EE — silver accent = focus ring */
   --radius: 0.5rem;
-
-  /* Retained temporarily — same crimson value as :root; removed by the later
-     logo-swap task alongside the :root declaration. See the :root note. */
-  --brand-primary: oklch(0.585 0.220 27);
 }
 
 @theme inline {
