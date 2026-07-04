@@ -1527,3 +1527,58 @@ and was already failing this way in the pristine pre-change baseline — so it i
 NOT introduced by `add-leftover-download-cleanup`. Same family as the documented
 `scripts/render-budget.test.tsx` load flake. A reactive fix (bump this one test's
 timeout, or make the identity check synchronous) is possible later — out of scope here.
+
+---
+
+## DEFERRED — CloudStash OS icon pack + tray (`restyle-cloudstash-monochrome` §4.2)
+
+**What.** The rasterised operating-system icon pack — Windows `.ico`, macOS `.icns`,
+Linux `.png` set — generated from the CloudStash app-tile SVG, plus wiring
+`apps/desktop/electron-builder.yml` `icon:` (currently unset → electron default) and
+any tray icon.
+
+**Shipped now (NOT deferred).** The in-app favicon / window-title icon IS wired:
+`apps/desktop/src/renderer/public/brand/cloudstash-app-tile-dark.svg` +
+`metadata.icons` in `layout.tsx`, verified in the renderer build (asset copied to
+`out/brand/…` and `<link rel="icon" href="/brand/cloudstash-app-tile-dark.svg">`
+emitted). Only the packaged OS icons are deferred.
+
+**Why deferred.** Only visible in a *packaged* build (installer / exe / dock /
+taskbar), which is out of this dev cycle's verification scope; needs a rasteriser
+dependency (e.g. `sharp` / `electron-icon-builder`) + a packaged build to verify.
+Same class as `wire-packaged-build-download-resilience`. The SVG sources ship in the
+design pack + `apps/desktop/src/renderer/public/brand/`.
+
+**Owner:** unassigned (HUMAN). Bundle with the next packaged-build lane.
+
+---
+
+## DEFERRED — CloudStash Monochrome running-system visual smoke (`restyle-cloudstash-monochrome` §6.3 / §4.1)
+
+**What.** Launch the running app and visually confirm: (a) first paint is CloudStash
+Monochrome **dark** with no flash of light/unstyled theme (cold start), (b) the
+Light/Dark switch flips the whole surface (graphite ⇄ paper) including the
+theme-swapped brand mark (`mark-dark` ⇄ `mark-light`), (c) the Bricolage Grotesque
+wordmark/headings render, (d) the app-tile favicon shows in the window.
+
+**Partially CONFIRMED (2026-07-05, static-export Playwright).** Served the production
+`out/` build and screenshotted `/` at 1280×820 in BOTH themes (localStorage
+`cloudstash.theme` default→light and `dark`): confirmed the dark first paint is
+graphite monochrome with NO theme flash; the brand mark swaps (light cloud ⇄ dark
+cloud + silver fold) between themes; the Bricolage wordmark + "Datasources" heading
+render; and the flat inverted-monochrome primary button (ink slab on light / silver
+slab on dark — no gradient/emboss). REMAINING to smoke in a real Electron boot: the
+**populated** `DatasourceCard` grid (needs `window.api`; the browser run shows the
+error state instead) and the **live in-app** Light/Dark switch interaction (vs. a
+reload).
+
+**Why deferred.** Needs a live Electron app (the renderer's `app://` protocol + a
+running fs-sync service + config) — same class as the other running-system smokes in
+this file. The underlying guarantees are unit-tested: `no-fouc.test.tsx` proves the
+pre-paint bootstrap sets `.dark` before React mounts; `monochrome-identity.test.ts`
++ `contrast.test.ts` guard the palette + AA; `cloudstash-logo.test.tsx` guards the
+`.dark`-variant mark swap; `typography.test.ts` + the renderer build prove the font
+is self-hosted with zero runtime fetch. The monochrome look itself was visually
+validated in the approved visual-refinement mockup before implementation.
+
+**Owner:** unassigned (HUMAN). To do during the next environment-loop / packaged pass.

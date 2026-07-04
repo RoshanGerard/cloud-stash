@@ -28,11 +28,17 @@ afterEach(() => {
 });
 
 describe("AppHeader — brand chrome (Decision 14)", () => {
-  it("renders the CloudStash logo SVG", () => {
+  it("renders the CloudStash theme-swapped brand mark", () => {
     render(<AppHeader />);
+    // restyle-cloudstash-monochrome §4.1 — the mark is now theme-swapped .svg
+    // artwork rendered as two <img> elements inside a role="img" wrapper
+    // (was an inline <svg> tinted through the retired crimson brand token).
     const logo = document.querySelector("[data-testid='cloudstash-logo']");
     expect(logo).not.toBeNull();
-    expect(logo!.tagName.toLowerCase()).toBe("svg");
+    const marks = logo!.querySelectorAll(
+      "img[src^='/brand/cloudstash-mark-']",
+    );
+    expect(marks.length).toBe(2);
   });
 
   it("renders the product wordmark 'CloudStash'", () => {
@@ -40,6 +46,22 @@ describe("AppHeader — brand chrome (Decision 14)", () => {
     expect(
       screen.getByText(/CloudStash/i),
     ).toBeInTheDocument();
+  });
+
+  // restyle-cloudstash-monochrome §4.3 (design.md Decision 4) — the display
+  // face (Bricolage Grotesque) is layered on the wordmark and section headings
+  // via the `font-display` Tailwind utility; Geist stays the UI/body font.
+  it("renders the wordmark in the display face (font-display)", () => {
+    render(<AppHeader />);
+    const wordmark = screen.getByText(/^CloudStash$/);
+    expect(wordmark).toHaveClass("font-display");
+  });
+
+  it("renders a section heading (Settings dialog title) in the display face", () => {
+    render(<AppHeader />);
+    fireEvent.click(screen.getByRole("button", { name: /open settings/i }));
+    const heading = screen.getByRole("heading", { name: /^settings$/i });
+    expect(heading).toHaveClass("font-display");
   });
 
   it("renders the ThemeSwitcher trigger (right side)", () => {

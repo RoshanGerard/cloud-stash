@@ -18,8 +18,8 @@ function Progress({
         // white over a dark canvas read as a too-bright track ("secondary
         // white color on progress bar is too bright" — user review-round-3).
         // `bg-muted` is a single theme-scoped token that reads as a
-        // subdued-but-visible track on every theme (light / dark / serene-
-        // blue) without opacity layering.
+        // subdued-but-visible track on every theme (light / dark) without
+        // opacity layering.
         "relative h-2 w-full overflow-hidden rounded-full bg-muted",
         className
       )}

@@ -46,7 +46,9 @@ export function DatasourcesToolbar({
           className="text-muted-foreground size-5"
           aria-hidden
         />
-        <h1 className="text-lg font-semibold tracking-tight">Datasources</h1>
+        <h1 className="font-display text-lg font-semibold tracking-tight">
+          Datasources
+        </h1>
       </div>
       <Button
         ref={triggerRef}
@@ -124,7 +126,9 @@ function DashboardEmpty({
     >
       <EmptyDatasourcesIllustration className="h-40 w-60 text-muted-foreground" />
       <div className="flex flex-col gap-2">
-        <h2 className="text-lg font-semibold">No cloud datasources yet</h2>
+        <h2 className="font-display text-lg font-semibold">
+          No cloud datasources yet
+        </h2>
         <p className="text-muted-foreground text-sm">
           Connect Google Drive, OneDrive, or Amazon S3 to start syncing files.
         </p>
@@ -154,7 +158,9 @@ function DashboardError({
       role="alert"
       className="flex flex-col items-center justify-center gap-3 p-8 text-center"
     >
-      <h2 className="text-lg font-semibold">Couldn&apos;t load datasources</h2>
+      <h2 className="font-display text-lg font-semibold">
+        Couldn&apos;t load datasources
+      </h2>
       <p className="text-muted-foreground text-sm">{message}</p>
       <Button size="sm" onClick={onRetry}>
         Retry

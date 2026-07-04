@@ -2,122 +2,67 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* shadcn/ui v4 — new-york style, slate base palette. Both themes are
-   class-driven via `.dark` on <html> (Decision 6 in design.md). The
-   @theme inline block bridges the raw CSS variables to Tailwind v4's
-   color/radius utility classes (bg-background, text-foreground, etc.). */
+/* shadcn/ui v4 — new-york style, CloudStash Monochrome palette. The identity
+   is graphite surfaces + a monochrome (silver/graphite) accent, with the four
+   status hues reserved for status only. Both themes are class-driven via
+   `.dark` on <html> (Decision 6 in design.md): `:root` is the monochrome
+   Light theme, `.dark` is the canonical CloudStash graphite Dark theme. Every
+   value is authored as oklch(); the graphite neutrals carry a slight cool
+   cast (hue ~250–266) and near-zero chroma. Every shadcn token keeps its
+   variable name so no component churns. The @theme inline block bridges the
+   raw CSS variables to Tailwind v4's color/radius utility classes
+   (bg-background, text-foreground, etc.). */
 
+/* Monochrome Light (Decision 1). The inverse of the graphite Dark: a cool
+   paper canvas, white cards, an ink text ramp, and a graphite accent — silver
+   fails AA on a light ground, so the accent/ring darkens toward graphite. */
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.129 0.042 264.695);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.129 0.042 264.695);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.129 0.042 264.695);
-  --primary: oklch(0.208 0.042 265.755);
-  --primary-foreground: oklch(0.984 0.003 247.858);
-  --secondary: oklch(0.968 0.007 247.896);
-  --secondary-foreground: oklch(0.208 0.042 265.755);
-  --muted: oklch(0.968 0.007 247.896);
-  --muted-foreground: oklch(0.554 0.046 257.417);
-  --accent: oklch(0.968 0.007 247.896);
-  --accent-foreground: oklch(0.208 0.042 265.755);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.984 0.003 247.858);
-  --border: oklch(0.929 0.013 255.508);
-  --input: oklch(0.929 0.013 255.508);
-  --ring: oklch(0.704 0.04 256.788);
+  --background: oklch(0.948 0.0063 255.5); /* #EBEEF2 */
+  --foreground: oklch(0.193 0.0144 253.2); /* #10151B */
+  --card: oklch(1 0 0); /* #FFFFFF */
+  --card-foreground: oklch(0.193 0.0144 253.2); /* #10151B */
+  --popover: oklch(1 0 0); /* #FFFFFF */
+  --popover-foreground: oklch(0.193 0.0144 253.2); /* #10151B */
+  --primary: oklch(0.25 0.0216 257.3); /* #1B222C — flat ink button fill */
+  --primary-foreground: oklch(0.972 0.0034 247.9); /* #F4F6F8 */
+  --secondary: oklch(0.957 0.0052 247.9); /* #EEF1F4 */
+  --secondary-foreground: oklch(0.193 0.0144 253.2); /* #10151B */
+  --muted: oklch(0.978 0.0034 247.9); /* #F6F8FA */
+  --muted-foreground: oklch(0.51 0.0212 258.4); /* #5F6773 — darkened from #666E7A so muted text clears WCAG AA (4.5:1) on the light canvas #EBEEF2, not just on white cards (§6.1 contrast guard) */
+  --accent: oklch(0.957 0.0052 247.9); /* #EEF1F4 — hover-surface, not brand */
+  --accent-foreground: oklch(0.193 0.0144 253.2); /* #10151B */
+  --destructive: oklch(0.577 0.2152 27.3); /* #DC2626 */
+  --destructive-foreground: oklch(1 0 0); /* #FFFFFF */
+  --border: oklch(0.914 0.0098 252.8); /* #DEE3E9 */
+  --input: oklch(0.843 0.0129 255.5); /* #C6CCD4 */
+  --ring: oklch(0.268 0.0241 264); /* #202632 — graphite accent (AA on light) */
   --radius: 0.5rem;
-
-  /* Decision 14 (review-round-1): CloudStash brand primary. Theme-invariant —
-     the same vibrant crimson reads on both light and dark chrome. Used by
-     the <CloudStashLogo> chevrons; consumed as `fill="var(--brand-primary)"`
-     inside the SVG (feature code cannot emit an oklch() literal itself
-     per the literals-ban guardrail). */
-  --brand-primary: oklch(0.585 0.220 27);
-
-  /* Review-round-2, Task 2: the Decision 16 tiled pentagonal watermark
-     and its `--watermark-image` token were removed. The dashboard now
-     renders a hand-authored <DashboardBackground /> inline SVG
-     (features/datasources/dashboard-background.tsx) instead — a single
-     asymmetric hexagon-network composition that adapts to theme via
-     currentColor without needing a CSS-level data-URL. */
 }
 
+/* Canonical CloudStash graphite Dark (Decision 1): a near-black canvas,
+   layered graphite surfaces, a silver text ramp, and a silver accent/ring for
+   focus/active/selection. */
 .dark {
-  /* Review-round-3 reversal of Decision 13: the warm-hue-50 "near-black"
-     experiment shipped in round-1 was judged too warm on user live-review.
-     Reverted to a cool near-black — hue ~265 (cool slate) with low chroma
-     (~0.025). Lightness gap between `--background` (0.110) and `--card`
-     (0.175) is now ~0.065 so cards read with visible elevation over the
-     canvas (addresses "cards not highlighting" review-round-3 complaint).
-     --primary / --primary-foreground / --destructive / --destructive-
-     foreground / --border stay at their pre-refinement values — accent
-     tokens read identically across themes and the transparent-white
-     border is hue-neutral. */
-  --background: oklch(0.110 0.025 265);
-  --foreground: oklch(0.950 0.010 260);
-  --card: oklch(0.175 0.025 265);
-  --card-foreground: oklch(0.950 0.010 260);
-  --popover: oklch(0.180 0.025 265);
-  --popover-foreground: oklch(0.950 0.010 260);
-  --primary: oklch(0.929 0.013 255.508);
-  --primary-foreground: oklch(0.208 0.042 265.755);
-  --secondary: oklch(0.240 0.025 265);
-  --secondary-foreground: oklch(0.950 0.010 260);
-  --muted: oklch(0.220 0.025 265);
-  --muted-foreground: oklch(0.700 0.010 260);
-  --accent: oklch(0.240 0.025 265);
-  --accent-foreground: oklch(0.950 0.010 260);
-  --destructive: oklch(0.704 0.191 22.216);
-  --destructive-foreground: oklch(0.984 0.003 247.858);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.560 0.025 265);
+  --background: oklch(0.164 0.0153 239.5); /* #080F14 */
+  --foreground: oklch(0.966 0.0045 258.3); /* #F2F4F7 */
+  --card: oklch(0.203 0.016 256.8); /* #12171E */
+  --card-foreground: oklch(0.966 0.0045 258.3); /* #F2F4F7 */
+  --popover: oklch(0.233 0.0196 258.4); /* #181E27 */
+  --popover-foreground: oklch(0.966 0.0045 258.3); /* #F2F4F7 */
+  --primary: oklch(0.933 0.0075 260.7); /* #E6E9EE — flat silver button fill */
+  --primary-foreground: oklch(0.171 0.0149 253.2); /* #0B1016 */
+  --secondary: oklch(0.268 0.0241 264); /* #202632 */
+  --secondary-foreground: oklch(0.966 0.0045 258.3); /* #F2F4F7 */
+  --muted: oklch(0.233 0.0196 258.4); /* #181E27 */
+  --muted-foreground: oklch(0.652 0.0164 260.7); /* #8A909A */
+  --accent: oklch(0.268 0.0241 264); /* #202632 — hover-surface, not brand */
+  --accent-foreground: oklch(0.966 0.0045 258.3); /* #F2F4F7 */
+  --destructive: oklch(0.711 0.1661 22.2); /* #F87171 */
+  --destructive-foreground: oklch(0.171 0.0149 253.2); /* #0B1016 */
+  --border: oklch(0.305 0.0211 265.9); /* #2A2F3A */
+  --input: oklch(0.359 0.0304 261.9); /* #343D4D */
+  --ring: oklch(0.933 0.0075 260.7); /* #E6E9EE — silver accent = focus ring */
   --radius: 0.5rem;
-
-  /* Theme-invariant brand primary — same value as :root (Decision 14). The
-     crimson reads well on both the light and cool-near-black dark
-     backgrounds, so no theme-specific override is needed. Declared in both
-     blocks only so a future refinement can diverge the two without a
-     cascade footgun. */
-  --brand-primary: oklch(0.585 0.220 27);
-
-  /* Review-round-2, Task 2: the dark-theme override for the removed
-     `--watermark-image` is gone alongside the :root declaration. The
-     hex-network <DashboardBackground /> uses `currentColor`, which
-     resolves to the theme `--foreground` (cool-near-white in .dark),
-     so no per-theme duplicate is needed. */
-}
-
-/* Review-round-3, Task 6: "Serene Blue" — a third named theme alongside
-   Light and Dark. Always-explicit (System still resolves only to light or
-   dark per OS preference; Serene Blue is never inferred). Applied via a
-   `data-theme="serene-blue"` attribute on <html>, orthogonal to the `.dark`
-   class so the two can never collide. Palette concept: soft sky-blue bg,
-   muted blue accents, cool-but-light (NOT a dark mode — a light-mode
-   alternative). `--brand-primary` cascades from :root (theme-invariant). */
-[data-theme="serene-blue"] {
-  --background: oklch(0.975 0.015 230);
-  --foreground: oklch(0.280 0.050 230);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.280 0.050 230);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.280 0.050 230);
-  --primary: oklch(0.208 0.042 264.695);
-  --primary-foreground: oklch(0.984 0.003 247.858);
-  --secondary: oklch(0.920 0.025 230);
-  --secondary-foreground: oklch(0.280 0.050 230);
-  --muted: oklch(0.935 0.020 230);
-  --muted-foreground: oklch(0.480 0.040 230);
-  --accent: oklch(0.920 0.025 230);
-  --accent-foreground: oklch(0.280 0.050 230);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.984 0.003 247.858);
-  --border: oklch(0.880 0.025 230);
-  --input: oklch(0.880 0.025 230);
-  --ring: oklch(0.600 0.100 230);
-  --radius: 0.625rem;
 }
 
 @theme inline {
@@ -130,6 +75,15 @@
     BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo,
     Consolas, "Liberation Mono", monospace;
+
+  /* Display face (design.md Decision 4, restyle-cloudstash-monochrome §4.3):
+     Bricolage Grotesque, self-hosted via next/font/local, exposed on <html> as
+     --font-display-face. This bridge makes the `font-display` Tailwind utility
+     resolve to it, applied to the wordmark + section headings only (Geist Sans
+     stays UI/body). Fallback is a system grotesque stack — deliberately NOT
+     Inter/Roboto/Arial — shown until the bundled woff2 decodes (display: swap). */
+  --font-display: var(--font-display-face), ui-sans-serif, system-ui,
+    "Segoe UI", sans-serif;
 
   /* Density (design.md Decision 8 — Linear/Vercel dense-quiet): baseline text
      drops to 14px. Downstream `text-base`, `text-sm`, `text-xs` utilities all

@@ -16,17 +16,13 @@ import {
 } from "./theme-store"
 
 /**
- * User-facing theme picker — Light / Dark / Serene Blue / System.
+ * User-facing theme picker — Light / Dark / System.
  *
  * Trigger shows an icon that reflects the *current preference* (not the
- * resolved effective theme): sun for Light, moon for Dark, droplets for
- * Serene Blue, monitor for System. The effective theme is applied via the
- * theme store and picked up by the inline pre-paint script on cold start
- * plus any subscriber (e.g. the sonner Toaster) on warm update.
- *
- * Review-round-3, Task 6c: Serene Blue added as a fourth option between
- * Dark and System. It's an always-explicit theme — System still only
- * resolves to light or dark (never Serene Blue) via `prefers-color-scheme`.
+ * resolved effective theme): sun for Light, moon for Dark, monitor for
+ * System. The effective theme is applied via the theme store and picked up by
+ * the inline pre-paint script on cold start plus any subscriber (e.g. the
+ * sonner Toaster) on warm update. System resolves to light|dark via the OS.
  */
 
 const OPTIONS: ReadonlyArray<{
@@ -36,7 +32,6 @@ const OPTIONS: ReadonlyArray<{
 }> = [
   { value: "light", label: "Light", icon: "sun" },
   { value: "dark", label: "Dark", icon: "moon" },
-  { value: "serene-blue", label: "Serene Blue", icon: "droplets" },
   { value: "system", label: "System", icon: "monitor" },
 ]
 
@@ -46,8 +41,6 @@ function iconForPreference(pref: ThemePreference): IconName {
       return "sun"
     case "dark":
       return "moon"
-    case "serene-blue":
-      return "droplets"
     case "system":
       return "monitor"
   }

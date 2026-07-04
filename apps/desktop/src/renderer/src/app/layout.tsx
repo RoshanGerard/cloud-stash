@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
+import localFont from "next/font/local";
 
 import "../styles/globals.css";
 import { AppFooter } from "../components/app-footer";
@@ -14,12 +15,37 @@ import { DiagnosticsShortcut } from "../features/diagnostics/diagnostics-shortcu
 export const metadata: Metadata = {
   title: "cloudstash",
   description: "CloudStash desktop shell",
+  // Favicon / window icon: the CloudStash Monochrome app-tile (graphite tile +
+  // cloud/silver-fold mark), vendored to public/brand/ and served at
+  // app://local/brand/… . A self-contained SVG loaded via <link rel="icon">
+  // (no id-collision risk vs. inlining). The rasterised OS icon pack
+  // (ico/icns/png + electron-builder wiring) is a packaged-build follow-up
+  // (PENDING_TC) — the SVG sources ship here for it.
+  icons: { icon: "/brand/cloudstash-app-tile-dark.svg" },
 };
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
 };
+
+// Bricolage Grotesque — the CloudStash display face (design.md Decision 4,
+// restyle-cloudstash-monochrome §4.3). A distinctive OFL grotesque layered on
+// the wordmark and section headings (Geist Sans stays UI/body, Geist Mono
+// stays monospace). Self-hosted via `next/font/local` from a woff2 vendored
+// into `src/fonts/bricolage/` (next/font/local requires a repo-relative path,
+// not a node_modules path) — bundled at build time, zero runtime fetch. The
+// vendored file is the weight-axis (200–800) variable font for the Latin
+// subset; `@fontsource-variable/bricolage-grotesque` (OFL) is the devDependency
+// that sources the woff2 + license. `.variable` exposes `--font-display-face`
+// on <html>; globals.css's `@theme inline` bridges it to the `font-display`
+// utility. `swap` shows the system-grotesque fallback until the woff2 decodes.
+const bricolage = localFont({
+  src: "../fonts/bricolage/bricolage-grotesque-latin-wght-normal.woff2",
+  variable: "--font-display-face",
+  display: "swap",
+  weight: "200 800",
+});
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   // Geist Sans + Geist Mono via next/font (design.md Decision 9). Each
@@ -31,7 +57,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html
       lang="en"
-      className={`${GeistSans.variable} ${GeistMono.variable}`}
+      className={`${GeistSans.variable} ${GeistMono.variable} ${bricolage.variable}`}
     >
       <head>
         {/* Pre-paint theme bootstrap — runs synchronously before React
@@ -85,7 +111,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             toast delivery (rename failure, delete success, download path,
             deferred-search clipboard copies, etc.). The wrapper in
             `components/ui/sonner.tsx` reads the theme store so toasts
-            match the app's Light / Dark / Serene Blue palette. */}
+            match the app's Light / Dark palette. */}
         <Toaster />
       </body>
     </html>
