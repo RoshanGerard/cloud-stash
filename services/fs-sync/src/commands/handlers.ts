@@ -42,6 +42,7 @@ import {
 import { makeDownloadsListActiveHandler } from "./downloads-list-active.js";
 import { makeClearDownloadHistoryHandler } from "./downloads-clear-history.js";
 import { makeDeletePartialHandler } from "./downloads-delete-partial.js";
+import { makeListLeftoverHandler } from "./downloads-list-leftover.js";
 import {
   createDefaultFilesUploadDeps,
   makeFilesUploadHandler,
@@ -388,6 +389,15 @@ export function buildCommandHandlers(deps: HandlersDeps): CommandHandlers {
     // `target_path`, needing only `deps.db` (always present) + an fs unlink,
     // independent of the registry-gated download bundle above.
     "downloads:delete-partial": makeDeletePartialHandler({
+      db: deps.db,
+    }),
+    // downloads:list-leftover (add-leftover-download-cleanup §3) — wired
+    // UNCONDITIONALLY like clear-history/delete-partial: it reads the durable
+    // `downloads` rows and stats each recorded `target_path`, needing only
+    // `deps.db` (always present) + an fs stat, independent of the
+    // registry-gated download bundle above. READ-ONLY: never unlinks, never
+    // resolves an engine client, never throws.
+    "downloads:list-leftover": makeListLeftoverHandler({
       db: deps.db,
     }),
     // files:upload + sync:cancel-upload + uploads:list-active —

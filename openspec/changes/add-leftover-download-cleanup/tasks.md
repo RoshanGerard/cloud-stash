@@ -20,10 +20,10 @@ Discipline: TDD (RED → watch fail → GREEN) on every code task; worktree at `
 
 ## 3. Service handler — `downloads:list-leftover` (services/fs-sync)
 
-- [ ] 3.1 RED: `services/fs-sync/src/commands/downloads-list-leftover.test.ts` — KEEP-eligible + on-disk → entry with `sizeOnDisk` from stat; ENOENT/errored stat → excluded; completed/in-flight → excluded; empty result; ordered by `ended_at` desc; never throws.
-- [ ] 3.2 GREEN: `services/fs-sync/src/commands/downloads-list-leftover.ts` — `makeListLeftoverHandler({ db, fs? })` with an injected `stat` port (defaults to `node:fs/promises`), mirroring `downloads-delete-partial.ts`'s fs injection. SELECT KEEP-eligible rows ordered `ended_at` DESC, stat each `target_path`, project surviving rows to `LeftoverEntry`.
-- [ ] 3.3 Register `"downloads:list-leftover": makeListLeftoverHandler({ db: deps.db })` in `commands/handlers.ts` (unconditional db-only wiring, like clear-history/delete-partial).
-- [ ] 3.4 Add the dispatcher-registration test to `commands/handlers.test.ts` (handler defined; empty-DB call returns `{ entries: [] }`).
+- [x] 3.1 RED: `services/fs-sync/src/commands/downloads-list-leftover.test.ts` — KEEP-eligible + on-disk → entry with `sizeOnDisk` from stat; ENOENT/errored stat → excluded; completed/in-flight → excluded; empty result; ordered by `ended_at` desc; never throws.
+- [x] 3.2 GREEN: `services/fs-sync/src/commands/downloads-list-leftover.ts` — `makeListLeftoverHandler({ db, fs? })` with an injected `stat` port (defaults to `node:fs/promises`), mirroring `downloads-delete-partial.ts`'s fs injection. SELECT KEEP-eligible rows ordered `ended_at` DESC, stat each `target_path`, project surviving rows to `LeftoverEntry`.
+- [x] 3.3 Register `"downloads:list-leftover": makeListLeftoverHandler({ db: deps.db })` in `commands/handlers.ts` (unconditional db-only wiring, like clear-history/delete-partial).
+- [x] 3.4 Add the dispatcher-registration test to `commands/handlers.test.ts` (handler defined; empty-DB call returns `{ entries: [] }`).
 
 ## 4. Contract change — `clearDownloadHistory` unlinks KEEP-eligible partials (services/fs-sync)
 

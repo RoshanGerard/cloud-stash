@@ -251,3 +251,20 @@ describe("downloads:delete-partial (add-failed-download-cleanup-affordance §2)"
     expect(res.result).toEqual({ deleted: false });
   });
 });
+
+describe("downloads:list-leftover (add-leftover-download-cleanup §3)", () => {
+  it("is registered WITHOUT the download bundle (unconditional db-only wiring)", async () => {
+    // Pins the spec scenario "downloads:list-leftover command is registered".
+    // The beforeEach handler set omits downloadRegistry / resolveClient, yet
+    // list-leftover must still route — like clear-history / delete-partial it
+    // needs only `db`. An empty DB yields no rows and therefore no stat calls,
+    // so this asserts routing hermetically without touching the filesystem.
+    expect(handlers["downloads:list-leftover"]).toBeDefined();
+
+    const res = await call("downloads:list-leftover", {});
+
+    expect(res.ok).toBe(true);
+    if (!res.ok) return;
+    expect(res.result).toEqual({ entries: [] });
+  });
+});
