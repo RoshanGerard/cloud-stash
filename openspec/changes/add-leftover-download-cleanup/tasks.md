@@ -4,11 +4,11 @@ Discipline: TDD (RED → watch fail → GREEN) on every code task; worktree at `
 
 ## 1. Wire contract — `downloads:list-leftover` (@ft5/ipc-contracts)
 
-- [ ] 1.1 Add `LeftoverEntry` type (`downloadJobId, datasourceId, sourcePath, targetPath, sizeOnDisk, failureTag, failureMessage, endedAt`) and `ListLeftoverRequest = {}` / `ListLeftoverResponse` (envelope with `value: { entries: LeftoverEntry[] }`) to `sync-service/commands.ts`; add `ListLeftoverCommand`.
-- [ ] 1.2 Register `"downloads:list-leftover"` in `CommandMap` and `COMMAND_NAMES` (after `downloads:delete-partial`).
-- [ ] 1.3 Re-export the new types from `sync-service/index.ts`.
-- [ ] 1.4 Add `"downloads:list-leftover"` to the exhaustive `CommandName` `Expected` unions in `sync-service/commands.test-d.ts` and `sync-service/authenticate-onboarding.test-d.ts` (both pin the full set — `tsc -b` fails otherwise).
-- [ ] 1.5 Add `sync-service/__tests__/list-leftover.test-d.ts` — type tests for `LeftoverEntry`, request/response, and the command registration.
+- [x] 1.1 Add `LeftoverEntry` type (`downloadJobId, datasourceId, sourcePath, targetPath, sizeOnDisk, failureTag, failureMessage, endedAt`) and `ListLeftoverRequest = {}` / `ListLeftoverResponse` (envelope with `value: { entries: LeftoverEntry[] }`) to `sync-service/commands.ts`; add `ListLeftoverCommand`.
+- [x] 1.2 Register `"downloads:list-leftover"` in `CommandMap` and `COMMAND_NAMES` (after `downloads:delete-partial`).
+- [x] 1.3 Re-export the new types from `sync-service/index.ts`.
+- [x] 1.4 Add `"downloads:list-leftover"` to the exhaustive `CommandName` `Expected` unions in `sync-service/commands.test-d.ts` and `sync-service/authenticate-onboarding.test-d.ts` (both pin the full set — `tsc -b` fails otherwise).
+- [x] 1.5 Add `sync-service/__tests__/list-leftover.test-d.ts` — type tests for `LeftoverEntry`, request/response, and the command registration.
 
 ## 2. Desktop channel + four-layer bridge (sync-service-desktop + apps/desktop)
 

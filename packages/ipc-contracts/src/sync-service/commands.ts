@@ -837,6 +837,61 @@ interface DeletePartialCommand {
   readonly error: FilesCommandErrorShape;
 }
 
+// ---- downloads:list-leftover (add-leftover-download-cleanup §1) ------------
+//
+// `downloads:list-leftover` returns the KEEP-eligible terminal `downloads`
+// rows whose partial file the service confirms still exists on disk — the
+// retention-bounded failure subset narrowed to files still present. Empty
+// request; the service stats each candidate `target_path` server-side (the
+// renderer has no filesystem access), skipping any whose `stat` rejects
+// (ENOENT or otherwise). The handler is read-only, never resolves an engine
+// client, and never throws. Entries are ordered by `ended_at` descending
+// and the response is NOT paginated. Settings renders these as the
+// review-leftover-files list; per-row cleanup reuses `downloads:delete-partial`
+// UNCHANGED.
+
+/**
+ * One leftover partial file, projected from a KEEP-eligible terminal
+ * `downloads` row whose `target_path` still exists on disk. `sizeOnDisk` is
+ * the byte size reported by the service-side `stat` (the bytes actually on
+ * disk now, which may be less than the download's intended size). `failureTag`
+ * / `failureMessage` / `endedAt` are the row's stored values and are `null`
+ * when the row never recorded them.
+ */
+export interface LeftoverEntry {
+  readonly downloadJobId: string;
+  readonly datasourceId: string;
+  readonly sourcePath: string;
+  readonly targetPath: string;
+  readonly sizeOnDisk: number;
+  readonly failureTag: string | null;
+  readonly failureMessage: string | null;
+  readonly endedAt: number | null;
+}
+
+/**
+ * Wire-shape alias for the `downloads:list-leftover` request. Empty params
+ * — the service returns every KEEP-eligible leftover across every datasource.
+ * Mirrors `DownloadsListActiveRequest`.
+ */
+export type DownloadsListLeftoverRequest = Record<string, never>;
+
+/**
+ * Wire-shape alias for the `downloads:list-leftover` response, expressed as
+ * the standard tagged envelope used across the sync-service surface.
+ * Subscribers branch on `ok` to pick out `value.entries` vs `error`.
+ */
+export type DownloadsListLeftoverResponse =
+  | { readonly ok: true; readonly value: { readonly entries: readonly LeftoverEntry[] } }
+  | { readonly ok: false; readonly error: FilesCommandErrorShape };
+
+interface DownloadsListLeftoverCommand {
+  readonly command: "downloads:list-leftover";
+  readonly params: DownloadsListLeftoverRequest;
+  readonly result: { readonly entries: readonly LeftoverEntry[] };
+  readonly error: FilesCommandErrorShape;
+}
+
 // ---- uploads:* commands (migrate-upload-orchestration-out-of-engine §7) ---
 //
 // `uploads:list-active` returns the live snapshot of in-flight upload jobs
@@ -949,6 +1004,7 @@ export interface CommandMap {
   "downloads:list-active": DownloadsListActiveCommand;
   "downloads:clear-history": ClearDownloadHistoryCommand;
   "downloads:delete-partial": DeletePartialCommand;
+  "downloads:list-leftover": DownloadsListLeftoverCommand;
   "uploads:list-active": UploadsListActiveCommand;
   "sync:cancel-upload": SyncCancelUploadCommand;
 }
@@ -991,6 +1047,7 @@ export const COMMAND_NAMES: ReadonlyArray<CommandName> = [
   "downloads:list-active",
   "downloads:clear-history",
   "downloads:delete-partial",
+  "downloads:list-leftover",
   "uploads:list-active",
   "sync:cancel-upload",
 ] as const;

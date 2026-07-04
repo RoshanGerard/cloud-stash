@@ -60,6 +60,7 @@ describe("sync-service command contract", () => {
       | "downloads:list-active"
       | "downloads:clear-history"
       | "downloads:delete-partial"
+      | "downloads:list-leftover"
       | "uploads:list-active"
       | "sync:cancel-upload";
     expectTypeOf<CommandName>().toEqualTypeOf<Expected>();
