@@ -85,7 +85,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             toast delivery (rename failure, delete success, download path,
             deferred-search clipboard copies, etc.). The wrapper in
             `components/ui/sonner.tsx` reads the theme store so toasts
-            match the app's Light / Dark / Serene Blue palette. */}
+            match the app's Light / Dark palette. */}
         <Toaster />
       </body>
     </html>

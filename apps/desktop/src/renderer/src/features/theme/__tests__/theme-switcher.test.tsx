@@ -43,7 +43,6 @@ describe("ThemeSwitcher", () => {
   beforeEach(() => {
     localStorage.clear();
     document.documentElement.classList.remove("dark");
-    document.documentElement.removeAttribute("data-theme");
     // Default to a light system preference. Individual tests override as needed.
     vi.stubGlobal("matchMedia", stubMatchMedia(false));
   });
@@ -53,7 +52,6 @@ describe("ThemeSwitcher", () => {
     vi.unstubAllGlobals();
     localStorage.clear();
     document.documentElement.classList.remove("dark");
-    document.documentElement.removeAttribute("data-theme");
   });
 
   it("renders a trigger with an accessible name", () => {
@@ -62,18 +60,18 @@ describe("ThemeSwitcher", () => {
     expect(trigger).toBeInTheDocument();
   });
 
-  it("opens a menu containing exactly Light, Dark, Serene Blue, System in order on click", async () => {
+  it("opens a menu containing exactly Light, Dark, System in order on click", async () => {
     render(<ThemeSwitcher />);
     const trigger = screen.getByRole("button", { name: /toggle theme/i });
     fireEvent.pointerDown(trigger, { button: 0 });
 
     const items = await screen.findAllByRole("menuitem");
-    // Review-round-3, Task 6: Serene Blue slots in between Dark and System.
-    expect(items).toHaveLength(4);
+    // CloudStash Monochrome ships exactly three: Light, Dark, System (Serene
+    // Blue retired). System still resolves to light|dark via the OS.
+    expect(items).toHaveLength(3);
     expect(items[0]).toHaveTextContent(/light/i);
     expect(items[1]).toHaveTextContent(/^dark$/i);
-    expect(items[2]).toHaveTextContent(/serene blue/i);
-    expect(items[3]).toHaveTextContent(/system/i);
+    expect(items[2]).toHaveTextContent(/system/i);
   });
 
   it("opens the menu via keyboard (Enter on trigger)", async () => {
@@ -83,28 +81,21 @@ describe("ThemeSwitcher", () => {
     fireEvent.keyDown(trigger, { key: "Enter" });
 
     const items = await screen.findAllByRole("menuitem");
-    expect(items).toHaveLength(4);
+    expect(items).toHaveLength(3);
   });
 
-  it("selecting Dark applies `.dark`, removes data-theme, and writes localStorage", async () => {
-    // Simulate stale serene-blue attribute from a previous session — selecting
-    // Dark must strip it (review-round-3, Task 6: `applyEffectiveTheme`
-    // manages both channels on every call).
-    document.documentElement.setAttribute("data-theme", "serene-blue");
-
+  it("selecting Dark applies `.dark` and writes localStorage", async () => {
     render(<ThemeSwitcher />);
     fireEvent.pointerDown(screen.getByRole("button", { name: /toggle theme/i }), { button: 0 });
     const darkItem = await screen.findByRole("menuitem", { name: /^dark$/i });
     fireEvent.click(darkItem);
 
     expect(document.documentElement.classList.contains("dark")).toBe(true);
-    expect(document.documentElement.hasAttribute("data-theme")).toBe(false);
     expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe("dark");
   });
 
-  it("selecting Light removes `.dark` and data-theme and writes localStorage", async () => {
+  it("selecting Light removes `.dark` and writes localStorage", async () => {
     document.documentElement.classList.add("dark");
-    document.documentElement.setAttribute("data-theme", "serene-blue");
     localStorage.setItem(THEME_STORAGE_KEY, "dark");
 
     render(<ThemeSwitcher />);
@@ -113,22 +104,7 @@ describe("ThemeSwitcher", () => {
     fireEvent.click(lightItem);
 
     expect(document.documentElement.classList.contains("dark")).toBe(false);
-    expect(document.documentElement.hasAttribute("data-theme")).toBe(false);
     expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe("light");
-  });
-
-  it("selecting Serene Blue sets data-theme, removes `.dark`, and writes localStorage", async () => {
-    document.documentElement.classList.add("dark");
-    localStorage.setItem(THEME_STORAGE_KEY, "dark");
-
-    render(<ThemeSwitcher />);
-    fireEvent.pointerDown(screen.getByRole("button", { name: /toggle theme/i }), { button: 0 });
-    const sereneItem = await screen.findByRole("menuitem", { name: /serene blue/i });
-    fireEvent.click(sereneItem);
-
-    expect(document.documentElement.getAttribute("data-theme")).toBe("serene-blue");
-    expect(document.documentElement.classList.contains("dark")).toBe(false);
-    expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe("serene-blue");
   });
 
   it("selecting System removes the localStorage key and applies `.dark` when OS prefers dark", async () => {
@@ -142,13 +118,11 @@ describe("ThemeSwitcher", () => {
 
     expect(localStorage.getItem(THEME_STORAGE_KEY)).toBeNull();
     expect(document.documentElement.classList.contains("dark")).toBe(true);
-    expect(document.documentElement.hasAttribute("data-theme")).toBe(false);
   });
 
   it("selecting System removes the localStorage key and does NOT apply `.dark` when OS prefers light", async () => {
     vi.stubGlobal("matchMedia", stubMatchMedia(false));
     document.documentElement.classList.add("dark");
-    document.documentElement.setAttribute("data-theme", "serene-blue");
     localStorage.setItem(THEME_STORAGE_KEY, "dark");
 
     render(<ThemeSwitcher />);
@@ -158,7 +132,6 @@ describe("ThemeSwitcher", () => {
 
     expect(localStorage.getItem(THEME_STORAGE_KEY)).toBeNull();
     expect(document.documentElement.classList.contains("dark")).toBe(false);
-    expect(document.documentElement.hasAttribute("data-theme")).toBe(false);
   });
 
   it("reflects the current effective theme in its trigger (indicator differs per state)", () => {
@@ -179,22 +152,14 @@ describe("ThemeSwitcher", () => {
 
     // Dark
     localStorage.setItem(THEME_STORAGE_KEY, "dark");
-    const { unmount: unmountDark } = render(<ThemeSwitcher />);
+    render(<ThemeSwitcher />);
     const darkTrigger = screen.getByRole("button", { name: /toggle theme/i });
     const darkIndicator = within(darkTrigger).getByTestId("theme-indicator");
     const darkName = darkIndicator.getAttribute("data-icon");
-    unmountDark();
 
-    // Serene Blue (review-round-3, Task 6)
-    localStorage.setItem(THEME_STORAGE_KEY, "serene-blue");
-    render(<ThemeSwitcher />);
-    const sereneTrigger = screen.getByRole("button", { name: /toggle theme/i });
-    const sereneIndicator = within(sereneTrigger).getByTestId("theme-indicator");
-    const sereneName = sereneIndicator.getAttribute("data-icon");
-
-    // Four distinct indicators — one per preference state.
-    const names = [systemName, lightName, darkName, sereneName];
-    expect(new Set(names).size).toBe(4);
+    // Three distinct indicators — one per preference state.
+    const names = [systemName, lightName, darkName];
+    expect(new Set(names).size).toBe(3);
     expect(names.every(Boolean)).toBe(true);
   });
 
@@ -211,26 +176,5 @@ describe("ThemeSwitcher", () => {
 
     const toaster = screen.getByTestId("sonner-stub");
     expect(toaster).toHaveAttribute("data-theme", "dark");
-  });
-
-  it("maps Serene Blue to 'light' when forwarding to Sonner (sonner's theme union is light|dark|system)", async () => {
-    render(
-      <>
-        <ThemeSwitcher />
-        <Toaster />
-      </>,
-    );
-    fireEvent.pointerDown(screen.getByRole("button", { name: /toggle theme/i }), { button: 0 });
-    const sereneItem = await screen.findByRole("menuitem", { name: /serene blue/i });
-    fireEvent.click(sereneItem);
-
-    // Sonner doesn't know about "serene-blue"; our wrapper translates the
-    // preference to "light" so Sonner's theme switch is well-defined. The
-    // actual toast chrome colours still resolve through the CSS custom
-    // properties (--popover, --border, etc.) which the `[data-theme=...]`
-    // selector overrides — so toasts on Serene Blue still pick up the
-    // correct palette without Sonner needing to know about it.
-    const toaster = screen.getByTestId("sonner-stub");
-    expect(toaster).toHaveAttribute("data-theme", "light");
   });
 });

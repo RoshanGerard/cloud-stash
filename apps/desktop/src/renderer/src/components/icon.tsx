@@ -28,7 +28,6 @@ import {
   CopyIcon,
   AlertTriangleIcon,
   DatabaseIcon,
-  DropletsIcon,
   FileArchiveIcon,
   FileAudioIcon,
   FileCodeIcon,
@@ -80,9 +79,7 @@ export type IconName =
   // Review-round-3:
   //   `folder-sync` — leading glyph on the dashboard "Datasources" title
   //     (Task 4: modernize heading with a complementary glyph).
-  //   `droplets`    — Serene Blue theme-switcher option indicator (Task 6c).
   | "folder-sync"
-  | "droplets"
   // ui-file-explorer: breadcrumb separator (chevron-right), back/forward/up
   // navigation buttons on the explorer chrome. `home` is used as the root
   // segment's leading glyph to match the design-note that the root reads as
@@ -147,7 +144,6 @@ const REGISTRY: Record<IconName, ComponentType<LucideProps>> = {
   settings: SettingsIcon,
   "trash-2": Trash2Icon,
   "folder-sync": FolderSyncIcon,
-  droplets: DropletsIcon,
   "chevron-left": ChevronLeftIcon,
   "chevron-right": ChevronRightIcon,
   "chevron-up": ChevronUpIcon,

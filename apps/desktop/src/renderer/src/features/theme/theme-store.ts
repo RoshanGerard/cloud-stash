@@ -16,11 +16,10 @@ import { useSyncExternalStore } from "react"
  * browser-global state like localStorage + matchMedia.
  */
 
-// Review-round-3, Task 6: "serene-blue" added as a third explicit theme.
-// System still resolves only to light|dark (never serene-blue); selecting
-// Serene Blue is an explicit override. CSS selector is the orthogonal
-// `data-theme="serene-blue"` attribute on <html>, not the `.dark` class.
-export type ThemePreference = "light" | "dark" | "serene-blue" | "system"
+// CloudStash Monochrome ships exactly two palettes plus System: Light (`:root`)
+// and the canonical graphite Dark (`.dark` class on <html>). System resolves
+// to light|dark via `prefers-color-scheme`. No named theme beyond these ships.
+export type ThemePreference = "light" | "dark" | "system"
 
 export const THEME_STORAGE_KEY = "cloudstash.theme"
 
@@ -40,16 +39,16 @@ export function getStoredPreference(): ThemePreference {
   if (!isBrowser()) return "system"
   try {
     const raw = window.localStorage.getItem(THEME_STORAGE_KEY)
-    if (raw === "light" || raw === "dark" || raw === "serene-blue") return raw
+    if (raw === "light" || raw === "dark") return raw
     return "system"
   } catch {
     return "system"
   }
 }
 
-export function getEffectiveTheme(): "light" | "dark" | "serene-blue" {
+export function getEffectiveTheme(): "light" | "dark" {
   const pref = getStoredPreference()
-  if (pref === "light" || pref === "dark" || pref === "serene-blue") return pref
+  if (pref === "light" || pref === "dark") return pref
   if (!isBrowser()) return "light"
   try {
     return window.matchMedia(DARK_QUERY).matches ? "dark" : "light"
@@ -62,21 +61,12 @@ export function applyEffectiveTheme(): void {
   if (!isBrowser()) return
   const effective = getEffectiveTheme()
   const root = document.documentElement
-  // Review-round-3, Task 6: always manage BOTH the `.dark` class and the
-  // `data-theme` attribute on every call. Selecting Serene Blue after Dark
-  // must strip `.dark`; selecting Dark after Serene Blue must strip
-  // `data-theme`. Branching only on the "add" side would leave stale
-  // state from the previous theme.
+  // Light/Dark are the only palettes: the graphite Dark theme is the presence
+  // of the `.dark` class on <html>, its absence is the Light theme.
   if (effective === "dark") {
     root.classList.add("dark")
-    root.removeAttribute("data-theme")
-  } else if (effective === "serene-blue") {
-    root.classList.remove("dark")
-    root.setAttribute("data-theme", "serene-blue")
   } else {
-    // "light"
     root.classList.remove("dark")
-    root.removeAttribute("data-theme")
   }
 }
 

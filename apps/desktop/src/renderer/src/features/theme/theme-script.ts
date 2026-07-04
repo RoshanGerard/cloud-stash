@@ -17,10 +17,9 @@
  *    the effective behaviour and the 4.4 theme test keeps the class
  *    name (`.dark`) canonical.
  */
-// Review-round-3, Task 6b: extended to handle the "serene-blue" preference.
-// Every branch now explicitly resets BOTH the `.dark` class and the
-// `data-theme` attribute — otherwise a stored "serene-blue" followed by an
-// OS dark preference (after the user switches to System) would leave a
-// stale attribute. The state machine mirrors `applyEffectiveTheme()` in
+// CloudStash Monochrome resolves to exactly two palettes: Light (no class) and
+// the canonical graphite Dark (`.dark` on <html>). The bootstrap only ever
+// adds or removes `.dark` — an explicit stored "dark"/"light" wins, otherwise
+// it falls back to `prefers-color-scheme`. Mirrors `applyEffectiveTheme()` in
 // theme-store.ts. ES5-safe: `var`, no arrow fns, no optional chaining.
-export const THEME_BOOTSTRAP_SCRIPT = `(function(){try{var k="cloudstash.theme";var v=null;try{v=window.localStorage.getItem(k)}catch(_){v=null}var d=document.documentElement;var eff;if(v==="dark"||v==="light"||v==="serene-blue"){eff=v}else{var m=window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)");eff=(m&&m.matches)?"dark":"light"}if(eff==="dark"){d.classList.add("dark");d.removeAttribute("data-theme")}else if(eff==="serene-blue"){d.classList.remove("dark");d.setAttribute("data-theme","serene-blue")}else{d.classList.remove("dark");d.removeAttribute("data-theme")}}catch(_){}})();`
+export const THEME_BOOTSTRAP_SCRIPT = `(function(){try{var k="cloudstash.theme";var v=null;try{v=window.localStorage.getItem(k)}catch(_){v=null}var d=document.documentElement;var eff;if(v==="dark"||v==="light"){eff=v}else{var m=window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)");eff=(m&&m.matches)?"dark":"light"}if(eff==="dark"){d.classList.add("dark")}else{d.classList.remove("dark")}}catch(_){}})();`

@@ -14,17 +14,13 @@ import { usePreference } from "@/features/theme/theme-store"
 // design.md Decision 6 rejects next-themes; this wrapper reads the renderer's
 // own theme store so Sonner reflects the user's explicit Light/Dark choice
 // (falling back to `prefers-color-scheme` when the preference is "system").
-//
-// Review-round-3, Task 6: Sonner's `theme` prop only accepts
-// `"light" | "dark" | "system"`. Our preference union now includes
-// `"serene-blue"` (a light-mode alternative); map it to `"light"` when
-// forwarding to Sonner — the toast chrome inherits the correct colour
-// tokens through CSS variables (`--normal-bg` → `var(--popover)`, etc.)
-// so Sonner doesn't need to know the custom theme name exists.
+// The preference union (`"light" | "dark" | "system"`) matches Sonner's own
+// `theme` prop exactly, so it forwards unchanged — the toast chrome inherits
+// the CloudStash palette through the CSS variables (`--normal-bg` →
+// `var(--popover)`, etc.) below.
 const Toaster = ({ ...props }: ToasterProps) => {
   const pref = usePreference()
-  const theme: ToasterProps["theme"] =
-    pref === "serene-blue" ? "light" : pref
+  const theme: ToasterProps["theme"] = pref
 
   return (
     <Sonner

@@ -434,8 +434,8 @@ export function InvalidDatasourceState({
           // light-on-dark / dark-on-light pairing so the TEXT sits on the
           // callout's OWN fixed-shade background (bg-red-50 / dark:bg-red-950),
           // making contrast theme-independent — NOT `text-destructive` on a
-          // `bg-destructive/5` tint, which fails AA in the light + serene-blue
-          // themes (the page-background tint drops it below 4.5:1). The left
+          // `bg-destructive/5` tint, which fails AA in the light theme (the
+          // page-background tint drops it below 4.5:1). The left
           // accent is the red-keyed flourish.
           className="mt-2 flex w-full max-w-[360px] items-start gap-2 rounded-md border border-red-300 border-l-2 border-l-red-500 bg-red-50 p-3 text-left dark:border-red-800 dark:border-l-red-500 dark:bg-red-950/40"
         >
