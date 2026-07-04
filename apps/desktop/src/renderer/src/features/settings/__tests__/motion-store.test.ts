@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 //
 // Motion preference store — mirrors the shape of theme-store.ts but keys on
-// `localStorage["ft5.motion"]` and drives the `data-motion` attribute on
+// `localStorage["cloudstash.motion"]` and drives the `data-motion` attribute on
 // <html>. Default preference is "always-on" (custom animations always run,
 // regardless of OS `prefers-reduced-motion`). The user can opt into "safe" —
 // in which case the attribute is written and the CSS override in globals.css
@@ -32,8 +32,8 @@ describe("motion-store", () => {
   });
 
   describe("MOTION_STORAGE_KEY", () => {
-    it("is the canonical 'ft5.motion' key", () => {
-      expect(MOTION_STORAGE_KEY).toBe("ft5.motion");
+    it("is the canonical 'cloudstash.motion' key", () => {
+      expect(MOTION_STORAGE_KEY).toBe("cloudstash.motion");
     });
   });
 

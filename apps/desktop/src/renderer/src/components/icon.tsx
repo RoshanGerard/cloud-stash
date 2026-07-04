@@ -6,7 +6,7 @@
  * enforces that every other feature-code `.tsx` must go through this module.
  *
  * Phase 5.4 extends the IconName union to cover the provider-icon strings
- * carried by the frozen `providers` registry in @ft5/ipc-contracts:
+ * carried by the frozen `providers` registry in @cloudstash/ipc-contracts:
  *   - google-drive → "cloud"
  *   - onedrive     → "cloud"
  *   - amazon-s3    → "database"

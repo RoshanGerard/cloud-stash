@@ -24,7 +24,7 @@ import {
 } from "vitest";
 import { act, cleanup, render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
-import type { SyncEvent } from "@ft5/ipc-contracts/sync-service-desktop";
+import type { SyncEvent } from "@cloudstash/ipc-contracts/sync-service-desktop";
 
 import { DatasourcesProvider, useAuthSession } from "../store";
 
@@ -176,7 +176,7 @@ describe("store auth-* slice — sync.onEvent integration", () => {
         kind: "auth-failed",
         payload: {
           correlationId: "corr-3",
-          // eslint-disable-next-line ft5/no-raw-error-tag-literal -- AuthFailedTag vocabulary (no const object) — out of scope
+          // eslint-disable-next-line cloudstash/no-raw-error-tag-literal -- AuthFailedTag vocabulary (no const object) — out of scope
           tag: "auth-revoked",
           message: "Token was revoked by the user",
         },
@@ -203,7 +203,7 @@ describe("store auth-* slice — sync.onEvent integration", () => {
         kind: "auth-failed",
         payload: {
           correlationId: "corr-mismatch",
-          // eslint-disable-next-line ft5/no-raw-error-tag-literal -- AuthFailedTag vocabulary (no const object) — out of scope
+          // eslint-disable-next-line cloudstash/no-raw-error-tag-literal -- AuthFailedTag vocabulary (no const object) — out of scope
           tag: "account-mismatch",
           message: "This datasource is connected to owner@example.com.",
           expectedEmail: "owner@example.com",
@@ -235,7 +235,7 @@ describe("store auth-* slice — sync.onEvent integration", () => {
         kind: "auth-failed",
         payload: {
           correlationId: "corr-plain",
-          // eslint-disable-next-line ft5/no-raw-error-tag-literal -- AuthFailedTag vocabulary (no const object) — out of scope
+          // eslint-disable-next-line cloudstash/no-raw-error-tag-literal -- AuthFailedTag vocabulary (no const object) — out of scope
           tag: "provider-error",
           message: "Something went wrong",
         },

@@ -19,10 +19,10 @@
 //     `withAuthRefresh`; a post-refresh `auth-expired` reaching the env loop
 //     is not in the retry set and surfaces terminal.
 
-import type { DatasourceClient } from "@ft5/fs-datasource-engine";
-import { withAuthRefresh } from "@ft5/fs-datasource-engine";
-import type { DatasourceType } from "@ft5/ipc-contracts";
-import { DatasourceErrorTag } from "@ft5/ipc-contracts";
+import type { DatasourceClient } from "@cloudstash/fs-datasource-engine";
+import { withAuthRefresh } from "@cloudstash/fs-datasource-engine";
+import type { DatasourceType } from "@cloudstash/ipc-contracts";
+import { DatasourceErrorTag } from "@cloudstash/ipc-contracts";
 
 import type { CommandHandler } from "../ipc/server.js";
 

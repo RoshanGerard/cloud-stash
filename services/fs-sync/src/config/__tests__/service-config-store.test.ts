@@ -3,7 +3,7 @@
 // `sync:get-config` / `sync:set-config` handlers (§12).
 //
 // Spec: `openspec/changes/implement-datasource-onboarding/specs/fs-sync-service/spec.md`
-// Requirement "ServiceConfigStore reads ~/ft5/sync_app/config.json for OAuth
+// Requirement "ServiceConfigStore reads ~/cloudstash/sync_app/config.json for OAuth
 // app config" + design.md Decision 4. The atomic-write + 0o600 pattern
 // mirrors `services/fs-sync/src/credential-store/config-file.ts`.
 
@@ -22,7 +22,7 @@ let cleanupDirs: string[] = [];
 
 async function scratchDir(): Promise<string> {
   const dir = await fsp.mkdtemp(
-    path.join(os.tmpdir(), "ft5-svc-config-"),
+    path.join(os.tmpdir(), "cloudstash-svc-config-"),
   );
   cleanupDirs.push(dir);
   return dir;

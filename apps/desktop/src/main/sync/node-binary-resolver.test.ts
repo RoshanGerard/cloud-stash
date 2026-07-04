@@ -18,8 +18,8 @@ import { resolveServiceNodeBinary } from "./node-binary-resolver.js";
 
 const FAKE_APP_PATH =
   process.platform === "win32"
-    ? "C:\\Program Files\\FT5\\resources\\app.asar"
-    : "/opt/FT5/resources/app.asar";
+    ? "C:\\Program Files\\CloudStash\\resources\\app.asar"
+    : "/opt/CloudStash/resources/app.asar";
 
 describe("resolveServiceNodeBinary", () => {
   it("throws in dev mode (isPackaged=false)", () => {

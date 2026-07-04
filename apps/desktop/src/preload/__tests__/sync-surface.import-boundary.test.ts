@@ -10,12 +10,12 @@ import { describe, expect, it } from "vitest";
 // message if someone accidentally imports from the wire subpath.
 //
 // Scope:
-//   ALLOWED:  `@ft5/ipc-contracts` (root barrel — existing datasources/files/ping)
-//   ALLOWED:  `@ft5/ipc-contracts/sync-service-desktop` (renderer-facing subpath)
-//   FORBIDDEN: `@ft5/ipc-contracts/sync-service` (wire subpath, reserved for
+//   ALLOWED:  `@cloudstash/ipc-contracts` (root barrel — existing datasources/files/ping)
+//   ALLOWED:  `@cloudstash/ipc-contracts/sync-service-desktop` (renderer-facing subpath)
+//   FORBIDDEN: `@cloudstash/ipc-contracts/sync-service` (wire subpath, reserved for
 //              main ↔ service daemon; the renderer and preload must never see
 //              wire-format types like RequestFrame / Frame)
-//   FORBIDDEN: `@ft5/ipc-contracts/sync-service/<anything>` (sub-paths of the wire)
+//   FORBIDDEN: `@cloudstash/ipc-contracts/sync-service/<anything>` (sub-paths of the wire)
 
 const PRELOAD_PATH = resolve(
   __dirname,
@@ -24,7 +24,7 @@ const PRELOAD_PATH = resolve(
 );
 
 describe("preload import-boundary: sync-service wire subpath must not be imported", () => {
-  it("preload/index.ts does not import from @ft5/ipc-contracts/sync-service", () => {
+  it("preload/index.ts does not import from @cloudstash/ipc-contracts/sync-service", () => {
     const source = readFileSync(PRELOAD_PATH, "utf8");
 
     // Match `sync-service` as a complete path segment: it must be followed by
@@ -32,18 +32,18 @@ describe("preload import-boundary: sync-service wire subpath must not be importe
     // ensures we do NOT accidentally match the ALLOWED `sync-service-desktop`.
     //
     // Pattern breakdown:
-    //   @ft5/ipc-contracts/sync-service  — the forbidden prefix
+    //   @cloudstash/ipc-contracts/sync-service  — the forbidden prefix
     //   (?!-desktop)                     — NOT followed by -desktop
     //   ["'/]                            — must be followed by quote or slash
     //                                      (completes the path segment or ends
     //                                       the string literal)
-    const forbiddenPattern = /@ft5\/ipc-contracts\/sync-service(?!-desktop)["'/]/g;
+    const forbiddenPattern = /@cloudstash\/ipc-contracts\/sync-service(?!-desktop)["'/]/g;
 
     const matches = source.match(forbiddenPattern);
 
     expect(
       matches,
-      `preload/index.ts must not import from the wire subpath @ft5/ipc-contracts/sync-service. ` +
+      `preload/index.ts must not import from the wire subpath @cloudstash/ipc-contracts/sync-service. ` +
         `Found forbidden pattern(s): ${JSON.stringify(matches)}`,
     ).toBeNull();
   });

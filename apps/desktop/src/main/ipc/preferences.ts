@@ -3,7 +3,7 @@
 //
 // Background. The renderer's `downloads-store` (built in §20) is the
 // durable owner of the default-downloads-folder preference — it
-// persists to `localStorage["ft5.downloads.defaultFolder"]` per the
+// persists to `localStorage["cloudstash.downloads.defaultFolder"]` per the
 // existing `motion-store.ts` pattern (design.md V4 + spec.md "Downloads
 // preferences resolve toPath from store + modifier keys"). This handler
 // holds an in-memory mirror of the same value so callers outside the
@@ -29,12 +29,12 @@ export function handleGetDefaultDownloadsFolder(): string | null {
 
 // Post-archive bug-fix follow-up — `app.getPath("downloads")` exposure
 // for the first-run modal (§21). The original task description deferred
-// this and used the literal string `"~/Downloads/ft5"` as a placeholder;
+// this and used the literal string `"~/Downloads/CloudStash"` as a placeholder;
 // that placeholder fails the service-side `path.isAbsolute` check on
 // every host, so every first-run download silently dropped server-side.
 // Resolving the OS default here returns a real absolute path
 // (`C:\Users\<u>\Downloads` on Windows, `/Users/<u>/Downloads` on macOS
-// / Linux) which the renderer composes into `<dl>/ft5`.
+// / Linux) which the renderer composes into `<dl>/CloudStash`.
 //
 // Dependency-injection shape mirrors the open-saved / show-saved
 // handlers: the bound port is supplied by `registerIpcHandlers` so this

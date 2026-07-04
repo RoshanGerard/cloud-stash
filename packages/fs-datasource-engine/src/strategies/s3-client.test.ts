@@ -33,8 +33,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type {
   CredentialsFormIntent,
   StoredCredentials,
-} from "@ft5/ipc-contracts";
-import { DatasourceError, DatasourceErrorTag, providers } from "@ft5/ipc-contracts";
+} from "@cloudstash/ipc-contracts";
+import { DatasourceError, DatasourceErrorTag, providers } from "@cloudstash/ipc-contracts";
 
 import type { BaseClientContext, CredentialStore } from "../base-client.js";
 import { createS3Client, S3Client, pathToKey, keyToPath } from "./s3-client.js";

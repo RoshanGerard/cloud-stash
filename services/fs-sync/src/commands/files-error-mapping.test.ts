@@ -4,7 +4,7 @@ import {
   DatasourceError,
   DatasourceErrorTag,
   FilesErrorTag,
-} from "@ft5/ipc-contracts";
+} from "@cloudstash/ipc-contracts";
 
 import { normalizeFilesError } from "./files-error-mapping.js";
 

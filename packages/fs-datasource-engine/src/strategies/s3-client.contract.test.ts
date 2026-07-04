@@ -29,7 +29,7 @@ import { Upload } from "@aws-sdk/lib-storage";
 import { mockClient } from "aws-sdk-client-mock";
 import { vi } from "vitest";
 
-import { providers, type StoredCredentials } from "@ft5/ipc-contracts";
+import { providers, type StoredCredentials } from "@cloudstash/ipc-contracts";
 
 import type { BaseClientContext } from "../base-client.js";
 import { runStrategyContractSuite, type StrategyContractFixture } from "../__tests__/strategy-contract.js";

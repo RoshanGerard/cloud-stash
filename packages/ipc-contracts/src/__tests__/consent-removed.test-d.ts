@@ -3,7 +3,7 @@
 // Per the modified `datasources-ui` capability requirement "Datasource IPC
 // surface is the single data path", the `consent-*` event taxonomy and the
 // `startConsent` / `cancelConsent` request/response surface SHALL NOT be
-// present on `@ft5/ipc-contracts/datasources` after this change.
+// present on `@cloudstash/ipc-contracts/datasources` after this change.
 // Authentication lifecycle now flows through the service via the
 // `auth-*` taxonomy on `sync:event` (see `sync-service` capability).
 //

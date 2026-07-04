@@ -3,8 +3,8 @@
 // Section 20 — `downloads-store` preferences. Mirrors `motion-store.ts`
 // patterns but keys on two localStorage entries:
 //
-//   - `ft5.downloads.defaultFolder`  → absolute folder path string
-//   - `ft5.downloads.alwaysAsk`      → "yes" | absent (no other values)
+//   - `cloudstash.downloads.defaultFolder`  → absolute folder path string
+//   - `cloudstash.downloads.alwaysAsk`      → "yes" | absent (no other values)
 //
 // See `openspec/changes/add-engine-rename-download/specs/file-explorer/spec.md`
 // § "Downloads preferences resolve `toPath` from store + modifier keys"
@@ -35,14 +35,14 @@ describe("downloads-store", () => {
   });
 
   describe("storage keys", () => {
-    it("defaultFolder key is 'ft5.downloads.defaultFolder'", () => {
+    it("defaultFolder key is 'cloudstash.downloads.defaultFolder'", () => {
       expect(DOWNLOADS_DEFAULT_FOLDER_KEY).toBe(
-        "ft5.downloads.defaultFolder",
+        "cloudstash.downloads.defaultFolder",
       );
     });
 
-    it("alwaysAsk key is 'ft5.downloads.alwaysAsk'", () => {
-      expect(DOWNLOADS_ALWAYS_ASK_KEY).toBe("ft5.downloads.alwaysAsk");
+    it("alwaysAsk key is 'cloudstash.downloads.alwaysAsk'", () => {
+      expect(DOWNLOADS_ALWAYS_ASK_KEY).toBe("cloudstash.downloads.alwaysAsk");
     });
   });
 
@@ -54,9 +54,9 @@ describe("downloads-store", () => {
     it("returns the stored path string when the key is set", () => {
       localStorage.setItem(
         DOWNLOADS_DEFAULT_FOLDER_KEY,
-        "/Users/alice/Downloads/ft5",
+        "/Users/alice/Downloads/CloudStash",
       );
-      expect(getDefaultFolder()).toBe("/Users/alice/Downloads/ft5");
+      expect(getDefaultFolder()).toBe("/Users/alice/Downloads/CloudStash");
     });
   });
 
@@ -84,9 +84,9 @@ describe("downloads-store", () => {
       const { result } = renderHook(() => useDefaultFolder());
       expect(result.current).toBeNull();
       act(() => {
-        setDefaultFolder("/Users/alice/Downloads/ft5");
+        setDefaultFolder("/Users/alice/Downloads/CloudStash");
       });
-      expect(result.current).toBe("/Users/alice/Downloads/ft5");
+      expect(result.current).toBe("/Users/alice/Downloads/CloudStash");
       // The listener spy is exercised here by symmetry with motion-store;
       // we only care that the hook surface reflects the change. Mark
       // the spy untouched is fine.
@@ -99,8 +99,8 @@ describe("downloads-store", () => {
         ...window,
         api: { preferences: { setDefaultDownloadsFolder: setMain } },
       });
-      setDefaultFolder("/Users/alice/Downloads/ft5");
-      expect(setMain).toHaveBeenCalledWith("/Users/alice/Downloads/ft5");
+      setDefaultFolder("/Users/alice/Downloads/CloudStash");
+      expect(setMain).toHaveBeenCalledWith("/Users/alice/Downloads/CloudStash");
     });
 
     it("is a safe no-op for the bridge call when window.api is absent", () => {
@@ -154,19 +154,19 @@ describe("downloads-store", () => {
     it("returns the stored value when set on first render", () => {
       localStorage.setItem(
         DOWNLOADS_DEFAULT_FOLDER_KEY,
-        "/Users/alice/Downloads/ft5",
+        "/Users/alice/Downloads/CloudStash",
       );
       const { result } = renderHook(() => useDefaultFolder());
-      expect(result.current).toBe("/Users/alice/Downloads/ft5");
+      expect(result.current).toBe("/Users/alice/Downloads/CloudStash");
     });
 
     it("re-renders when setDefaultFolder is called", () => {
       const { result } = renderHook(() => useDefaultFolder());
       expect(result.current).toBeNull();
       act(() => {
-        setDefaultFolder("/Users/alice/Downloads/ft5");
+        setDefaultFolder("/Users/alice/Downloads/CloudStash");
       });
-      expect(result.current).toBe("/Users/alice/Downloads/ft5");
+      expect(result.current).toBe("/Users/alice/Downloads/CloudStash");
     });
   });
 

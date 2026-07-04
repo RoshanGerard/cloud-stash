@@ -1,5 +1,5 @@
 {
-  "name": "@ft5/ipc-contracts",
+  "name": "@cloudstash/ipc-contracts",
   "private": true,
   "version": "0.0.0",
   "type": "module",

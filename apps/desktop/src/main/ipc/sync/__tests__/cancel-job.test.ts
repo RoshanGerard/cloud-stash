@@ -11,7 +11,7 @@
 
 import { describe, expect, it, vi } from "vitest";
 
-import type { SyncCancelJobRequest } from "@ft5/ipc-contracts/sync-service-desktop";
+import type { SyncCancelJobRequest } from "@cloudstash/ipc-contracts/sync-service-desktop";
 
 import type { SyncClient } from "../../../sync/client.js";
 import { SyncCommandError } from "../../../sync/client.js";
@@ -58,7 +58,7 @@ describe("handleSyncCancelJob", () => {
 
   it("re-throws not-found (not a renderer-observable fallible outcome for cancel)", async () => {
     const err = new SyncCommandError("sync:cancel-job", {
-      // eslint-disable-next-line ft5/no-raw-error-tag-literal -- ServiceErrorTag vocabulary (no const object) — out of scope
+      // eslint-disable-next-line cloudstash/no-raw-error-tag-literal -- ServiceErrorTag vocabulary (no const object) — out of scope
       tag: "not-found",
       message: "job j-missing does not exist",
     });

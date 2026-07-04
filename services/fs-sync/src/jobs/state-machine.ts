@@ -7,7 +7,7 @@
 // → failed`; `running → cancelled`; `waiting-network → queued`;
 // `waiting-network → cancelled`. Terminal: completed, failed, cancelled.
 
-import type { JobStatus } from "@ft5/ipc-contracts/sync-service";
+import type { JobStatus } from "@cloudstash/ipc-contracts/sync-service";
 
 const ADJACENCY: Record<JobStatus, ReadonlyArray<JobStatus>> = {
   queued: ["running", "cancelled"],

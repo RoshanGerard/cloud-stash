@@ -1,4 +1,4 @@
-import type { DatasourcesListResponse } from "@ft5/ipc-contracts";
+import type { DatasourcesListResponse } from "@cloudstash/ipc-contracts";
 
 import { getEngine } from "../../datasources/engine.js";
 

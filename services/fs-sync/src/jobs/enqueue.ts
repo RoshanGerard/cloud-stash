@@ -9,7 +9,7 @@ import { randomUUID } from "node:crypto";
 
 import type Database from "better-sqlite3";
 
-import type { ConflictPolicy, JobStatus } from "@ft5/ipc-contracts/sync-service";
+import type { ConflictPolicy, JobStatus } from "@cloudstash/ipc-contracts/sync-service";
 
 import { JobRepository } from "./repository.js";
 

@@ -30,17 +30,17 @@ import type {
   AuthResult,
   DatasourceSummary,
   ProviderId,
-} from "@ft5/ipc-contracts";
+} from "@cloudstash/ipc-contracts";
 import type {
   ClientFactory,
   CredentialStore,
   EngineContext,
   OAuthAppConfig,
   OAuthIntent,
-} from "@ft5/fs-datasource-engine";
+} from "@cloudstash/fs-datasource-engine";
 
 import { createEventBus, type EventBus } from "../../events/event-bus.js";
-import type { EventName, EventPayloadMap } from "@ft5/ipc-contracts/sync-service";
+import type { EventName, EventPayloadMap } from "@cloudstash/ipc-contracts/sync-service";
 
 import {
   createOAuthLoopbackBroker,
@@ -191,7 +191,7 @@ describe("OAuthLoopbackBroker", () => {
       engineContext,
       factory,
       getOAuthAppConfig: makeGetOAuthAppConfig(),
-      dataDir: "/tmp/ft5-test-data-dir",
+      dataDir: "/tmp/cloudstash-test-data-dir",
     });
     const { events } = makeBusSpy(bus);
 
@@ -263,7 +263,7 @@ describe("OAuthLoopbackBroker", () => {
       engineContext,
       factory,
       getOAuthAppConfig: makeGetOAuthAppConfig(),
-      dataDir: "/tmp/ft5-test-data-dir",
+      dataDir: "/tmp/cloudstash-test-data-dir",
     });
     const { events } = makeBusSpy(bus);
 
@@ -333,7 +333,7 @@ describe("OAuthLoopbackBroker", () => {
       factory,
       getOAuthAppConfig: makeGetOAuthAppConfig(),
       mintDatasourceId,
-      dataDir: "/tmp/ft5-test-data-dir",
+      dataDir: "/tmp/cloudstash-test-data-dir",
     });
     const { events } = makeBusSpy(bus);
 
@@ -422,7 +422,7 @@ describe("OAuthLoopbackBroker", () => {
       engineContext,
       factory,
       getOAuthAppConfig: makeGetOAuthAppConfig(),
-      dataDir: "/tmp/ft5-test-data-dir",
+      dataDir: "/tmp/cloudstash-test-data-dir",
     });
     const { events } = makeBusSpy(bus);
 
@@ -489,7 +489,7 @@ describe("OAuthLoopbackBroker", () => {
       engineContext,
       factory,
       getOAuthAppConfig: makeGetOAuthAppConfig(),
-      dataDir: "/tmp/ft5-test-data-dir",
+      dataDir: "/tmp/cloudstash-test-data-dir",
     });
     const { events } = makeBusSpy(bus);
 
@@ -546,7 +546,7 @@ describe("OAuthLoopbackBroker", () => {
       factory,
       getOAuthAppConfig: makeGetOAuthAppConfig(),
       mintDatasourceId,
-      dataDir: "/tmp/ft5-test-data-dir",
+      dataDir: "/tmp/cloudstash-test-data-dir",
     });
     const { events } = makeBusSpy(bus);
 
@@ -601,7 +601,7 @@ describe("OAuthLoopbackBroker", () => {
       factory,
       getOAuthAppConfig: makeGetOAuthAppConfig(),
       mintDatasourceId,
-      dataDir: "/tmp/ft5-test-data-dir",
+      dataDir: "/tmp/cloudstash-test-data-dir",
     });
     const { events } = makeBusSpy(bus);
 
@@ -639,7 +639,7 @@ describe("OAuthLoopbackBroker", () => {
       engineContext,
       factory,
       getOAuthAppConfig: makeGetOAuthAppConfig(),
-      dataDir: "/tmp/ft5-test-data-dir",
+      dataDir: "/tmp/cloudstash-test-data-dir",
     });
 
     // ACT (a): start three sessions.
@@ -707,7 +707,7 @@ describe("OAuthLoopbackBroker", () => {
       engineContext,
       factory,
       getOAuthAppConfig: makeGetOAuthAppConfig(),
-      dataDir: "/tmp/ft5-test-data-dir",
+      dataDir: "/tmp/cloudstash-test-data-dir",
     });
     const { events } = makeBusSpy(bus);
 
@@ -750,7 +750,7 @@ describe("OAuthLoopbackBroker", () => {
       engineContext,
       factory,
       getOAuthAppConfig: failingGetConfig,
-      dataDir: "/tmp/ft5-test-data-dir",
+      dataDir: "/tmp/cloudstash-test-data-dir",
     });
     const { events } = makeBusSpy(bus);
 

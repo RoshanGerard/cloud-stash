@@ -26,7 +26,7 @@ import type {
   DatasourceErrorTag,
   DatasourceStatus,
   DatasourceSummary,
-} from "@ft5/ipc-contracts";
+} from "@cloudstash/ipc-contracts";
 
 import type { SqliteDatabase } from "../db/database.js";
 

@@ -21,7 +21,7 @@ afterEach(async () => {
 function scratch(): string {
   const d = path.join(
     os.tmpdir(),
-    `ft5-sync-health-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    `cloudstash-sync-health-${Date.now()}-${Math.random().toString(36).slice(2)}`,
   );
   cleanup.push(d);
   return d;

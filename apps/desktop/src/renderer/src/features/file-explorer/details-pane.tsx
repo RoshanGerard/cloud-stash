@@ -2,7 +2,7 @@
 
 import { useSyncExternalStore } from "react";
 
-import type { FileEntry } from "@ft5/ipc-contracts";
+import type { FileEntry } from "@cloudstash/ipc-contracts";
 
 import { Icon } from "@/components/icon";
 import { cn } from "@/lib/utils";

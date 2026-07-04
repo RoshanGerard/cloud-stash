@@ -27,8 +27,8 @@ import type {
   FilesUploadRequest,
   FilesUploadResponse,
   PingResponse,
-} from "@ft5/ipc-contracts";
-import type { DownloadJob, UploadJob } from "@ft5/ipc-contracts/sync-service";
+} from "@cloudstash/ipc-contracts";
+import type { DownloadJob, UploadJob } from "@cloudstash/ipc-contracts/sync-service";
 import type {
   SyncAuthenticateCancelRequest,
   SyncAuthenticateCancelResponse,
@@ -50,7 +50,7 @@ import type {
   SyncSetConfigRequest,
   SyncSetConfigResponse,
   SyncUploadsListActiveResponse,
-} from "@ft5/ipc-contracts/sync-service-desktop";
+} from "@cloudstash/ipc-contracts/sync-service-desktop";
 
 declare global {
   interface Window {
@@ -110,7 +110,7 @@ declare global {
         getDefaultDownloadsFolder(): Promise<string | null>;
         // Post-archive bug-fix follow-up — `app.getPath("downloads")`
         // exposure used by the first-run downloads modal to pre-fill a
-        // REAL absolute path. The renderer composes `<resolved>/ft5`
+        // REAL absolute path. The renderer composes `<resolved>/CloudStash`
         // with the host's separator.
         getOSDefaultDownloadsFolder(): Promise<string>;
       };

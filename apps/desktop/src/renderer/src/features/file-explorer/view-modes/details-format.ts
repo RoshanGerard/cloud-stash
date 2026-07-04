@@ -1,4 +1,4 @@
-import type { FileEntry } from "@ft5/ipc-contracts";
+import type { FileEntry } from "@cloudstash/ipc-contracts";
 
 /**
  * Shared cell formatters for the file-explorer view modes. Extracted so

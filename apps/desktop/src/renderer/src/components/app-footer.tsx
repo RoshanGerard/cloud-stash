@@ -29,7 +29,7 @@ export function AppFooter({ className, ...rest }: AppFooterProps) {
       {...rest}
     >
       <p className="text-muted-foreground text-xs">
-        © {year} Forti5 Tech. All rights reserved.
+        © {year} CloudStash. All rights reserved.
       </p>
     </footer>
   );

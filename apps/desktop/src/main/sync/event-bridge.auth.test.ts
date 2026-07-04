@@ -17,9 +17,9 @@ import * as net from "node:net";
 import * as os from "node:os";
 import * as path from "node:path";
 
-import type { DatasourceSummary } from "@ft5/ipc-contracts";
-import type { RequestFrame } from "@ft5/ipc-contracts/sync-service";
-import { SYNC_CHANNELS } from "@ft5/ipc-contracts/sync-service-desktop";
+import type { DatasourceSummary } from "@cloudstash/ipc-contracts";
+import type { RequestFrame } from "@cloudstash/ipc-contracts/sync-service";
+import { SYNC_CHANNELS } from "@cloudstash/ipc-contracts/sync-service-desktop";
 import {
   afterEach,
   beforeEach,
@@ -94,11 +94,11 @@ function makeFakeWindow(): FakeBrowserWindow {
 
 function pipeFor(tag: string): string {
   if (process.platform === "win32") {
-    return `\\\\.\\pipe\\ft5-sync-eb-auth-${tag}-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    return `\\\\.\\pipe\\cloudstash-sync-eb-auth-${tag}-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
   }
   return path.join(
     os.tmpdir(),
-    `ft5-sync-eb-auth-${tag}-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}.sock`,
+    `cloudstash-sync-eb-auth-${tag}-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}.sock`,
   );
 }
 
@@ -451,7 +451,7 @@ describe("createSyncEventBridge — auth-event subscriptions (§16)", () => {
         name: "auth-failed",
         payload: {
           correlationId: "corr-mismatch",
-          // eslint-disable-next-line ft5/no-raw-error-tag-literal -- AuthFailedTag vocabulary (no const object) — out of scope
+          // eslint-disable-next-line cloudstash/no-raw-error-tag-literal -- AuthFailedTag vocabulary (no const object) — out of scope
           tag: "account-mismatch",
           message: "This datasource is connected to owner@example.com.",
           expectedEmail: "owner@example.com",
@@ -471,7 +471,7 @@ describe("createSyncEventBridge — auth-event subscriptions (§16)", () => {
         kind: "auth-failed",
         payload: {
           correlationId: "corr-mismatch",
-          // eslint-disable-next-line ft5/no-raw-error-tag-literal -- AuthFailedTag vocabulary (no const object) — out of scope
+          // eslint-disable-next-line cloudstash/no-raw-error-tag-literal -- AuthFailedTag vocabulary (no const object) — out of scope
           tag: "account-mismatch",
           message: "This datasource is connected to owner@example.com.",
           expectedEmail: "owner@example.com",

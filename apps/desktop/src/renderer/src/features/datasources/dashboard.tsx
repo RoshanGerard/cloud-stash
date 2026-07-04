@@ -166,7 +166,7 @@ function DashboardError({
 function DashboardPopulated({
   datasources,
 }: {
-  datasources: import("@ft5/ipc-contracts").DatasourceSummary[];
+  datasources: import("@cloudstash/ipc-contracts").DatasourceSummary[];
 }) {
   return (
     <div

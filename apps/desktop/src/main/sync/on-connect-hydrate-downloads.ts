@@ -33,7 +33,7 @@
 // is unaffected. The miss is bounded — only the historical snapshot of
 // in-flight downloads is lost, not the live progress feed.
 
-import type { DownloadJob } from "@ft5/ipc-contracts/sync-service";
+import type { DownloadJob } from "@cloudstash/ipc-contracts/sync-service";
 
 /**
  * Minimal request-able shape consumed by this module. The full

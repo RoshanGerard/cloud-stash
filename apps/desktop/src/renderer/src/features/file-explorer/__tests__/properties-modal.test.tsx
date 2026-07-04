@@ -17,7 +17,7 @@ import {
 } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 
-import type { FileEntry } from "@ft5/ipc-contracts";
+import type { FileEntry } from "@cloudstash/ipc-contracts";
 
 import { PropertiesModal } from "../properties-modal.js";
 import {

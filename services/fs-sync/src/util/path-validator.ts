@@ -9,7 +9,7 @@
 // 1. `not absolute`                              — `path.isAbsolute(toPath)` is false
 // 2. `contains traversal`                        — `path.normalize(toPath) !== toPath`
 // 3. `parent directory not writable`             — `fs.access(parent, W_OK)` rejects
-// 4. `cannot write inside service data directory` — toPath is inside `~/ft5/sync_app/`
+// 4. `cannot write inside service data directory` — toPath is inside `~/cloudstash/sync_app/`
 //
 // The handler maps a failed validation to
 // `{ ok: false, error: { tag: "other", message: \`toPath validation: <reason>\`, retryable: false } }`
@@ -43,7 +43,7 @@ export interface PathValidatorDeps {
   readonly homedir: () => string;
 }
 
-const SERVICE_DATA_SUBDIR = nodePath.join("ft5", "sync_app");
+const SERVICE_DATA_SUBDIR = nodePath.join("cloudstash", "sync_app");
 
 /**
  * Run the four toPath validators in order. The order matters: cheap
@@ -74,14 +74,14 @@ export async function validateToPath(
 
   // 4. (run before the async probe to keep validation deterministic in
   // tests that don't wire `canWrite`.) Block writes inside the service's
-  // data directory `~/ft5/sync_app/`. Use platform-native path comparison
+  // data directory `~/cloudstash/sync_app/`. Use platform-native path comparison
   // — Windows is case-insensitive at the FS layer, but spec scenarios
   // exercise Unix-flavoured paths only; `startsWith` on the
   // platform-canonical separator is the simplest correct primitive.
   const home = deps.homedir();
   const serviceDataDir = nodePath.join(home, SERVICE_DATA_SUBDIR);
   // Anchor the prefix at a separator so a sibling path like
-  // `/home/user/ft5/sync_app_other` is NOT mistakenly rejected.
+  // `/home/user/cloudstash/sync_app_other` is NOT mistakenly rejected.
   const serviceDataPrefix = serviceDataDir + nodePath.sep;
   if (toPath === serviceDataDir || toPath.startsWith(serviceDataPrefix)) {
     return { ok: false, reason: "cannot write inside service data directory" };

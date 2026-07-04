@@ -26,17 +26,17 @@ describe("preferences handlers — in-memory default-downloads-folder slot", () 
   });
 
   it("setDefaultDownloadsFolder writes the slot and getDefaultDownloadsFolder reads it back", () => {
-    handleSetDefaultDownloadsFolder("/Users/alice/Downloads/ft5");
+    handleSetDefaultDownloadsFolder("/Users/alice/Downloads/CloudStash");
     expect(handleGetDefaultDownloadsFolder()).toBe(
-      "/Users/alice/Downloads/ft5",
+      "/Users/alice/Downloads/CloudStash",
     );
   });
 
   it("setDefaultDownloadsFolder with the same folder is idempotent", () => {
-    handleSetDefaultDownloadsFolder("/Users/alice/Downloads/ft5");
-    handleSetDefaultDownloadsFolder("/Users/alice/Downloads/ft5");
+    handleSetDefaultDownloadsFolder("/Users/alice/Downloads/CloudStash");
+    handleSetDefaultDownloadsFolder("/Users/alice/Downloads/CloudStash");
     expect(handleGetDefaultDownloadsFolder()).toBe(
-      "/Users/alice/Downloads/ft5",
+      "/Users/alice/Downloads/CloudStash",
     );
   });
 
@@ -47,7 +47,7 @@ describe("preferences handlers — in-memory default-downloads-folder slot", () 
   });
 
   it("__resetPreferencesForTesting clears the slot", () => {
-    handleSetDefaultDownloadsFolder("/Users/alice/Downloads/ft5");
+    handleSetDefaultDownloadsFolder("/Users/alice/Downloads/CloudStash");
     __resetPreferencesForTesting();
     expect(handleGetDefaultDownloadsFolder()).toBeNull();
   });

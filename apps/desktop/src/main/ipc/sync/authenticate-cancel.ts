@@ -14,8 +14,8 @@
 import type {
   SyncAuthenticateCancelRequest,
   SyncAuthenticateCancelResponse,
-} from "@ft5/ipc-contracts/sync-service-desktop";
-import type { SyncAuthenticateCancelError } from "@ft5/ipc-contracts/sync-service";
+} from "@cloudstash/ipc-contracts/sync-service-desktop";
+import type { SyncAuthenticateCancelError } from "@cloudstash/ipc-contracts/sync-service";
 
 import { SyncClient, SyncCommandError } from "../../sync/client.js";
 import { getSyncClient } from "../../sync/sync-client-holder.js";

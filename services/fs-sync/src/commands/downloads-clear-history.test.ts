@@ -16,7 +16,7 @@
 import Database from "better-sqlite3";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { DownloadTerminalStatus } from "@ft5/ipc-contracts/sync-service";
+import type { DownloadTerminalStatus } from "@cloudstash/ipc-contracts/sync-service";
 
 import { applyMigrations } from "../db/migrations.js";
 import type { Connection } from "../ipc/server.js";

@@ -1,4 +1,4 @@
-import type { CredentialStore } from "@ft5/fs-datasource-engine";
+import type { CredentialStore } from "@cloudstash/fs-datasource-engine";
 import { describe, expectTypeOf, it } from "vitest";
 
 import { ConfigFileCredentialStore } from "./config-file.js";

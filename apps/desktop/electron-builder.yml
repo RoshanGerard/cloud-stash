@@ -1,5 +1,5 @@
-appId: tech.forti5.ft5-cloude-sync
-productName: FT5 Cloude Sync
+appId: com.cloudstash.app
+productName: CloudStash
 directories:
   output: release
   buildResources: build
@@ -9,7 +9,7 @@ files:
   # node_modules is NOT included by electron-builder's default when `files`
   # is specified (the list replaces the default). Without this, transitive
   # runtime deps pulled in via workspace packages (e.g. `@smithy/*` under
-  # `@aws-sdk/client-s3` under `@ft5/fs-datasource-engine`) fail to resolve
+  # `@aws-sdk/client-s3` under `@cloudstash/fs-datasource-engine`) fail to resolve
   # at runtime with `Cannot find module '@smithy/util-buffer-from'`.
   - node_modules/**/*
 extraResources:

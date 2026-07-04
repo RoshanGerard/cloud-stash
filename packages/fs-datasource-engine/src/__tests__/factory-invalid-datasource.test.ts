@@ -20,7 +20,7 @@ import {
   DatasourceErrorTag,
   type ProviderId,
   type StoredCredentials,
-} from "@ft5/ipc-contracts";
+} from "@cloudstash/ipc-contracts";
 
 import type { CredentialStore } from "../credential-store.js";
 import {

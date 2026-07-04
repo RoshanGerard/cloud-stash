@@ -8,7 +8,7 @@
 import type {
   EventName,
   EventPayloadMap,
-} from "@ft5/ipc-contracts/sync-service";
+} from "@cloudstash/ipc-contracts/sync-service";
 
 import type { EventBus } from "../events/event-bus.js";
 

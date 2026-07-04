@@ -28,8 +28,8 @@
 
 import { randomUUID as defaultRandomUUID } from "node:crypto";
 
-import type { AuthIntent } from "@ft5/fs-datasource-engine";
-import type { ProviderId } from "@ft5/ipc-contracts";
+import type { AuthIntent } from "@cloudstash/fs-datasource-engine";
+import type { ProviderId } from "@cloudstash/ipc-contracts";
 
 const DEFAULT_TTL_MS = 300_000; // 5 minutes — see design.md Decision 10.
 

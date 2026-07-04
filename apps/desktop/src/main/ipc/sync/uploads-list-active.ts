@@ -14,7 +14,7 @@
 // inside `main/index.ts` swallows the rejection separately so a
 // transient service blip doesn't poison bootstrap.
 
-import type { SyncUploadsListActiveResponse } from "@ft5/ipc-contracts/sync-service-desktop";
+import type { SyncUploadsListActiveResponse } from "@cloudstash/ipc-contracts/sync-service-desktop";
 
 import type { SyncClient } from "../../sync/client.js";
 import { getSyncClient } from "../../sync/sync-client-holder.js";

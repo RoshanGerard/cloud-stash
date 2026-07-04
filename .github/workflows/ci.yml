@@ -67,35 +67,35 @@ jobs:
       # FT5_GOOGLE_OAUTH_* env injection was removed in
       # implement-datasource-onboarding (§18.5) — the desktop's
       # electron.vite.config.ts no longer defines those constants. OAuth
-      # app config is now read at runtime from ~/ft5/sync_app/config.json
+      # app config is now read at runtime from ~/cloudstash/sync_app/config.json
       # by the fs-sync service. The matching GitHub repo secrets remain
       # provisioned but unused; cleanup is a separate housekeeping task.
       - name: Build desktop (main + preload + renderer)
         shell: bash
-        run: pnpm --filter @ft5/desktop build:all
+        run: pnpm --filter @cloudstash/desktop build:all
 
       - name: Package (macOS)
         if: runner.os == 'macOS'
         shell: bash
-        run: pnpm --filter @ft5/desktop package:mac
+        run: pnpm --filter @cloudstash/desktop package:mac
 
       - name: Package (Windows)
         if: runner.os == 'Windows'
         shell: bash
-        run: pnpm --filter @ft5/desktop package:win
+        run: pnpm --filter @cloudstash/desktop package:win
 
       - name: Package (Linux)
         if: runner.os == 'Linux'
         shell: bash
-        run: pnpm --filter @ft5/desktop package:linux
+        run: pnpm --filter @cloudstash/desktop package:linux
 
       # Playwright e2e — Section 9 of the setup-project change will add the
-      # `e2e` script under @ft5/desktop. Until then this step will fail; the
+      # `e2e` script under @cloudstash/desktop. Until then this step will fail; the
       # workflow is not activated in branch protection yet, so that is
       # acceptable.
       - name: Playwright e2e
         shell: bash
-        run: pnpm --filter @ft5/desktop e2e
+        run: pnpm --filter @cloudstash/desktop e2e
 
   drizzle-boundary:
     name: drizzle-orm boundary check

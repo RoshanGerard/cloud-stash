@@ -29,9 +29,9 @@
   --ring: oklch(0.704 0.04 256.788);
   --radius: 0.5rem;
 
-  /* Decision 14 (review-round-1): Forti5 brand primary. Theme-invariant —
+  /* Decision 14 (review-round-1): CloudStash brand primary. Theme-invariant —
      the same vibrant crimson reads on both light and dark chrome. Used by
-     the <Forti5Logo> chevrons; consumed as `fill="var(--brand-primary)"`
+     the <CloudStashLogo> chevrons; consumed as `fill="var(--brand-primary)"`
      inside the SVG (feature code cannot emit an oklch() literal itself
      per the literals-ban guardrail). */
   --brand-primary: oklch(0.585 0.220 27);

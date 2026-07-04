@@ -27,8 +27,8 @@ describe("dev vs prod path selection", () => {
     const dev = resolveSocketPath({ dev: true }, {});
     expect(dev).not.toBe(prod);
     if (process.platform === "win32") {
-      expect(prod).toBe("\\\\.\\pipe\\ft5-sync");
-      expect(dev).toBe("\\\\.\\pipe\\ft5-sync-dev");
+      expect(prod).toBe("\\\\.\\pipe\\cloudstash-sync");
+      expect(dev).toBe("\\\\.\\pipe\\cloudstash-sync-dev");
     } else {
       expect(prod.endsWith("/sync.sock")).toBe(true);
       expect(dev.endsWith("/sync-dev.sock")).toBe(true);
@@ -43,12 +43,12 @@ describe("dev vs prod path selection", () => {
     expect(dev).not.toBe(prod);
   });
 
-  it("FT5_SYNC_DATA_DIR overrides both dev and prod defaults equivalently", () => {
+  it("CLOUDSTASH_SYNC_DATA_DIR overrides both dev and prod defaults equivalently", () => {
     const override = "/tmp/custom";
-    expect(resolveDataDir({ dev: false }, { FT5_SYNC_DATA_DIR: override })).toBe(
+    expect(resolveDataDir({ dev: false }, { CLOUDSTASH_SYNC_DATA_DIR: override })).toBe(
       override,
     );
-    expect(resolveDataDir({ dev: true }, { FT5_SYNC_DATA_DIR: override })).toBe(
+    expect(resolveDataDir({ dev: true }, { CLOUDSTASH_SYNC_DATA_DIR: override })).toBe(
       override,
     );
   });

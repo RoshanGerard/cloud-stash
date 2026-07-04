@@ -19,7 +19,7 @@
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-RUN_DIR="$REPO_ROOT/node_modules/.cache/ft5-dev"
+RUN_DIR="$REPO_ROOT/node_modules/.cache/cloudstash-dev"
 SERVICE_PID_FILE="$RUN_DIR/service.pid"
 DESKTOP_PID_FILE="$RUN_DIR/desktop.pid"
 SERVICE_LOG="$RUN_DIR/service.log"
@@ -94,7 +94,7 @@ do_start() {
   do_stop >/dev/null 2>&1 || true
 
   echo "==> Building fs-sync service"
-  (cd "$REPO_ROOT" && pnpm --filter @ft5/fs-sync-service build)
+  (cd "$REPO_ROOT" && pnpm --filter @cloudstash/fs-sync-service build)
 
   echo "==> Flipping better-sqlite3 to Electron ABI (145)"
   if ! (cd "$REPO_ROOT" && pnpm abi:electron); then
@@ -150,7 +150,7 @@ EPERM_HINT
   echo "==> Starting desktop (electron-vite dev)"
   (
     cd "$REPO_ROOT"
-    pnpm --filter @ft5/desktop run dev
+    pnpm --filter @cloudstash/desktop run dev
   ) >"$DESKTOP_LOG" 2>&1 &
   local desktop_pid=$!
   echo "$desktop_pid" > "$DESKTOP_PID_FILE"

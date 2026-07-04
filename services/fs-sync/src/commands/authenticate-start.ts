@@ -52,11 +52,11 @@ import {
   DatasourceError,
   DatasourceErrorTag,
   type ProviderId,
-} from "@ft5/ipc-contracts";
+} from "@cloudstash/ipc-contracts";
 import type {
   ClientFactory,
   EngineContext,
-} from "@ft5/fs-datasource-engine";
+} from "@cloudstash/fs-datasource-engine";
 
 import type { CommandHandler } from "../ipc/server.js";
 import type { EventBus } from "../events/event-bus.js";

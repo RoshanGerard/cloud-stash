@@ -8,7 +8,7 @@
 // Spec: IPC transport — Request { id, kind, command, params } | Response
 // | Event frames delimited by \n.
 
-import type { Frame } from "@ft5/ipc-contracts/sync-service";
+import type { Frame } from "@cloudstash/ipc-contracts/sync-service";
 
 export const DEFAULT_MAX_FRAME_BYTES = 10 * 1024 * 1024;
 

@@ -7,14 +7,14 @@ Captured against commit **3a7723f..65d5625** on branch `feature/wire-fs-sync-ser
 ## Prerequisites
 
 - Repo checked out at the worktree (`.worktrees/wire-fs-sync-service`) and `pnpm install` run at the root.
-- No other fs-sync-service instance running (`$HOME/ft5/sync_app/dev/service-dev.pid` absent, or the PID it names is not live).
+- No other fs-sync-service instance running (`$HOME/cloudstash/sync_app/dev/service-dev.pid` absent, or the PID it names is not live).
 
 ## Steps
 
 ### 1. Build the service dist
 
 ```bash
-pnpm --filter @ft5/fs-sync-service build
+pnpm --filter @cloudstash/fs-sync-service build
 ```
 
 The `start` script runs `node dist/main/index.js`, so a fresh build is required after source edits.
@@ -24,16 +24,16 @@ The `start` script runs `node dist/main/index.js`, so a fresh build is required 
 In one terminal:
 
 ```bash
-pnpm --filter @ft5/fs-sync-service start -- --dev
+pnpm --filter @cloudstash/fs-sync-service start -- --dev
 ```
 
 The extra `--` is pnpm's argv escape — it forwards `--dev` to the Node process. Expected stdout within ~300 ms:
 
 ```
-fs-sync-service started (pid=<N>, mode=dev, pipe=\\.\pipe\ft5-sync-dev)
+fs-sync-service started (pid=<N>, mode=dev, pipe=\\.\pipe\cloudstash-sync-dev)
 ```
 
-On Unix the pipe line will read `pipe=/home/<user>/ft5/sync_app/dev/sync-dev.sock`.
+On Unix the pipe line will read `pipe=/home/<user>/cloudstash/sync_app/dev/sync-dev.sock`.
 
 ### 3. Send `sync:get-status` via the smoke client
 
@@ -55,7 +55,7 @@ Equivalent one-liner for platforms without the script (Unix):
 
 ```bash
 printf '{"id":"1","kind":"request","command":"sync:get-status","params":{}}\n' \
-  | nc -U "$HOME/ft5/sync_app/dev/sync-dev.sock"
+  | nc -U "$HOME/cloudstash/sync_app/dev/sync-dev.sock"
 ```
 
 Windows doesn't ship `nc` with pipe support; use `smoke-client.mjs` or PowerShell's `NamedPipeClientStream`.
@@ -69,7 +69,7 @@ Graceful (preferred — exercises the signals.ts 5-second grace period and remov
 Programmatic equivalent on **Unix**:
 
 ```bash
-kill -INT "$(cat "$HOME/ft5/sync_app/dev/service-dev.pid")"
+kill -INT "$(cat "$HOME/cloudstash/sync_app/dev/service-dev.pid")"
 ```
 
 **Windows caveat — graceful shutdown is a manual-only step.** Node's `process.kill(pid, "SIGINT")` and `taskkill /F /PID <pid>` both hard-terminate a service running in a different console on Windows. Neither delivers a real SIGINT — [Node docs](https://nodejs.org/api/process.html#processkillpid-signal) state that on Windows "POSIX signals do not exist, the signal argument will be ignored, and the process will be killed forcefully and abruptly (similar to SIGKILL)." Result: `service-dev.pid` is left behind and the next `start` exits 3 (`AlreadyRunningError`) until the stale file is deleted.
@@ -87,13 +87,13 @@ After Ctrl+C the service prints:
 fs-sync-service received SIGINT; shutting down
 ```
 
-and exits 0 within 5 seconds. The PID file `$HOME/ft5/sync_app/dev/service-dev.pid` must no longer exist. The SQLite files (`sync.db`, `sync.db-shm`, `sync.db-wal`) stay on disk — they hold persisted state for the next start.
+and exits 0 within 5 seconds. The PID file `$HOME/cloudstash/sync_app/dev/service-dev.pid` must no longer exist. The SQLite files (`sync.db`, `sync.db-shm`, `sync.db-wal`) stay on disk — they hold persisted state for the next start.
 
 ## Observed results (last captured run)
 
 | Step | Expected | Observed |
 | --- | --- | --- |
-| Start | "fs-sync-service started …" on stdout | ✅ `pid=6624, mode=dev, pipe=\\.\pipe\ft5-sync-dev` |
+| Start | "fs-sync-service started …" on stdout | ✅ `pid=6624, mode=dev, pipe=\\.\pipe\cloudstash-sync-dev` |
 | smoke-client | `ok:true` response frame with `version`, `serviceUuid`, `runningJobs: 0`, `queuedJobs: 0`, `waitingNetworkJobs: 0`, `monitorConnected: false` | ✅ exactly that shape |
 | PID file while running | present, contains the service PID | ✅ `service-dev.pid` contained `6624` |
 | Graceful shutdown | PID file removed | ⚠ not exercised — Windows blocks cross-console SIGINT delivery (see caveat above); signals.test.ts covers the assertion via an injected `EventEmitter` |

@@ -8,7 +8,7 @@
 
 import { describe, expect, it, vi } from "vitest";
 
-import type { SyncCancelUploadRequest } from "@ft5/ipc-contracts/sync-service-desktop";
+import type { SyncCancelUploadRequest } from "@cloudstash/ipc-contracts/sync-service-desktop";
 
 import type { SyncClient } from "../../../sync/client.js";
 import { handleSyncCancelUpload } from "../cancel-upload.js";

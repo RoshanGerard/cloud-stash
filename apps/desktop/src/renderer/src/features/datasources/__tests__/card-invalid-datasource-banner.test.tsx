@@ -27,8 +27,8 @@ import {
   within,
 } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
-import type { DatasourceSummary } from "@ft5/ipc-contracts";
-import type { SyncEvent } from "@ft5/ipc-contracts/sync-service-desktop";
+import type { DatasourceSummary } from "@cloudstash/ipc-contracts";
+import type { SyncEvent } from "@cloudstash/ipc-contracts/sync-service-desktop";
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({

@@ -1,5 +1,5 @@
 // ConfigFileCredentialStore — a CredentialStore port impl that persists
-// plaintext JSON at `$HOME/ft5/sync_app/credentials.json`. Writes are
+// plaintext JSON at `$HOME/cloudstash/sync_app/credentials.json`. Writes are
 // atomic (write-to-tmp + fs.rename). On Unix the file is chmod'd to 0o600
 // after every write AND fs.stat-checked for permission widening on every
 // read; a widened mode raises `CredentialStorePermissionError` and emits
@@ -12,8 +12,8 @@
 import * as fsp from "node:fs/promises";
 import * as path from "node:path";
 
-import type { CredentialStore } from "@ft5/fs-datasource-engine";
-import type { StoredCredentials } from "@ft5/ipc-contracts";
+import type { CredentialStore } from "@cloudstash/fs-datasource-engine";
+import type { StoredCredentials } from "@cloudstash/ipc-contracts";
 
 export class CredentialStorePermissionError extends Error {
   readonly observedMode: string;

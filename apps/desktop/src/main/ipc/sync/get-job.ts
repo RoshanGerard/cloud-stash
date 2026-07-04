@@ -13,7 +13,7 @@
 import type {
   SyncGetJobRequest,
   SyncGetJobResponse,
-} from "@ft5/ipc-contracts/sync-service-desktop";
+} from "@cloudstash/ipc-contracts/sync-service-desktop";
 
 import type { SyncClient } from "../../sync/client.js";
 import { SyncCommandError } from "../../sync/client.js";
@@ -27,7 +27,7 @@ export async function handleSyncGetJob(
     const wire = await client.getJob({ jobId: req.jobId });
     return { job: wire.job };
   } catch (err) {
-    // eslint-disable-next-line ft5/no-raw-error-tag-literal -- ServiceErrorTag vocabulary (no const object) — out of scope
+    // eslint-disable-next-line cloudstash/no-raw-error-tag-literal -- ServiceErrorTag vocabulary (no const object) — out of scope
     if (err instanceof SyncCommandError && err.tag === "not-found") {
       return { job: null };
     }

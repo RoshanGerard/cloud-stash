@@ -40,7 +40,7 @@ vi.mock("sonner", () => ({
 }));
 
 import { LeftoverFilesDialog } from "../leftover-files-dialog";
-import type { LeftoverEntry } from "@ft5/ipc-contracts/sync-service-desktop";
+import type { LeftoverEntry } from "@cloudstash/ipc-contracts/sync-service-desktop";
 
 let listLeftoverMock: Mock;
 let deletePartialMock: Mock;

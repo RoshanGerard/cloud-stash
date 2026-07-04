@@ -20,41 +20,41 @@ import { afterEach, describe, expect, it } from "vitest";
 import { cleanup, render } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 
-import { Forti5Logo } from "../forti5-logo";
+import { CloudStashLogo } from "../cloudstash-logo";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-const LOGO_SRC_PATH = join(__dirname, "..", "forti5-logo.tsx");
+const LOGO_SRC_PATH = join(__dirname, "..", "cloudstash-logo.tsx");
 
 afterEach(() => {
   cleanup();
 });
 
-describe("Forti5Logo — real brand geometry (review-round-2)", () => {
+describe("CloudStashLogo — real brand geometry (review-round-2)", () => {
   it("renders a single <svg> with role='img' and the product aria-label", () => {
-    const { container } = render(<Forti5Logo />);
+    const { container } = render(<CloudStashLogo />);
     const svgs = container.querySelectorAll("svg");
     expect(svgs.length).toBe(1);
     const svg = svgs[0]!;
     expect(svg.getAttribute("role")).toBe("img");
-    expect(svg.getAttribute("aria-label")).toMatch(/FT5 Unified Cloud Sync/i);
-    expect(svg.getAttribute("data-testid")).toBe("forti5-logo");
+    expect(svg.getAttribute("aria-label")).toMatch(/CloudStash/i);
+    expect(svg.getAttribute("data-testid")).toBe("cloudstash-logo");
   });
 
   it("uses the user-supplied viewBox 0 0 174.16 166.81", () => {
-    const { container } = render(<Forti5Logo />);
+    const { container } = render(<CloudStashLogo />);
     const svg = container.querySelector("svg")!;
     expect(svg.getAttribute("viewBox")).toBe("0 0 174.16 166.81");
   });
 
   it("renders exactly 6 polygons (1 central pentagon + 5 outer petals)", () => {
-    const { container } = render(<Forti5Logo />);
+    const { container } = render(<CloudStashLogo />);
     const polygons = container.querySelectorAll("svg polygon");
     expect(polygons.length).toBe(6);
   });
 
   it("all 6 polygons fill with var(--brand-primary) — unified crimson (review-round-3)", () => {
-    const { container } = render(<Forti5Logo />);
+    const { container } = render(<CloudStashLogo />);
     const polygons = Array.from(
       container.querySelectorAll<SVGPolygonElement>("svg polygon"),
     );
@@ -75,7 +75,7 @@ describe("Forti5Logo — real brand geometry (review-round-2)", () => {
   });
 
   it("no polygon fills with var(--background) — the round-2 'hole' was removed in round-3", () => {
-    const { container } = render(<Forti5Logo />);
+    const { container } = render(<CloudStashLogo />);
     const polygons = Array.from(
       container.querySelectorAll<SVGPolygonElement>("svg polygon"),
     );
@@ -94,7 +94,7 @@ describe("Forti5Logo — real brand geometry (review-round-2)", () => {
   });
 
   it("honours the `size` prop on both width and height", () => {
-    const { container } = render(<Forti5Logo size={40} />);
+    const { container } = render(<CloudStashLogo size={40} />);
     const svg = container.querySelector("svg")!;
     expect(svg.getAttribute("width")).toBe("40");
     expect(svg.getAttribute("height")).toBe("40");

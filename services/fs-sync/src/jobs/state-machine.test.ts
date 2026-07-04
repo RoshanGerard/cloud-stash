@@ -1,4 +1,4 @@
-import type { JobStatus } from "@ft5/ipc-contracts";
+import type { JobStatus } from "@cloudstash/ipc-contracts";
 import { describe, expect, it } from "vitest";
 
 import {

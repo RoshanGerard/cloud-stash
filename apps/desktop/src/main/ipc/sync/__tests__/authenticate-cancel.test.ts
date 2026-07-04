@@ -9,10 +9,10 @@ import { describe, expect, it, vi } from "vitest";
 
 import type {
   SyncAuthenticateCancelRequest,
-} from "@ft5/ipc-contracts/sync-service-desktop";
+} from "@cloudstash/ipc-contracts/sync-service-desktop";
 import type {
   SyncAuthenticateCancelError,
-} from "@ft5/ipc-contracts/sync-service";
+} from "@cloudstash/ipc-contracts/sync-service";
 
 import type { SyncClient } from "../../../sync/client.js";
 import { SyncCommandError } from "../../../sync/client.js";

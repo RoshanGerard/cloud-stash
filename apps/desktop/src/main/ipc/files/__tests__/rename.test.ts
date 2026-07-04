@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { FilesErrorTag } from "@ft5/ipc-contracts";
-import type { FileEntry } from "@ft5/ipc-contracts";
+import { FilesErrorTag } from "@cloudstash/ipc-contracts";
+import type { FileEntry } from "@cloudstash/ipc-contracts";
 
 import { SyncCommandError } from "../../../sync/client.js";
 

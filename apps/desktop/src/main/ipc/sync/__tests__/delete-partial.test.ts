@@ -7,7 +7,7 @@
 
 import { describe, expect, it, vi } from "vitest";
 
-import type { SyncDeletePartialRequest } from "@ft5/ipc-contracts/sync-service-desktop";
+import type { SyncDeletePartialRequest } from "@cloudstash/ipc-contracts/sync-service-desktop";
 
 import type { SyncClient } from "../../../sync/client.js";
 import { handleDeletePartial } from "../delete-partial.js";

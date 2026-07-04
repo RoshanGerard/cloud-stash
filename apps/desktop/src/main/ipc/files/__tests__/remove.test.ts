@@ -1,4 +1,4 @@
-import { FilesErrorTag } from "@ft5/ipc-contracts";
+import { FilesErrorTag } from "@cloudstash/ipc-contracts";
 import { describe, expect, it, vi } from "vitest";
 
 import { SyncCommandError } from "../../../sync/client.js";

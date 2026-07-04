@@ -13,7 +13,7 @@
 //   everything else → terminal (user-retry may still kick in — see
 //                     phase 13)
 
-import { DatasourceErrorTag } from "@ft5/ipc-contracts";
+import { DatasourceErrorTag } from "@cloudstash/ipc-contracts";
 
 export type SystemRetryBranch =
   | {

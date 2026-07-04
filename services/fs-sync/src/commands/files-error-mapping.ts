@@ -14,7 +14,7 @@ import {
   DatasourceError,
   DatasourceErrorTag,
   FilesErrorTag,
-} from "@ft5/ipc-contracts";
+} from "@cloudstash/ipc-contracts";
 
 export interface FilesErrorEnvelopeInner {
   readonly tag: FilesErrorTag;

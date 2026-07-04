@@ -15,8 +15,8 @@
 
 import { describe, expect, it, vi } from "vitest";
 
-import type { SyncGetRetryPolicyRequest } from "@ft5/ipc-contracts/sync-service-desktop";
-import type { RetryPolicy } from "@ft5/ipc-contracts/sync-service";
+import type { SyncGetRetryPolicyRequest } from "@cloudstash/ipc-contracts/sync-service-desktop";
+import type { RetryPolicy } from "@cloudstash/ipc-contracts/sync-service";
 
 import type { SyncClient } from "../../../sync/client.js";
 import { SyncCommandError } from "../../../sync/client.js";
@@ -85,7 +85,7 @@ describe("handleSyncGetRetryPolicy", () => {
 
   it("re-throws SyncCommandError failures (e.g. not-found)", async () => {
     const err = new SyncCommandError("sync:get-retry-policy", {
-      // eslint-disable-next-line ft5/no-raw-error-tag-literal -- ServiceErrorTag vocabulary (no const object) — out of scope
+      // eslint-disable-next-line cloudstash/no-raw-error-tag-literal -- ServiceErrorTag vocabulary (no const object) — out of scope
       tag: "not-found",
       message: "no policy for datasource",
     });

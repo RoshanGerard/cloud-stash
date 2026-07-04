@@ -8,7 +8,7 @@ import {
   screen,
 } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
-import type { FileEntry } from "@ft5/ipc-contracts";
+import type { FileEntry } from "@cloudstash/ipc-contracts";
 
 import { FileContextMenu } from "../context-menu.js";
 import { ProviderKindContext } from "../provider-kind-context.js";

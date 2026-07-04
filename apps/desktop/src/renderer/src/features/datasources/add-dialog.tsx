@@ -24,8 +24,8 @@
 // picker and credential-forms files do not use `rounded-lg`.
 
 import { useCallback, useState } from "react";
-import { providers } from "@ft5/ipc-contracts";
-import type { ProviderDescriptor } from "@ft5/ipc-contracts";
+import { providers } from "@cloudstash/ipc-contracts";
+import type { ProviderDescriptor } from "@cloudstash/ipc-contracts";
 
 import {
   Dialog,

@@ -11,11 +11,11 @@ import { describe, expect, it, vi } from "vitest";
 import {
   DatasourceError,
   DatasourceErrorTag,
-} from "@ft5/ipc-contracts";
+} from "@cloudstash/ipc-contracts";
 import type {
   ClientFactory,
   CredentialStore,
-} from "@ft5/fs-datasource-engine";
+} from "@cloudstash/fs-datasource-engine";
 
 import { createResolveClient } from "../resolve-client.js";
 

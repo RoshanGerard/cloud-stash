@@ -48,10 +48,10 @@ async function preBindWindowsPipe(pipePath: string): Promise<net.Server> {
 }
 
 beforeEach(async () => {
-  scratchDir = await fsp.mkdtemp(path.join(os.tmpdir(), "ft5-sync-ipcbind-"));
+  scratchDir = await fsp.mkdtemp(path.join(os.tmpdir(), "cloudstash-sync-ipcbind-"));
   if (process.platform === "win32") {
     // Reserve a named pipe that bootstrap will collide with on listen().
-    badSocketPath = `\\\\.\\pipe\\ft5-sync-bind-fail-${uniquePipeTag()}`;
+    badSocketPath = `\\\\.\\pipe\\cloudstash-sync-bind-fail-${uniquePipeTag()}`;
     blocker = await preBindWindowsPipe(badSocketPath);
   } else {
     // Point at a path inside a directory we deliberately never create.

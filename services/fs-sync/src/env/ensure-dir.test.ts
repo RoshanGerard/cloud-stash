@@ -22,7 +22,7 @@ afterEach(async () => {
 function scratchDir(): string {
   const dir = path.join(
     os.tmpdir(),
-    `ft5-sync-ensure-dir-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    `cloudstash-sync-ensure-dir-${Date.now()}-${Math.random().toString(36).slice(2)}`,
   );
   cleanup.push(dir);
   return dir;

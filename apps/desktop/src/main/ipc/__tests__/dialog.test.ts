@@ -24,7 +24,7 @@ describe("handleDialogShowSaveDialog — proxy over dialog.showSaveDialog", () =
     const showSaveDialog = vi.fn().mockResolvedValue(expected);
 
     const opts = {
-      defaultPath: "/Users/alice/Downloads/ft5/welcome.pdf",
+      defaultPath: "/Users/alice/Downloads/CloudStash/welcome.pdf",
       title: "Save file",
       buttonLabel: "Save",
     };
@@ -91,14 +91,14 @@ describe("handleDialogShowOpenDialog — proxy over dialog.showOpenDialog", () =
   it("delegates to deps.showOpenDialog with the renderer's opts verbatim and returns the result", async () => {
     const expected = {
       canceled: false,
-      filePaths: ["/Users/alice/Downloads/ft5"] as const,
+      filePaths: ["/Users/alice/Downloads/CloudStash"] as const,
     };
     const showOpenDialog = vi.fn().mockResolvedValue(expected);
 
     const opts = {
       title: "Choose downloads folder",
       properties: ["openDirectory", "createDirectory"] as const,
-      defaultPath: "/Users/alice/Downloads/ft5",
+      defaultPath: "/Users/alice/Downloads/CloudStash",
     };
     const result = await handleDialogShowOpenDialog(opts, { showOpenDialog });
 

@@ -25,7 +25,7 @@ import {
 } from "./migrations.js";
 
 function mkTmpDir(): string {
-  return mkdtempSync(path.join(os.tmpdir(), "ft5-db-test-"));
+  return mkdtempSync(path.join(os.tmpdir(), "cloudstash-db-test-"));
 }
 
 const createUsersMigration: Migration = {
@@ -56,7 +56,7 @@ describe("openDatabase + runMigrations (Phase 9a)", () => {
   });
 
   it("opens a database at the given filesystem path", () => {
-    const dbPath = path.join(tmpDir, "ft5.db");
+    const dbPath = path.join(tmpDir, "cloudstash.db");
     const db = openDatabase(dbPath);
     try {
       expect(existsSync(dbPath)).toBe(true);
@@ -75,7 +75,7 @@ describe("openDatabase + runMigrations (Phase 9a)", () => {
   it("auto-creates a missing parent directory", () => {
     const nestedDir = path.join(tmpDir, "nested", "deep", "folder");
     expect(existsSync(nestedDir)).toBe(false);
-    const dbPath = path.join(nestedDir, "ft5.db");
+    const dbPath = path.join(nestedDir, "cloudstash.db");
     const db = openDatabase(dbPath);
     try {
       expect(statSync(nestedDir).isDirectory()).toBe(true);
@@ -86,7 +86,7 @@ describe("openDatabase + runMigrations (Phase 9a)", () => {
   });
 
   it("runs migrations in order on first open", () => {
-    const dbPath = path.join(tmpDir, "ft5.db");
+    const dbPath = path.join(tmpDir, "cloudstash.db");
     const db = openDatabase(dbPath);
     try {
       runMigrations(db, [createUsersMigration, seedUsersMigration]);
@@ -100,7 +100,7 @@ describe("openDatabase + runMigrations (Phase 9a)", () => {
   });
 
   it("does NOT re-run a migration when opened a second time", () => {
-    const dbPath = path.join(tmpDir, "ft5.db");
+    const dbPath = path.join(tmpDir, "cloudstash.db");
 
     const first = openDatabase(dbPath);
     runMigrations(first, [createUsersMigration, seedUsersMigration]);
@@ -120,7 +120,7 @@ describe("openDatabase + runMigrations (Phase 9a)", () => {
   });
 
   it("applies later-added migrations without re-running prior ones", () => {
-    const dbPath = path.join(tmpDir, "ft5.db");
+    const dbPath = path.join(tmpDir, "cloudstash.db");
     const db1 = openDatabase(dbPath);
     runMigrations(db1, [createUsersMigration, seedUsersMigration]);
     db1.close();

@@ -20,7 +20,7 @@
 // `sub` is the durable identity key (the reconnect same-account comparison
 // keys on it — D1); `email` is display-only and defaults to "" when absent.
 
-import type { AccountIdentity } from "@ft5/ipc-contracts";
+import type { AccountIdentity } from "@cloudstash/ipc-contracts";
 
 /** Clock-skew grace applied to `exp` so a token expiring right at the edge of
  *  the exchange is still accepted (the exchange completed moments before).

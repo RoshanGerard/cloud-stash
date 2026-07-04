@@ -539,11 +539,11 @@ You: Use finishing-a-development-branch
 > Production is down; you need to ship a fix in the next 10 minutes.
 
 ```
-You: Hotfix: <describe>. File ticket FT5-1234 to back-fill the spec, deadline before next merge to main.
+You: Hotfix: <describe>. File ticket CS-1234 to back-fill the spec, deadline before next merge to main.
 Claude: [investigates, fixes with reactive TDD, commits the fix,
-         records FT5-1234 + deadline, flags it as the one open Pattern C on this branch]
+         records CS-1234 + deadline, flags it as the one open Pattern C on this branch]
 You: Use finishing-a-development-branch
-[Pre-handoff backstop notes the open deferred back-fill — you (the owner) are responsible for resolving FT5-1234 before the next merge to main]
+[Pre-handoff backstop notes the open deferred back-fill — you (the owner) are responsible for resolving CS-1234 before the next merge to main]
 ```
 
 ---

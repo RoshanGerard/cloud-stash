@@ -20,13 +20,13 @@
 
 import type Database from "better-sqlite3";
 
-import { COMMAND_NAMES } from "@ft5/ipc-contracts/sync-service";
+import { COMMAND_NAMES } from "@cloudstash/ipc-contracts/sync-service";
 import {
   createClientFactory,
   createDefaultProviderRegistry,
   type ClientFactory,
   type ProviderRegistry,
-} from "@ft5/fs-datasource-engine";
+} from "@cloudstash/fs-datasource-engine";
 
 import { createResolveClient } from "./resolve-client.js";
 
@@ -308,13 +308,13 @@ export async function bootstrap(options: BootstrapOptions): Promise<Runtime> {
       getOAuthAppConfig: (providerId, redirectUri) =>
         serviceConfigStore.getOAuthAppConfig(providerId, redirectUri),
       dataDir,
-      // FT5_DEV_CREDENTIALS=1 short-circuits the browser flow per the
+      // CLOUDSTASH_DEV_CREDENTIALS=1 short-circuits the browser flow per the
       // ADDED Requirement "Development builds may bypass authenticate
-      // via FT5_DEV_CREDENTIALS (service-side)".
-      isDevOverride: env.FT5_DEV_CREDENTIALS === "1",
+      // via CLOUDSTASH_DEV_CREDENTIALS (service-side)".
+      isDevOverride: env.CLOUDSTASH_DEV_CREDENTIALS === "1",
       warnOnce: () => {
         logger?.info?.(
-          "FT5_DEV_CREDENTIALS active — browser consent bypassed",
+          "CLOUDSTASH_DEV_CREDENTIALS active — browser consent bypassed",
         );
       },
     });

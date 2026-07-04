@@ -8,7 +8,7 @@
 
 import { describe, expect, it } from "vitest";
 
-import type { ServiceConfig } from "@ft5/ipc-contracts/sync-service";
+import type { ServiceConfig } from "@cloudstash/ipc-contracts/sync-service";
 
 import {
   DEFAULT_RETENTION_SETTINGS,

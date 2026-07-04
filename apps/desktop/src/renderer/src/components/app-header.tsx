@@ -4,7 +4,7 @@
 // Persistent brand chrome at the top of the renderer. Mounted once in the
 // RootLayout so it stays put across any future routes. Elements:
 //
-//   [logo] FT5 Unified Cloud Sync              [settings] [ThemeSwitcher]
+//   [logo] CloudStash              [settings] [ThemeSwitcher]
 //
 // Settings button opens the SettingsDialog (Motion Safe toggle). Sits
 // BEFORE the ThemeSwitcher in DOM order so the visual reading is
@@ -20,7 +20,7 @@
 import { useCallback, useRef, useState, type HTMLAttributes } from "react";
 
 import { cn } from "@/lib/utils";
-import { Forti5Logo } from "@/components/forti5-logo";
+import { CloudStashLogo } from "@/components/cloudstash-logo";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/icon";
 import { ThemeSwitcher } from "@/features/theme/theme-switcher";
@@ -48,8 +48,8 @@ export function AppHeader({ className, ...rest }: AppHeaderProps) {
       {...rest}
     >
       <div className="flex items-center gap-2">
-        <Forti5Logo size={28} />
-        <span className="text-sm font-medium">FT5 Unified Cloud Sync</span>
+        <CloudStashLogo size={28} />
+        <span className="text-sm font-medium">CloudStash</span>
       </div>
       <div className="flex items-center gap-1">
         <Button

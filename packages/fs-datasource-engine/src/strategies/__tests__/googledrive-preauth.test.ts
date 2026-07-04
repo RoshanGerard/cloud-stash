@@ -16,8 +16,8 @@
 
 import { describe, expect, it } from "vitest";
 
-import type { OAuthIntent } from "@ft5/ipc-contracts";
-import { DatasourceError, providers } from "@ft5/ipc-contracts";
+import type { OAuthIntent } from "@cloudstash/ipc-contracts";
+import { DatasourceError, providers } from "@cloudstash/ipc-contracts";
 
 import type { PreAuthConfig } from "../../auth-types.js";
 import type { BaseClientContext, CredentialStore } from "../../base-client.js";

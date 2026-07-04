@@ -34,12 +34,12 @@ import {
   within,
 } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
-import type { DatasourceSummary } from "@ft5/ipc-contracts";
+import type { DatasourceSummary } from "@cloudstash/ipc-contracts";
 import type {
   JobProgressPayload,
   JobSummary,
   SyncStateSeedPayload,
-} from "@ft5/ipc-contracts/sync-service-desktop";
+} from "@cloudstash/ipc-contracts/sync-service-desktop";
 
 // next/navigation mock — DatasourceCard consumes `useRouter()` even though
 // none of the tests below activate Explore. Same hoisted-mock pattern as

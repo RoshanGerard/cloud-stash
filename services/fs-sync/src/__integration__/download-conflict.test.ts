@@ -21,7 +21,7 @@ import type {
   DatasourceClient,
   DatasourceType,
   DownloadResult,
-} from "@ft5/fs-datasource-engine";
+} from "@cloudstash/fs-datasource-engine";
 
 import { buildCommandHandlers } from "../commands/handlers.js";
 import type { CommandHandlers } from "../ipc/server.js";
@@ -83,14 +83,14 @@ let handlers: CommandHandlers;
 beforeEach(async () => {
   const dbFile = path.join(
     os.tmpdir(),
-    `ft5-dlconflict-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}.db`,
+    `cloudstash-dlconflict-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}.db`,
   );
   cleanup.push(dbFile);
   db = new Database(dbFile);
   applyMigrations(db);
   bus = createEventBus();
   registry = createDownloadRegistry();
-  tmpDir = await fsp.mkdtemp(path.join(os.tmpdir(), "ft5-dlconflict-"));
+  tmpDir = await fsp.mkdtemp(path.join(os.tmpdir(), "cloudstash-dlconflict-"));
   cleanup.push(tmpDir);
 
   downloadFileSpy = vi.fn(

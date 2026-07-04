@@ -12,8 +12,8 @@ import * as path from "node:path";
 import Database from "better-sqlite3";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { DatasourceClient } from "@ft5/fs-datasource-engine";
-import type { DatasourceFileEntry, DatasourceType } from "@ft5/ipc-contracts";
+import type { DatasourceClient } from "@cloudstash/fs-datasource-engine";
+import type { DatasourceFileEntry, DatasourceType } from "@cloudstash/ipc-contracts";
 
 import { applyMigrations } from "../db/migrations.js";
 import { createEventBus, type EventBus } from "../events/event-bus.js";
@@ -74,7 +74,7 @@ const ctx = {
 beforeEach(() => {
   const file = path.join(
     os.tmpdir(),
-    `ft5-sync-files-dispatcher-${Date.now()}-${Math.random().toString(36).slice(2)}.db`,
+    `cloudstash-sync-files-dispatcher-${Date.now()}-${Math.random().toString(36).slice(2)}.db`,
   );
   cleanup.push(file);
   db = new Database(file);

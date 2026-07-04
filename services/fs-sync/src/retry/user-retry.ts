@@ -4,8 +4,8 @@
 //
 // Spec: "User-level retry policy for provider-error".
 
-import { DatasourceErrorTag } from "@ft5/ipc-contracts";
-import type { RetryPolicy } from "@ft5/ipc-contracts/sync-service";
+import { DatasourceErrorTag } from "@cloudstash/ipc-contracts";
+import type { RetryPolicy } from "@cloudstash/ipc-contracts/sync-service";
 
 export type UserRetryDecision =
   | {

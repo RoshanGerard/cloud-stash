@@ -1,6 +1,6 @@
 // Contract types for the FS Datasource Engine (see
 // `openspec/changes/add-fs-datasource-engine`). These are the shared types
-// that flow between the engine package (`@ft5/fs-datasource-engine`), the
+// that flow between the engine package (`@cloudstash/fs-datasource-engine`), the
 // main-process IPC handlers, and the renderer's subscribers. They live here —
 // not inside the engine — because the renderer must be able to narrow event
 // payloads without importing the engine (engine carries provider SDKs and is

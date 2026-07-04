@@ -2,11 +2,11 @@
 
 import { useEffect, useRef, useSyncExternalStore } from "react";
 
-import type { FilesSearchResponse } from "@ft5/ipc-contracts";
+import type { FilesSearchResponse } from "@cloudstash/ipc-contracts";
 import {
   FILES_PROVIDER_SEARCH_DEFERRED_MESSAGE,
   FilesErrorTag,
-} from "@ft5/ipc-contracts";
+} from "@cloudstash/ipc-contracts";
 
 import { Button } from "@/components/ui/button";
 import {

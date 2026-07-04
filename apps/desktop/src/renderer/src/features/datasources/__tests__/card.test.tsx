@@ -16,8 +16,8 @@ import {
   within,
 } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
-import type { DatasourceSummary } from "@ft5/ipc-contracts";
-import { providers } from "@ft5/ipc-contracts";
+import type { DatasourceSummary } from "@cloudstash/ipc-contracts";
+import { providers } from "@cloudstash/ipc-contracts";
 
 // Task 8.1 — the Explore quick-action activates `useRouter().push(...)` on
 // the App Router. card.tsx does not consume `next/navigation` today, so we

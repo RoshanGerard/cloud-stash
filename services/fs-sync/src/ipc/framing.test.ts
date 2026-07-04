@@ -1,4 +1,4 @@
-import type { Frame } from "@ft5/ipc-contracts/sync-service";
+import type { Frame } from "@cloudstash/ipc-contracts/sync-service";
 import { describe, expect, it } from "vitest";
 
 import {

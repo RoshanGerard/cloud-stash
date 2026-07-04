@@ -7,7 +7,7 @@
 //   "Requirement: In-memory `DownloadRegistry` tracks active downloads".
 //
 // Shape recap (service-internal, carries `abortController`; the IPC-exposed
-// `DownloadJob` from `@ft5/ipc-contracts` strips it):
+// `DownloadJob` from `@cloudstash/ipc-contracts` strips it):
 //
 //   interface DownloadJobEntry {
 //     downloadJobId: string;          // service-minted UUID

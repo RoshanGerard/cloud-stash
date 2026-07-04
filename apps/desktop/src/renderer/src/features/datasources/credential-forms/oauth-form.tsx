@@ -30,7 +30,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import type { ProviderId } from "@ft5/ipc-contracts";
+import type { ProviderId } from "@cloudstash/ipc-contracts";
 
 import { Button } from "@/components/ui/button";
 import { useAuthSession } from "../store";

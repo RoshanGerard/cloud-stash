@@ -37,7 +37,7 @@
 //         initial progress; subsequent live events for any of those ids
 //         update the existing toast (not create a duplicate).
 
-import { DatasourceErrorTag, FilesErrorTag } from "@ft5/ipc-contracts";
+import { DatasourceErrorTag, FilesErrorTag } from "@cloudstash/ipc-contracts";
 import { beforeEach, describe, expect, it, vi, type Mock } from "vitest";
 
 import {
@@ -243,7 +243,7 @@ describe("createDownloadJobToaster (§24.1)", () => {
       payload: {
         downloadJobId: "job-A",
         datasourceId: "ds-1",
-        savedPath: "/Users/alice/Downloads/ft5/welcome.pdf",
+        savedPath: "/Users/alice/Downloads/CloudStash/welcome.pdf",
         bytes: 2048,
       },
     });
@@ -295,7 +295,7 @@ describe("createDownloadJobToaster (§24.1)", () => {
       payload: {
         downloadJobId: "job-A",
         datasourceId: "ds-1",
-        savedPath: "/Users/alice/Downloads/ft5/welcome.pdf",
+        savedPath: "/Users/alice/Downloads/CloudStash/welcome.pdf",
         bytes: 2048,
       },
     });
@@ -350,7 +350,7 @@ describe("createDownloadJobToaster (§24.1)", () => {
       payload: {
         downloadJobId: "job-X",
         datasourceId: "ds-1",
-        savedPath: "/Users/alice/Downloads/ft5/welcome.pdf",
+        savedPath: "/Users/alice/Downloads/CloudStash/welcome.pdf",
         bytes: 2048,
       },
     });
@@ -386,7 +386,7 @@ describe("createDownloadJobToaster (§24.1)", () => {
       payload: {
         downloadJobId: "job-A",
         datasourceId: "ds-1",
-        savedPath: "/Users/alice/Downloads/ft5/welcome.pdf",
+        savedPath: "/Users/alice/Downloads/CloudStash/welcome.pdf",
         bytes: 2048,
       },
     });
@@ -428,7 +428,7 @@ describe("createDownloadJobToaster (§24.1)", () => {
       payload: {
         downloadJobId: "job-A",
         datasourceId: "ds-1",
-        savedPath: "/Users/alice/Downloads/ft5/welcome.pdf",
+        savedPath: "/Users/alice/Downloads/CloudStash/welcome.pdf",
         bytes: 2048,
       },
     });
@@ -449,7 +449,7 @@ describe("createDownloadJobToaster (§24.1)", () => {
 
     opts.actions!.onOpen();
     expect(openSavedPath).toHaveBeenCalledWith(
-      "/Users/alice/Downloads/ft5/welcome.pdf",
+      "/Users/alice/Downloads/CloudStash/welcome.pdf",
     );
     expect(toast.dismiss).toHaveBeenCalledWith(successId);
   });
@@ -473,7 +473,7 @@ describe("createDownloadJobToaster (§24.1)", () => {
       payload: {
         downloadJobId: "job-A",
         datasourceId: "ds-1",
-        savedPath: "/Users/alice/Downloads/ft5/welcome.pdf",
+        savedPath: "/Users/alice/Downloads/CloudStash/welcome.pdf",
         bytes: 2048,
       },
     });
@@ -490,7 +490,7 @@ describe("createDownloadJobToaster (§24.1)", () => {
 
     opts.actions!.onShowInFolder();
     expect(showSavedInFolder).toHaveBeenCalledWith(
-      "/Users/alice/Downloads/ft5/welcome.pdf",
+      "/Users/alice/Downloads/CloudStash/welcome.pdf",
     );
     expect(toast.dismiss).toHaveBeenCalledWith(successId);
   });
@@ -512,7 +512,7 @@ describe("createDownloadJobToaster (§24.1)", () => {
       payload: {
         downloadJobId: "job-A",
         datasourceId: "ds-1",
-        savedPath: "/Users/alice/Downloads/ft5/welcome.pdf",
+        savedPath: "/Users/alice/Downloads/CloudStash/welcome.pdf",
         bytes: 2048,
       },
     });
@@ -525,7 +525,7 @@ describe("createDownloadJobToaster (§24.1)", () => {
       payload: {
         downloadJobId: "job-A",
         datasourceId: "ds-1",
-        savedPath: "/Users/alice/Downloads/ft5/welcome.pdf",
+        savedPath: "/Users/alice/Downloads/CloudStash/welcome.pdf",
         bytes: 2048,
       },
     });
@@ -561,7 +561,7 @@ describe("createDownloadJobToaster (§24.1)", () => {
       payload: {
         downloadJobId: "job-A",
         datasourceId: "ds-1",
-        savedPath: "/Users/alice/Downloads/ft5/welcome.pdf",
+        savedPath: "/Users/alice/Downloads/CloudStash/welcome.pdf",
         bytes: 2048,
       },
     });
@@ -581,11 +581,11 @@ describe("createDownloadJobToaster (§24.1)", () => {
     expect(opts.actions).toBeDefined();
     opts.actions!.onOpen();
     expect(openSavedPath).toHaveBeenCalledWith(
-      "/Users/alice/Downloads/ft5/welcome.pdf",
+      "/Users/alice/Downloads/CloudStash/welcome.pdf",
     );
     opts.actions!.onShowInFolder();
     expect(showSavedInFolder).toHaveBeenCalledWith(
-      "/Users/alice/Downloads/ft5/welcome.pdf",
+      "/Users/alice/Downloads/CloudStash/welcome.pdf",
     );
   });
 
@@ -877,7 +877,7 @@ describe("createDownloadJobToaster — hydration (§24.3)", () => {
         downloadJobId: "job-A",
         datasourceId: "ds-1",
         sourcePath: "/welcome.pdf",
-        targetPath: "/Users/alice/Downloads/ft5/welcome.pdf",
+        targetPath: "/Users/alice/Downloads/CloudStash/welcome.pdf",
         bytesDownloaded: 250,
         contentLength: 1000,
         startedAt: 0,
@@ -886,7 +886,7 @@ describe("createDownloadJobToaster — hydration (§24.3)", () => {
         downloadJobId: "job-B",
         datasourceId: "ds-1",
         sourcePath: "/another.pdf",
-        targetPath: "/Users/alice/Downloads/ft5/another.pdf",
+        targetPath: "/Users/alice/Downloads/CloudStash/another.pdf",
         bytesDownloaded: 0,
         contentLength: null,
         startedAt: 1,
@@ -1150,7 +1150,7 @@ describe("createDownloadJobToaster — retrying state (§8)", () => {
         downloadJobId: "job-A",
         datasourceId: "ds-1",
         sourcePath: "/welcome.pdf",
-        targetPath: "/Users/alice/Downloads/ft5/welcome.pdf",
+        targetPath: "/Users/alice/Downloads/CloudStash/welcome.pdf",
         bytesDownloaded: 251_658_240,
         contentLength: 398_458_880,
         startedAt: 0,
@@ -1192,7 +1192,7 @@ describe("createDownloadJobToaster — retrying state (§8)", () => {
         downloadJobId: "job-A",
         datasourceId: "ds-1",
         sourcePath: "/welcome.pdf",
-        targetPath: "/Users/alice/Downloads/ft5/welcome.pdf",
+        targetPath: "/Users/alice/Downloads/CloudStash/welcome.pdf",
         bytesDownloaded: 100,
         contentLength: 200,
         startedAt: 0,
@@ -1754,7 +1754,7 @@ describe("createDownloadJobToaster — bytes-only progress fallback (§12.3)", (
         downloadJobId: "job-A",
         datasourceId: "ds-1",
         sourcePath: "/welcome.mp4",
-        targetPath: "/Users/alice/Downloads/ft5/welcome.mp4",
+        targetPath: "/Users/alice/Downloads/CloudStash/welcome.mp4",
         bytesDownloaded: 167_772_160, // 160.0 MB
         contentLength: 398_458_880, // 380.0 MB
         startedAt: 0,
@@ -1797,7 +1797,7 @@ describe("createDownloadJobToaster — bytes-only progress fallback (§12.3)", (
         downloadJobId: "job-A",
         datasourceId: "ds-1",
         sourcePath: "/welcome.mp4",
-        targetPath: "/Users/alice/Downloads/ft5/welcome.mp4",
+        targetPath: "/Users/alice/Downloads/CloudStash/welcome.mp4",
         bytesDownloaded: 52_428_800, // 50 MB
         contentLength: null,
         startedAt: 0,

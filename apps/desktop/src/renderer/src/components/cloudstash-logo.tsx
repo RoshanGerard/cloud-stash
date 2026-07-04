@@ -1,4 +1,4 @@
-// Forti5 brand logo — real geometry (review-round-2, Task 1).
+// CloudStash brand logo — real geometry (review-round-2, Task 1).
 //
 // The round-1 component was a simplified chevron-and-pentagon mark. The
 // user supplied the authoritative SVG (`dpc_glyph_dark.svg`) — a central
@@ -24,7 +24,7 @@
 
 import type { SVGProps } from "react";
 
-export interface Forti5LogoProps extends Omit<SVGProps<SVGSVGElement>, "width" | "height"> {
+export interface CloudStashLogoProps extends Omit<SVGProps<SVGSVGElement>, "width" | "height"> {
   /**
    * Pixel size for both width and height. The viewBox itself is
    * slightly taller than wide (174.16 x 166.81); the SVG
@@ -54,12 +54,12 @@ const PETAL_POINTS: readonly string[] = [
   "100.21 166.05 141.35 166.46 155.56 120.76 85.94 121.7 100.21 166.05",
 ];
 
-export function Forti5Logo({
+export function CloudStashLogo({
   size = 28,
   role = "img",
-  "aria-label": ariaLabel = "FT5 Unified Cloud Sync",
+  "aria-label": ariaLabel = "CloudStash",
   ...rest
-}: Forti5LogoProps) {
+}: CloudStashLogoProps) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -68,7 +68,7 @@ export function Forti5Logo({
       height={size}
       role={role}
       aria-label={ariaLabel}
-      data-testid="forti5-logo"
+      data-testid="cloudstash-logo"
       {...rest}
     >
       {/* All 6 polygons (5 outer petals + central pentagon) in theme-

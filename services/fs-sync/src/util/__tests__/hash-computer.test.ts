@@ -25,7 +25,7 @@ import { createHashComputer } from "../hash-computer.js";
 let scratchDir: string;
 
 beforeEach(async () => {
-  scratchDir = await fsp.mkdtemp(path.join(os.tmpdir(), "ft5-hash-"));
+  scratchDir = await fsp.mkdtemp(path.join(os.tmpdir(), "cloudstash-hash-"));
 });
 
 afterEach(async () => {

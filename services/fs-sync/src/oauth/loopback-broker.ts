@@ -43,7 +43,7 @@
 //   On dispose: close every active server, clear every timer, drain
 //     the pending-session map. Used by SIGINT graceful shutdown.
 //
-// Dev override (FT5_DEV_CREDENTIALS=1):
+// Dev override (CLOUDSTASH_DEV_CREDENTIALS=1):
 //   When `isDevOverride: true` AND `<dataDir>/dev-credentials.json`
 //   parses successfully, the broker short-circuits the browser flow
 //   entirely. No HTTP server bound, no factory.createForAuth call, no
@@ -63,14 +63,14 @@ import type {
   DatasourceSummary,
   ProviderId,
   StoredCredentials,
-} from "@ft5/ipc-contracts";
-import { DatasourceError, DatasourceErrorTag, providers } from "@ft5/ipc-contracts";
+} from "@cloudstash/ipc-contracts";
+import { DatasourceError, DatasourceErrorTag, providers } from "@cloudstash/ipc-contracts";
 import type {
   ClientFactory,
   EngineContext,
   OAuthAppConfig,
   OAuthIntent,
-} from "@ft5/fs-datasource-engine";
+} from "@cloudstash/fs-datasource-engine";
 
 import type { EventBus } from "../events/event-bus.js";
 
@@ -166,7 +166,7 @@ export interface OAuthLoopbackBrokerOptions {
   /** When true AND `<dataDir>/dev-credentials.json` parses, every
    *  start() short-circuits to the dev path (no browser, no HTTP
    *  bind). Production wires
-   *  `process.env.FT5_DEV_CREDENTIALS === "1"` at bootstrap; the
+   *  `process.env.CLOUDSTASH_DEV_CREDENTIALS === "1"` at bootstrap; the
    *  broker module stays env-agnostic so it remains pure / unit
    *  testable. */
   isDevOverride?: boolean;
@@ -395,7 +395,7 @@ export function createOAuthLoopbackBroker(
           cleanup(correlationId);
           options.bus.emit("auth-failed", {
             correlationId,
-            // eslint-disable-next-line ft5/no-raw-error-tag-literal -- AuthFailedTag vocabulary (no const object) — out of scope
+            // eslint-disable-next-line cloudstash/no-raw-error-tag-literal -- AuthFailedTag vocabulary (no const object) — out of scope
             tag: "auth-revoked",
           });
           return;
@@ -459,7 +459,7 @@ export function createOAuthLoopbackBroker(
                   : undefined;
               options.bus.emit("auth-failed", {
                 correlationId,
-                // eslint-disable-next-line ft5/no-raw-error-tag-literal -- AuthFailedTag vocabulary (no const object) — out of scope
+                // eslint-disable-next-line cloudstash/no-raw-error-tag-literal -- AuthFailedTag vocabulary (no const object) — out of scope
                 tag: "account-mismatch",
                 message: err.message,
                 ...(expectedEmail !== undefined ? { expectedEmail } : {}),
@@ -469,7 +469,7 @@ export function createOAuthLoopbackBroker(
             }
             options.bus.emit("auth-failed", {
               correlationId,
-              // eslint-disable-next-line ft5/no-raw-error-tag-literal -- AuthFailedTag vocabulary (no const object) — out of scope
+              // eslint-disable-next-line cloudstash/no-raw-error-tag-literal -- AuthFailedTag vocabulary (no const object) — out of scope
               tag: "provider-error",
               message: String(err),
             });

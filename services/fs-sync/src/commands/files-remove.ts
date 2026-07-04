@@ -17,13 +17,13 @@
 // handle-first pattern — every `files:*` call that mutates or returns a
 // single entry is ambiguity-vulnerable on path-only addressing.
 
-import type { DatasourceClient } from "@ft5/fs-datasource-engine";
-import { withAuthRefresh } from "@ft5/fs-datasource-engine";
+import type { DatasourceClient } from "@cloudstash/fs-datasource-engine";
+import { withAuthRefresh } from "@cloudstash/fs-datasource-engine";
 import type {
   DatasourceType,
   FilesRemoveEntryResult,
-} from "@ft5/ipc-contracts";
-import { FilesErrorTag } from "@ft5/ipc-contracts";
+} from "@cloudstash/ipc-contracts";
+import { FilesErrorTag } from "@cloudstash/ipc-contracts";
 
 import type { CommandHandler } from "../ipc/server.js";
 

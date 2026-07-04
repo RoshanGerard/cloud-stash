@@ -5,7 +5,7 @@ import { useSyncExternalStore } from "react"
 /**
  * Single source of truth for the renderer's theme preference.
  *
- * Stored in `localStorage` under `ft5.theme`. The "system" preference is
+ * Stored in `localStorage` under `cloudstash.theme`. The "system" preference is
  * represented by the *absence* of the key so a cold-start inline script
  * (see `theme-script.ts`) can evaluate it without having to parse a string
  * sentinel — any truthy value is a user override.
@@ -22,7 +22,7 @@ import { useSyncExternalStore } from "react"
 // `data-theme="serene-blue"` attribute on <html>, not the `.dark` class.
 export type ThemePreference = "light" | "dark" | "serene-blue" | "system"
 
-export const THEME_STORAGE_KEY = "ft5.theme"
+export const THEME_STORAGE_KEY = "cloudstash.theme"
 
 const DARK_QUERY = "(prefers-color-scheme: dark)"
 

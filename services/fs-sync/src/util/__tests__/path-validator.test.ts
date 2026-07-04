@@ -45,7 +45,7 @@ describe("validateToPath", () => {
 
   it("rejects writes inside the service data directory with reason 'cannot write inside service data directory'", async () => {
     const home = "/home/alice";
-    const inside = nodePath.join(home, "ft5", "sync_app", "credentials.json");
+    const inside = nodePath.join(home, "cloudstash", "sync_app", "credentials.json");
     const result = await validateToPath(inside, {
       canWrite: async () => true,
       homedir: () => home,
@@ -81,9 +81,9 @@ describe("validateToPath", () => {
 
   it("does NOT reject sibling paths that merely share a prefix with the service data dir", async () => {
     const home = "/home/alice";
-    // `~/ft5/sync_app_other/...` is NOT inside `~/ft5/sync_app/...` —
+    // `~/cloudstash/sync_app_other/...` is NOT inside `~/cloudstash/sync_app/...` —
     // the validator must anchor the comparison at a separator.
-    const target = nodePath.join(home, "ft5", "sync_app_other", "file.pdf");
+    const target = nodePath.join(home, "cloudstash", "sync_app_other", "file.pdf");
     const result = await validateToPath(target, {
       canWrite: async () => true,
       homedir: () => home,

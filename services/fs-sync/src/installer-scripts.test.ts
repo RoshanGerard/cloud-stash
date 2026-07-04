@@ -19,18 +19,18 @@ function read(rel: string): string {
 }
 
 describe("Windows installer scripts", () => {
-  it("register.ps1 invokes schtasks /Create /SC ONLOGON /RL LIMITED with /TN ft5-sync", () => {
+  it("register.ps1 invokes schtasks /Create /SC ONLOGON /RL LIMITED with /TN cloudstash-sync", () => {
     const src = read("windows/register.ps1");
     expect(src).toMatch(/schtasks[\s\S]*?\/Create/);
     expect(src).toMatch(/\/SC\s+ONLOGON/);
-    expect(src).toMatch(/\/TN\s+\$taskName|\/TN\s+"?ft5-sync"?/);
+    expect(src).toMatch(/\/TN\s+\$taskName|\/TN\s+"?cloudstash-sync"?/);
     expect(src).toMatch(/\/RL\s+LIMITED/);
   });
 
-  it("unregister.ps1 invokes schtasks /Delete on the ft5-sync task", () => {
+  it("unregister.ps1 invokes schtasks /Delete on the cloudstash-sync task", () => {
     const src = read("windows/unregister.ps1");
     expect(src).toMatch(/schtasks\s+\/Delete/);
-    expect(src).toMatch(/\$taskName|ft5-sync/);
+    expect(src).toMatch(/\$taskName|cloudstash-sync/);
   });
 });
 
@@ -38,7 +38,7 @@ describe("macOS installer scripts", () => {
   it("register.sh writes a LaunchAgent plist and launchctl loads it", () => {
     const src = read("macos/register.sh");
     expect(src).toContain("Library/LaunchAgents");
-    expect(src).toContain("tech.forti5.ft5-sync");
+    expect(src).toContain("com.cloudstash.sync");
     expect(src).toMatch(/RunAtLoad\s*<\/key>\s*<true\/>/);
     expect(src).toMatch(/KeepAlive\s*<\/key>\s*<true\/>/);
     expect(src).toContain("launchctl load");
@@ -55,18 +55,18 @@ describe("Linux installer scripts", () => {
   it("register.sh writes a systemd --user unit, enables it, and invokes loginctl enable-linger", () => {
     const src = read("linux/register.sh");
     expect(src).toContain(".config/systemd/user");
-    expect(src).toContain("ft5-sync.service");
-    expect(src).toContain("systemctl --user enable --now ft5-sync.service");
+    expect(src).toContain("cloudstash-sync.service");
+    expect(src).toContain("systemctl --user enable --now cloudstash-sync.service");
     expect(src).toContain("loginctl enable-linger");
     // XDG autostart fallback is present for distros without systemd --user.
     expect(src).toContain("autostart");
-    expect(src).toContain("ft5-sync.desktop");
+    expect(src).toContain("cloudstash-sync.desktop");
   });
 
   it("unregister.sh invokes systemctl --user disable and deletes both the unit and autostart entry", () => {
     const src = read("linux/unregister.sh");
-    expect(src).toContain("systemctl --user disable --now ft5-sync.service");
-    expect(src).toContain("ft5-sync.service");
-    expect(src).toContain("ft5-sync.desktop");
+    expect(src).toContain("systemctl --user disable --now cloudstash-sync.service");
+    expect(src).toContain("cloudstash-sync.service");
+    expect(src).toContain("cloudstash-sync.desktop");
   });
 });

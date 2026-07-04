@@ -33,7 +33,7 @@ import {
   waitFor,
 } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
-import type { SyncEvent } from "@ft5/ipc-contracts/sync-service-desktop";
+import type { SyncEvent } from "@cloudstash/ipc-contracts/sync-service-desktop";
 
 import { DatasourcesProvider } from "../store";
 import { OAuthForm, type OAuthFormProps } from "../credential-forms/oauth-form";
@@ -309,7 +309,7 @@ describe("OAuthForm — surfaces cancel and timeout inline with Retry", () => {
         kind: "auth-failed",
         payload: {
           correlationId: "corr-test",
-          // eslint-disable-next-line ft5/no-raw-error-tag-literal -- AuthFailedTag vocabulary (no const object) — out of scope
+          // eslint-disable-next-line cloudstash/no-raw-error-tag-literal -- AuthFailedTag vocabulary (no const object) — out of scope
           tag: "auth-revoked",
           message: "Token was revoked by the user",
         },
@@ -362,7 +362,7 @@ describe("OAuthForm — service-config-missing inline copy", () => {
       ok: false,
       error: {
         tag: "service-config-missing",
-        path: "/home/user/ft5/sync_app/config.json",
+        path: "/home/user/cloudstash/sync_app/config.json",
         providerId: "google-drive",
       },
     });
@@ -381,7 +381,7 @@ describe("OAuthForm — service-config-missing inline copy", () => {
     );
     // Path is rendered as <code>
     expect(failed.querySelector("code")?.textContent).toBe(
-      "/home/user/ft5/sync_app/config.json",
+      "/home/user/cloudstash/sync_app/config.json",
     );
     expect(failed.textContent).toMatch(/README/i);
     expect(screen.getByRole("button", { name: /retry/i })).toBeInTheDocument();

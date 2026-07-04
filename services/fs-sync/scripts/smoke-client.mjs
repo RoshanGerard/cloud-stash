@@ -1,9 +1,9 @@
 // Manual smoke-test client. Connects to the running dev service
-// (Windows: `\\.\pipe\ft5-sync-dev`; Unix: `$HOME/ft5/sync_app/dev/sync-dev.sock`),
+// (Windows: `\\.\pipe\cloudstash-sync-dev`; Unix: `$HOME/cloudstash/sync_app/dev/sync-dev.sock`),
 // sends a `sync:get-status` request, prints the first response frame,
 // and exits 0 on success / 1 on transport error / 2 on timeout.
 // Usage: `node scripts/smoke-client.mjs` with the service running in
-// another terminal via `pnpm --filter @ft5/fs-sync-service start -- --dev`.
+// another terminal via `pnpm --filter @cloudstash/fs-sync-service start -- --dev`.
 // Companion doc: SMOKE.md.
 
 import * as net from "node:net";
@@ -12,8 +12,8 @@ import * as path from "node:path";
 
 const pipe =
   process.platform === "win32"
-    ? "\\\\.\\pipe\\ft5-sync-dev"
-    : path.join(os.homedir(), "ft5/sync_app/dev/sync-dev.sock");
+    ? "\\\\.\\pipe\\cloudstash-sync-dev"
+    : path.join(os.homedir(), "cloudstash/sync_app/dev/sync-dev.sock");
 
 const sock = net.connect(pipe);
 let buf = "";

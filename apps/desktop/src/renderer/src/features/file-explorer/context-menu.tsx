@@ -2,7 +2,7 @@
 
 import type { JSX, ReactNode } from "react";
 
-import type { FileEntry } from "@ft5/ipc-contracts";
+import type { FileEntry } from "@cloudstash/ipc-contracts";
 
 import {
   ContextMenu,

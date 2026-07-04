@@ -28,7 +28,7 @@
 import { useSyncExternalStore } from "react";
 import type { KeyboardEvent as ReactKeyboardEvent } from "react";
 
-import type { FileEntry } from "@ft5/ipc-contracts";
+import type { FileEntry } from "@cloudstash/ipc-contracts";
 
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/icon";

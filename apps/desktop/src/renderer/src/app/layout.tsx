@@ -12,8 +12,8 @@ import { MOTION_BOOTSTRAP_SCRIPT } from "../features/settings/motion-script";
 import { DiagnosticsShortcut } from "../features/diagnostics/diagnostics-shortcut";
 
 export const metadata: Metadata = {
-  title: "ft5-cloude-sync",
-  description: "Forti5 Cloude sync desktop shell",
+  title: "cloudstash",
+  description: "CloudStash desktop shell",
 };
 
 export const viewport: Viewport = {

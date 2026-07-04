@@ -4,12 +4,12 @@ import { act, render } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { createElement, useSyncExternalStore } from "react";
 
-import { FilesErrorTag } from "@ft5/ipc-contracts";
+import { FilesErrorTag } from "@cloudstash/ipc-contracts";
 import type {
   FileEntry,
   FilesListResponse,
   FilesListValue,
-} from "@ft5/ipc-contracts";
+} from "@cloudstash/ipc-contracts";
 
 // Sonner is mocked so rename's toast.error call is observable.
 vi.mock("sonner", () => ({
@@ -142,7 +142,7 @@ describe("createExplorerStore — initial state", () => {
   });
 
   it("exports a storage key prefix of the expected shape", () => {
-    expect(EXPLORER_STORAGE_KEY_PREFIX).toBe("ft5.file-explorer.");
+    expect(EXPLORER_STORAGE_KEY_PREFIX).toBe("cloudstash.file-explorer.");
   });
 });
 
@@ -1746,7 +1746,7 @@ describe("useExplorerStore hook", () => {
 //   - applyInitialPage(value):  sets entries + nextCursor for the first page
 //   - loadMore():               appends + advances nextCursor
 //   - retryLoadMore():          re-issues with the SAME cursor + pageSize
-//   - readExplorerPageSize():   localStorage `ft5.explorer.pageSize`, def 500
+//   - readExplorerPageSize():   localStorage `cloudstash.explorer.pageSize`, def 500
 // ---------------------------------------------------------------------------
 
 type FilesListStub = ReturnType<typeof vi.fn>;
@@ -1799,7 +1799,7 @@ describe("pagination — readExplorerPageSize (§8.7)", () => {
   });
 
   it("exports the localStorage key of the expected shape", () => {
-    expect(EXPLORER_PAGE_SIZE_KEY).toBe("ft5.explorer.pageSize");
+    expect(EXPLORER_PAGE_SIZE_KEY).toBe("cloudstash.explorer.pageSize");
   });
 });
 
@@ -1966,7 +1966,7 @@ describe("pagination — loadMore failure + retryLoadMore (§8.4, §8.5)", () =>
     return {
       ok: false,
       error: {
-        // eslint-disable-next-line ft5/no-raw-error-tag-literal -- off-taxonomy fixture — network-error is not a FilesErrorTag member
+        // eslint-disable-next-line cloudstash/no-raw-error-tag-literal -- off-taxonomy fixture — network-error is not a FilesErrorTag member
         tag: "network-error",
         message: "connection timed out",
         retryable: true,
@@ -1990,7 +1990,7 @@ describe("pagination — loadMore failure + retryLoadMore (§8.4, §8.5)", () =>
     expect(after.entries.map((e) => e.id)).toEqual(["a", "b"]);
     expect(after.loadingMore).toBe(false);
     expect(after.loadMoreError).toEqual({
-      // eslint-disable-next-line ft5/no-raw-error-tag-literal -- off-taxonomy fixture — network-error is not a FilesErrorTag member
+      // eslint-disable-next-line cloudstash/no-raw-error-tag-literal -- off-taxonomy fixture — network-error is not a FilesErrorTag member
       tag: "network-error",
       message: "connection timed out",
       retryable: true,
@@ -2080,7 +2080,7 @@ describe("pagination — navigation discards cursor + failed-state (§8.6)", () 
   it("navigate() clears nextCursor and loadMoreError", async () => {
     const listFn = vi.fn(async () => ({
       ok: false as const,
-      // eslint-disable-next-line ft5/no-raw-error-tag-literal -- off-taxonomy fixture — network-error is not a FilesErrorTag member
+      // eslint-disable-next-line cloudstash/no-raw-error-tag-literal -- off-taxonomy fixture — network-error is not a FilesErrorTag member
       error: { tag: "network-error" as const, message: "boom", retryable: true },
     }));
     installFilesListApi(listFn);

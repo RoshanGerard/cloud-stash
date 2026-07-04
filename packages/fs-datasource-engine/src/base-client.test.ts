@@ -12,8 +12,8 @@ import type {
   Quota,
   StoredCredentials,
   Target,
-} from "@ft5/ipc-contracts";
-import { DatasourceError, DatasourceErrorTag } from "@ft5/ipc-contracts";
+} from "@cloudstash/ipc-contracts";
+import { DatasourceError, DatasourceErrorTag } from "@cloudstash/ipc-contracts";
 
 import {
   BaseDatasourceClient,
@@ -1376,7 +1376,7 @@ describe("BaseDatasourceClient — rename `keep-both` policy delegates to the st
     // surface it (the engine emits no `delete-failed` event post
     // migrate-engine-events-to-consumer).
     const exhausted = new DatasourceError<FakeType>({
-      // eslint-disable-next-line ft5/no-raw-error-tag-literal -- off-taxonomy — 'other' is not a DatasourceErrorTag member (base re-throw test)
+      // eslint-disable-next-line cloudstash/no-raw-error-tag-literal -- off-taxonomy — 'other' is not a DatasourceErrorTag member (base re-throw test)
       tag: "other",
       datasourceType: "amazon-s3",
       datasourceId: "ds-1",

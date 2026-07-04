@@ -93,9 +93,9 @@ function pipeFor(tag: string): string {
   const suffix =
     `${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
   if (process.platform === "win32") {
-    return `\\\\.\\pipe\\ft5-sync-int-auth-${tag}-${suffix}`;
+    return `\\\\.\\pipe\\cloudstash-sync-int-auth-${tag}-${suffix}`;
   }
-  return path.join(os.tmpdir(), `ft5-sync-int-auth-${tag}-${suffix}.sock`);
+  return path.join(os.tmpdir(), `cloudstash-sync-int-auth-${tag}-${suffix}.sock`);
 }
 
 async function connect(pipePath: string): Promise<net.Socket> {
@@ -204,7 +204,7 @@ async function bootScratchRuntime(opts: {
 
 beforeEach(async () => {
   scratchDir = await fsp.mkdtemp(
-    path.join(os.tmpdir(), "ft5-sync-int-auth-"),
+    path.join(os.tmpdir(), "cloudstash-sync-int-auth-"),
   );
   runtime = null;
 });

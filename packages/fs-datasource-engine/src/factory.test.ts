@@ -8,9 +8,9 @@
 
 import { describe, expect, it, vi } from "vitest";
 
-import type { AccountIdentity, ProviderId } from "@ft5/ipc-contracts";
-import { providers } from "@ft5/ipc-contracts";
-import { DatasourceError } from "@ft5/ipc-contracts";
+import type { AccountIdentity, ProviderId } from "@cloudstash/ipc-contracts";
+import { providers } from "@cloudstash/ipc-contracts";
+import { DatasourceError } from "@cloudstash/ipc-contracts";
 
 import type { OAuthAppConfig } from "./auth-types.js";
 
@@ -230,7 +230,7 @@ describe("createClientFactory", () => {
     expect(c.credentials).toBe(mockCreds);
     // Referentially equal store propagates into the BaseClientContext.
     expect(c.ctx.credentialStore).toBe(ctx.credentialStore);
-    // Descriptor is resolved from the shared @ft5/ipc-contracts export.
+    // Descriptor is resolved from the shared @cloudstash/ipc-contracts export.
     expect(c.ctx.providerDescriptor).toBe(providers["amazon-s3"]);
   });
 

@@ -46,8 +46,8 @@ import {
   within,
 } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
-import { FilesErrorTag } from "@ft5/ipc-contracts";
-import type { DatasourceSummary } from "@ft5/ipc-contracts";
+import { FilesErrorTag } from "@cloudstash/ipc-contracts";
+import type { DatasourceSummary } from "@cloudstash/ipc-contracts";
 
 import ExplorePage from "../page";
 import {

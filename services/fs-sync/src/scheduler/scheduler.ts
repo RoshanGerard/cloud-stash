@@ -10,8 +10,8 @@
 import type {
   JobSummary,
   JobKind,
-} from "@ft5/ipc-contracts/sync-service";
-import { DatasourceErrorTag } from "@ft5/ipc-contracts";
+} from "@cloudstash/ipc-contracts/sync-service";
+import { DatasourceErrorTag } from "@cloudstash/ipc-contracts";
 
 import type { EventBus } from "../events/event-bus.js";
 import { JobRepository } from "../jobs/repository.js";

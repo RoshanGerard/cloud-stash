@@ -15,7 +15,7 @@
 
 import { useCallback, useState, type FormEvent } from "react";
 
-import type { ProviderId } from "@ft5/ipc-contracts";
+import type { ProviderId } from "@cloudstash/ipc-contracts";
 
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";

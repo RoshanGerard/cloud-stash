@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Deregisters the ft5-sync LaunchAgent. Idempotent.
+# Deregisters the cloudstash-sync LaunchAgent. Idempotent.
 set -euo pipefail
 
-LABEL="tech.forti5.ft5-sync"
+LABEL="com.cloudstash.sync"
 PLIST="$HOME/Library/LaunchAgents/${LABEL}.plist"
 
 launchctl unload "$PLIST" 2>/dev/null || true
 rm -f "$PLIST"
 
-echo "ft5-sync: LaunchAgent deregistered (if present)"
+echo "cloudstash-sync: LaunchAgent deregistered (if present)"

@@ -78,9 +78,9 @@ matter for anyone running this branch's earlier commits:
    completion or explicit cancel. The renderer's progress bar resumes
    on next app open via the seed handshake.
 4. **Mac/Linux dev IPC socket relocation.** The dev socket now lives
-   at `$HOME/ft5/sync_app/dev/sync-dev.sock` (matching the spec's
-   data-dir layout), not the prior `$HOME/ft5/sync_app/sync-dev.sock`.
+   at `$HOME/cloudstash/sync_app/dev/sync-dev.sock` (matching the spec's
+   data-dir layout), not the prior `$HOME/cloudstash/sync_app/sync-dev.sock`.
    Any stale socket file at the old path from this branch's earlier
    commits can be deleted; no action needed for users who haven't run
    `pnpm dev` on Unix yet. Latent on Windows because named pipes
-   (`\\.\pipe\ft5-sync[-dev]`) bypass the data dir.
+   (`\\.\pipe\cloudstash-sync[-dev]`) bypass the data dir.

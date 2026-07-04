@@ -74,8 +74,8 @@ import type {
   Quota,
   StoredCredentials,
   Target,
-} from "@ft5/ipc-contracts";
-import { DatasourceError, DatasourceErrorTag } from "@ft5/ipc-contracts";
+} from "@cloudstash/ipc-contracts";
+import { DatasourceError, DatasourceErrorTag } from "@cloudstash/ipc-contracts";
 
 import type { PreAuthConfig } from "../auth-types.js";
 import { parseIdToken, IdTokenError } from "../oauth/id-token.js";
@@ -1836,7 +1836,7 @@ export class OneDriveClient extends BaseDatasourceClient<"onedrive"> {
     }
     // quotaLimitReached — storage quota exhausted. The 8-tag taxonomy does
     // NOT have a dedicated `quota-exceeded` tag (see `DatasourceErrorTag` in
-    // `@ft5/ipc-contracts`). Mapping to `provider-error` with
+    // `@cloudstash/ipc-contracts`). Mapping to `provider-error` with
     // `retryable: false` is the safe fit: the write will not succeed on
     // retry until the user frees space. Taxonomy expansion is tracked as a
     // phase-7 code-review follow-up; until it lands, the outer `raw` payload

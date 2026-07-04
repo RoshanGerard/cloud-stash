@@ -35,9 +35,9 @@ import {
   within,
 } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
-import type { DatasourceSummary } from "@ft5/ipc-contracts";
-import { providers } from "@ft5/ipc-contracts";
-import type { SyncEvent } from "@ft5/ipc-contracts/sync-service-desktop";
+import type { DatasourceSummary } from "@cloudstash/ipc-contracts";
+import { providers } from "@cloudstash/ipc-contracts";
+import type { SyncEvent } from "@cloudstash/ipc-contracts/sync-service-desktop";
 
 // Task 8.2 added `useRouter()` to DatasourceCard. The add-dialog happy-path
 // tests render a real card (verifying the new datasource appears in the

@@ -15,8 +15,8 @@
 import type {
   SyncSetConfigRequest,
   SyncSetConfigResponse,
-} from "@ft5/ipc-contracts/sync-service-desktop";
-import type { SyncSetConfigError } from "@ft5/ipc-contracts/sync-service";
+} from "@cloudstash/ipc-contracts/sync-service-desktop";
+import type { SyncSetConfigError } from "@cloudstash/ipc-contracts/sync-service";
 
 import { SyncClient, SyncCommandError } from "../../sync/client.js";
 import { getSyncClient } from "../../sync/sync-client-holder.js";

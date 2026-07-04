@@ -8,7 +8,7 @@
 // (can fail with `not-cancelable`).
 //
 // These types deliberately mirror — but do NOT re-export — the wire contract
-// shapes from `@ft5/ipc-contracts/sync-service`. The renderer must NEVER
+// shapes from `@cloudstash/ipc-contracts/sync-service`. The renderer must NEVER
 // import wire-format types like `RequestFrame`. The `listJobs` response adds
 // the `derivedSyncingDatasourceIds` field computed by the main-process IPC
 // handler (see spec "Main-process IPC proxy translates renderer calls to
@@ -182,7 +182,7 @@ export interface SyncCancelUploadResponse {
 //
 // The `UploadJob` type itself lives in the wire-side `commands.ts`
 // (consistent with `DownloadJob`); callers reach for it through the
-// renderer-facing barrel (`@ft5/ipc-contracts/sync-service-desktop`)
+// renderer-facing barrel (`@cloudstash/ipc-contracts/sync-service-desktop`)
 // re-export below in `index.ts`.
 
 export type SyncUploadsListActiveRequest = void;
@@ -248,7 +248,7 @@ export type SyncAuthenticateCancelResponse =
 
 // ---- getConfig / setConfig (design.md Decision 4) -----------------------
 //
-// Round-trip for the per-provider OAuth app config (`~/ft5/sync_app/
+// Round-trip for the per-provider OAuth app config (`~/cloudstash/sync_app/
 // config.json`). The renderer does NOT call these in this change — they
 // exist for a future settings UI. Round-trip coverage proves the contract
 // surface from the desktop test client.
@@ -337,7 +337,7 @@ export interface SyncListLeftoverResponse {
 //
 // Symmetric counterpart of authenticate. The desktop's `datasources:remove`
 // IPC handler calls this command after `registry.remove` succeeds so the
-// per-user credential entry at `~/ft5/sync_app/credentials.json` is cleaned
+// per-user credential entry at `~/cloudstash/sync_app/credentials.json` is cleaned
 // up alongside the registry row. Best-effort cleanup — most failures still
 // return `{ ok: true, result: { deleted: false } }`.
 

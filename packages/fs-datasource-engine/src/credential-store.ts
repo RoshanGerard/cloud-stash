@@ -14,10 +14,10 @@
 //
 // Ported from an inline declaration that previously lived in
 // `base-client.ts`; consumers keep importing `CredentialStore` from the
-// package's public surface (`@ft5/fs-datasource-engine`) — this module
+// package's public surface (`@cloudstash/fs-datasource-engine`) — this module
 // relocation is invisible to them.
 
-import type { StoredCredentials } from "@ft5/ipc-contracts";
+import type { StoredCredentials } from "@cloudstash/ipc-contracts";
 
 /**
  * Encrypted credential storage port. The engine stays framework-agnostic;

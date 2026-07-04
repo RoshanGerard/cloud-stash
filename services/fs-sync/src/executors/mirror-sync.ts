@@ -6,10 +6,10 @@ import * as path from "node:path";
 import type {
   DatasourceClient,
   DatasourceError,
-} from "@ft5/fs-datasource-engine";
-import { withAuthRefresh } from "@ft5/fs-datasource-engine";
-import type { DatasourceType } from "@ft5/ipc-contracts";
-import { DatasourceErrorTag, EntryKind } from "@ft5/ipc-contracts";
+} from "@cloudstash/fs-datasource-engine";
+import { withAuthRefresh } from "@cloudstash/fs-datasource-engine";
+import type { DatasourceType } from "@cloudstash/ipc-contracts";
+import { DatasourceErrorTag, EntryKind } from "@cloudstash/ipc-contracts";
 
 import { SnapshotRepository } from "../jobs/snapshot-repository.js";
 import type { Executor, ExecutorResult } from "../scheduler/scheduler.js";

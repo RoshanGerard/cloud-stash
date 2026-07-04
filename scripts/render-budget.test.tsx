@@ -13,12 +13,12 @@ import { seedEntry } from "../apps/desktop/src/renderer/src/features/file-explor
  * environment". 50 ms is the *dev-host* budget; jsdom is materially
  * slower than a real browser layout engine, so the default ceiling here
  * is more generous (200 ms by default, tunable via
- * `FT5_RENDER_BUDGET_MS`). The point is the *shape* of the guardrail —
+ * `CLOUDSTASH_RENDER_BUDGET_MS`). The point is the *shape* of the guardrail —
  * an accidental O(N) per-row hook or an expensive formatter will blow
  * past even a generous ceiling; this test lights up loudly when it does.
  *
  * Configuration knobs:
- *   FT5_RENDER_BUDGET_MS  number, ms — hard ceiling. Default 200.
+ *   CLOUDSTASH_RENDER_BUDGET_MS  number, ms — hard ceiling. Default 200.
  *
  * Design:
  *   - 300 entries (the directory-size ceiling from the spec).
@@ -51,12 +51,12 @@ import { seedEntry } from "../apps/desktop/src/renderer/src/features/file-explor
 // "50 ms" which is the *real-browser dev-host* budget, not jsdom;
 // this 700 ms is the jsdom analogue post-Phase-4-composite.
 // CI environments with consistently-fast runners can tighten via
-// FT5_RENDER_BUDGET_MS=500; slower shared runners can loosen.
+// CLOUDSTASH_RENDER_BUDGET_MS=500; slower shared runners can loosen.
 const DEFAULT_BUDGET_MS = 700;
 const FIXTURE_SIZE = 300;
 
 function readBudgetMs(): number {
-  const raw = process.env.FT5_RENDER_BUDGET_MS;
+  const raw = process.env.CLOUDSTASH_RENDER_BUDGET_MS;
   if (typeof raw !== "string" || raw.length === 0) return DEFAULT_BUDGET_MS;
   const parsed = Number.parseInt(raw, 10);
   if (!Number.isFinite(parsed) || parsed <= 0) return DEFAULT_BUDGET_MS;
@@ -107,7 +107,7 @@ describe("render-budget guardrail — Details mode @ 300 entries", () => {
 
     expect(
       duration < budgetMs,
-      `Details-mode initial render of ${String(FIXTURE_SIZE)} entries took ${duration.toFixed(2)} ms, exceeding the ${String(budgetMs)} ms ceiling. Override via FT5_RENDER_BUDGET_MS if this is a CI-environment shift, or investigate if a recent change added an O(N) per-row hook or formatter.`,
+      `Details-mode initial render of ${String(FIXTURE_SIZE)} entries took ${duration.toFixed(2)} ms, exceeding the ${String(budgetMs)} ms ceiling. Override via CLOUDSTASH_RENDER_BUDGET_MS if this is a CI-environment shift, or investigate if a recent change added an O(N) per-row hook or formatter.`,
     ).toBe(true);
 
     unmount();

@@ -10,7 +10,7 @@
 //   in-flight uploads in memory".
 //
 // Shape recap (service-internal, carries `abortController`; the IPC-exposed
-// `UploadJob` from `@ft5/ipc-contracts` strips it):
+// `UploadJob` from `@cloudstash/ipc-contracts` strips it):
 //
 //   interface UploadJobEntry {
 //     uploadJobId: string;             // service-minted UUID

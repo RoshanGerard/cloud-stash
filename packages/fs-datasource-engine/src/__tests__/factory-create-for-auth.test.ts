@@ -28,8 +28,8 @@ import type {
   CredentialsFormIntent,
   OAuthIntent,
   ProviderId,
-} from "@ft5/ipc-contracts";
-import { DatasourceError, DatasourceErrorTag } from "@ft5/ipc-contracts";
+} from "@cloudstash/ipc-contracts";
+import { DatasourceError, DatasourceErrorTag } from "@cloudstash/ipc-contracts";
 
 import type { OAuthAppConfig } from "../auth-types.js";
 import type { CredentialStore } from "../credential-store.js";

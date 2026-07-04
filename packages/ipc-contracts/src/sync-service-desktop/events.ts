@@ -10,7 +10,7 @@
 //
 //   1. The 10 lifecycle events emitted by the fs-sync service itself. Their
 //      payload shapes are re-exported (NOT duplicated) from the wire
-//      contract at `@ft5/ipc-contracts/sync-service`.
+//      contract at `@cloudstash/ipc-contracts/sync-service`.
 //   2. `sync-state-seed` — a synthetic event emitted once per supervisor
 //      connection carrying the in-progress JobSummary snapshot from the
 //      app-open reconciliation handshake (spec: "App-open reconciliation

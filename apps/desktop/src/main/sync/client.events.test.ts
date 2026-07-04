@@ -19,7 +19,7 @@ import * as path from "node:path";
 import type {
   EventFrame,
   RequestFrame,
-} from "@ft5/ipc-contracts/sync-service";
+} from "@cloudstash/ipc-contracts/sync-service";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { FramingDecoder, encodeFrame } from "./framing.js";
@@ -27,11 +27,11 @@ import { SyncClient } from "./client.js";
 
 function pipeFor(tag: string): string {
   if (process.platform === "win32") {
-    return `\\\\.\\pipe\\ft5-sync-client-evt-${tag}-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    return `\\\\.\\pipe\\cloudstash-sync-client-evt-${tag}-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
   }
   return path.join(
     os.tmpdir(),
-    `ft5-sync-client-evt-${tag}-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}.sock`,
+    `cloudstash-sync-client-evt-${tag}-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}.sock`,
   );
 }
 

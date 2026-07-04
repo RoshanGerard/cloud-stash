@@ -1,5 +1,5 @@
 {
-  "name": "@ft5/fs-sync-service",
+  "name": "@cloudstash/fs-sync-service",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -24,8 +24,8 @@
   },
   "devDependencies": {
     "@aws-sdk/client-s3": "^3.1032.0",
-    "@ft5/fs-datasource-engine": "workspace:*",
-    "@ft5/ipc-contracts": "workspace:*",
+    "@cloudstash/fs-datasource-engine": "workspace:*",
+    "@cloudstash/ipc-contracts": "workspace:*",
     "@types/better-sqlite3": "7.6.13",
     "vitest": "3.2.4"
   }

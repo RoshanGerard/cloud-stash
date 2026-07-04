@@ -31,7 +31,7 @@ import {
   waitFor,
 } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
-import type { SyncEvent } from "@ft5/ipc-contracts/sync-service-desktop";
+import type { SyncEvent } from "@cloudstash/ipc-contracts/sync-service-desktop";
 
 import { DatasourcesProvider } from "../store";
 import {

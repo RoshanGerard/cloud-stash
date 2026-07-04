@@ -43,7 +43,7 @@ import {
   within,
 } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
-import type { DatasourceSummary } from "@ft5/ipc-contracts";
+import type { DatasourceSummary } from "@cloudstash/ipc-contracts";
 
 // Task 8.2 added `useRouter()` to DatasourceCard. The dashboard-populated
 // a11y tests mount real cards, so without the App-Router context Next

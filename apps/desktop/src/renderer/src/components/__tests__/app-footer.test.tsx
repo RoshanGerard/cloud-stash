@@ -18,7 +18,7 @@ describe("AppFooter — copyright chrome (Decision 14)", () => {
     render(<AppFooter />);
     const year = new Date().getFullYear().toString();
     const text = screen.getByText(
-      new RegExp(`©\\s*${year}\\s*Forti5 Tech`, "i"),
+      new RegExp(`©\\s*${year}\\s*CloudStash`, "i"),
     );
     expect(text).toBeInTheDocument();
   });

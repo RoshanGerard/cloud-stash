@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { DatasourceClient } from "@ft5/fs-datasource-engine";
-import type { DatasourceFileEntry, DatasourceType } from "@ft5/ipc-contracts";
-import { DatasourceError, DatasourceErrorTag } from "@ft5/ipc-contracts";
+import type { DatasourceClient } from "@cloudstash/fs-datasource-engine";
+import type { DatasourceFileEntry, DatasourceType } from "@cloudstash/ipc-contracts";
+import { DatasourceError, DatasourceErrorTag } from "@cloudstash/ipc-contracts";
 
 import { makeFilesRenameHandler } from "./files-rename.js";
 

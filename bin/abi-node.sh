@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Flip better-sqlite3 to the Node ABI (NODE_MODULE_VERSION 137 on Node 24.x).
-# Run this before `pnpm -w test --run`, `pnpm --filter @ft5/fs-sync-service test`,
+# Run this before `pnpm -w test --run`, `pnpm --filter @cloudstash/fs-sync-service test`,
 # or `pnpm dev:sync-service` if the last thing you ran was the Electron app.
 #
 # The `--force` flag is load-bearing — without it prebuild-install refuses

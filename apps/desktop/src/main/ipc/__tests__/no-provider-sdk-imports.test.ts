@@ -1,6 +1,6 @@
 // Phase 9e — architectural guardrail. The IPC handler layer MUST NOT
 // import provider SDKs directly. Any provider-specific knowledge lives
-// inside `@ft5/fs-datasource-engine` strategies (`S3Client`,
+// inside `@cloudstash/fs-datasource-engine` strategies (`S3Client`,
 // `OneDriveClient`, `GoogleDriveClient`); handlers talk to the engine
 // through the `ClientFactory` / `DatasourceClient` surface only.
 //

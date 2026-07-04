@@ -31,8 +31,8 @@ import type {
   DatasourceType,
   DatasourceFileEntry,
   StoredCredentials,
-} from "@ft5/ipc-contracts";
-import { DatasourceError, DatasourceErrorTag } from "@ft5/ipc-contracts";
+} from "@cloudstash/ipc-contracts";
+import { DatasourceError, DatasourceErrorTag } from "@cloudstash/ipc-contracts";
 import { describe, expect, it } from "vitest";
 
 import type { DatasourceClient } from "../base-client.js";

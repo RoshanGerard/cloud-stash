@@ -1,12 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { DatasourceError, DatasourceErrorTag } from "@ft5/ipc-contracts";
+import { DatasourceError, DatasourceErrorTag } from "@cloudstash/ipc-contracts";
 
 import { withAuthRefresh } from "./with-auth-refresh.js";
 
 // ---------------------------------------------------------------------------
 // withAuthRefresh — the default, replaceable one-shot refresh-then-retry
-// policy exported from @ft5/fs-datasource-engine
+// policy exported from @cloudstash/fs-datasource-engine
 // (migrate-engine-retry-policy-to-consumer Decision 3).
 //
 // The helper is framework-agnostic: it only depends on the public

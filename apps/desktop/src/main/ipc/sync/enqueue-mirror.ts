@@ -27,11 +27,11 @@
 import type {
   CommandParams,
   SyncAlreadyRunningErrorShape,
-} from "@ft5/ipc-contracts/sync-service";
+} from "@cloudstash/ipc-contracts/sync-service";
 import type {
   SyncEnqueueMirrorRequest,
   SyncEnqueueMirrorResponse,
-} from "@ft5/ipc-contracts/sync-service-desktop";
+} from "@cloudstash/ipc-contracts/sync-service-desktop";
 
 import type { SyncClient } from "../../sync/client.js";
 import { SyncCommandError } from "../../sync/client.js";

@@ -5,7 +5,7 @@
 
 import { describe, it, expect } from "vitest";
 
-import { DatasourceError, DatasourceErrorTag } from "@ft5/ipc-contracts";
+import { DatasourceError, DatasourceErrorTag } from "@cloudstash/ipc-contracts";
 
 import { isEnvironmentallyRetryable } from "../retry-classification.js";
 

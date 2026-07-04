@@ -1,7 +1,7 @@
 import type {
   FilesRenameRequest,
   FilesRenameResponse,
-} from "@ft5/ipc-contracts";
+} from "@cloudstash/ipc-contracts";
 
 import type { SyncClient } from "../../sync/client.js";
 import { getSyncClient } from "../../sync/sync-client-holder.js";

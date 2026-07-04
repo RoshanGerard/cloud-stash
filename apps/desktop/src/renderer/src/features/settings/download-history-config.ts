@@ -14,7 +14,7 @@ import type {
   ServiceConfig,
   SyncGetConfigResponse,
   SyncSetConfigResponse,
-} from "@ft5/ipc-contracts/sync-service-desktop";
+} from "@cloudstash/ipc-contracts/sync-service-desktop";
 
 export interface DownloadHistorySettings {
   readonly autoPrune: boolean;

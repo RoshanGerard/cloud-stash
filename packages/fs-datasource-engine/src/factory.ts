@@ -7,7 +7,7 @@
 //   client   = factory.create(providerId, datasourceId, credentials, ctx)
 //
 // Each `create` call looks up the registered factory for `providerId`,
-// resolves the corresponding `ProviderDescriptor` from `@ft5/ipc-contracts`,
+// resolves the corresponding `ProviderDescriptor` from `@cloudstash/ipc-contracts`,
 // assembles a fresh `BaseClientContext` that pairs the supplied
 // `EngineContext` (credentialStore) with the descriptor, and delegates
 // to the registered factory. The main factory itself:
@@ -18,7 +18,7 @@
 //   * does NOT verify credentials — that is the caller's concern.
 //   * DOES validate registry integrity eagerly at construction: every
 //     registered key must have a matching descriptor in
-//     `@ft5/ipc-contracts`'s `providers` export, AND every known descriptor
+//     `@cloudstash/ipc-contracts`'s `providers` export, AND every known descriptor
 //     must have a corresponding registry entry — else `createClientFactory`
 //     throws `DatasourceError tag="unsupported"`.
 //
@@ -32,7 +32,7 @@
 //   mapped type (`{ [P in ProviderId]: ProviderFactoryFn<P> }`): each entry
 //   at key `P` returns `DatasourceClient<P>`. This keeps concrete strategy
 //   factories (Phases 6-8) from needing unsafe widening casts when Phase 6
-//   tightens `ProviderMetadata<T>` in `@ft5/ipc-contracts`.
+//   tightens `ProviderMetadata<T>` in `@cloudstash/ipc-contracts`.
 
 import { randomUUID } from "node:crypto";
 
@@ -40,12 +40,12 @@ import type {
   AccountIdentity,
   ProviderId,
   StoredCredentials,
-} from "@ft5/ipc-contracts";
+} from "@cloudstash/ipc-contracts";
 import {
   DatasourceError,
   DatasourceErrorTag,
   providers,
-} from "@ft5/ipc-contracts";
+} from "@cloudstash/ipc-contracts";
 
 import type { OAuthAppConfig, PreAuthConfig } from "./auth-types.js";
 import type {
@@ -286,7 +286,7 @@ export interface ClientFactory {
  *
  * Eagerly validates the registry in both directions:
  *   1. every registered providerId has a matching descriptor in
- *      `@ft5/ipc-contracts`'s `providers` export;
+ *      `@cloudstash/ipc-contracts`'s `providers` export;
  *   2. every known descriptor has a corresponding registry entry —
  *      a caller who passes an empty (or partial) registry fails fast at
  *      construction with a clear message rather than at first-call time.
@@ -301,7 +301,7 @@ export function createClientFactory(registry: ProviderRegistry): ClientFactory {
         datasourceId: FACTORY_CONSTRUCTION_DS_ID,
         retryable: false,
         raw: "registry-descriptor-missing",
-        message: `Provider registry contains '${key}' but no descriptor is registered in @ft5/ipc-contracts.providers`,
+        message: `Provider registry contains '${key}' but no descriptor is registered in @cloudstash/ipc-contracts.providers`,
       });
     }
   }

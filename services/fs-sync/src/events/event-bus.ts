@@ -6,7 +6,7 @@
 import type {
   EventName,
   EventPayloadMap,
-} from "@ft5/ipc-contracts/sync-service";
+} from "@cloudstash/ipc-contracts/sync-service";
 
 export type Listener = <N extends EventName>(
   name: N,

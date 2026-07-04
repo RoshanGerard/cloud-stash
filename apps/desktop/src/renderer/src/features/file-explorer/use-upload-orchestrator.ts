@@ -28,14 +28,14 @@
 //      message (per-file failures are INDEPENDENT — one failing does
 //      not prevent the others from dispatching).
 
-import { FilesErrorTag } from "@ft5/ipc-contracts";
+import { FilesErrorTag } from "@cloudstash/ipc-contracts";
 import type {
   ConflictPolicy,
   FilesStatRequest,
   FilesStatResponse,
   FilesUploadRequest,
   FilesUploadResponse,
-} from "@ft5/ipc-contracts";
+} from "@cloudstash/ipc-contracts";
 
 import type {
   ConflictChoice,
