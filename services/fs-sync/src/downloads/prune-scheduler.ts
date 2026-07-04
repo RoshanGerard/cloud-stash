@@ -9,15 +9,17 @@
 // then re-prunes every 24h. Each run RE-READS the current retention policy
 // from config, so a `set-config` change takes effect on the next cycle without
 // a restart; when `autoPrune` is off the run is a no-op. The interval timer is
-// cleared on `stop()`. Never touches `in-flight` rows or on-disk files (that
-// is `pruneDownloadHistory`'s contract).
+// cleared on `stop()`. Never deletes `in-flight` rows and never MODIFIES
+// on-disk files — the prune only READS disk state (`stat`) to retain
+// KEEP-eligible aged leftovers whose partial is still present, and never
+// unlinks (that is `pruneDownloadHistory`'s contract).
 
 import type Database from "better-sqlite3";
 
 import type { ServiceConfig } from "@ft5/ipc-contracts/sync-service";
 
 import { resolveRetentionSettings } from "../config/download-history-settings.js";
-import { pruneDownloadHistory } from "./prune.js";
+import { pruneDownloadHistory, type PruneFs } from "./prune.js";
 
 const DAY_MS = 86_400_000;
 
@@ -36,6 +38,14 @@ export interface PruneSchedulerDeps {
     | undefined;
   /** Override the 24h cadence (tests). Defaults to {@link PRUNE_INTERVAL_MS}. */
   readonly intervalMs?: number | undefined;
+  // Filesystem `stat` port threaded into `pruneDownloadHistory` so the prune
+  // can retain KEEP-eligible aged rows whose partial is still on disk
+  // (add-leftover-download-cleanup §5). `| undefined` so an absent arg threads
+  // through under `exactOptionalPropertyTypes`; `pruneDownloadHistory` falls
+  // back to `node:fs/promises` when it is undefined. Production leaves it
+  // unset (bootstrap constructs the scheduler without an `fs`); tests inject a
+  // hermetic port.
+  readonly fs?: PruneFs | undefined;
 }
 
 export interface PruneScheduler {
@@ -55,9 +65,11 @@ export function createPruneScheduler(deps: PruneSchedulerDeps): PruneScheduler {
       if (!settings.autoPrune) {
         return;
       }
-      const deleted = pruneDownloadHistory(deps.db, {
-        maxAgeMs: settings.retentionDays * DAY_MS,
-      });
+      const deleted = await pruneDownloadHistory(
+        deps.db,
+        { maxAgeMs: settings.retentionDays * DAY_MS },
+        deps.fs,
+      );
       if (deleted > 0) {
         deps.logger?.info("downloads-history-pruned", {
           deleted,

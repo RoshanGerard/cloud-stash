@@ -24,6 +24,7 @@ function seed(
   id: string,
   status: string,
   endedAt: number | null,
+  targetPath = "/b",
 ): void {
   db.prepare(
     `INSERT INTO downloads (
@@ -31,14 +32,25 @@ function seed(
        bytes_downloaded, content_length, status, failure_tag,
        failure_message, started_at, updated_at, ended_at
      ) VALUES (
-       @id, 'ds-1', '/a', '/b', 100, NULL, @status, NULL, NULL, 0, 0, @endedAt
+       @id, 'ds-1', '/a', @targetPath, 100, NULL, @status, NULL, NULL, 0, 0, @endedAt
      )`,
-  ).run({ id, status, endedAt });
+  ).run({ id, status, endedAt, targetPath });
 }
 
 function count(db: Database.Database): number {
   return (db.prepare(`SELECT COUNT(*) AS c FROM downloads`).get() as { c: number })
     .c;
+}
+
+/** A `stat` port with no files on disk — every path rejects with ENOENT. */
+function goneFs(): { stat(path: string): Promise<{ size: number }> } {
+  return {
+    stat: async (p: string) => {
+      const e = new Error(`ENOENT: ${p}`) as NodeJS.ErrnoException;
+      e.code = "ENOENT";
+      throw e;
+    },
+  };
 }
 
 function configWith(downloadHistory?: ServiceConfig["downloadHistory"]): ServiceConfig {
@@ -108,17 +120,45 @@ describe("download-history prune scheduler", () => {
       db,
       readConfig: async () =>
         configWith({ autoPrune: true, retentionDays: 30 }),
+      fs: goneFs(),
     });
     await sched.start();
     expect(count(db)).toBe(0);
 
-    // A newly-aged row appears after start; the next 24h tick prunes it.
+    // A newly-aged KEEP-eligible row appears after start; its partial is gone
+    // (goneFs), so the next 24h tick prunes it.
     seed(db, "appeared", "failed", NOW - 31 * DAY);
     expect(count(db)).toBe(1);
 
     await vi.advanceTimersByTimeAsync(PRUNE_INTERVAL_MS);
 
     expect(count(db)).toBe(0);
+    sched.stop();
+  });
+
+  it("threads the injected fs — an aged KEEP-eligible row whose partial is on disk is retained", async () => {
+    // Load-bearing: if `runOnce` dropped `deps.fs` and fell back to the real
+    // node stat, "/disk/partial" would reject → the row would be pruned →
+    // count 0 → this test fails. A resolving fake fs is the only shape that
+    // proves `deps.fs` reached `pruneDownloadHistory`.
+    seed(db, "leftover", "failed", NOW - 200 * DAY, "/disk/partial");
+    const sched = createPruneScheduler({
+      db,
+      readConfig: async () =>
+        configWith({ autoPrune: true, retentionDays: 90 }),
+      fs: {
+        stat: async (p: string) => {
+          if (p === "/disk/partial") return { size: 128 };
+          const e = new Error(`ENOENT: ${p}`) as NodeJS.ErrnoException;
+          e.code = "ENOENT";
+          throw e;
+        },
+      },
+    });
+
+    await sched.start();
+
+    expect(count(db)).toBe(1); // retained because its partial is on disk
     sched.stop();
   });
 

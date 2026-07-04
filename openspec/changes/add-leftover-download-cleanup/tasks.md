@@ -33,9 +33,9 @@ Discipline: TDD (RED → watch fail → GREEN) on every code task; worktree at `
 
 ## 5. Contract change — `pruneDownloadHistory` skips on-disk partials (services/fs-sync)
 
-- [ ] 5.1 RED: extend `downloads/__tests__/prune.test.ts` — aged `failed` row with on-disk partial is RETAINED; aged `cancelled` row whose file is gone is PRUNED; aged `completed` row is PRUNED; no file is ever unlinked; a per-row stat error degrades to "file gone" (row pruned) and does not abort the cycle.
-- [ ] 5.2 GREEN: add a filesystem `stat` port to `downloads/prune.ts`; stat the KEEP-eligible aged rows and exclude the ones whose `target_path` still exists from the DELETE set (completed + gone-file KEEP-eligible rows still deleted). Never unlink.
-- [ ] 5.3 Thread the fs port through `createPruneScheduler` (`prune-scheduler.ts` deps + `runOnce`), preserving the degrade-not-crash guard; update `prune-scheduler.test.ts`.
+- [x] 5.1 RED: extend `downloads/__tests__/prune.test.ts` — aged `failed` row with on-disk partial is RETAINED; aged `cancelled` row whose file is gone is PRUNED; aged `completed` row is PRUNED; no file is ever unlinked; a per-row stat error degrades to "file gone" (row pruned) and does not abort the cycle.
+- [x] 5.2 GREEN: add a filesystem `stat` port to `downloads/prune.ts`; stat the KEEP-eligible aged rows and exclude the ones whose `target_path` still exists from the DELETE set (completed + gone-file KEEP-eligible rows still deleted). Never unlink.
+- [x] 5.3 Thread the fs port through `createPruneScheduler` (`prune-scheduler.ts` deps + `runOnce`), preserving the degrade-not-crash guard; update `prune-scheduler.test.ts`.
 
 ## 6. Renderer — Review-leftover-files button + dialog (apps/desktop renderer)
 
