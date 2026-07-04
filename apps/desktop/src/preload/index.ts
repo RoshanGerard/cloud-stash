@@ -1,6 +1,10 @@
 import { contextBridge, ipcRenderer, webUtils, type IpcRendererEvent } from "electron";
 
-import { DATASOURCES_CHANNELS, FILES_CHANNELS } from "@cloudstash/ipc-contracts";
+import {
+  DATASOURCES_CHANNELS,
+  FILES_CHANNELS,
+  WINDOW_CHANNELS,
+} from "@cloudstash/ipc-contracts";
 import type {
   DatasourcesActionRequest,
   DatasourcesActionResponse,
@@ -25,6 +29,7 @@ import type {
   FilesUploadRequest,
   FilesUploadResponse,
   PingResponse,
+  WindowMaximizeChangePayload,
 } from "@cloudstash/ipc-contracts";
 import { SYNC_CHANNELS } from "@cloudstash/ipc-contracts/sync-service-desktop";
 
@@ -121,6 +126,38 @@ import type {
 // crossing the contextBridge.
 const api = {
   ping: (): Promise<PingResponse> => ipcRenderer.invoke("ping"),
+  // Static platform tag (add-frameless-window-chrome). Exposed as a plain
+  // value, NOT an async getter, so the renderer can branch its window-control
+  // rendering (custom controls on Windows/Linux, none on macOS) at first paint
+  // with no pop-in. `process.platform` is available in the sandboxed preload.
+  platform: process.platform,
+  // Window-controls surface for the frameless main window. minimize /
+  // toggleMaximize / close are thin `invoke` wrappers over the four-layer IPC
+  // (contract in `@cloudstash/ipc-contracts`, handlers in main). `onMaximizeChange`
+  // is the one-way main→renderer subscription (mirrors `sync.onEvent`): each
+  // call registers its own listener and returns a dispose fn that removes THAT
+  // listener, so the maximize control can swap between maximize/restore glyphs.
+  window: {
+    minimize: (): Promise<void> =>
+      ipcRenderer.invoke(WINDOW_CHANNELS.minimize),
+    toggleMaximize: (): Promise<void> =>
+      ipcRenderer.invoke(WINDOW_CHANNELS.toggleMaximize),
+    close: (): Promise<void> => ipcRenderer.invoke(WINDOW_CHANNELS.close),
+    onMaximizeChange: (
+      callback: (maximized: boolean) => void,
+    ): (() => void) => {
+      const listener = (
+        _event: IpcRendererEvent,
+        payload: WindowMaximizeChangePayload,
+      ): void => {
+        callback(payload.maximized);
+      };
+      ipcRenderer.on(WINDOW_CHANNELS.maximizeChange, listener);
+      return () => {
+        ipcRenderer.removeListener(WINDOW_CHANNELS.maximizeChange, listener);
+      };
+    },
+  },
   datasources: {
     list: (): Promise<DatasourcesListResponse> =>
       ipcRenderer.invoke(DATASOURCES_CHANNELS.list),

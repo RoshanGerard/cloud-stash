@@ -15,11 +15,22 @@ vi.mock("electron", () => ({
 
 import { contextBridge, ipcRenderer } from "electron";
 
-import { DATASOURCES_CHANNELS, FILES_CHANNELS } from "@cloudstash/ipc-contracts";
+import {
+  DATASOURCES_CHANNELS,
+  FILES_CHANNELS,
+  WINDOW_CHANNELS,
+} from "@cloudstash/ipc-contracts";
 import { SYNC_CHANNELS } from "@cloudstash/ipc-contracts/sync-service-desktop";
 
 type ExposedApi = {
   ping: () => Promise<unknown>;
+  platform: string;
+  window: {
+    minimize: () => Promise<void>;
+    toggleMaximize: () => Promise<void>;
+    close: () => Promise<void>;
+    onMaximizeChange: (callback: (maximized: boolean) => void) => () => void;
+  };
   datasources: {
     list: () => Promise<unknown>;
     add: (req: unknown) => Promise<unknown>;
@@ -86,6 +97,9 @@ describe("preload exposed api", () => {
       "dialog",
       "files",
       "ping",
+      // add-frameless-window-chrome — static platform tag + window-controls
+      // surface for the frameless main window.
+      "platform",
       "preferences",
       "sync",
       // migrate-upload-orchestration-out-of-engine §7.9 — new
@@ -93,6 +107,7 @@ describe("preload exposed api", () => {
       // `uploads:list-active` RPC.
       "uploads",
       "webUtils",
+      "window",
     ]);
     expect(typeof exposed.ping).toBe("function");
     expect(typeof exposed.datasources).toBe("object");
@@ -103,6 +118,8 @@ describe("preload exposed api", () => {
     expect(typeof exposed.preferences).toBe("object");
     expect(typeof exposed.dialog).toBe("object");
     expect(typeof exposed.uploads).toBe("object");
+    expect(typeof exposed.platform).toBe("string");
+    expect(typeof exposed.window).toBe("object");
   });
 
   it("ping() invokes ipcRenderer.invoke('ping') with no other args and returns its resolved value", async () => {
@@ -694,5 +711,72 @@ describe("preload exposed api", () => {
       ]);
       expect(result).toBe(response);
     });
+  });
+});
+
+describe("preload window-controls surface (add-frameless-window-chrome)", () => {
+  beforeEach(() => {
+    vi.resetModules();
+    vi.clearAllMocks();
+  });
+
+  it("exposes a static platform string equal to process.platform", async () => {
+    const exposed = await loadExposed();
+    expect(typeof exposed.platform).toBe("string");
+    expect(exposed.platform).toBe(process.platform);
+  });
+
+  it("window.minimize() invokes ipcRenderer.invoke(WINDOW_CHANNELS.minimize) with no other args", async () => {
+    const invokeMock = ipcRenderer.invoke as unknown as ReturnType<typeof vi.fn>;
+    const exposed = await loadExposed();
+    await exposed.window.minimize();
+    expect(invokeMock).toHaveBeenCalledTimes(1);
+    expect(invokeMock.mock.calls[0]).toEqual([WINDOW_CHANNELS.minimize]);
+  });
+
+  it("window.toggleMaximize() invokes ipcRenderer.invoke(WINDOW_CHANNELS.toggleMaximize)", async () => {
+    const invokeMock = ipcRenderer.invoke as unknown as ReturnType<typeof vi.fn>;
+    const exposed = await loadExposed();
+    await exposed.window.toggleMaximize();
+    expect(invokeMock).toHaveBeenCalledTimes(1);
+    expect(invokeMock.mock.calls[0]).toEqual([WINDOW_CHANNELS.toggleMaximize]);
+  });
+
+  it("window.close() invokes ipcRenderer.invoke(WINDOW_CHANNELS.close)", async () => {
+    const invokeMock = ipcRenderer.invoke as unknown as ReturnType<typeof vi.fn>;
+    const exposed = await loadExposed();
+    await exposed.window.close();
+    expect(invokeMock).toHaveBeenCalledTimes(1);
+    expect(invokeMock.mock.calls[0]).toEqual([WINDOW_CHANNELS.close]);
+  });
+
+  it("window.onMaximizeChange(cb) subscribes on maximize-change, unwraps the payload boolean, and disposes its own listener", async () => {
+    const onMock = ipcRenderer.on as unknown as ReturnType<typeof vi.fn>;
+    const removeMock = ipcRenderer.removeListener as unknown as ReturnType<
+      typeof vi.fn
+    >;
+    const exposed = await loadExposed();
+
+    const received: boolean[] = [];
+    const dispose = exposed.window.onMaximizeChange((m) => received.push(m));
+
+    expect(onMock).toHaveBeenCalledTimes(1);
+    expect(onMock.mock.calls[0]![0]).toBe(WINDOW_CHANNELS.maximizeChange);
+
+    // Fire the registered listener with wire payloads; the caller-facing
+    // callback receives the unwrapped boolean.
+    const listener = onMock.mock.calls[0]![1] as (
+      event: unknown,
+      payload: { maximized: boolean },
+    ) => void;
+    listener({}, { maximized: true });
+    listener({}, { maximized: false });
+    expect(received).toEqual([true, false]);
+
+    // Dispose removes THAT listener from THAT channel (not all listeners).
+    dispose();
+    expect(removeMock).toHaveBeenCalledTimes(1);
+    expect(removeMock.mock.calls[0]![0]).toBe(WINDOW_CHANNELS.maximizeChange);
+    expect(removeMock.mock.calls[0]![1]).toBe(listener);
   });
 });
