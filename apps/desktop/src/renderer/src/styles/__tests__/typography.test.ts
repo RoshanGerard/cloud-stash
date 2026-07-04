@@ -113,3 +113,108 @@ describe("typography — Geist font wiring", () => {
     expect(text).toMatch(/--font-mono\s*:\s*var\(--font-geist-mono\)/);
   });
 });
+
+// Display-face wiring per design.md Decision 4 (restyle-cloudstash-monochrome
+// §4.3): a distinctive display typeface — Bricolage Grotesque (OFL) — is layered
+// on top of the Geist UI/mono type for the wordmark and section headings. It is
+// self-hosted via `next/font/local` from a woff2 vendored into the repo (zero
+// runtime fetch), exposed on <html> as the CSS variable `--font-display-face`,
+// and bridged in globals.css's `@theme inline` block to the Tailwind
+// `font-display` utility (`--font-display: var(--font-display-face), ...`).
+// Same file-as-text approach as the Geist block above: `next/font/local` is a
+// compile-time loader that throws outside the Next.js build, and the resolved
+// `.variable` token is a generated class name, not the literal CSS var name.
+
+const DASHBOARD_PATH = join(
+  __dirname,
+  "..",
+  "..",
+  "features",
+  "datasources",
+  "dashboard.tsx",
+);
+const DIALOG_PATH = join(
+  __dirname,
+  "..",
+  "..",
+  "components",
+  "ui",
+  "dialog.tsx",
+);
+
+describe("typography — Bricolage Grotesque display face wiring", () => {
+  it("layout.tsx imports localFont from next/font/local", () => {
+    const text = readFileSync(LAYOUT_PATH, "utf8");
+    expect(text).toMatch(
+      /import\s+localFont\s+from\s+["']next\/font\/local["']/,
+    );
+  });
+
+  it("layout.tsx loads the display face via localFont and exposes --font-display-face", () => {
+    const text = readFileSync(LAYOUT_PATH, "utf8");
+    // The localFont() call self-hosts the vendored woff2 and names its CSS
+    // variable --font-display-face (the theme bridge maps that to --font-display).
+    expect(text).toMatch(/localFont\s*\(/);
+    expect(text).toMatch(/variable\s*:\s*["']--font-display-face["']/);
+  });
+
+  it("layout.tsx applies the display font variable to the <html> className alongside Geist", () => {
+    const text = readFileSync(LAYOUT_PATH, "utf8");
+    const htmlTagMatch = text.match(/<html\s[\s\S]*?>/);
+    expect(
+      htmlTagMatch,
+      "expected a <html> element in layout.tsx",
+    ).not.toBeNull();
+    const htmlTag = htmlTagMatch![0];
+    // Geist stays the UI/mono face; the display face is layered on top.
+    expect(htmlTag).toMatch(/\bGeistSans\.variable\b/);
+    expect(htmlTag).toMatch(/\bGeistMono\.variable\b/);
+    expect(htmlTag).toMatch(/\bbricolage\.variable\b/);
+  });
+
+  it("globals.css bridges --font-display to var(--font-display-face) via @theme", () => {
+    const text = readFileSync(GLOBALS_CSS_PATH, "utf8");
+    expect(text).toMatch(/--font-display\s*:\s*var\(--font-display-face\)/);
+  });
+
+  it("does NOT fetch the display face at runtime from common font CDNs", () => {
+    // next/font injects @font-face into the built CSS, so a regression to a
+    // hosted face would show up as one of these domains in either source file.
+    for (const path of [LAYOUT_PATH, GLOBALS_CSS_PATH]) {
+      const text = readFileSync(path, "utf8");
+      for (const domain of RUNTIME_FONT_FETCH_DOMAINS) {
+        expect(
+          text.includes(domain),
+          `${path} must not reference ${domain} (display face self-hosted via next/font/local)`,
+        ).toBe(false);
+      }
+    }
+  });
+
+  it("does NOT emit an external font <link rel=stylesheet> in layout.tsx", () => {
+    const text = readFileSync(LAYOUT_PATH, "utf8");
+    expect(text).not.toMatch(
+      /<link[^>]+rel=["']stylesheet["'][^>]+href=["']https?:\/\/[^"']*font/i,
+    );
+  });
+
+  it("applies the font-display utility to the dashboard page heading", () => {
+    // Supplementary to the jsdom render assertions in app-header.test.tsx: the
+    // <h1> page title carries the display face.
+    const text = readFileSync(DASHBOARD_PATH, "utf8");
+    const h1Match = text.match(/<h1[^>]*>/);
+    expect(h1Match, "expected an <h1> in dashboard.tsx").not.toBeNull();
+    expect(h1Match![0]).toMatch(/\bfont-display\b/);
+  });
+
+  it("applies the font-display utility to the DialogTitle primitive", () => {
+    // All dialog titles (Settings, etc.) are section headings and inherit the
+    // display face from the one shared primitive.
+    const text = readFileSync(DIALOG_PATH, "utf8");
+    // The DialogTitle renders a `data-slot="dialog-title"` element; assert the
+    // display face lands on that element's className.
+    const titleEl = text.match(/data-slot="dialog-title"[\s\S]*?\/>/);
+    expect(titleEl, "expected a dialog-title element in dialog.tsx").not.toBeNull();
+    expect(titleEl![0]).toMatch(/\bfont-display\b/);
+  });
+});

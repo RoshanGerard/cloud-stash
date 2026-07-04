@@ -74,7 +74,9 @@ function DatasourceNotFound() {
       className="flex flex-col items-center justify-center gap-4 p-8 text-center"
     >
       <div className="flex flex-col gap-2">
-        <h2 className="text-lg font-semibold">Datasource not found</h2>
+        <h2 className="font-display text-lg font-semibold">
+          Datasource not found
+        </h2>
         <p className="text-muted-foreground text-sm">
           The datasource you&apos;re trying to explore couldn&apos;t be located. It may have been removed.
         </p>

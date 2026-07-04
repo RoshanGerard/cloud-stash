@@ -48,6 +48,22 @@ describe("AppHeader — brand chrome (Decision 14)", () => {
     ).toBeInTheDocument();
   });
 
+  // restyle-cloudstash-monochrome §4.3 (design.md Decision 4) — the display
+  // face (Bricolage Grotesque) is layered on the wordmark and section headings
+  // via the `font-display` Tailwind utility; Geist stays the UI/body font.
+  it("renders the wordmark in the display face (font-display)", () => {
+    render(<AppHeader />);
+    const wordmark = screen.getByText(/^CloudStash$/);
+    expect(wordmark).toHaveClass("font-display");
+  });
+
+  it("renders a section heading (Settings dialog title) in the display face", () => {
+    render(<AppHeader />);
+    fireEvent.click(screen.getByRole("button", { name: /open settings/i }));
+    const heading = screen.getByRole("heading", { name: /^settings$/i });
+    expect(heading).toHaveClass("font-display");
+  });
+
   it("renders the ThemeSwitcher trigger (right side)", () => {
     render(<AppHeader />);
     // ThemeSwitcher renders a Button with aria-label="Toggle theme".

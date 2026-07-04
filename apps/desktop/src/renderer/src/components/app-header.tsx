@@ -49,7 +49,10 @@ export function AppHeader({ className, ...rest }: AppHeaderProps) {
     >
       <div className="flex items-center gap-2">
         <CloudStashLogo size={28} />
-        <span className="text-sm font-medium">CloudStash</span>
+        {/* Wordmark in the Bricolage Grotesque display face (design.md
+            Decision 4). `font-display` resolves to --font-display via the
+            @theme bridge in globals.css; Geist stays the UI/body font. */}
+        <span className="font-display text-sm font-medium">CloudStash</span>
       </div>
       <div className="flex items-center gap-1">
         <Button

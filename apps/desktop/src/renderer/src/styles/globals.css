@@ -76,6 +76,15 @@
   --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo,
     Consolas, "Liberation Mono", monospace;
 
+  /* Display face (design.md Decision 4, restyle-cloudstash-monochrome §4.3):
+     Bricolage Grotesque, self-hosted via next/font/local, exposed on <html> as
+     --font-display-face. This bridge makes the `font-display` Tailwind utility
+     resolve to it, applied to the wordmark + section headings only (Geist Sans
+     stays UI/body). Fallback is a system grotesque stack — deliberately NOT
+     Inter/Roboto/Arial — shown until the bundled woff2 decodes (display: swap). */
+  --font-display: var(--font-display-face), ui-sans-serif, system-ui,
+    "Segoe UI", sans-serif;
+
   /* Density (design.md Decision 8 — Linear/Vercel dense-quiet): baseline text
      drops to 14px. Downstream `text-base`, `text-sm`, `text-xs` utilities all
      derive from the default Tailwind scale once this root size shifts. Card

@@ -24,6 +24,7 @@
     "tailwind-merge": "^3.5.0"
   },
   "devDependencies": {
+    "@fontsource-variable/bricolage-grotesque": "^5.2.10",
     "@tailwindcss/postcss": "^4.2.2",
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
