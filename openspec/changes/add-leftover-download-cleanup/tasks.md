@@ -48,6 +48,6 @@ Discipline: TDD (RED → watch fail → GREEN) on every code task; worktree at `
 
 ## 7. Verification & pre-archive
 
-- [ ] 7.1 Full test suite green (`pnpm abi:node` first in the main checkout), `tsc -b`, eslint, and `openspec validate add-leftover-download-cleanup --strict` all clean.
-- [ ] 7.2 Confirm `downloads:delete-partial` and its bridge were reused unchanged (no re-implementation); confirm completed files are provably never unlinked by clear-history or prune (assertions present).
-- [ ] 7.3 Exercise against a running system where feasible (or record a deferred running-system smoke in `PENDING_TC.MD` with a coverage map, mirroring Phase 1 §6.3).
+- [x] 7.1 Full test suite green (3160 passed / 10 skipped; 1 pre-existing load-induced timeout flake `channels.test-d.ts` "reachable from top-level re-export" — passes in isolation at 37ms, present in the pristine baseline, documented in `PENDING_TC.MD`), `tsc -b` (Type Errors: none), eslint (35 changed files clean), and `openspec validate add-leftover-download-cleanup --strict` all clean.
+- [x] 7.2 Confirmed `downloads:delete-partial` and its bridge reused UNCHANGED (no edits to `downloads-delete-partial.ts` or its four-layer bridge; per-row + bulk delete both call it). Completed files provably never unlinked — `clearDownloadHistory` uses a LITERAL `status IN ('failed','cancelled','interrupted')` in its pre-delete SELECT (excludes completed even under a hostile `filter.status:['completed']`); `pruneDownloadHistory` only stats/retains KEEP-eligible rows and never unlinks (tests assert both).
+- [x] 7.3 Running-system smoke deferred to `PENDING_TC.MD` (real orphaned partials from prior-session failures + a live service not reproducible here; full unit/integration coverage map recorded, mirroring Phase 1 §6.3).
