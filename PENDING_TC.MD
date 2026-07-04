@@ -1550,3 +1550,24 @@ Same class as `wire-packaged-build-download-resilience`. The SVG sources ship in
 design pack + `apps/desktop/src/renderer/public/brand/`.
 
 **Owner:** unassigned (HUMAN). Bundle with the next packaged-build lane.
+
+---
+
+## DEFERRED — CloudStash Monochrome running-system visual smoke (`restyle-cloudstash-monochrome` §6.3 / §4.1)
+
+**What.** Launch the running app and visually confirm: (a) first paint is CloudStash
+Monochrome **dark** with no flash of light/unstyled theme (cold start), (b) the
+Light/Dark switch flips the whole surface (graphite ⇄ paper) including the
+theme-swapped brand mark (`mark-dark` ⇄ `mark-light`), (c) the Bricolage Grotesque
+wordmark/headings render, (d) the app-tile favicon shows in the window.
+
+**Why deferred.** Needs a live Electron app (the renderer's `app://` protocol + a
+running fs-sync service + config) — same class as the other running-system smokes in
+this file. The underlying guarantees are unit-tested: `no-fouc.test.tsx` proves the
+pre-paint bootstrap sets `.dark` before React mounts; `monochrome-identity.test.ts`
++ `contrast.test.ts` guard the palette + AA; `cloudstash-logo.test.tsx` guards the
+`.dark`-variant mark swap; `typography.test.ts` + the renderer build prove the font
+is self-hosted with zero runtime fetch. The monochrome look itself was visually
+validated in the approved visual-refinement mockup before implementation.
+
+**Owner:** unassigned (HUMAN). To do during the next environment-loop / packaged pass.

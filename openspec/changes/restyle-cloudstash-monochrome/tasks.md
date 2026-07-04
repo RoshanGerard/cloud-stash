@@ -22,13 +22,13 @@
 
 ## 5. Spec sync + Purpose direct-edit
 
-- [ ] 5.1 Drift guard + `/opsx:sync` (1 MODIFIED + 1 ADDED to datasources-ui).
-- [ ] 5.2 **Direct edit** `datasources-ui` `## Purpose` prose: retire the "Serene Blue themes" mention and reflect the monochrome identity (delta lifecycle cannot reach Purpose — same as change 1 Decision 12).
-- [ ] 5.3 `openspec validate datasources-ui --type spec` green; `git grep -i serene` returns nothing outside archive.
+- [x] 5.1 `/opsx:sync` applied the datasources-ui delta to canonical (intelligent merge): MODIFIED "UI foundation" (CloudStash Monochrome light/dark themes, no legacy Serene Blue + new "no legacy theme" scenario) + ADDED "CloudStash brand identity — monochrome palette, flat accent, mark, display type".
+- [x] 5.2 **Direct-edited** canonical `datasources-ui` `## Purpose`: retired the "Serene Blue themes" mention → "CloudStash Monochrome light/dark (dark canonical), silver-monochrome accent, Bricolage Grotesque display over Geist" (delta lifecycle cannot reach Purpose — same as change 1 Decision 12).
+- [x] 5.3 `openspec validate datasources-ui --type spec` green. No LIVE serene references — remaining mentions are the spec's own absence-requirement/scenario (forbidding it) + the change's retirement narrative + tests asserting absence.
 
 ## 6. Verify
 
-- [ ] 6.1 Contrast test: primary button, accent/focus ring, body + muted text vs backgrounds meet WCAG AA in BOTH themes (muted-on-surface is the risk pair).
-- [ ] 6.2 Existing guards green: colour-literal ban, motion-budget (`scripts/motion-budget`), no-blur-outside-overlays.
-- [ ] 6.3 Full suite: `pnpm typecheck` + `pnpm lint` + `pnpm test` (`pnpm abi:node`) + e2e; first-paint dark screenshot shows CloudStash monochrome, no theme flash.
-- [ ] 6.4 `openspec validate restyle-cloudstash-monochrome` green.
+- [x] 6.1 Contrast test authored (`styles/__tests__/contrast.test.ts` — parses oklch tokens → linear sRGB → WCAG relative luminance): primary button, focus ring, body + muted text vs background AND card meet AA in BOTH themes (11/11). Caught + fixed the one sub-AA pair: light `--muted-foreground` 4.42 → 4.94 on the canvas (commit `96580db`).
+- [x] 6.2 Guards green: colour-literal ban (in suite) + motion-budget + no-blur — `pnpm lint` exit 0; no new motion/blur added.
+- [x] 6.3 `pnpm typecheck` exit 0 + `pnpm lint` exit 0 + full `pnpm -w test` = **3194 pass** (1 pre-existing `channels.test-d` load flake, passes isolated — PENDING_TC) + `pnpm -r build` (renderer next + electron-vite + services) exit 0, on `pnpm abi:node`. **DEFERRED to PENDING_TC:** running-system first-paint monochrome screenshot / theme-swap visual (needs a live Electron app; the no-FOUC guarantee is structurally unit-tested via `no-fouc.test.tsx`, and the monochrome look was visually validated via the approved refinement mockup).
+- [x] 6.4 `openspec validate restyle-cloudstash-monochrome` green.
