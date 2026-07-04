@@ -121,7 +121,7 @@ A full-width vertical list (`role="list"`), one item per entry (`role="listitem"
 
 ### VD4 — Bulk "Delete all" confirmation
 
-A nested shadcn **`AlertDialog`** opened by "Delete all", rendered over the dimmed list. Title names the count — **"Delete all N leftover files?"** — body: **"These incomplete files will be removed from your computer. This can't be undone."** Actions: **Cancel** and a destructive **"Delete N files"**. The AlertDialog supplies focus-trap + Escape handling. "Delete all" is disabled while a bulk operation is in flight.
+A nested confirmation **`Dialog`** opened by "Delete all", rendered over the dimmed leftover-list dialog. **Primitive note:** the renderer has no `AlertDialog` component (only the shadcn `Dialog`), and `ClearHistoryDialog` already uses `Dialog` for destructive confirmation — so this nested confirm reuses the existing `Dialog` primitive rather than adding an `AlertDialog` dependency. The UX/decision is unchanged. `DialogTitle` names the count — **"Delete all N leftover files?"** — with a `DialogDescription` (wired via `aria-describedby` for WCAG AA): **"These incomplete files will be removed from your computer. This can't be undone."** `DialogFooter` actions: **Cancel** and a destructive **"Delete N files"** (`variant="destructive"`). Radix `Dialog` supplies the focus-trap + Escape handling; the nested confirm restores focus to the "Delete all" trigger on close. "Delete all" is disabled while a bulk operation is in flight.
 
 ### VD5 — Results & empty state
 
@@ -136,4 +136,4 @@ A nested shadcn **`AlertDialog`** opened by "Delete all", rendered over the dimm
 
 ### VD7 — Accessibility
 
-Semantic list markup (`role="list"` / `listitem`); every Delete control is labelled (icon + text or `aria-label`); destructive intent conveyed by label + shape, not color alone; the nested AlertDialog and the outer Dialog both trap focus and restore it on close; full keyboard reachability; WCAG AA contrast on the tinted destructive controls against their fixed fill.
+Semantic list markup (`role="list"` / `listitem`); every Delete control is labelled (icon + text or `aria-label`); destructive intent conveyed by label + shape, not color alone; the nested confirm `Dialog` and the outer leftover-list `Dialog` both trap focus and restore it on close; full keyboard reachability; WCAG AA contrast on the tinted destructive controls against their fixed fill.
