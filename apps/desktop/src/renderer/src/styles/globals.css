@@ -28,7 +28,7 @@
   --secondary: oklch(0.957 0.0052 247.9); /* #EEF1F4 */
   --secondary-foreground: oklch(0.193 0.0144 253.2); /* #10151B */
   --muted: oklch(0.978 0.0034 247.9); /* #F6F8FA */
-  --muted-foreground: oklch(0.536 0.0212 258.4); /* #666E7A */
+  --muted-foreground: oklch(0.51 0.0212 258.4); /* #5F6773 — darkened from #666E7A so muted text clears WCAG AA (4.5:1) on the light canvas #EBEEF2, not just on white cards (§6.1 contrast guard) */
   --accent: oklch(0.957 0.0052 247.9); /* #EEF1F4 — hover-surface, not brand */
   --accent-foreground: oklch(0.193 0.0144 253.2); /* #10151B */
   --destructive: oklch(0.577 0.2152 27.3); /* #DC2626 */
