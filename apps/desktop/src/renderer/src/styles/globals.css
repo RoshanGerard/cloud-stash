@@ -2,6 +2,19 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* add-frameless-window-chrome — Electron window drag regions. The frameless
+   main window's app header is the OS drag surface (`app-drag`); every
+   interactive child (settings, theme switcher, window controls) opts back out
+   with `app-no-drag` so it stays clickable. `-webkit-app-region` is the only
+   property Electron reads for this; these utilities exist so the classes emit
+   real CSS in the build (the component tests assert class presence directly). */
+@utility app-drag {
+  -webkit-app-region: drag;
+}
+@utility app-no-drag {
+  -webkit-app-region: no-drag;
+}
+
 /* shadcn/ui v4 — new-york style, CloudStash Monochrome palette. The identity
    is graphite surfaces + a monochrome (silver/graphite) accent, with the four
    status hues reserved for status only. Both themes are class-driven via

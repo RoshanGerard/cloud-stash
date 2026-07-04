@@ -56,6 +56,29 @@ declare global {
   interface Window {
     api: {
       ping(): Promise<PingResponse>;
+      // add-frameless-window-chrome — static platform tag (lets the app header
+      // gate window-control rendering per OS at first paint) + the window-
+      // controls surface for the frameless main window. Typed as the explicit
+      // platform union rather than `NodeJS.Platform` because this renderer
+      // declaration intentionally avoids pulling in Node types (see file head).
+      platform:
+        | "aix"
+        | "android"
+        | "darwin"
+        | "freebsd"
+        | "haiku"
+        | "linux"
+        | "openbsd"
+        | "sunos"
+        | "win32"
+        | "cygwin"
+        | "netbsd";
+      window: {
+        minimize(): Promise<void>;
+        toggleMaximize(): Promise<void>;
+        close(): Promise<void>;
+        onMaximizeChange(callback: (maximized: boolean) => void): () => void;
+      };
       datasources: {
         list(): Promise<DatasourcesListResponse>;
         add(req: DatasourcesAddRequest): Promise<DatasourcesAddResponse>;
