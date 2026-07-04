@@ -34,7 +34,7 @@ import {
   createClientFactory,
   createDefaultProviderRegistry,
   type ClientFactory,
-} from "@ft5/fs-datasource-engine";
+} from "@cloudstash/fs-datasource-engine";
 
 import type { SqliteDatabase } from "../db/database.js";
 import { DatasourceRegistry } from "./registry.js";

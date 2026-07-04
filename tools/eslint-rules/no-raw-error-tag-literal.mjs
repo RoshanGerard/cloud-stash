@@ -1,5 +1,5 @@
 /**
- * ESLint rule: ft5/no-raw-error-tag-literal
+ * ESLint rule: cloudstash/no-raw-error-tag-literal
  *
  * Forbids raw `DatasourceErrorTag` / `FilesErrorTag` value literals in error-tag
  * context, mirroring (and complementing) the Vitest grep-scan guard at
@@ -16,7 +16,7 @@
  *    `eslint --fix` never rewrites a shared value to the wrong enum.
  *  - Decision 4: exceptions (off-vocabulary ServiceErrorTag / AuthFailedTag
  *    literals, off-taxonomy fixtures) are handled per-site via
- *    `// eslint-disable-next-line ft5/no-raw-error-tag-literal -- <reason>`, not
+ *    `// eslint-disable-next-line cloudstash/no-raw-error-tag-literal -- <reason>`, not
  *    a built-in allowlist; the shared vocabulary is the single source of truth.
  *
  * Vocabulary is imported from the shared module so the rule and the Vitest guard
@@ -32,7 +32,7 @@ import {
 
 const TAG_SET = new Set(TAG_VALUES);
 const FIELD_SET = new Set(ENFORCED_FIELDS);
-const IPC_CONTRACTS = "@ft5/ipc-contracts";
+const IPC_CONTRACTS = "@cloudstash/ipc-contracts";
 
 /** The field name a discriminant/operand refers to, or null. */
 function fieldNameOf(node) {
@@ -105,7 +105,7 @@ export default {
     hasSuggestions: true,
     schema: [],
     messages: {
-      raw: 'Reference the "{{value}}" error tag via its const object (@ft5/ipc-contracts), not a raw string literal.',
+      raw: 'Reference the "{{value}}" error tag via its const object (@cloudstash/ipc-contracts), not a raw string literal.',
       use: "Use {{ref}}",
     },
   },
@@ -113,7 +113,7 @@ export default {
   create(context) {
     const sourceCode = context.sourceCode ?? context.getSourceCode();
 
-    /** Fix ops to ensure the value `enumName` is imported from @ft5/ipc-contracts. */
+    /** Fix ops to ensure the value `enumName` is imported from @cloudstash/ipc-contracts. */
     function ensureImportFixes(fixer, enumName) {
       const body = sourceCode.ast.body;
       const ipcImports = body.filter(

@@ -41,7 +41,7 @@ import { toast as sonnerToast } from "sonner";
 // --- Public types ----------------------------------------------------
 
 // Local event union mirroring `EventPayloadMap` from
-// `@ft5/ipc-contracts/sync-service` for the four download lifecycle
+// `@cloudstash/ipc-contracts/sync-service` for the four download lifecycle
 // kinds. Inlined here rather than imported because the sync-service
 // subpath is forbidden from the renderer barrier (see preload's
 // import-boundary test). Structural shape is identical to the wire

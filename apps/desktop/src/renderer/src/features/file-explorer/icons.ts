@@ -1,4 +1,4 @@
-import type { FileEntry, MimeFamily } from "@ft5/ipc-contracts";
+import type { FileEntry, MimeFamily } from "@cloudstash/ipc-contracts";
 
 import type { IconName } from "../../components/icon";
 

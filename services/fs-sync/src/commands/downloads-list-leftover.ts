@@ -25,7 +25,7 @@ import { stat as nodeStat } from "node:fs/promises";
 
 import type Database from "better-sqlite3";
 
-import type { LeftoverEntry } from "@ft5/ipc-contracts/sync-service";
+import type { LeftoverEntry } from "@cloudstash/ipc-contracts/sync-service";
 
 import type { CommandHandler } from "../ipc/server.js";
 

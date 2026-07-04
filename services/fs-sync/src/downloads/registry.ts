@@ -29,7 +29,7 @@
 //                  only terminal-status writer and the only memory-removal
 //                  path (the §13 handler finalizes on every terminal path).
 //
-// Naming note. The IPC-exposed `DownloadJob` from `@ft5/ipc-contracts`
+// Naming note. The IPC-exposed `DownloadJob` from `@cloudstash/ipc-contracts`
 // (sync-service/commands.ts) is the wire shape — `downloadJobId`,
 // `datasourceId`, `sourcePath`, `targetPath`, `bytesDownloaded`,
 // `contentLength`, `startedAt`, no `abortController`. This service-internal
@@ -52,7 +52,7 @@
  * bytes. The `update` API enforces this at the type level via
  * `DownloadJobUpdate`.
  *
- * Mirrors the IPC-exposed `DownloadJob` from `@ft5/ipc-contracts`
+ * Mirrors the IPC-exposed `DownloadJob` from `@cloudstash/ipc-contracts`
  * (sync-service/commands.ts) plus an `abortController` field. Field
  * `readonly` markers match the IPC type so projecting one to the other in
  * §14 is a structural drop-the-controller.

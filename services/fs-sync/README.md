@@ -1,8 +1,8 @@
-# `@ft5/fs-sync-service`
+# `@cloudstash/fs-sync-service`
 
 Framework-agnostic per-user Node.js background daemon. Owns manual upload
 and mirror-sync jobs: accepts IPC commands, executes them against
-`@ft5/fs-datasource-engine`, persists state in a SQLite database owned
+`@cloudstash/fs-datasource-engine`, persists state in a SQLite database owned
 exclusively by the service, and keeps running after the Electron desktop
 app closes.
 
@@ -12,8 +12,8 @@ calls flow through the engine's `DatasourceClient<T>` obtained from
 
 ## Data directory
 
-`$HOME/ft5/sync_app/` (dev: `$HOME/ft5/sync_app/dev/`), honouring
-`FT5_SYNC_DATA_DIR` override. Created on first start with mode `0700`
+`$HOME/cloudstash/sync_app/` (dev: `$HOME/cloudstash/sync_app/dev/`), honouring
+`CLOUDSTASH_SYNC_DATA_DIR` override. Created on first start with mode `0700`
 on Unix / user-only ACL on Windows. Contents:
 
 | File               | Role                                             |
@@ -27,10 +27,10 @@ on Unix / user-only ACL on Windows. Contents:
 ## IPC surface
 
 Transport: newline-delimited JSON over a named pipe
-(`\\.\pipe\ft5-sync` on Windows, `$HOME/ft5/sync_app/sync.sock` on
+(`\\.\pipe\cloudstash-sync` on Windows, `$HOME/cloudstash/sync_app/sync.sock` on
 Unix; `-dev` suffix in dev mode). Each frame is `Request`,
 `Response`, or `Event`. Contract types live in
-`@ft5/ipc-contracts/sync-service`.
+`@cloudstash/ipc-contracts/sync-service`.
 
 Commands (see `COMMAND_NAMES`):
 
@@ -154,8 +154,8 @@ get-status → teardown loop.
 ## Build and test
 
 ```bash
-pnpm --filter @ft5/fs-sync-service build
-pnpm --filter @ft5/fs-sync-service test
+pnpm --filter @cloudstash/fs-sync-service build
+pnpm --filter @cloudstash/fs-sync-service test
 ```
 
 The service's tests run standalone via its own `vitest.config.ts` and

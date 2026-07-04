@@ -26,8 +26,8 @@ import {
   within,
 } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
-import type { DatasourceSummary } from "@ft5/ipc-contracts";
-import type { SyncEvent } from "@ft5/ipc-contracts/sync-service-desktop";
+import type { DatasourceSummary } from "@cloudstash/ipc-contracts";
+import type { SyncEvent } from "@cloudstash/ipc-contracts/sync-service-desktop";
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({
@@ -341,7 +341,7 @@ describe("AuthErrorBanner — Wrong-account mini-callout (enforce-oauth-reconnec
     const callout = await reconnectThenEmit(
       buildErrorSummary({ errorKind: "auth-revoked" }),
       {
-        // eslint-disable-next-line ft5/no-raw-error-tag-literal -- AuthFailedTag vocabulary (no const object) — out of scope
+        // eslint-disable-next-line cloudstash/no-raw-error-tag-literal -- AuthFailedTag vocabulary (no const object) — out of scope
         tag: "account-mismatch",
         expectedEmail: "acme@gmail.com",
         actualEmail: "other@gmail.com",
@@ -364,7 +364,7 @@ describe("AuthErrorBanner — Wrong-account mini-callout (enforce-oauth-reconnec
   it("keeps the Reconnect action LIVE (not disabled) inside the mini-callout", async () => {
     const callout = await reconnectThenEmit(
       buildErrorSummary({ errorKind: "auth-revoked" }),
-      // eslint-disable-next-line ft5/no-raw-error-tag-literal -- AuthFailedTag vocabulary (no const object) — out of scope
+      // eslint-disable-next-line cloudstash/no-raw-error-tag-literal -- AuthFailedTag vocabulary (no const object) — out of scope
       { tag: "account-mismatch", expectedEmail: "acme@gmail.com" },
     );
 
@@ -377,7 +377,7 @@ describe("AuthErrorBanner — Wrong-account mini-callout (enforce-oauth-reconnec
   it("the mini-callout's alert-triangle icon is amber and aria-hidden (not the destructive token)", async () => {
     const callout = await reconnectThenEmit(
       buildErrorSummary({ errorKind: "auth-revoked" }),
-      // eslint-disable-next-line ft5/no-raw-error-tag-literal -- AuthFailedTag vocabulary (no const object) — out of scope
+      // eslint-disable-next-line cloudstash/no-raw-error-tag-literal -- AuthFailedTag vocabulary (no const object) — out of scope
       { tag: "account-mismatch", expectedEmail: "acme@gmail.com" },
     );
 
@@ -391,7 +391,7 @@ describe("AuthErrorBanner — Wrong-account mini-callout (enforce-oauth-reconnec
   it("the mini-callout container uses the amber palette (not the destructive token)", async () => {
     const callout = await reconnectThenEmit(
       buildErrorSummary({ errorKind: "auth-revoked" }),
-      // eslint-disable-next-line ft5/no-raw-error-tag-literal -- AuthFailedTag vocabulary (no const object) — out of scope
+      // eslint-disable-next-line cloudstash/no-raw-error-tag-literal -- AuthFailedTag vocabulary (no const object) — out of scope
       { tag: "account-mismatch", expectedEmail: "acme@gmail.com" },
     );
     expect(callout.className).toMatch(/amber/);
@@ -402,7 +402,7 @@ describe("AuthErrorBanner — Wrong-account mini-callout (enforce-oauth-reconnec
     const callout = await reconnectThenEmit(
       buildErrorSummary({ errorKind: "auth-revoked" }),
       {
-        // eslint-disable-next-line ft5/no-raw-error-tag-literal -- AuthFailedTag vocabulary (no const object) — out of scope
+        // eslint-disable-next-line cloudstash/no-raw-error-tag-literal -- AuthFailedTag vocabulary (no const object) — out of scope
         tag: "account-mismatch",
         expectedEmail: "",
       },
@@ -417,7 +417,7 @@ describe("AuthErrorBanner — Wrong-account mini-callout (enforce-oauth-reconnec
   it("a NON-account-mismatch failed tag keeps the existing 'Reconnect failed' copy and no callout", async () => {
     const banner = await reconnectThenEmit(
       buildErrorSummary({ errorKind: "auth-revoked" }),
-      // eslint-disable-next-line ft5/no-raw-error-tag-literal -- AuthFailedTag vocabulary (no const object) — out of scope
+      // eslint-disable-next-line cloudstash/no-raw-error-tag-literal -- AuthFailedTag vocabulary (no const object) — out of scope
       { tag: "provider-error", message: "boom" },
     );
 

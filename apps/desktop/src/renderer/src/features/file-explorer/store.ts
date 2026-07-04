@@ -3,7 +3,7 @@
 import { useSyncExternalStore } from "react";
 import { toast } from "sonner";
 
-import { FilesErrorTag } from "@ft5/ipc-contracts";
+import { FilesErrorTag } from "@cloudstash/ipc-contracts";
 import type {
   FileEntry,
   FilesDownloadResponse,
@@ -13,7 +13,7 @@ import type {
   FilesRemoveResponse,
   FilesRemoveTarget,
   FilesRenameResponse,
-} from "@ft5/ipc-contracts";
+} from "@cloudstash/ipc-contracts";
 
 /**
  * File-explorer store. One instance per datasource id — each explorer view
@@ -383,18 +383,18 @@ export const DIRECTORY_RENAME_REFUSAL =
   "Folder rename is not supported in this version";
 export const EMPTY_NAME_REFUSAL = "Name cannot be empty";
 
-export const EXPLORER_STORAGE_KEY_PREFIX = "ft5.file-explorer.";
+export const EXPLORER_STORAGE_KEY_PREFIX = "cloudstash.file-explorer.";
 
 // Pagination page-size preference (add-engine-listdirectory-pagination
 // Decision 3). Read from a single global localStorage key (NOT per-
-// datasource, mirroring the `ft5.downloads.*` flat-key pattern) on every
+// datasource, mirroring the `cloudstash.downloads.*` flat-key pattern) on every
 // list-call origination — both the initial list (issued by
 // `use-explorer-data.ts`) and each `loadMore` / `retryLoadMore`. Default
 // is 500 when the key is absent or holds a non-positive / non-numeric
 // value. The Settings dropdown (group 12) writes one of
 // 100 / 500 / 1000 / 5000 / 10000; the strategy layer clamps to each
 // provider's cap, so the renderer does not validate the upper bound.
-export const EXPLORER_PAGE_SIZE_KEY = "ft5.explorer.pageSize";
+export const EXPLORER_PAGE_SIZE_KEY = "cloudstash.explorer.pageSize";
 export const DEFAULT_EXPLORER_PAGE_SIZE = 500;
 
 /**

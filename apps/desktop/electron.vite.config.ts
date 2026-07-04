@@ -12,7 +12,7 @@ import { resolve } from "node:path";
 // `define` injection is gone as of `implement-datasource-onboarding` §18.5
 // — the OAuth consent broker has been relocated from the desktop main
 // process to the fs-sync service per design.md Decision 2, and the service
-// reads its OAuth app config from `~/ft5/sync_app/config.json` per
+// reads its OAuth app config from `~/cloudstash/sync_app/config.json` per
 // Decision 4. The desktop process no longer carries provider clientId /
 // clientSecret values; the `FT5_GOOGLE_OAUTH_CLIENT_ID` /
 // `FT5_GOOGLE_OAUTH_CLIENT_SECRET` env vars are deprecated and are no
@@ -34,7 +34,7 @@ export default defineConfig({
       // remain externalized — those need to be loaded via host bindings.
       externalizeDepsPlugin({
         exclude: [
-          "@ft5/fs-datasource-engine",
+          "@cloudstash/fs-datasource-engine",
         ],
       }),
     ],
@@ -51,7 +51,7 @@ export default defineConfig({
     },
   },
   preload: {
-    // Exclude `@ft5/ipc-contracts` from externalization so it's bundled
+    // Exclude `@cloudstash/ipc-contracts` from externalization so it's bundled
     // into the preload's CJS output. Electron's sandboxed preload context
     // can only resolve "electron" at runtime; any other specifier left as
     // a runtime `require(...)` (the default behavior of
@@ -61,8 +61,8 @@ export default defineConfig({
     plugins: [
       externalizeDepsPlugin({
         exclude: [
-          "@ft5/ipc-contracts",
-          "@ft5/ipc-contracts/sync-service-desktop",
+          "@cloudstash/ipc-contracts",
+          "@cloudstash/ipc-contracts/sync-service-desktop",
         ],
       }),
     ],

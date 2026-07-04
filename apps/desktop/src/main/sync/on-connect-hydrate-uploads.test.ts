@@ -26,7 +26,7 @@
 
 import { describe, expect, it, vi } from "vitest";
 
-import type { UploadJob } from "@ft5/ipc-contracts/sync-service";
+import type { UploadJob } from "@cloudstash/ipc-contracts/sync-service";
 
 import { hydrateActiveUploadsOnce } from "./on-connect-hydrate-uploads.js";
 

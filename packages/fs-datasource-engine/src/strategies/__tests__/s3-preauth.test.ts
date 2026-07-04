@@ -14,8 +14,8 @@
 
 import { describe, expect, it } from "vitest";
 
-import type { CredentialsFormIntent } from "@ft5/ipc-contracts";
-import { providers } from "@ft5/ipc-contracts";
+import type { CredentialsFormIntent } from "@cloudstash/ipc-contracts";
+import { providers } from "@cloudstash/ipc-contracts";
 
 import type { PreAuthConfig } from "../../auth-types.js";
 import type { BaseClientContext, CredentialStore } from "../../base-client.js";

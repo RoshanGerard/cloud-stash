@@ -1,5 +1,5 @@
 {
-  "name": "@ft5/fs-datasource-engine",
+  "name": "@cloudstash/fs-datasource-engine",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -18,7 +18,7 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1032.0",
     "@aws-sdk/lib-storage": "^3.1032.0",
-    "@ft5/ipc-contracts": "workspace:*",
+    "@cloudstash/ipc-contracts": "workspace:*",
     "@microsoft/microsoft-graph-client": "^3.0.7",
     "googleapis": "^171.0.0"
   },

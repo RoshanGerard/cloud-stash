@@ -41,13 +41,12 @@ export default tseslint.config(
     // Repo-wide: forbids raw DatasourceErrorTag / FilesErrorTag value literals
     // on tag / errorTag / lastErrorTag / engineCause. Off-vocabulary literals
     // (ServiceErrorTag / AuthFailedTag, off-taxonomy fixtures) carry a per-site
-    // `// eslint-disable-next-line ft5/no-raw-error-tag-literal -- <reason>`,
+    // `// eslint-disable-next-line cloudstash/no-raw-error-tag-literal -- <reason>`,
     // mirroring the Vitest guard's WIRE_LITERAL_ALLOWLIST (Decision 4).
-    plugins: {
-      ft5: { rules: { "no-raw-error-tag-literal": noRawErrorTagLiteral } },
+    plugins: { cloudstash: { rules: { "no-raw-error-tag-literal": noRawErrorTagLiteral } },
     },
     rules: {
-      "ft5/no-raw-error-tag-literal": "error",
+      "cloudstash/no-raw-error-tag-literal": "error",
     },
   },
   {

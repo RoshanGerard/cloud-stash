@@ -198,13 +198,13 @@ describe("SettingsDialog — Downloads section", () => {
     installDownloadsApiMock();
     localStorage.setItem(
       DOWNLOADS_DEFAULT_FOLDER_KEY,
-      "/Users/alice/Downloads/ft5",
+      "/Users/alice/Downloads/CloudStash",
     );
 
     render(<SettingsDialog open={true} onOpenChange={() => {}} />);
 
     expect(
-      screen.getByText("/Users/alice/Downloads/ft5"),
+      screen.getByText("/Users/alice/Downloads/CloudStash"),
     ).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /^open$/i }),
@@ -235,7 +235,7 @@ describe("SettingsDialog — Downloads section", () => {
     installDownloadsApiMock();
     localStorage.setItem(
       DOWNLOADS_DEFAULT_FOLDER_KEY,
-      "/Users/alice/Downloads/ft5",
+      "/Users/alice/Downloads/CloudStash",
     );
     render(<SettingsDialog open={true} onOpenChange={() => {}} />);
 
@@ -243,7 +243,7 @@ describe("SettingsDialog — Downloads section", () => {
 
     expect(showSavedInFolderMock).toHaveBeenCalledTimes(1);
     expect(showSavedInFolderMock).toHaveBeenCalledWith(
-      "/Users/alice/Downloads/ft5",
+      "/Users/alice/Downloads/CloudStash",
     );
   });
 
@@ -251,7 +251,7 @@ describe("SettingsDialog — Downloads section", () => {
     installDownloadsApiMock();
     localStorage.setItem(
       DOWNLOADS_DEFAULT_FOLDER_KEY,
-      "/Users/alice/Downloads/ft5",
+      "/Users/alice/Downloads/CloudStash",
     );
     showOpenDialogMock.mockResolvedValueOnce({
       canceled: false,
@@ -290,7 +290,7 @@ describe("SettingsDialog — Downloads section", () => {
     installDownloadsApiMock();
     localStorage.setItem(
       DOWNLOADS_DEFAULT_FOLDER_KEY,
-      "/Users/alice/Downloads/ft5",
+      "/Users/alice/Downloads/CloudStash",
     );
     showOpenDialogMock.mockResolvedValueOnce({
       canceled: true,
@@ -306,7 +306,7 @@ describe("SettingsDialog — Downloads section", () => {
     });
     // Stored value untouched.
     expect(localStorage.getItem(DOWNLOADS_DEFAULT_FOLDER_KEY)).toBe(
-      "/Users/alice/Downloads/ft5",
+      "/Users/alice/Downloads/CloudStash",
     );
   });
 
@@ -357,7 +357,7 @@ describe("SettingsDialog — Downloads section", () => {
     installDownloadsApiMock();
     localStorage.setItem(
       DOWNLOADS_DEFAULT_FOLDER_KEY,
-      "/Users/alice/Downloads/ft5",
+      "/Users/alice/Downloads/CloudStash",
     );
     render(<SettingsDialog open={true} onOpenChange={() => {}} />);
 
@@ -549,7 +549,7 @@ describe("SettingsDialog — Explorer section (page size)", () => {
     installDownloadsApiMock();
     localStorage.setItem(
       DOWNLOADS_DEFAULT_FOLDER_KEY,
-      "/Users/alice/Downloads/ft5",
+      "/Users/alice/Downloads/CloudStash",
     );
     render(<SettingsDialog open={true} onOpenChange={() => {}} />);
 

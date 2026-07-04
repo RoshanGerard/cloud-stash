@@ -19,7 +19,7 @@ import {
 } from "vitest";
 import { act, cleanup, render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
-import type { SyncEvent } from "@ft5/ipc-contracts/sync-service-desktop";
+import type { SyncEvent } from "@cloudstash/ipc-contracts/sync-service-desktop";
 
 import { DatasourcesProvider, useAuthSession } from "../store";
 
@@ -172,7 +172,7 @@ describe("useAuthSession — auth-* event plumbing", () => {
         kind: "auth-failed",
         payload: {
           correlationId: "corr-3",
-          // eslint-disable-next-line ft5/no-raw-error-tag-literal -- AuthFailedTag vocabulary (no const object) — out of scope
+          // eslint-disable-next-line cloudstash/no-raw-error-tag-literal -- AuthFailedTag vocabulary (no const object) — out of scope
           tag: "auth-revoked",
           message: "Token was revoked by the user",
         },
@@ -267,7 +267,7 @@ describe("useAuthSession — auth-* event plumbing", () => {
           correlationId: "corr-cfg",
           tag: "engine-error",
           message:
-            "Service configuration missing. Add OAuth credentials to /home/u/ft5/sync_app/config.json",
+            "Service configuration missing. Add OAuth credentials to /home/u/cloudstash/sync_app/config.json",
         },
       });
     });

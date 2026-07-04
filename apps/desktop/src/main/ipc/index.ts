@@ -4,7 +4,7 @@ import {
   DATASOURCES_CHANNELS,
   FILES_CHANNELS,
   SYNC_CHANNELS,
-} from "@ft5/ipc-contracts";
+} from "@cloudstash/ipc-contracts";
 import type {
   DatasourcesActionRequest,
   DatasourcesAddRequest,
@@ -16,7 +16,7 @@ import type {
   FilesSearchRequest,
   FilesStatRequest,
   FilesUploadRequest,
-} from "@ft5/ipc-contracts";
+} from "@cloudstash/ipc-contracts";
 import type {
   SyncAuthenticateCancelRequest,
   SyncAuthenticateCompleteRequest,
@@ -32,7 +32,7 @@ import type {
   SyncListJobsRequest,
   SyncSetConfigRequest,
   SyncSetRetryPolicyRequest,
-} from "@ft5/ipc-contracts/sync-service-desktop";
+} from "@cloudstash/ipc-contracts/sync-service-desktop";
 
 import { handleDatasourcesAction } from "./datasources/action.js";
 import { handleDatasourcesAdd } from "./datasources/add.js";
@@ -314,7 +314,7 @@ export function registerIpcHandlers(
 
   // Post-archive bug-fix follow-up — exposure for `app.getPath("downloads")`
   // so the first-run downloads modal can pre-fill a REAL absolute path
-  // instead of the broken `"~/Downloads/ft5"` placeholder. See
+  // instead of the broken `"~/Downloads/CloudStash"` placeholder. See
   // `preferences.ts` for the handler-side rationale.
   ipcMain.handle("preferences:getOSDefaultDownloadsFolder", () =>
     handleGetOSDefaultDownloadsFolder({

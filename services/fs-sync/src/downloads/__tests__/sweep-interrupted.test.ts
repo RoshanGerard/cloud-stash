@@ -154,7 +154,7 @@ describe("sweepInterruptedDownloads", () => {
     const db = makeDb();
     const file = path.join(
       os.tmpdir(),
-      `ft5-sweep-${Date.now()}-${Math.random().toString(36).slice(2)}.part`,
+      `cloudstash-sweep-${Date.now()}-${Math.random().toString(36).slice(2)}.part`,
     );
     fs.writeFileSync(file, "partial bytes");
     try {

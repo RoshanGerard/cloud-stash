@@ -1,4 +1,4 @@
-# Registers ft5-sync as a per-user Scheduled Task (runs at logon) with
+# Registers cloudstash-sync as a per-user Scheduled Task (runs at logon) with
 # LIMITED privileges — no Administrator elevation required.
 # Invoked by apps/desktop's electron-builder `afterInstall` hook on Windows.
 #
@@ -9,7 +9,7 @@ param(
     [string]$ServicePath
 )
 
-$taskName = "ft5-sync"
+$taskName = "cloudstash-sync"
 
 # Remove any prior registration so /Create doesn't fail with "task already exists".
 schtasks /Delete /TN $taskName /F 2>$null
@@ -26,4 +26,4 @@ if ($LASTEXITCODE -ne 0) {
     exit $LASTEXITCODE
 }
 
-Write-Host "ft5-sync: registered Scheduled Task with ONLOGON trigger"
+Write-Host "cloudstash-sync: registered Scheduled Task with ONLOGON trigger"

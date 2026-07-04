@@ -9,13 +9,13 @@ import {
   type ClientFactory,
   type CredentialStore,
   type DatasourceClient,
-} from "@ft5/fs-datasource-engine";
+} from "@cloudstash/fs-datasource-engine";
 import {
   DatasourceError,
   DatasourceErrorTag,
   type DatasourceType,
   type ProviderId,
-} from "@ft5/ipc-contracts";
+} from "@cloudstash/ipc-contracts";
 
 export interface ResolveClientDeps {
   readonly credentialStore: CredentialStore;

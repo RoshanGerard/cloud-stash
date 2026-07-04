@@ -7,10 +7,10 @@ import { useSyncExternalStore } from "react";
  * default downloads folder and the "always ask" toggle. Modelled on
  * `motion-store.ts`, but keys two distinct localStorage entries:
  *
- *   - `ft5.downloads.defaultFolder` — absolute folder path string. Absent
+ *   - `cloudstash.downloads.defaultFolder` — absolute folder path string. Absent
  *     until the user commits a folder via the first-run modal or the
  *     Settings dialog.
- *   - `ft5.downloads.alwaysAsk` — only ever set to `"yes"`. Absent means
+ *   - `cloudstash.downloads.alwaysAsk` — only ever set to `"yes"`. Absent means
  *     the toggle is off (default).
  *
  * Reads come purely from localStorage. `setDefaultFolder` ALSO mirrors
@@ -27,8 +27,8 @@ import { useSyncExternalStore } from "react";
  * `apps/desktop/src/main/ipc/preferences.ts`.
  */
 
-export const DOWNLOADS_DEFAULT_FOLDER_KEY = "ft5.downloads.defaultFolder";
-export const DOWNLOADS_ALWAYS_ASK_KEY = "ft5.downloads.alwaysAsk";
+export const DOWNLOADS_DEFAULT_FOLDER_KEY = "cloudstash.downloads.defaultFolder";
+export const DOWNLOADS_ALWAYS_ASK_KEY = "cloudstash.downloads.alwaysAsk";
 
 const listeners = new Set<() => void>();
 

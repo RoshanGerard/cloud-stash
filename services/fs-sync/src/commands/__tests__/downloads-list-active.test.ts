@@ -21,8 +21,8 @@ import { describe, expect, it, vi } from "vitest";
 
 import * as nodePath from "node:path";
 
-import type { DatasourceClient, DownloadResult } from "@ft5/fs-datasource-engine";
-import type { DatasourceFileEntry, DatasourceType } from "@ft5/ipc-contracts";
+import type { DatasourceClient, DownloadResult } from "@cloudstash/fs-datasource-engine";
+import type { DatasourceFileEntry, DatasourceType } from "@cloudstash/ipc-contracts";
 
 import { createDownloadRegistry } from "../../downloads/registry.js";
 import { createEventBus } from "../../events/event-bus.js";

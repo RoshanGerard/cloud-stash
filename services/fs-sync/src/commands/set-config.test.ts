@@ -26,7 +26,7 @@ describe("sync:set-config handler — implement-datasource-onboarding §12", () 
   let configPath: string;
 
   beforeEach(async () => {
-    dir = await fsp.mkdtemp(path.join(os.tmpdir(), "ft5-setcfg-"));
+    dir = await fsp.mkdtemp(path.join(os.tmpdir(), "cloudstash-setcfg-"));
     configPath = path.join(dir, "config.json");
     store = new ServiceConfigStore({ filePath: configPath });
   });

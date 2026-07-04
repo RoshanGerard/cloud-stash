@@ -25,7 +25,7 @@ afterEach(async () => {
 function scratchPid(): string {
   const f = path.join(
     os.tmpdir(),
-    `ft5-sync-pid-${Date.now()}-${Math.random().toString(36).slice(2)}.pid`,
+    `cloudstash-sync-pid-${Date.now()}-${Math.random().toString(36).slice(2)}.pid`,
   );
   cleanup.push(f);
   return f;

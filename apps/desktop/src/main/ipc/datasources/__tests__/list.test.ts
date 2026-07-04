@@ -4,8 +4,8 @@
 
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import { providers } from "@ft5/ipc-contracts";
-import type { DatasourceStatus, DatasourceSummary } from "@ft5/ipc-contracts";
+import { providers } from "@cloudstash/ipc-contracts";
+import type { DatasourceStatus, DatasourceSummary } from "@cloudstash/ipc-contracts";
 
 import { FIXTURE_SUMMARIES } from "./helpers.js";
 

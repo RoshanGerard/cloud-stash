@@ -8,7 +8,7 @@ import type {
   CommandResult,
   EventName,
   EventPayloadMap,
-} from "@ft5/ipc-contracts/sync-service";
+} from "@cloudstash/ipc-contracts/sync-service";
 import Database from "better-sqlite3";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
@@ -27,7 +27,7 @@ let emitted: Array<[EventName, EventPayloadMap[EventName]]>;
 beforeEach(() => {
   const file = path.join(
     os.tmpdir(),
-    `ft5-sync-cmd-${Date.now()}-${Math.random().toString(36).slice(2)}.db`,
+    `cloudstash-sync-cmd-${Date.now()}-${Math.random().toString(36).slice(2)}.db`,
   );
   cleanup.push(file);
   db = new Database(file);

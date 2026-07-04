@@ -88,11 +88,11 @@ vi.mock("node:child_process", () => ({
 
 function pipeFor(tag: string): string {
   if (process.platform === "win32") {
-    return `\\\\.\\pipe\\ft5-sync-supervisor-race-${tag}-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    return `\\\\.\\pipe\\cloudstash-sync-supervisor-race-${tag}-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
   }
   return path.join(
     os.tmpdir(),
-    `ft5-sync-supervisor-race-${tag}-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}.sock`,
+    `cloudstash-sync-supervisor-race-${tag}-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}.sock`,
   );
 }
 

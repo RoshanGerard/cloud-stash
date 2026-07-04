@@ -35,12 +35,12 @@
 
 import { useCallback, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { providers } from "@ft5/ipc-contracts";
+import { providers } from "@cloudstash/ipc-contracts";
 import type {
   DatasourceStatus,
   DatasourceSummary,
   ProviderDescriptor,
-} from "@ft5/ipc-contracts";
+} from "@cloudstash/ipc-contracts";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -56,7 +56,7 @@ import {
 import { Icon, isIconName, type IconName } from "@/components/icon";
 import { cn } from "@/lib/utils";
 
-import type { ProviderId } from "@ft5/ipc-contracts";
+import type { ProviderId } from "@cloudstash/ipc-contracts";
 
 import {
   useAuthSession,
@@ -328,7 +328,7 @@ function AuthErrorBanner({
   // from `message`).
   const isAccountMismatch =
     sessionState.status === "failed" &&
-    // eslint-disable-next-line ft5/no-raw-error-tag-literal -- AuthFailedTag vocabulary (no const object) — out of scope
+    // eslint-disable-next-line cloudstash/no-raw-error-tag-literal -- AuthFailedTag vocabulary (no const object) — out of scope
     sessionState.tag === "account-mismatch";
   const expectedEmail = isAccountMismatch
     ? sessionState.expectedEmail

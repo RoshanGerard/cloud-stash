@@ -8,7 +8,7 @@
 
 import { describe, expect, it, vi } from "vitest";
 
-import type { SyncClearDownloadHistoryRequest } from "@ft5/ipc-contracts/sync-service-desktop";
+import type { SyncClearDownloadHistoryRequest } from "@cloudstash/ipc-contracts/sync-service-desktop";
 
 import type { SyncClient } from "../../../sync/client.js";
 import { handleClearDownloadHistory } from "../clear-download-history.js";

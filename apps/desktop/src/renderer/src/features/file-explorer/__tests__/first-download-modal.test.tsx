@@ -3,7 +3,7 @@
 // add-engine-rename-download §21.1 — RED tests for `<FirstDownloadModal />`.
 //
 // The first-run downloads modal blocks on the user's first-ever
-// download (detected by the absence of `ft5.downloads.defaultFolder` in
+// download (detected by the absence of `cloudstash.downloads.defaultFolder` in
 // localStorage). It collects the default downloads folder, persists
 // the choice, and only then dispatches the deferred download. The
 // blocking nature is non-negotiable per spec.md § "Modal cannot be
@@ -66,7 +66,7 @@ let getOSDefaultDownloadsFolderMock: Mock;
 // bridge with a fixed POSIX-style path; production uses `app.getPath
 // ("downloads")` per the new IPC handler in `main/ipc/preferences.ts`.
 const FIXTURE_OS_DOWNLOADS = "/Users/alice/Downloads";
-const EXPECTED_PREFILL = "/Users/alice/Downloads/ft5";
+const EXPECTED_PREFILL = "/Users/alice/Downloads/CloudStash";
 
 function installApiMock(): void {
   showOpenDialogMock = vi.fn(async () => ({
@@ -109,7 +109,7 @@ describe("FirstDownloadModal — first-run defaults collection", () => {
     expect(body).toMatch(/Save as/i);
   });
 
-  it("pre-fills the path input with the OS-resolved downloads folder + 'ft5'", async () => {
+  it("pre-fills the path input with the OS-resolved downloads folder + 'CloudStash'", async () => {
     installApiMock();
     render(<FirstDownloadModal open={true} onCommit={() => {}} />);
 
@@ -119,9 +119,9 @@ describe("FirstDownloadModal — first-run defaults collection", () => {
     expect(input).toBeInTheDocument();
     // Post-archive bug fix: the modal resolves the real OS default via
     // `window.api.preferences.getOSDefaultDownloadsFolder` and appends
-    // `ft5` with the host-correct separator (the `joinFolderAndName`
+    // `CloudStash` with the host-correct separator (the `joinFolderAndName`
     // helper from `use-download-orchestrator`). The earlier hard-coded
-    // `"~/Downloads/ft5"` is gone — that string is not absolute and
+    // `"~/Downloads/CloudStash"` is gone — that string is not absolute and
     // failed the service-side `path.isAbsolute` validator.
     await waitFor(() => {
       expect(getOSDefaultDownloadsFolderMock).toHaveBeenCalledTimes(1);
@@ -146,7 +146,7 @@ describe("FirstDownloadModal — first-run defaults collection", () => {
       /downloads folder/i,
     ) as HTMLInputElement;
     await waitFor(() => {
-      expect(input.value).toBe("C:\\Users\\dev2\\Downloads\\ft5");
+      expect(input.value).toBe("C:\\Users\\dev2\\Downloads\\CloudStash");
     });
   });
 

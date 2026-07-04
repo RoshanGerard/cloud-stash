@@ -15,8 +15,8 @@ vi.mock("electron", () => ({
 
 import { contextBridge, ipcRenderer } from "electron";
 
-import { DATASOURCES_CHANNELS, FILES_CHANNELS } from "@ft5/ipc-contracts";
-import { SYNC_CHANNELS } from "@ft5/ipc-contracts/sync-service-desktop";
+import { DATASOURCES_CHANNELS, FILES_CHANNELS } from "@cloudstash/ipc-contracts";
+import { SYNC_CHANNELS } from "@cloudstash/ipc-contracts/sync-service-desktop";
 
 type ExposedApi = {
   ping: () => Promise<unknown>;
@@ -409,7 +409,7 @@ describe("preload exposed api", () => {
       invokeMock.mockResolvedValue(undefined);
 
       const exposed = await loadExposed();
-      const savedPath = "/Users/alice/Downloads/ft5/welcome.pdf";
+      const savedPath = "/Users/alice/Downloads/CloudStash/welcome.pdf";
       await exposed.files.openSavedPath(savedPath);
 
       expect(invokeMock).toHaveBeenCalledTimes(1);
@@ -427,7 +427,7 @@ describe("preload exposed api", () => {
       invokeMock.mockResolvedValue(undefined);
 
       const exposed = await loadExposed();
-      const savedPath = "/Users/alice/Downloads/ft5/welcome.pdf";
+      const savedPath = "/Users/alice/Downloads/CloudStash/welcome.pdf";
       await exposed.files.showSavedInFolder(savedPath);
 
       expect(invokeMock).toHaveBeenCalledTimes(1);
@@ -545,7 +545,7 @@ describe("preload exposed api", () => {
       invokeMock.mockResolvedValue(undefined);
 
       const exposed = await loadExposed();
-      const folder = "/Users/alice/Downloads/ft5";
+      const folder = "/Users/alice/Downloads/CloudStash";
       await exposed.preferences.setDefaultDownloadsFolder(folder);
 
       expect(invokeMock).toHaveBeenCalledTimes(1);
@@ -557,7 +557,7 @@ describe("preload exposed api", () => {
 
     it("getDefaultDownloadsFolder() delegates to ipcRenderer.invoke('preferences:getDefaultDownloadsFolder') with no second arg and returns the resolved value", async () => {
       const invokeMock = ipcRenderer.invoke as unknown as ReturnType<typeof vi.fn>;
-      invokeMock.mockResolvedValue("/Users/alice/Downloads/ft5");
+      invokeMock.mockResolvedValue("/Users/alice/Downloads/CloudStash");
 
       const exposed = await loadExposed();
       const result = await exposed.preferences.getDefaultDownloadsFolder();
@@ -566,7 +566,7 @@ describe("preload exposed api", () => {
       expect(invokeMock.mock.calls[0]).toEqual([
         "preferences:getDefaultDownloadsFolder",
       ]);
-      expect(result).toBe("/Users/alice/Downloads/ft5");
+      expect(result).toBe("/Users/alice/Downloads/CloudStash");
     });
 
     it("getDefaultDownloadsFolder() returns null when no folder is set", async () => {
@@ -594,7 +594,7 @@ describe("preload exposed api", () => {
 
       const exposed = await loadExposed();
       const opts = {
-        defaultPath: "/Users/alice/Downloads/ft5/welcome.pdf",
+        defaultPath: "/Users/alice/Downloads/CloudStash/welcome.pdf",
         title: "Save file",
       };
       const result = await exposed.dialog.showSaveDialog(opts);

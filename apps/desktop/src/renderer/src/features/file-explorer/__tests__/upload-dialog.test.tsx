@@ -28,7 +28,7 @@ import {
   vi,
   type Mock,
 } from "vitest";
-import type { FileEntry } from "@ft5/ipc-contracts";
+import type { FileEntry } from "@cloudstash/ipc-contracts";
 import {
   act,
   cleanup,

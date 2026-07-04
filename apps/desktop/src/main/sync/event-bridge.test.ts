@@ -19,8 +19,8 @@ import * as net from "node:net";
 import * as os from "node:os";
 import * as path from "node:path";
 
-import type { RequestFrame } from "@ft5/ipc-contracts/sync-service";
-import { SYNC_CHANNELS } from "@ft5/ipc-contracts/sync-service-desktop";
+import type { RequestFrame } from "@cloudstash/ipc-contracts/sync-service";
+import { SYNC_CHANNELS } from "@cloudstash/ipc-contracts/sync-service-desktop";
 import {
   afterEach,
   beforeEach,
@@ -94,11 +94,11 @@ function makeFakeWindow(destroyed = false): FakeBrowserWindow {
 
 function pipeFor(tag: string): string {
   if (process.platform === "win32") {
-    return `\\\\.\\pipe\\ft5-sync-eb-test-${tag}-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    return `\\\\.\\pipe\\cloudstash-sync-eb-test-${tag}-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
   }
   return path.join(
     os.tmpdir(),
-    `ft5-sync-eb-test-${tag}-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}.sock`,
+    `cloudstash-sync-eb-test-${tag}-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}.sock`,
   );
 }
 

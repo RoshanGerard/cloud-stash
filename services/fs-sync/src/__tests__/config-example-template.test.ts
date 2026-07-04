@@ -1,10 +1,10 @@
 // §7 — committed `services/fs-sync/config.example.json` template invariants.
 //
 // Per the fs-sync-service spec (Modified Requirement "ServiceConfigStore reads
-// `~/ft5/sync_app/config.json` for OAuth app config"), the repo ships a
+// `~/cloudstash/sync_app/config.json` for OAuth app config"), the repo ships a
 // committed template at `services/fs-sync/config.example.json` so the
 // first-run setup is `cp services/fs-sync/config.example.json
-// ~/ft5/sync_app/config.json` followed by editing the file.
+// ~/cloudstash/sync_app/config.json` followed by editing the file.
 //
 // This test pins the template's invariants:
 //   - file exists at the documented path

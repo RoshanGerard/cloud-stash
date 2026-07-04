@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Registers ft5-sync as a per-user LaunchAgent. RunAtLoad + KeepAlive so
+# Registers cloudstash-sync as a per-user LaunchAgent. RunAtLoad + KeepAlive so
 # launchd re-spawns the service on user login.
 # Invoked by electron-builder's `afterInstall` hook on macOS.
 #
@@ -12,7 +12,7 @@ if [ -z "$SERVICE_PATH" ]; then
   exit 2
 fi
 
-LABEL="tech.forti5.ft5-sync"
+LABEL="com.cloudstash.sync"
 PLIST="$HOME/Library/LaunchAgents/${LABEL}.plist"
 mkdir -p "$(dirname "$PLIST")"
 
@@ -33,9 +33,9 @@ cat > "$PLIST" <<EOF
     <key>KeepAlive</key>
     <true/>
     <key>StandardOutPath</key>
-    <string>${HOME}/ft5/sync_app/service.log</string>
+    <string>${HOME}/cloudstash/sync_app/service.log</string>
     <key>StandardErrorPath</key>
-    <string>${HOME}/ft5/sync_app/service.log</string>
+    <string>${HOME}/cloudstash/sync_app/service.log</string>
 </dict>
 </plist>
 EOF
@@ -44,4 +44,4 @@ EOF
 launchctl unload "$PLIST" 2>/dev/null || true
 launchctl load "$PLIST"
 
-echo "ft5-sync: LaunchAgent registered and loaded (${LABEL})"
+echo "cloudstash-sync: LaunchAgent registered and loaded (${LABEL})"

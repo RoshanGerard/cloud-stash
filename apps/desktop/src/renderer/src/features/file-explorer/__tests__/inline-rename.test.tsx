@@ -10,7 +10,7 @@ import {
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 
-import type { FileEntry, FilesRenameResponse } from "@ft5/ipc-contracts";
+import type { FileEntry, FilesRenameResponse } from "@cloudstash/ipc-contracts";
 
 // Sonner mocked so the store's toast.error does not require a <Toaster/>.
 vi.mock("sonner", () => ({

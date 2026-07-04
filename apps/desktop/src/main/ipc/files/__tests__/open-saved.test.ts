@@ -19,13 +19,13 @@ describe("handleFilesOpenSavedPath — proxy over shell.openPath", () => {
   it("delegates to deps.openPath with the savedPath verbatim", async () => {
     const openPath = vi.fn().mockResolvedValue("");
 
-    await handleFilesOpenSavedPath("/Users/alice/Downloads/ft5/welcome.pdf", {
+    await handleFilesOpenSavedPath("/Users/alice/Downloads/CloudStash/welcome.pdf", {
       openPath,
     });
 
     expect(openPath).toHaveBeenCalledTimes(1);
     expect(openPath).toHaveBeenCalledWith(
-      "/Users/alice/Downloads/ft5/welcome.pdf",
+      "/Users/alice/Downloads/CloudStash/welcome.pdf",
     );
   });
 
@@ -47,13 +47,13 @@ describe("handleFilesShowSavedInFolder — proxy over shell.showItemInFolder", (
   it("delegates to deps.showItemInFolder with the savedPath verbatim", () => {
     const showItemInFolder = vi.fn();
 
-    handleFilesShowSavedInFolder("/Users/alice/Downloads/ft5/welcome.pdf", {
+    handleFilesShowSavedInFolder("/Users/alice/Downloads/CloudStash/welcome.pdf", {
       showItemInFolder,
     });
 
     expect(showItemInFolder).toHaveBeenCalledTimes(1);
     expect(showItemInFolder).toHaveBeenCalledWith(
-      "/Users/alice/Downloads/ft5/welcome.pdf",
+      "/Users/alice/Downloads/CloudStash/welcome.pdf",
     );
   });
 

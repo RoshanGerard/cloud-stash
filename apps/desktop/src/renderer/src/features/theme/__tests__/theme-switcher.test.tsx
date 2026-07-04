@@ -23,7 +23,7 @@ vi.mock("sonner", async () => {
 import { ThemeSwitcher } from "../theme-switcher";
 import { Toaster } from "@/components/ui/sonner";
 
-const THEME_STORAGE_KEY = "ft5.theme";
+const THEME_STORAGE_KEY = "cloudstash.theme";
 
 type MatchMediaStub = (matches: boolean) => ReturnType<typeof vi.fn>;
 

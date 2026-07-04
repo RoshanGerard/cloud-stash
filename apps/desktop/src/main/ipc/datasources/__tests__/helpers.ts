@@ -11,7 +11,7 @@
 // Consequently this helper module ships only `FIXTURE_SUMMARIES`; the
 // former `makeCreds()` helper and the electron mock are gone.
 
-import type { DatasourceSummary } from "@ft5/ipc-contracts";
+import type { DatasourceSummary } from "@cloudstash/ipc-contracts";
 
 export const FIXTURE_SUMMARIES: ReadonlyArray<DatasourceSummary> = [
   {

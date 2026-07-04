@@ -9,7 +9,7 @@ import { applyMigrations } from "../db/migrations.js";
 import { createEventBus, type EventBus } from "../events/event-bus.js";
 import { JobRepository } from "../jobs/repository.js";
 
-import { DatasourceErrorTag } from "@ft5/ipc-contracts";
+import { DatasourceErrorTag } from "@cloudstash/ipc-contracts";
 
 import { Scheduler, type Executor, type ExecutorResult } from "./scheduler.js";
 
@@ -21,7 +21,7 @@ let repo: JobRepository;
 beforeEach(() => {
   const file = path.join(
     os.tmpdir(),
-    `ft5-sync-sched-${Date.now()}-${Math.random().toString(36).slice(2)}.db`,
+    `cloudstash-sync-sched-${Date.now()}-${Math.random().toString(36).slice(2)}.db`,
   );
   cleanup.push(file);
   db = new Database(file);

@@ -7,7 +7,7 @@ import {
   type CommandHandler,
   type RequestFrame,
   type ResponseFrame,
-} from "@ft5/ipc-contracts/sync-service";
+} from "@cloudstash/ipc-contracts/sync-service";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { FramingDecoder } from "./framing.js";
@@ -17,11 +17,11 @@ let running: RunningServer | null = null;
 
 function pipeFor(tag: string): string {
   if (process.platform === "win32") {
-    return `\\\\.\\pipe\\ft5-sync-test-${tag}-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    return `\\\\.\\pipe\\cloudstash-sync-test-${tag}-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
   }
   return path.join(
     os.tmpdir(),
-    `ft5-sync-test-${tag}-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}.sock`,
+    `cloudstash-sync-test-${tag}-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}.sock`,
   );
 }
 
@@ -168,7 +168,7 @@ describe("IPC server — round-trip", () => {
       order.push("b-finish");
       return {
         ok: false,
-        // eslint-disable-next-line ft5/no-raw-error-tag-literal -- ServiceErrorTag vocabulary (no const object) — out of scope
+        // eslint-disable-next-line cloudstash/no-raw-error-tag-literal -- ServiceErrorTag vocabulary (no const object) — out of scope
         error: { tag: "not-found", message: "no" },
       };
     };

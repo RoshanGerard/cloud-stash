@@ -28,17 +28,17 @@ afterEach(() => {
 });
 
 describe("AppHeader — brand chrome (Decision 14)", () => {
-  it("renders the Forti5 logo SVG", () => {
+  it("renders the CloudStash logo SVG", () => {
     render(<AppHeader />);
-    const logo = document.querySelector("[data-testid='forti5-logo']");
+    const logo = document.querySelector("[data-testid='cloudstash-logo']");
     expect(logo).not.toBeNull();
     expect(logo!.tagName.toLowerCase()).toBe("svg");
   });
 
-  it("renders the product wordmark 'FT5 Unified Cloud Sync'", () => {
+  it("renders the product wordmark 'CloudStash'", () => {
     render(<AppHeader />);
     expect(
-      screen.getByText(/FT5 Unified Cloud Sync/i),
+      screen.getByText(/CloudStash/i),
     ).toBeInTheDocument();
   });
 

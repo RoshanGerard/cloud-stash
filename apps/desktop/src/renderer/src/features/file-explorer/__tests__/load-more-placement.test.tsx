@@ -22,8 +22,8 @@ import {
 } from "vitest";
 import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
-import { FilesErrorTag } from "@ft5/ipc-contracts";
-import type { FileEntry } from "@ft5/ipc-contracts";
+import { FilesErrorTag } from "@cloudstash/ipc-contracts";
+import type { FileEntry } from "@cloudstash/ipc-contracts";
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({

@@ -1,4 +1,4 @@
-import type { FileEntry } from "@ft5/ipc-contracts";
+import type { FileEntry } from "@cloudstash/ipc-contracts";
 
 /**
  * Test-only factory for `FileEntry` fixtures. Used by every view-mode test

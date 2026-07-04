@@ -18,8 +18,8 @@
 // Unknown tags collapse to `other` so unexpected service drift doesn't
 // crash the renderer.
 
-import { FilesErrorTag } from "@ft5/ipc-contracts";
-import type { FilesErrorEnvelope } from "@ft5/ipc-contracts";
+import { FilesErrorTag } from "@cloudstash/ipc-contracts";
+import type { FilesErrorEnvelope } from "@cloudstash/ipc-contracts";
 
 import { SyncCommandError } from "../../sync/client.js";
 

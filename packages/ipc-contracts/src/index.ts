@@ -9,7 +9,7 @@ export interface PingResponse {
 // `DatasourcesCancelConsent{Request,Response}` were retired by
 // `implement-datasource-onboarding`. The replacement surface is
 // `SyncAuthenticate{Start,Complete,Cancel}*` plus the `auth-*` event
-// taxonomy on `@ft5/ipc-contracts/sync-service`.
+// taxonomy on `@cloudstash/ipc-contracts/sync-service`.
 export type {
   CredentialsSchema,
   DatasourceAction,
@@ -116,14 +116,14 @@ export {
 } from "./fs-datasource-engine.js";
 
 // Sync-service IPC contract surface. Shipped by `add-fs-sync-service`.
-// Clients reach this via the `@ft5/ipc-contracts/sync-service` subpath
+// Clients reach this via the `@cloudstash/ipc-contracts/sync-service` subpath
 // (see package.json `exports`).
 export * as SyncService from "./sync-service/index.js";
 
 // Renderer-facing sync-service IPC surface. Shipped by
 // `wire-fs-sync-service`. Re-exports the channel constants at the top
 // level for convenience (the preload and main process are the primary
-// consumers; the full subpath `@ft5/ipc-contracts/sync-service-desktop`
+// consumers; the full subpath `@cloudstash/ipc-contracts/sync-service-desktop`
 // is the canonical import for the type surface).
 export { SYNC_CHANNELS } from "./sync-service-desktop/channels.js";
 export type { SyncChannelName } from "./sync-service-desktop/channels.js";

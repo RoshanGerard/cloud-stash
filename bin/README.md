@@ -12,7 +12,7 @@ fails to load until flipped back.
 
 | Script | When to run | What it does |
 |---|---|---|
-| `bin/abi-electron.sh` | Before `pnpm --filter @ft5/desktop run dev` / `package:*` | Rebuilds `better-sqlite3` for Electron via `@electron/rebuild -f` |
+| `bin/abi-electron.sh` | Before `pnpm --filter @cloudstash/desktop run dev` / `package:*` | Rebuilds `better-sqlite3` for Electron via `@electron/rebuild -f` |
 | `bin/abi-node.sh` | Before `pnpm -w test --run` / `pnpm dev:sync-service` | Fetches the Node prebuild via `prebuild-install --force` |
 
 Both are idempotent and take ~5 seconds. They are also wired as pnpm

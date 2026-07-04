@@ -7,7 +7,7 @@
 //      via the standard IPC failure path.
 //   2. `syncClient.deleteCredentials({datasourceId})` — symmetric counterpart
 //      to authenticate per implement-datasource-onboarding design Decision
-//      12. The service deletes its `~/ft5/sync_app/credentials.json` entry
+//      12. The service deletes its `~/cloudstash/sync_app/credentials.json` entry
 //      so the per-user credential file does not accumulate dead state.
 //
 // The service-side cleanup is **best-effort** per design Risks §1: any
@@ -20,7 +20,7 @@
 import type {
   DatasourcesRemoveRequest,
   DatasourcesRemoveResponse,
-} from "@ft5/ipc-contracts";
+} from "@cloudstash/ipc-contracts";
 
 import { getEngine } from "../../datasources/engine.js";
 import type { SyncClient } from "../../sync/client.js";

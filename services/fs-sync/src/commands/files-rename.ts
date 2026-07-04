@@ -18,9 +18,9 @@
 // Decision 7) so the renderer's ConflictResolutionDialog can prompt
 // with the colliding sibling path.
 
-import type { DatasourceClient, Target } from "@ft5/fs-datasource-engine";
-import { withAuthRefresh } from "@ft5/fs-datasource-engine";
-import type { DatasourceType } from "@ft5/ipc-contracts";
+import type { DatasourceClient, Target } from "@cloudstash/fs-datasource-engine";
+import { withAuthRefresh } from "@cloudstash/fs-datasource-engine";
+import type { DatasourceType } from "@cloudstash/ipc-contracts";
 
 import type { CommandHandler } from "../ipc/server.js";
 

@@ -1,4 +1,4 @@
-// Tests for OAuthLoopbackBroker dev-override (`FT5_DEV_CREDENTIALS=1`)
+// Tests for OAuthLoopbackBroker dev-override (`CLOUDSTASH_DEV_CREDENTIALS=1`)
 // path. Service-side port of
 // `apps/desktop/src/main/oauth/__tests__/consent-broker-dev-override.test.ts`,
 // per implement-datasource-onboarding §8.2.
@@ -8,14 +8,14 @@
 //     not the Electron `app.getPath("userData")` location)
 //   - tests pass `dataDir` injection + write a fixture file there
 //   - `isDevOverride: boolean` injection (production wires from
-//     `process.env.FT5_DEV_CREDENTIALS === "1"` at bootstrap; broker
+//     `process.env.CLOUDSTASH_DEV_CREDENTIALS === "1"` at bootstrap; broker
 //     stays env-agnostic)
 //   - emits `credential-persisted` + `auth-completed` on the bus (no
 //     subscribe(handler) injection, no addToRegistry callback)
 //
 // Spec ref: openspec/changes/implement-datasource-onboarding/specs/
 //   fs-sync-service/spec.md ADDED Requirement
-//   "Development builds may bypass authenticate via FT5_DEV_CREDENTIALS
+//   "Development builds may bypass authenticate via CLOUDSTASH_DEV_CREDENTIALS
 //   (service-side)".
 
 import * as fs from "node:fs";
@@ -28,15 +28,15 @@ import type {
   AuthResult,
   ProviderId,
   StoredCredentials,
-} from "@ft5/ipc-contracts";
+} from "@cloudstash/ipc-contracts";
 import type {
   ClientFactory,
   CredentialStore,
   EngineContext,
   OAuthAppConfig,
   OAuthIntent,
-} from "@ft5/fs-datasource-engine";
-import type { EventName, EventPayloadMap } from "@ft5/ipc-contracts/sync-service";
+} from "@cloudstash/fs-datasource-engine";
+import type { EventName, EventPayloadMap } from "@cloudstash/ipc-contracts/sync-service";
 
 import { createEventBus, type EventBus } from "../../events/event-bus.js";
 import {
@@ -130,7 +130,7 @@ function makeGetOAuthAppConfig(): (
 
 /** Create a temp data dir, optionally seeding `dev-credentials.json`. */
 function mkDataDir(seed?: StoredCredentials | string | null): string {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "ft5-broker-dev-"));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "cloudstash-broker-dev-"));
   if (seed !== undefined && seed !== null) {
     const target = path.join(dir, "dev-credentials.json");
     const contents = typeof seed === "string" ? seed : JSON.stringify(seed);

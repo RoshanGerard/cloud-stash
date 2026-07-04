@@ -27,7 +27,7 @@ import {
   within,
 } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
-import type { DatasourceSummary } from "@ft5/ipc-contracts";
+import type { DatasourceSummary } from "@cloudstash/ipc-contracts";
 
 // Task 8.2 added `useRouter()` from `next/navigation` to the DatasourceCard
 // (the "Explore" quick-action pushes /datasources/explore?id=<id>). Dashboard

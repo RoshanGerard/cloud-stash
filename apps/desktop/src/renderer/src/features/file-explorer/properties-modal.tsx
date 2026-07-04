@@ -3,7 +3,7 @@
 import { useSyncExternalStore } from "react";
 import { toast } from "sonner";
 
-import type { FileEntry } from "@ft5/ipc-contracts";
+import type { FileEntry } from "@cloudstash/ipc-contracts";
 
 import {
   Dialog,

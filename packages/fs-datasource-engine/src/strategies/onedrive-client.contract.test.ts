@@ -17,7 +17,7 @@ import { join } from "node:path";
 
 import { vi } from "vitest";
 
-import { providers, type StoredCredentials } from "@ft5/ipc-contracts";
+import { providers, type StoredCredentials } from "@cloudstash/ipc-contracts";
 
 import type { BaseClientContext } from "../base-client.js";
 import {

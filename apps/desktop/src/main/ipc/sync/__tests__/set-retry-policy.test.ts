@@ -16,8 +16,8 @@
 
 import { describe, expect, it, vi } from "vitest";
 
-import type { SyncSetRetryPolicyRequest } from "@ft5/ipc-contracts/sync-service-desktop";
-import type { RetryPolicy } from "@ft5/ipc-contracts/sync-service";
+import type { SyncSetRetryPolicyRequest } from "@cloudstash/ipc-contracts/sync-service-desktop";
+import type { RetryPolicy } from "@cloudstash/ipc-contracts/sync-service";
 
 import type { SyncClient } from "../../../sync/client.js";
 import { SyncCommandError } from "../../../sync/client.js";

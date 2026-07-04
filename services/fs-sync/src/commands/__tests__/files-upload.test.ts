@@ -15,17 +15,17 @@ import { describe, expect, it, vi } from "vitest";
 import type {
   DatasourceClient,
   Target,
-} from "@ft5/fs-datasource-engine";
+} from "@cloudstash/fs-datasource-engine";
 import type {
   DatasourceFileEntry,
   DatasourceType,
   EventName,
-} from "@ft5/ipc-contracts";
+} from "@cloudstash/ipc-contracts";
 import {
   DatasourceError,
   DatasourceErrorTag,
   FilesErrorTag,
-} from "@ft5/ipc-contracts";
+} from "@cloudstash/ipc-contracts";
 
 import { createUploadRegistry } from "../../uploads/registry.js";
 import { createEventBus } from "../../events/event-bus.js";

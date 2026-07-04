@@ -30,7 +30,7 @@ import { unlink as nodeUnlink } from "node:fs/promises";
 
 import type Database from "better-sqlite3";
 
-import type { DownloadTerminalStatus } from "@ft5/ipc-contracts/sync-service";
+import type { DownloadTerminalStatus } from "@cloudstash/ipc-contracts/sync-service";
 
 export interface ClearHistoryFilter {
   readonly status?: readonly DownloadTerminalStatus[];

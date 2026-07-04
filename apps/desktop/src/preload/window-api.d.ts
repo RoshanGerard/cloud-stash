@@ -22,7 +22,7 @@ import type {
   FilesUploadRequest,
   FilesUploadResponse,
   PingResponse,
-} from "@ft5/ipc-contracts";
+} from "@cloudstash/ipc-contracts";
 // migrate-upload-orchestration-out-of-engine §13.3 — `UploadJob` joins
 // the import set alongside `DownloadJob`. The callback parameter on
 // `files.onActiveUploadsHydrate` is `readonly UploadJob[]`, parallel to
@@ -30,7 +30,7 @@ import type {
 // hydrate channel hadn't been wired yet; chunk E adds the desktop
 // bridge + preload binding so the type now lives on the cross-bridge
 // callback.
-import type { DownloadJob, UploadJob } from "@ft5/ipc-contracts/sync-service";
+import type { DownloadJob, UploadJob } from "@cloudstash/ipc-contracts/sync-service";
 import type {
   SyncAuthenticateCancelRequest,
   SyncAuthenticateCancelResponse,
@@ -65,7 +65,7 @@ import type {
   SyncSetConfigResponse,
   SyncSetRetryPolicyRequest,
   SyncSetRetryPolicyResponse,
-} from "@ft5/ipc-contracts/sync-service-desktop";
+} from "@cloudstash/ipc-contracts/sync-service-desktop";
 
 // Ambient augmentation of the DOM `Window` interface so renderer code can
 // type-check calls to `window.api.*` without importing from this preload
@@ -73,10 +73,10 @@ import type {
 // This file lives next to the preload sources per tasks.md 5.2.
 //
 // We also re-export `PingResponse` from here per the tasks.md directive
-// ("preload-local .d.ts that re-exports PingResponse from @ft5/ipc-contracts").
+// ("preload-local .d.ts that re-exports PingResponse from @cloudstash/ipc-contracts").
 // The re-export is declarative only -- renderer code may instead depend on
-// `@ft5/ipc-contracts` directly in Section 6; this does not lock that choice.
-export type { PingResponse } from "@ft5/ipc-contracts";
+// `@cloudstash/ipc-contracts` directly in Section 6; this does not lock that choice.
+export type { PingResponse } from "@cloudstash/ipc-contracts";
 
 declare global {
   interface Window {

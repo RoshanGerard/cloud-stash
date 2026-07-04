@@ -29,11 +29,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from "vitest";
 import { act, cleanup, renderHook } from "@testing-library/react";
 
-import { FilesErrorTag, GOOGLE_APPS_EXPORT_FORMATS } from "@ft5/ipc-contracts";
+import { FilesErrorTag, GOOGLE_APPS_EXPORT_FORMATS } from "@cloudstash/ipc-contracts";
 import type {
   FileEntry,
   FilesDownloadResponse,
-} from "@ft5/ipc-contracts";
+} from "@cloudstash/ipc-contracts";
 
 import {
   DOWNLOADS_ALWAYS_ASK_KEY,
@@ -112,7 +112,7 @@ function makeApi(opts?: {
       opts?.downloadResult ?? {
         ok: true,
         value: {
-          savedPath: "/Users/alice/Downloads/ft5/welcome.pdf",
+          savedPath: "/Users/alice/Downloads/CloudStash/welcome.pdf",
           bytes: 1024,
         },
       }
@@ -143,7 +143,7 @@ describe("useDownloadOrchestrator — toPath resolution (§23.1)", () => {
   it("(a) default-folder click computes <defaultFolder>/<fileName> directly without showSaveDialog", async () => {
     localStorage.setItem(
       DOWNLOADS_DEFAULT_FOLDER_KEY,
-      "/Users/alice/Downloads/ft5",
+      "/Users/alice/Downloads/CloudStash",
     );
     const api = makeApi();
     const { result } = renderHook(() => useDownloadOrchestrator({ api }));
@@ -162,7 +162,7 @@ describe("useDownloadOrchestrator — toPath resolution (§23.1)", () => {
     expect(api.download).toHaveBeenCalledWith({
       datasourceId: "ds-1",
       path: "/welcome.pdf",
-      toPath: "/Users/alice/Downloads/ft5/welcome.pdf",
+      toPath: "/Users/alice/Downloads/CloudStash/welcome.pdf",
       // add-download-overwrite-confirm §5: every initial dispatch carries
       // `conflictPolicy: "fail"` explicitly so the service-side gate
       // surfaces a `tag: "conflict"` envelope when the destination
@@ -172,7 +172,7 @@ describe("useDownloadOrchestrator — toPath resolution (§23.1)", () => {
     expect(response).toEqual({
       ok: true,
       value: {
-        savedPath: "/Users/alice/Downloads/ft5/welcome.pdf",
+        savedPath: "/Users/alice/Downloads/CloudStash/welcome.pdf",
         bytes: 1024,
       },
     });
@@ -181,7 +181,7 @@ describe("useDownloadOrchestrator — toPath resolution (§23.1)", () => {
   it("(b1) Shift+Click opens showSaveDialog with { defaultPath: <defaultFolder>/<fileName> }; user pick drives dispatch", async () => {
     localStorage.setItem(
       DOWNLOADS_DEFAULT_FOLDER_KEY,
-      "/Users/alice/Downloads/ft5",
+      "/Users/alice/Downloads/CloudStash",
     );
     const api = makeApi({
       saveDialogResult: { canceled: false, filePath: "/tmp/welcome.pdf" },
@@ -200,7 +200,7 @@ describe("useDownloadOrchestrator — toPath resolution (§23.1)", () => {
     const saveCall = api.showSaveDialog.mock.calls[0]?.[0] as {
       defaultPath?: string;
     };
-    expect(saveCall.defaultPath).toBe("/Users/alice/Downloads/ft5/welcome.pdf");
+    expect(saveCall.defaultPath).toBe("/Users/alice/Downloads/CloudStash/welcome.pdf");
     expect(api.download).toHaveBeenCalledTimes(1);
     expect(api.download).toHaveBeenCalledWith({
       datasourceId: "ds-1",
@@ -213,7 +213,7 @@ describe("useDownloadOrchestrator — toPath resolution (§23.1)", () => {
   it("(b2) Shift+Click with user-cancel from showSaveDialog → NO IPC dispatch", async () => {
     localStorage.setItem(
       DOWNLOADS_DEFAULT_FOLDER_KEY,
-      "/Users/alice/Downloads/ft5",
+      "/Users/alice/Downloads/CloudStash",
     );
     const api = makeApi({
       saveDialogResult: { canceled: true },
@@ -237,7 +237,7 @@ describe("useDownloadOrchestrator — toPath resolution (§23.1)", () => {
   it("(c) Always-ask preference (alwaysAsk='yes') opens showSaveDialog even without Shift", async () => {
     localStorage.setItem(
       DOWNLOADS_DEFAULT_FOLDER_KEY,
-      "/Users/alice/Downloads/ft5",
+      "/Users/alice/Downloads/CloudStash",
     );
     localStorage.setItem(DOWNLOADS_ALWAYS_ASK_KEY, "yes");
     const api = makeApi({
@@ -257,7 +257,7 @@ describe("useDownloadOrchestrator — toPath resolution (§23.1)", () => {
     const saveCall = api.showSaveDialog.mock.calls[0]?.[0] as {
       defaultPath?: string;
     };
-    expect(saveCall.defaultPath).toBe("/Users/alice/Downloads/ft5/welcome.pdf");
+    expect(saveCall.defaultPath).toBe("/Users/alice/Downloads/CloudStash/welcome.pdf");
     expect(api.download).toHaveBeenCalledWith({
       datasourceId: "ds-1",
       path: "/welcome.pdf",
@@ -313,9 +313,9 @@ describe("useDownloadOrchestrator — first-run modal queueing (§23.3)", () => 
     await act(async () => {
       localStorage.setItem(
         DOWNLOADS_DEFAULT_FOLDER_KEY,
-        "/Users/alice/Downloads/ft5",
+        "/Users/alice/Downloads/CloudStash",
       );
-      result.current.onModalCommit("/Users/alice/Downloads/ft5");
+      result.current.onModalCommit("/Users/alice/Downloads/CloudStash");
       // Allow the deferred dispatch to flush.
       await Promise.resolve();
       await Promise.resolve();
@@ -325,7 +325,7 @@ describe("useDownloadOrchestrator — first-run modal queueing (§23.3)", () => 
     expect(api.download).toHaveBeenCalledWith({
       datasourceId: "ds-1",
       path: "/welcome.pdf",
-      toPath: "/Users/alice/Downloads/ft5/welcome.pdf",
+      toPath: "/Users/alice/Downloads/CloudStash/welcome.pdf",
       conflictPolicy: "fail",
     });
     // Modal closes after commit.
@@ -363,7 +363,7 @@ function makeApiWithConflict(opts: {
   const successResult: FilesDownloadResponse = opts.successResult ?? {
     ok: true,
     value: {
-      savedPath: "/Users/alice/Downloads/ft5/welcome.pdf",
+      savedPath: "/Users/alice/Downloads/CloudStash/welcome.pdf",
       bytes: 4096,
     },
   };
@@ -388,10 +388,10 @@ function conflictEnvelope(opts?: {
     ok: false,
     error: {
       tag: FilesErrorTag.Conflict,
-      message: `destination already exists at ${opts?.existingPath ?? "/Users/alice/Downloads/ft5/welcome.pdf"}`,
+      message: `destination already exists at ${opts?.existingPath ?? "/Users/alice/Downloads/CloudStash/welcome.pdf"}`,
       retryable: false,
       existingPath:
-        opts?.existingPath ?? "/Users/alice/Downloads/ft5/welcome.pdf",
+        opts?.existingPath ?? "/Users/alice/Downloads/CloudStash/welcome.pdf",
       ...(opts?.existingSize !== undefined
         ? { existingSize: opts.existingSize }
         : {}),
@@ -406,14 +406,14 @@ describe("useDownloadOrchestrator — conflict-prompt loop (add-download-overwri
   beforeEach(() => {
     localStorage.setItem(
       DOWNLOADS_DEFAULT_FOLDER_KEY,
-      "/Users/alice/Downloads/ft5",
+      "/Users/alice/Downloads/CloudStash",
     );
   });
 
   it("(§5.1) on conflict envelope, invokes the prompt with (existingPath, existingSize, existingModifiedAt) and re-dispatches with the user's choice on 'overwrite'", async () => {
     const api = makeApiWithConflict({
       conflictEnvelope: conflictEnvelope({
-        existingPath: "/Users/alice/Downloads/ft5/welcome.pdf",
+        existingPath: "/Users/alice/Downloads/CloudStash/welcome.pdf",
         existingSize: 4_400_000,
         existingModifiedAt: "2026-04-18T12:30:00.000Z",
       }),
@@ -445,7 +445,7 @@ describe("useDownloadOrchestrator — conflict-prompt loop (add-download-overwri
     expect(downloadConflictPrompt).toHaveBeenCalledTimes(1);
     expect(promptCalls).toEqual([
       {
-        existingPath: "/Users/alice/Downloads/ft5/welcome.pdf",
+        existingPath: "/Users/alice/Downloads/CloudStash/welcome.pdf",
         existingSize: 4_400_000,
         existingModifiedAt: "2026-04-18T12:30:00.000Z",
       },
@@ -456,18 +456,18 @@ describe("useDownloadOrchestrator — conflict-prompt loop (add-download-overwri
       conflictPolicy: "fail",
       datasourceId: "ds-1",
       path: "/welcome.pdf",
-      toPath: "/Users/alice/Downloads/ft5/welcome.pdf",
+      toPath: "/Users/alice/Downloads/CloudStash/welcome.pdf",
     });
     expect(api.download.mock.calls[1]?.[0]).toMatchObject({
       conflictPolicy: "overwrite",
       datasourceId: "ds-1",
       path: "/welcome.pdf",
-      toPath: "/Users/alice/Downloads/ft5/welcome.pdf",
+      toPath: "/Users/alice/Downloads/CloudStash/welcome.pdf",
     });
     expect(response).toEqual({
       ok: true,
       value: {
-        savedPath: "/Users/alice/Downloads/ft5/welcome.pdf",
+        savedPath: "/Users/alice/Downloads/CloudStash/welcome.pdf",
         bytes: 4096,
       },
     });
@@ -480,7 +480,7 @@ describe("useDownloadOrchestrator — conflict-prompt loop (add-download-overwri
         ok: true,
         // Service may return a suffixed savedPath for keep-both.
         value: {
-          savedPath: "/Users/alice/Downloads/ft5/welcome (1).pdf",
+          savedPath: "/Users/alice/Downloads/CloudStash/welcome (1).pdf",
           bytes: 4096,
         },
       },
@@ -511,7 +511,7 @@ describe("useDownloadOrchestrator — conflict-prompt loop (add-download-overwri
     expect(response).toEqual({
       ok: true,
       value: {
-        savedPath: "/Users/alice/Downloads/ft5/welcome (1).pdf",
+        savedPath: "/Users/alice/Downloads/CloudStash/welcome (1).pdf",
         bytes: 4096,
       },
     });
@@ -587,7 +587,7 @@ describe("useDownloadOrchestrator — conflict-prompt loop (add-download-overwri
   it("(§5.4) conflict envelope without hint fields → prompt invoked with size/modifiedAt = undefined", async () => {
     const api = makeApiWithConflict({
       conflictEnvelope: conflictEnvelope({
-        existingPath: "/Users/alice/Downloads/ft5/welcome.pdf",
+        existingPath: "/Users/alice/Downloads/CloudStash/welcome.pdf",
         // No existingSize, no existingModifiedAt — service may omit either
         // (rename callers, for example). Renderer must tolerate undefined
         // for both.
@@ -615,7 +615,7 @@ describe("useDownloadOrchestrator — conflict-prompt loop (add-download-overwri
       );
     });
     expect(captured.existingPath).toBe(
-      "/Users/alice/Downloads/ft5/welcome.pdf",
+      "/Users/alice/Downloads/CloudStash/welcome.pdf",
     );
     expect(captured.existingSize).toBeUndefined();
     expect(captured.existingModifiedAt).toBeUndefined();
@@ -650,8 +650,8 @@ describe("useDownloadOrchestrator — conflict-prompt loop (add-download-overwri
 // Post-archive bug-fix follow-up — Bug 2: host-aware join.
 // The pre-fix `joinFolderAndName` hard-coded `/` between folder and
 // filename. On Windows a folder picked via Electron's directory picker
-// arrives as `C:\Users\dev2\Downloads\ft5` (backslashes); joining with
-// `/` produced `C:\Users\dev2\Downloads\ft5/welcome.pdf` (mixed
+// arrives as `C:\Users\dev2\Downloads\CloudStash` (backslashes); joining with
+// `/` produced `C:\Users\dev2\Downloads\CloudStash/welcome.pdf` (mixed
 // separators). The service's `path.normalize(input) === input`
 // validator (the post-archive defence-in-depth from §6.5) rejects that
 // because Windows' `path.normalize` rewrites the `/` to `\`. Every
@@ -660,39 +660,39 @@ describe("useDownloadOrchestrator — conflict-prompt loop (add-download-overwri
 describe("joinFolderAndName — host-aware separator (post-archive bug fix)", () => {
   it("uses '/' for a POSIX folder", () => {
     expect(
-      joinFolderAndName("/Users/alice/Downloads/ft5", "welcome.pdf"),
-    ).toBe("/Users/alice/Downloads/ft5/welcome.pdf");
+      joinFolderAndName("/Users/alice/Downloads/CloudStash", "welcome.pdf"),
+    ).toBe("/Users/alice/Downloads/CloudStash/welcome.pdf");
   });
 
   it("uses '\\' for a Windows folder containing backslashes", () => {
-    // Source string at runtime is `C:\Users\dev2\Downloads\ft5`.
+    // Source string at runtime is `C:\Users\dev2\Downloads\CloudStash`.
     expect(
       joinFolderAndName(
-        "C:\\Users\\dev2\\Downloads\\ft5",
+        "C:\\Users\\dev2\\Downloads\\CloudStash",
         "welcome.pdf",
       ),
-    ).toBe("C:\\Users\\dev2\\Downloads\\ft5\\welcome.pdf");
+    ).toBe("C:\\Users\\dev2\\Downloads\\CloudStash\\welcome.pdf");
   });
 
   it("strips a trailing '/' on the folder before joining", () => {
     expect(
-      joinFolderAndName("/Users/alice/Downloads/ft5/", "welcome.pdf"),
-    ).toBe("/Users/alice/Downloads/ft5/welcome.pdf");
+      joinFolderAndName("/Users/alice/Downloads/CloudStash/", "welcome.pdf"),
+    ).toBe("/Users/alice/Downloads/CloudStash/welcome.pdf");
   });
 
   it("strips a trailing '\\' on the folder before joining", () => {
     expect(
       joinFolderAndName(
-        "C:\\Users\\dev2\\Downloads\\ft5\\",
+        "C:\\Users\\dev2\\Downloads\\CloudStash\\",
         "welcome.pdf",
       ),
-    ).toBe("C:\\Users\\dev2\\Downloads\\ft5\\welcome.pdf");
+    ).toBe("C:\\Users\\dev2\\Downloads\\CloudStash\\welcome.pdf");
   });
 
   it("strips a leading separator on the filename before joining", () => {
     expect(
-      joinFolderAndName("/Users/alice/Downloads/ft5", "/welcome.pdf"),
-    ).toBe("/Users/alice/Downloads/ft5/welcome.pdf");
+      joinFolderAndName("/Users/alice/Downloads/CloudStash", "/welcome.pdf"),
+    ).toBe("/Users/alice/Downloads/CloudStash/welcome.pdf");
   });
 
   // Post-archive smoke-2 (2026-04-28): sanitization must run BEFORE the
@@ -700,14 +700,14 @@ describe("joinFolderAndName — host-aware separator (post-archive bug fix)", ()
   // but invalid on Windows are scrubbed before the path crosses IPC.
   it("sanitizes Windows-invalid characters in the filename via joinFolderAndName", () => {
     expect(
-      joinFolderAndName("C:\\Users\\dev2\\Downloads\\ft5", "Acme: Test.docx"),
-    ).toBe("C:\\Users\\dev2\\Downloads\\ft5\\Acme_ Test.docx");
+      joinFolderAndName("C:\\Users\\dev2\\Downloads\\CloudStash", "Acme: Test.docx"),
+    ).toBe("C:\\Users\\dev2\\Downloads\\CloudStash\\Acme_ Test.docx");
   });
 
   it("sanitizes Windows reserved device names in the filename via joinFolderAndName", () => {
     expect(
-      joinFolderAndName("C:\\Users\\dev2\\Downloads\\ft5", "CON.txt"),
-    ).toBe("C:\\Users\\dev2\\Downloads\\ft5\\_CON.txt");
+      joinFolderAndName("C:\\Users\\dev2\\Downloads\\CloudStash", "CON.txt"),
+    ).toBe("C:\\Users\\dev2\\Downloads\\CloudStash\\_CON.txt");
   });
 });
 
@@ -807,7 +807,7 @@ describe("useDownloadOrchestrator — Google Apps export extension (add-drive-do
   beforeEach(() => {
     localStorage.setItem(
       DOWNLOADS_DEFAULT_FOLDER_KEY,
-      "/Users/alice/Downloads/ft5",
+      "/Users/alice/Downloads/CloudStash",
     );
   });
 
@@ -826,7 +826,7 @@ describe("useDownloadOrchestrator — Google Apps export extension (add-drive-do
     expect(api.download).toHaveBeenCalledTimes(1);
     const call = api.download.mock.calls[0]?.[0] as { toPath: string; path: string };
     // Local save path gets the extension.
-    expect(call.toPath).toBe("/Users/alice/Downloads/ft5/My Document.docx");
+    expect(call.toPath).toBe("/Users/alice/Downloads/CloudStash/My Document.docx");
     // Engine path (remote handle) is unchanged.
     expect(call.path).toBe("/My Document");
   });
@@ -844,7 +844,7 @@ describe("useDownloadOrchestrator — Google Apps export extension (add-drive-do
     });
 
     const call = api.download.mock.calls[0]?.[0] as { toPath: string };
-    expect(call.toPath).toBe("/Users/alice/Downloads/ft5/Notes.txt.docx");
+    expect(call.toPath).toBe("/Users/alice/Downloads/CloudStash/Notes.txt.docx");
   });
 
   it("(c) all 5 exportable subtypes append their mapped extension", async () => {
@@ -865,7 +865,7 @@ describe("useDownloadOrchestrator — Google Apps export extension (add-drive-do
       });
       const call = api.download.mock.calls[0]?.[0] as { toPath: string };
       expect(call.toPath).toBe(
-        `/Users/alice/Downloads/ft5/TestFile${extension}`,
+        `/Users/alice/Downloads/CloudStash/TestFile${extension}`,
         `expected extension ${extension} for mime ${mime}`,
       );
     }
@@ -886,7 +886,7 @@ describe("useDownloadOrchestrator — Google Apps export extension (add-drive-do
     });
 
     const call = api.download.mock.calls[0]?.[0] as { toPath: string };
-    expect(call.toPath).toBe("/Users/alice/Downloads/ft5/report.pdf");
+    expect(call.toPath).toBe("/Users/alice/Downloads/CloudStash/report.pdf");
   });
 
   it("(e) save dialog (shiftKey=true) uses the extended basename as defaultPath", async () => {
@@ -908,7 +908,7 @@ describe("useDownloadOrchestrator — Google Apps export extension (add-drive-do
       defaultPath?: string;
     };
     expect(saveCall.defaultPath).toBe(
-      "/Users/alice/Downloads/ft5/My Doc.docx",
+      "/Users/alice/Downloads/CloudStash/My Doc.docx",
     );
   });
 
@@ -931,7 +931,7 @@ describe("useDownloadOrchestrator — Google Apps export extension (add-drive-do
       defaultPath?: string;
     };
     expect(saveCall.defaultPath).toBe(
-      "/Users/alice/Downloads/ft5/Budget.xlsx",
+      "/Users/alice/Downloads/CloudStash/Budget.xlsx",
     );
   });
 
@@ -948,7 +948,7 @@ describe("useDownloadOrchestrator — Google Apps export extension (add-drive-do
     });
 
     const call = api.download.mock.calls[0]?.[0] as { toPath: string };
-    expect(call.toPath).toBe("/Users/alice/Downloads/ft5/My Form");
+    expect(call.toPath).toBe("/Users/alice/Downloads/CloudStash/My Form");
   });
 
   it("(g) providerMetadata.mimeType absent → no append, dispatches with entry.name, no crash", async () => {
@@ -966,7 +966,7 @@ describe("useDownloadOrchestrator — Google Apps export extension (add-drive-do
     });
 
     const call = api.download.mock.calls[0]?.[0] as { toPath: string };
-    expect(call.toPath).toBe("/Users/alice/Downloads/ft5/NoMeta");
+    expect(call.toPath).toBe("/Users/alice/Downloads/CloudStash/NoMeta");
   });
 
   it("(g) providerMetadata.mimeType is non-string (number) → no append, no crash", async () => {
@@ -984,6 +984,6 @@ describe("useDownloadOrchestrator — Google Apps export extension (add-drive-do
     });
 
     const call = api.download.mock.calls[0]?.[0] as { toPath: string };
-    expect(call.toPath).toBe("/Users/alice/Downloads/ft5/BadMeta");
+    expect(call.toPath).toBe("/Users/alice/Downloads/CloudStash/BadMeta");
   });
 });

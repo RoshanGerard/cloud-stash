@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { DatasourceErrorTag } from "@ft5/ipc-contracts";
+import { DatasourceErrorTag } from "@cloudstash/ipc-contracts";
 
 import { DEFAULT_POLICY } from "./policy-store.js";
 

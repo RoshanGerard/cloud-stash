@@ -41,10 +41,10 @@ importers:
 
   apps/desktop:
     dependencies:
-      '@ft5/fs-datasource-engine':
+      '@cloudstash/fs-datasource-engine':
         specifier: workspace:*
         version: link:../../packages/fs-datasource-engine
-      '@ft5/ipc-contracts':
+      '@cloudstash/ipc-contracts':
         specifier: workspace:*
         version: link:../../packages/ipc-contracts
       better-sqlite3:
@@ -81,7 +81,7 @@ importers:
 
   apps/desktop/src/renderer:
     dependencies:
-      '@ft5/ipc-contracts':
+      '@cloudstash/ipc-contracts':
         specifier: workspace:*
         version: link:../../../../packages/ipc-contracts
       '@radix-ui/react-slot':
@@ -142,7 +142,7 @@ importers:
       '@aws-sdk/lib-storage':
         specifier: ^3.1032.0
         version: 3.1032.0(@aws-sdk/client-s3@3.1032.0)
-      '@ft5/ipc-contracts':
+      '@cloudstash/ipc-contracts':
         specifier: workspace:*
         version: link:../ipc-contracts
       '@microsoft/microsoft-graph-client':
@@ -172,10 +172,10 @@ importers:
       '@aws-sdk/client-s3':
         specifier: ^3.1032.0
         version: 3.1032.0
-      '@ft5/fs-datasource-engine':
+      '@cloudstash/fs-datasource-engine':
         specifier: workspace:*
         version: link:../../packages/fs-datasource-engine
-      '@ft5/ipc-contracts':
+      '@cloudstash/ipc-contracts':
         specifier: workspace:*
         version: link:../../packages/ipc-contracts
       '@types/better-sqlite3':

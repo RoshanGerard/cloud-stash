@@ -58,13 +58,13 @@
 import type { BrowserWindow } from "electron";
 import { shell } from "electron";
 
-import type { EventFrame } from "@ft5/ipc-contracts/sync-service";
-import type { DatasourceSummary } from "@ft5/ipc-contracts";
+import type { EventFrame } from "@cloudstash/ipc-contracts/sync-service";
+import type { DatasourceSummary } from "@cloudstash/ipc-contracts";
 import {
   SYNC_CHANNELS,
   type SyncEvent,
   type SyncStateSeedPayload,
-} from "@ft5/ipc-contracts/sync-service-desktop";
+} from "@cloudstash/ipc-contracts/sync-service-desktop";
 
 import { getEngine } from "../datasources/engine.js";
 

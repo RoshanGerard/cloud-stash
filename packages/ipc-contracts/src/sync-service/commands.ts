@@ -330,7 +330,7 @@ interface AuthenticateCancelCommand {
 // ---- Service config (sync:get-config / sync:set-config) -------------------
 //
 // Per-provider OAuth app config (clientId / clientSecret) is sourced from a
-// service-owned JSON file (`~/ft5/sync_app/config.json`) per design.md
+// service-owned JSON file (`~/cloudstash/sync_app/config.json`) per design.md
 // Decision 4. These commands expose that file to the desktop. The
 // `add-download-history-ui` change makes the renderer the FIRST consumer
 // (the Settings → Downloads retention controls) via a read-modify-write
@@ -402,7 +402,7 @@ interface SetConfigCommand {
 // Symmetric counterpart of authenticate per design.md Decision 12. The
 // desktop's `datasources:remove` IPC handler calls this command after
 // `registry.remove` succeeds so the per-user credential entry at
-// `~/ft5/sync_app/credentials.json` is cleaned up alongside the registry
+// `~/cloudstash/sync_app/credentials.json` is cleaned up alongside the registry
 // row. Best-effort cleanup — most failures still return
 // `{ ok: true, result: { deleted: false } }` per the service handler spec.
 

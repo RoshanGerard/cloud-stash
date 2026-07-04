@@ -6,8 +6,8 @@
 
 import { describe, expect, it, vi } from "vitest";
 
-import type { CredentialStore } from "@ft5/fs-datasource-engine";
-import type { StoredCredentials } from "@ft5/ipc-contracts";
+import type { CredentialStore } from "@cloudstash/fs-datasource-engine";
+import type { StoredCredentials } from "@cloudstash/ipc-contracts";
 import type { Connection } from "../ipc/server.js";
 
 import { makeDeleteCredentialsHandler } from "./delete-credentials.js";

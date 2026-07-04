@@ -15,7 +15,7 @@
 
 import { describe, expect, it, vi } from "vitest";
 
-import type { SyncEnqueueMirrorRequest } from "@ft5/ipc-contracts/sync-service-desktop";
+import type { SyncEnqueueMirrorRequest } from "@cloudstash/ipc-contracts/sync-service-desktop";
 
 import type { SyncClient } from "../../../sync/client.js";
 import { SyncCommandError } from "../../../sync/client.js";

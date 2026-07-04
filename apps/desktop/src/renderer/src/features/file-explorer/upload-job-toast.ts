@@ -41,7 +41,7 @@ import type { UploadToaster } from "./use-upload-orchestrator";
 // --- Public types ----------------------------------------------------
 
 // Local mirror of the four upload-event payloads from
-// `@ft5/ipc-contracts/sync-service`. Inlined here rather than imported
+// `@cloudstash/ipc-contracts/sync-service`. Inlined here rather than imported
 // because the sync-service subpath is forbidden from the renderer
 // barrier (see preload's import-boundary test). Structural shape is
 // identical to the wire contract.

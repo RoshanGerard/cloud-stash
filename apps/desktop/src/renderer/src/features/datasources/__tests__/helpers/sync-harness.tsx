@@ -20,7 +20,7 @@
 
 import { act } from "@testing-library/react";
 import { vi } from "vitest";
-import type { SyncEvent } from "@ft5/ipc-contracts/sync-service-desktop";
+import type { SyncEvent } from "@cloudstash/ipc-contracts/sync-service-desktop";
 
 export type SyncListener = (event: SyncEvent) => void;
 

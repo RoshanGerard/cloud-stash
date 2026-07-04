@@ -37,7 +37,7 @@ import type {
   DatasourcesRemoveRequest,
   DatasourcesRemoveResponse,
   DatasourceSummary,
-} from "@ft5/ipc-contracts";
+} from "@cloudstash/ipc-contracts";
 import type {
   AuthFailedTag,
   JobCancelledPayload,
@@ -50,7 +50,7 @@ import type {
   JobSummary,
   SyncEvent,
   SyncStateSeedPayload,
-} from "@ft5/ipc-contracts/sync-service-desktop";
+} from "@cloudstash/ipc-contracts/sync-service-desktop";
 
 export type DatasourcesState =
   | { phase: "loading" }

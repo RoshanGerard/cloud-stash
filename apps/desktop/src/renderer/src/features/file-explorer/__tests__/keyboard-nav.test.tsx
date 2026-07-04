@@ -2,7 +2,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
-import type { FileEntry } from "@ft5/ipc-contracts";
+import type { FileEntry } from "@cloudstash/ipc-contracts";
 
 import { createExplorerStore } from "../store.js";
 import type { ExplorerStore } from "../store.js";

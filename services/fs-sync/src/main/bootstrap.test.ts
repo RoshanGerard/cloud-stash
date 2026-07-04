@@ -35,13 +35,13 @@ let runtime: Runtime | null = null;
 function pipeFor(tag: string): string {
   const suffix = `${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
   if (process.platform === "win32") {
-    return `\\\\.\\pipe\\ft5-sync-boot-${tag}-${suffix}`;
+    return `\\\\.\\pipe\\cloudstash-sync-boot-${tag}-${suffix}`;
   }
-  return path.join(os.tmpdir(), `ft5-sync-boot-${tag}-${suffix}.sock`);
+  return path.join(os.tmpdir(), `cloudstash-sync-boot-${tag}-${suffix}.sock`);
 }
 
 beforeEach(async () => {
-  scratchDir = await fsp.mkdtemp(path.join(os.tmpdir(), "ft5-sync-bootstrap-"));
+  scratchDir = await fsp.mkdtemp(path.join(os.tmpdir(), "cloudstash-sync-bootstrap-"));
   runtime = null;
 });
 

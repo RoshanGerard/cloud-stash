@@ -1,4 +1,4 @@
-import { FilesErrorTag } from "@ft5/ipc-contracts";
+import { FilesErrorTag } from "@cloudstash/ipc-contracts";
 import { describe, expect, it, vi } from "vitest";
 
 import type {
@@ -6,7 +6,7 @@ import type {
   FilesStatResponse,
   FilesUploadRequest,
   FilesUploadResponse,
-} from "@ft5/ipc-contracts";
+} from "@cloudstash/ipc-contracts";
 
 import type {
   ConflictResolver,

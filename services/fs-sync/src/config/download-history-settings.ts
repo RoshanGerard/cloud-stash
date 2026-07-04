@@ -12,7 +12,7 @@
 //   - `isValidDownloadHistory` is the shared predicate `set-config` reuses to
 //     reject an out-of-contract write.
 
-import type { ServiceConfig } from "@ft5/ipc-contracts/sync-service";
+import type { ServiceConfig } from "@cloudstash/ipc-contracts/sync-service";
 
 export interface RetentionSettings {
   readonly autoPrune: boolean;

@@ -6,9 +6,9 @@ import process from "node:process";
 // electron-builder emits platform-specific layouts under `apps/desktop/release/`;
 // pick the right one for the current OS.
 const platformExe = {
-  win32: "release/win-unpacked/FT5 Cloude Sync.exe",
-  darwin: "release/mac/FT5 Cloude Sync.app/Contents/MacOS/FT5 Cloude Sync",
-  linux: "release/linux-unpacked/ft5-cloude-sync",
+  win32: "release/win-unpacked/CloudStash.exe",
+  darwin: "release/mac/CloudStash.app/Contents/MacOS/CloudStash",
+  linux: "release/linux-unpacked/cloudstash",
 } as const;
 
 const rel = platformExe[process.platform as keyof typeof platformExe];
@@ -25,8 +25,8 @@ test("ping page renders a 13-digit ts", async () => {
     //
     // NOTE: This e2e file can't be executed in the dev sandbox (it needs a
     // packaged build); the path update is validated by humans running
-    // `pnpm --filter @ft5/desktop exec playwright test e2e/ping.spec.ts`
-    // against a fresh `pnpm --filter @ft5/desktop package:{win|mac|linux}`
+    // `pnpm --filter @cloudstash/desktop exec playwright test e2e/ping.spec.ts`
+    // against a fresh `pnpm --filter @cloudstash/desktop package:{win|mac|linux}`
     // output. See task 10.3 in the OpenSpec change for the manual
     // verification checklist.
     await window.goto("app://local/diagnostics");

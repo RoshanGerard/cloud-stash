@@ -32,7 +32,7 @@ afterEach(async () => {
 function scratchDbPath(): string {
   const f = path.join(
     os.tmpdir(),
-    `ft5-sync-mig-${Date.now()}-${Math.random().toString(36).slice(2)}.db`,
+    `cloudstash-sync-mig-${Date.now()}-${Math.random().toString(36).slice(2)}.db`,
   );
   cleanup.push(f);
   return f;
@@ -249,7 +249,7 @@ describe("applyMigrations", () => {
   it("honours a custom migrationsDir option (forward-compat)", async () => {
     const dir = path.join(
       os.tmpdir(),
-      `ft5-sync-mig-custom-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+      `cloudstash-sync-mig-custom-${Date.now()}-${Math.random().toString(36).slice(2)}`,
     );
     cleanup.push(dir);
     await fsp.mkdir(dir, { recursive: true });

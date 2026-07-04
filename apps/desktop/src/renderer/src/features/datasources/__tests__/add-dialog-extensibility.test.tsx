@@ -9,7 +9,7 @@
 // `features/datasources/credential-forms/`.
 //
 // Implementation notes:
-//   - `vi.mock("@ft5/ipc-contracts", ...)` is hoisted by vitest and file-
+//   - `vi.mock("@cloudstash/ipc-contracts", ...)` is hoisted by vitest and file-
 //     scoped. It lives in this dedicated file so sibling tests
 //     (add-dialog.test.tsx / card.test.tsx / dashboard.test.tsx) do NOT see
 //     the fourth provider. We spread `actual` so every type-level export
@@ -34,9 +34,9 @@ import {
 } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 
-vi.mock("@ft5/ipc-contracts", async () => {
-  const actual = await vi.importActual<typeof import("@ft5/ipc-contracts")>(
-    "@ft5/ipc-contracts",
+vi.mock("@cloudstash/ipc-contracts", async () => {
+  const actual = await vi.importActual<typeof import("@cloudstash/ipc-contracts")>(
+    "@cloudstash/ipc-contracts",
   );
   return {
     ...actual,

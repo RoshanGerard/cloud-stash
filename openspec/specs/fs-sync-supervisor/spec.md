@@ -8,7 +8,7 @@ The `fs-sync-supervisor` capability is the desktop main process's role in connec
 
 The desktop main process SHALL, during `bootstrap()`, start a `SyncSupervisor` that obtains a connected `SyncClient` to the fs-sync service before the renderer window loads. The supervisor SHALL:
 
-1. Attempt `net.connect` to the production pipe (`\\.\pipe\ft5-sync` on Windows, `$HOME/ft5/sync_app/sync.sock` on Unix) in prod, or to the dev pipe (`\\.\pipe\ft5-sync-dev` / `sync-dev.sock`) in dev.
+1. Attempt `net.connect` to the production pipe (`\\.\pipe\cloudstash-sync` on Windows, `$HOME/cloudstash/sync_app/sync.sock` on Unix) in prod, or to the dev pipe (`\\.\pipe\cloudstash-sync-dev` / `sync-dev.sock`) in dev.
 2. If the connect succeeds, use the resulting socket.
 3. If the connect rejects with `ENOENT` or `ECONNREFUSED` in **prod mode only**, spawn the service as a detached child process via `child_process.spawn(nodeBinary, [servicePath], { detached: true, stdio: 'ignore' })`, then call `child.unref()` so the service outlives the desktop process.
 4. After a spawn, retry-connect up to 5 times with geometric backoff (25 / 50 / 100 / 200 / 400 ms). If all retries fail, reject supervisor start with a fatal error surfaced to the renderer.
@@ -83,7 +83,7 @@ The preload SHALL expose `window.api.sync` with typed methods that mirror the se
 - `setRetryPolicy(scope, policy): Promise<void>`
 - `onEvent(callback: (event: ServiceEvent) => void): () => void`
 
-Request/response types SHALL live in a new module under `packages/ipc-contracts/src/sync-service-desktop/` (separate from the on-the-wire `sync-service` module) so renderer code does NOT import wire-format symbols (e.g., `Frame`, `RequestFrame`). The preload SHALL NOT import from `@ft5/ipc-contracts/sync-service` (the wire contract); ONLY from `@ft5/ipc-contracts/sync-service-desktop` plus `electron`.
+Request/response types SHALL live in a new module under `packages/ipc-contracts/src/sync-service-desktop/` (separate from the on-the-wire `sync-service` module) so renderer code does NOT import wire-format symbols (e.g., `Frame`, `RequestFrame`). The preload SHALL NOT import from `@cloudstash/ipc-contracts/sync-service` (the wire contract); ONLY from `@cloudstash/ipc-contracts/sync-service-desktop` plus `electron`.
 
 #### Scenario: Preload exposes sync methods under window.api.sync
 
@@ -92,8 +92,8 @@ Request/response types SHALL live in a new module under `packages/ipc-contracts/
 
 #### Scenario: Preload does not import wire-format types
 
-- **WHEN** a Vitest test grep-scans `apps/desktop/src/preload/` for imports from `@ft5/ipc-contracts/sync-service`
-- **THEN** no match is found; matches for `@ft5/ipc-contracts/sync-service-desktop` are allowed
+- **WHEN** a Vitest test grep-scans `apps/desktop/src/preload/` for imports from `@cloudstash/ipc-contracts/sync-service`
+- **THEN** no match is found; matches for `@cloudstash/ipc-contracts/sync-service-desktop` are allowed
 
 #### Scenario: Four-layer wiring per sync method
 
@@ -109,7 +109,7 @@ The desktop main process SHALL register `ipcMain.handle` handlers under `apps/de
 3. Translate the service response into the `sync-service-desktop` response type (for most calls this is the identity; for `listJobs` the handler SHALL also compute a `derivedSyncingDatasourceIds: string[]` field by grouping returned jobs by `datasourceId` filtered to `kind === 'sync' && status IN ('running', 'queued', 'waiting-network')`).
 4. Forward any structured service-side error (e.g., `sync-already-running`, `not-found`) as part of the typed response shape, NOT by throwing at the IPC boundary.
 
-The handler module SHALL NOT import `@ft5/fs-datasource-engine` directly — all provider work goes through the service. The handler module MAY import the renderer-facing contract and the `SyncClient`.
+The handler module SHALL NOT import `@cloudstash/fs-datasource-engine` directly — all provider work goes through the service. The handler module MAY import the renderer-facing contract and the `SyncClient`.
 
 #### Scenario: listJobs response is enriched with derived syncing set
 
@@ -205,7 +205,7 @@ The service's existing `dev:sync-service` script SHALL remain callable independe
 #### Scenario: pnpm dev starts both processes
 
 - **WHEN** a developer runs `pnpm dev` at the repo root
-- **THEN** stdout interleaves logs from both children with distinct prefixes; the desktop window loads successfully; the service's `service-dev.pid` file is created; a subsequent `pnpm --filter @ft5/fs-sync-service test:smoke` against the dev pipe succeeds
+- **THEN** stdout interleaves logs from both children with distinct prefixes; the desktop window loads successfully; the service's `service-dev.pid` file is created; a subsequent `pnpm --filter @cloudstash/fs-sync-service test:smoke` against the dev pipe succeeds
 
 #### Scenario: Ctrl-C exits cleanly
 

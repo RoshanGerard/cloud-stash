@@ -12,7 +12,7 @@ let cleanup: string[] = [];
 beforeEach(async () => {
   root = path.join(
     os.tmpdir(),
-    `ft5-sync-walk-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    `cloudstash-sync-walk-${Date.now()}-${Math.random().toString(36).slice(2)}`,
   );
   cleanup.push(root);
   await fsp.mkdir(root, { recursive: true });
@@ -63,7 +63,7 @@ describe("walkLocalTree", () => {
     async () => {
       const outside = path.join(
         os.tmpdir(),
-        `ft5-sync-outside-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        `cloudstash-sync-outside-${Date.now()}-${Math.random().toString(36).slice(2)}`,
       );
       cleanup.push(outside);
       await fsp.mkdir(outside, { recursive: true });

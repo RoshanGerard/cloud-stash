@@ -35,8 +35,8 @@ import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "reac
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-import { FilesErrorTag } from "@ft5/ipc-contracts";
-import type { FileEntry, FilesRemoveTarget } from "@ft5/ipc-contracts";
+import { FilesErrorTag } from "@cloudstash/ipc-contracts";
+import type { FileEntry, FilesRemoveTarget } from "@cloudstash/ipc-contracts";
 
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/icon";
@@ -89,7 +89,7 @@ import { useExplorerData } from "./use-explorer-data";
 import { useKeyboardNav } from "./use-keyboard-nav";
 import { ViewModeSwitcher } from "./view-mode-switcher";
 
-import type { DatasourceStatus } from "@ft5/ipc-contracts";
+import type { DatasourceStatus } from "@cloudstash/ipc-contracts";
 
 export interface FileExplorerProps {
   datasourceId: string;

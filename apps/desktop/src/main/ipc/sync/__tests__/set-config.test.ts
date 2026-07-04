@@ -11,7 +11,7 @@ import { describe, expect, it, vi } from "vitest";
 import type {
   ServiceConfig,
   SyncSetConfigRequest,
-} from "@ft5/ipc-contracts/sync-service-desktop";
+} from "@cloudstash/ipc-contracts/sync-service-desktop";
 
 import type { SyncClient } from "../../../sync/client.js";
 import { SyncCommandError } from "../../../sync/client.js";

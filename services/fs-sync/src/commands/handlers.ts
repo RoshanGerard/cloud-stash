@@ -9,8 +9,8 @@ import type {
   CredentialStore,
   DatasourceClient,
   EngineContext,
-} from "@ft5/fs-datasource-engine";
-import type { DatasourceType } from "@ft5/ipc-contracts";
+} from "@cloudstash/fs-datasource-engine";
+import type { DatasourceType } from "@cloudstash/ipc-contracts";
 
 import type {
   CommandHandlers,
@@ -192,7 +192,7 @@ export function buildCommandHandlers(deps: HandlersDeps): CommandHandlers {
         return {
           ok: false,
           error: {
-            // eslint-disable-next-line ft5/no-raw-error-tag-literal -- ServiceErrorTag vocabulary (no const object) — out of scope
+            // eslint-disable-next-line cloudstash/no-raw-error-tag-literal -- ServiceErrorTag vocabulary (no const object) — out of scope
             tag: "not-found",
             message: `no job with id ${params.jobId}`,
           },
@@ -206,7 +206,7 @@ export function buildCommandHandlers(deps: HandlersDeps): CommandHandlers {
       if (!job) {
         return {
           ok: false,
-          // eslint-disable-next-line ft5/no-raw-error-tag-literal -- ServiceErrorTag vocabulary (no const object) — out of scope
+          // eslint-disable-next-line cloudstash/no-raw-error-tag-literal -- ServiceErrorTag vocabulary (no const object) — out of scope
           error: { tag: "not-found", message: `no job with id ${params.jobId}` },
         };
       }
@@ -267,7 +267,7 @@ export function buildCommandHandlers(deps: HandlersDeps): CommandHandlers {
         return {
           ok: false,
           error: {
-            // eslint-disable-next-line ft5/no-raw-error-tag-literal -- ServiceErrorTag vocabulary (no const object) — out of scope
+            // eslint-disable-next-line cloudstash/no-raw-error-tag-literal -- ServiceErrorTag vocabulary (no const object) — out of scope
             tag: "not-found",
             message: `no policy for scope=${params.scope} datasourceId=${params.datasourceId ?? ""}`,
           },

@@ -150,7 +150,7 @@ describe("sync-service-desktop SYNC_CHANNELS constants", () => {
     expectTypeOf<typeof SYNC_CHANNELS.event>().toEqualTypeOf<"sync:event">();
   });
 
-  it("is reachable from the top-level @ft5/ipc-contracts index re-export", async () => {
+  it("is reachable from the top-level @cloudstash/ipc-contracts index re-export", async () => {
     const root = await import("../index.js");
     expect(root.SYNC_CHANNELS).toBe(SYNC_CHANNELS);
   });

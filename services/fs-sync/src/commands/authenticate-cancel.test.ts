@@ -11,10 +11,10 @@
 
 import { describe, expect, it, vi } from "vitest";
 
-import type { CredentialsFormIntent } from "@ft5/fs-datasource-engine";
+import type { CredentialsFormIntent } from "@cloudstash/fs-datasource-engine";
 
 import { createEventBus, type EventBus } from "../events/event-bus.js";
-import type { EventName, EventPayloadMap } from "@ft5/ipc-contracts/sync-service";
+import type { EventName, EventPayloadMap } from "@cloudstash/ipc-contracts/sync-service";
 import {
   createAuthCorrelationStore,
   type AuthCorrelationStore,

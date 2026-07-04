@@ -15,9 +15,9 @@ const repoRoot = path.resolve(__dirname, "..");
 // of undefined" errors in the renderer.
 //
 // Phase 3 added runtime imports of `DATASOURCES_CHANNELS` from
-// `@ft5/ipc-contracts` to the preload. `electron-vite`'s
+// `@cloudstash/ipc-contracts` to the preload. `electron-vite`'s
 // `externalizeDepsPlugin()` externalized that workspace dep by default,
-// producing a compiled preload with `require("@ft5/ipc-contracts")` at
+// producing a compiled preload with `require("@cloudstash/ipc-contracts")` at
 // line 3 that crashes the sandbox. The fix is to exclude the workspace
 // package from externalization in `electron.vite.config.ts`.
 //
@@ -78,7 +78,7 @@ describe("preload bundle forbids runtime requires of workspace deps", () => {
 // electron-vite writes the bundled main+preload to (`dist/main`, `dist/preload`).
 // Without `emitDeclarationOnly`, `tsc -b` (pnpm typecheck) transpiles
 // `src/preload/index.ts` → `dist/preload/index.js` with a raw
-// `require("@ft5/ipc-contracts")` that clobbers the electron-vite bundle and
+// `require("@cloudstash/ipc-contracts")` that clobbers the electron-vite bundle and
 // trips the guard above. apps/desktop is a leaf in the project-reference graph
 // (nothing consumes its emit; the runtime build is electron-vite), so tsc must
 // emit declarations only and leave the `dist/**/*.js` bundles to electron-vite.

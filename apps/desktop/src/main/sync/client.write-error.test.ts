@@ -20,11 +20,11 @@ import { SyncClient } from "./client.js";
 
 function pipeFor(tag: string): string {
   if (process.platform === "win32") {
-    return `\\\\.\\pipe\\ft5-sync-client-test-${tag}-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    return `\\\\.\\pipe\\cloudstash-sync-client-test-${tag}-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
   }
   return path.join(
     os.tmpdir(),
-    `ft5-sync-client-test-${tag}-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}.sock`,
+    `cloudstash-sync-client-test-${tag}-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}.sock`,
   );
 }
 

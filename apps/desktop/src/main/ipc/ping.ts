@@ -1,4 +1,4 @@
-import type { PingResponse } from "@ft5/ipc-contracts";
+import type { PingResponse } from "@cloudstash/ipc-contracts";
 
 // Pure handler for the `ping` IPC op. Intentionally has NO dependency on
 // Electron: the unit test in `__tests__/ping.test.ts` imports this directly

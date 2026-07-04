@@ -8,11 +8,11 @@ import type {
   FilesSearchResponse,
   FilesStatRequest,
   MimeFamily,
-} from "@ft5/ipc-contracts";
+} from "@cloudstash/ipc-contracts";
 import {
   FILES_PROVIDER_SEARCH_DEFERRED_MESSAGE,
   FilesErrorTag,
-} from "@ft5/ipc-contracts";
+} from "@cloudstash/ipc-contracts";
 
 // -----------------------------------------------------------------------------
 // Constants

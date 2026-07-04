@@ -8,7 +8,7 @@ import type {
   JobKind,
   JobStatus,
   JobSummary,
-} from "@ft5/ipc-contracts/sync-service";
+} from "@cloudstash/ipc-contracts/sync-service";
 
 import { assertLegalTransition } from "./state-machine.js";
 

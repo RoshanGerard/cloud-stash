@@ -27,23 +27,23 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   DatasourceError,
   DatasourceErrorTag,
-} from "@ft5/ipc-contracts";
+} from "@cloudstash/ipc-contracts";
 import type {
   AccountIdentity,
   AuthResult,
   ProviderId,
   StoredCredentials,
-} from "@ft5/ipc-contracts";
+} from "@cloudstash/ipc-contracts";
 import type {
   ClientFactory,
   CredentialStore,
   EngineContext,
   OAuthAppConfig,
   OAuthIntent,
-} from "@ft5/fs-datasource-engine";
+} from "@cloudstash/fs-datasource-engine";
 
 import { createEventBus, type EventBus } from "../../events/event-bus.js";
-import type { EventName, EventPayloadMap } from "@ft5/ipc-contracts/sync-service";
+import type { EventName, EventPayloadMap } from "@cloudstash/ipc-contracts/sync-service";
 
 import {
   createOAuthLoopbackBroker,
@@ -210,7 +210,7 @@ describe("OAuthLoopbackBroker — reconnect account anchor (§7)", () => {
       engineContext,
       factory,
       getOAuthAppConfig: makeGetOAuthAppConfig(),
-      dataDir: "/tmp/ft5-test-data-dir",
+      dataDir: "/tmp/cloudstash-test-data-dir",
     });
 
     const { correlationId } = await broker.start({
@@ -236,7 +236,7 @@ describe("OAuthLoopbackBroker — reconnect account anchor (§7)", () => {
       engineContext,
       factory,
       getOAuthAppConfig: makeGetOAuthAppConfig(),
-      dataDir: "/tmp/ft5-test-data-dir",
+      dataDir: "/tmp/cloudstash-test-data-dir",
     });
 
     const { correlationId } = await broker.start({ providerId: "google-drive" });
@@ -268,7 +268,7 @@ describe("OAuthLoopbackBroker — reconnect account anchor (§7)", () => {
       engineContext,
       factory,
       getOAuthAppConfig: makeGetOAuthAppConfig(),
-      dataDir: "/tmp/ft5-test-data-dir",
+      dataDir: "/tmp/cloudstash-test-data-dir",
     });
 
     const { correlationId } = await broker.start({
@@ -294,7 +294,7 @@ describe("OAuthLoopbackBroker — reconnect account anchor (§7)", () => {
       engineContext,
       factory,
       getOAuthAppConfig: makeGetOAuthAppConfig(),
-      dataDir: "/tmp/ft5-test-data-dir",
+      dataDir: "/tmp/cloudstash-test-data-dir",
     });
 
     const { correlationId } = await broker.start({
@@ -323,7 +323,7 @@ describe("OAuthLoopbackBroker — reconnect account anchor (§7)", () => {
       engineContext,
       factory,
       getOAuthAppConfig: makeGetOAuthAppConfig(),
-      dataDir: "/tmp/ft5-test-data-dir",
+      dataDir: "/tmp/cloudstash-test-data-dir",
     });
 
     const { correlationId } = await broker.start({
@@ -370,7 +370,7 @@ describe("OAuthLoopbackBroker — reconnect account anchor (§7)", () => {
       engineContext,
       factory,
       getOAuthAppConfig: makeGetOAuthAppConfig(),
-      dataDir: "/tmp/ft5-test-data-dir",
+      dataDir: "/tmp/cloudstash-test-data-dir",
     });
 
     const { correlationId } = await broker.start({
@@ -414,7 +414,7 @@ describe("OAuthLoopbackBroker — reconnect account anchor (§7)", () => {
       engineContext,
       factory,
       getOAuthAppConfig: makeGetOAuthAppConfig(),
-      dataDir: "/tmp/ft5-test-data-dir",
+      dataDir: "/tmp/cloudstash-test-data-dir",
     });
 
     const { correlationId } = await broker.start({
@@ -464,7 +464,7 @@ describe("OAuthLoopbackBroker — reconnect account anchor (§7)", () => {
       engineContext,
       factory,
       getOAuthAppConfig: makeGetOAuthAppConfig(),
-      dataDir: "/tmp/ft5-test-data-dir",
+      dataDir: "/tmp/cloudstash-test-data-dir",
     });
 
     const { correlationId } = await broker.start({

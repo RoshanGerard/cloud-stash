@@ -5,7 +5,7 @@
 // see one consistent on-disk shape across the service's two config files.
 //
 // Spec: `openspec/changes/implement-datasource-onboarding/specs/fs-sync-service/spec.md`
-// Requirement "ServiceConfigStore reads ~/ft5/sync_app/config.json for OAuth
+// Requirement "ServiceConfigStore reads ~/cloudstash/sync_app/config.json for OAuth
 // app config" + design.md Decision 4. The thrown `ServiceConfigMissingError`
 // surfaces through `handleAuthenticateStart` (§9) as the wire error
 // `{ tag: "service-config-missing", path, providerId }`.
@@ -18,9 +18,9 @@
 import * as fsp from "node:fs/promises";
 import * as path from "node:path";
 
-import type { ServiceConfig } from "@ft5/ipc-contracts/sync-service";
-import type { ProviderId } from "@ft5/ipc-contracts";
-import type { OAuthAppConfig } from "@ft5/fs-datasource-engine";
+import type { ServiceConfig } from "@cloudstash/ipc-contracts/sync-service";
+import type { ProviderId } from "@cloudstash/ipc-contracts";
+import type { OAuthAppConfig } from "@cloudstash/fs-datasource-engine";
 
 import { isValidDownloadHistory } from "./download-history-settings.js";
 

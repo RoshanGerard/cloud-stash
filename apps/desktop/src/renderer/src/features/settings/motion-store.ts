@@ -12,7 +12,7 @@ import { useSyncExternalStore } from "react"
  *   - "always-on"  → default. Custom animations (sync-pulse, sync-ripple,
  *                    skeleton-shimmer) run unconditionally. The storage key
  *                    is absent and `data-motion` is NOT set on <html>.
- *   - "safe"       → user opt-in. Writes `localStorage["ft5.motion"] = "safe"`
+ *   - "safe"       → user opt-in. Writes `localStorage["cloudstash.motion"] = "safe"`
  *                    and sets `data-motion="safe"` on <html>. A CSS override
  *                    in globals.css (`html[data-motion="safe"]` under a
  *                    `prefers-reduced-motion: reduce` media query) then
@@ -31,7 +31,7 @@ import { useSyncExternalStore } from "react"
 
 export type MotionPreference = "always-on" | "safe"
 
-export const MOTION_STORAGE_KEY = "ft5.motion"
+export const MOTION_STORAGE_KEY = "cloudstash.motion"
 
 const listeners = new Set<() => void>()
 

@@ -17,7 +17,7 @@ import { unlink as nodeUnlink } from "node:fs/promises";
 
 import type Database from "better-sqlite3";
 
-import { FilesErrorTag } from "@ft5/ipc-contracts";
+import { FilesErrorTag } from "@cloudstash/ipc-contracts";
 
 import type { CommandHandler } from "../ipc/server.js";
 

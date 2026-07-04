@@ -34,7 +34,7 @@ import {
   within,
 } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
-import type { FileEntry } from "@ft5/ipc-contracts";
+import type { FileEntry } from "@cloudstash/ipc-contracts";
 
 // FileExplorer now calls `useRouter()` for the back-to-dashboard button.
 // Mock `next/navigation` so the App Router invariant doesn't fire.

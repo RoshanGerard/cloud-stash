@@ -22,7 +22,7 @@ afterEach(async () => {
 function scratch(): string {
   const f = path.join(
     os.tmpdir(),
-    `ft5-sync-hash-${Date.now()}-${Math.random().toString(36).slice(2)}.bin`,
+    `cloudstash-sync-hash-${Date.now()}-${Math.random().toString(36).slice(2)}.bin`,
   );
   cleanup.push(f);
   return f;

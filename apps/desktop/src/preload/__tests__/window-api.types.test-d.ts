@@ -8,7 +8,7 @@ import type {
   SyncListJobsResponse,
   SyncListLeftoverResponse,
   SyncSetConfigResponse,
-} from "@ft5/ipc-contracts/sync-service-desktop";
+} from "@cloudstash/ipc-contracts/sync-service-desktop";
 
 // Type-level test for the window.api.sync branch declared in window-api.d.ts.
 //

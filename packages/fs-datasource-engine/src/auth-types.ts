@@ -2,7 +2,7 @@
 //
 // `OAuthAppConfig` is the typed shape of an OAuth application registration
 // (clientId / Secret / redirectUri are vendor-side identifiers obtained by
-// registering FT5 in the provider's developer console — distinct from
+// registering CloudStash in the provider's developer console — distinct from
 // per-user tokens which live in `StoredCredentials`). It is consumed by:
 //
 //   - `factory.createForAuth(providerId, oauthAppConfig, ctx)` (the

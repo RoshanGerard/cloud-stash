@@ -11,7 +11,7 @@
 // Pure predicate over `unknown`; no I/O and no dependency beyond the engine's
 // `DatasourceError` type.
 
-import { DatasourceError, DatasourceErrorTag } from "@ft5/ipc-contracts";
+import { DatasourceError, DatasourceErrorTag } from "@cloudstash/ipc-contracts";
 
 /**
  * Predicate gating the environmental retry layer (Layer 3 per

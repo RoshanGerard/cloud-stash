@@ -16,7 +16,7 @@
 
 import type Database from "better-sqlite3";
 
-import type { ServiceConfig } from "@ft5/ipc-contracts/sync-service";
+import type { ServiceConfig } from "@cloudstash/ipc-contracts/sync-service";
 
 import { resolveRetentionSettings } from "../config/download-history-settings.js";
 import { pruneDownloadHistory, type PruneFs } from "./prune.js";

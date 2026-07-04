@@ -20,7 +20,7 @@ import {
   COMMAND_NAMES,
   type RequestFrame,
   type ResponseFrame,
-} from "@ft5/ipc-contracts/sync-service";
+} from "@cloudstash/ipc-contracts/sync-service";
 import { buildMirrorSyncExecutor } from "../executors/mirror-sync.js";
 import { FramingDecoder } from "../ipc/framing.js";
 import { startServer, type RunningServer } from "../ipc/server.js";
@@ -37,18 +37,18 @@ let scheduler: Scheduler | null = null;
 
 function pipeFor(tag: string): string {
   if (process.platform === "win32") {
-    return `\\\\.\\pipe\\ft5-sync-int-${tag}-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    return `\\\\.\\pipe\\cloudstash-sync-int-${tag}-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
   }
   return path.join(
     os.tmpdir(),
-    `ft5-sync-int-${tag}-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}.sock`,
+    `cloudstash-sync-int-${tag}-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}.sock`,
   );
 }
 
 function scratchDb(): string {
   const f = path.join(
     os.tmpdir(),
-    `ft5-sync-int-${Date.now()}-${Math.random().toString(36).slice(2)}.db`,
+    `cloudstash-sync-int-${Date.now()}-${Math.random().toString(36).slice(2)}.db`,
   );
   cleanup.push(f);
   return f;

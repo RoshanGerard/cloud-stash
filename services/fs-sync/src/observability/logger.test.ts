@@ -23,7 +23,7 @@ afterEach(async () => {
 function scratch(): string {
   const d = path.join(
     os.tmpdir(),
-    `ft5-sync-log-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    `cloudstash-sync-log-${Date.now()}-${Math.random().toString(36).slice(2)}`,
   );
   cleanup.push(d);
   return path.join(d, "service.log");

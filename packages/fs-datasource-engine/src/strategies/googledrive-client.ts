@@ -96,13 +96,13 @@ import type {
   Quota,
   StoredCredentials,
   Target,
-} from "@ft5/ipc-contracts";
+} from "@cloudstash/ipc-contracts";
 import {
   DatasourceError,
   DatasourceErrorTag,
   GOOGLE_APPS_EXPORT_FORMATS,
-} from "@ft5/ipc-contracts";
-import type { GoogleAppsExportableMime } from "@ft5/ipc-contracts";
+} from "@cloudstash/ipc-contracts";
+import type { GoogleAppsExportableMime } from "@cloudstash/ipc-contracts";
 
 import type { PreAuthConfig } from "../auth-types.js";
 import { parseIdToken, IdTokenError } from "../oauth/id-token.js";

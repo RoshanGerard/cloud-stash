@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 //
 // Pre-paint motion bootstrap — asserts that the inline `<script>` that
-// runs before React mounts reads `localStorage["ft5.motion"]` and applies
+// runs before React mounts reads `localStorage["cloudstash.motion"]` and applies
 // `data-motion="safe"` on <html> synchronously. Mirrors the pattern used
 // for the theme bootstrap script (features/theme/__tests__/no-fouc.test.tsx).
 
@@ -9,7 +9,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { MOTION_BOOTSTRAP_SCRIPT } from "../motion-script";
 
-const MOTION_STORAGE_KEY = "ft5.motion";
+const MOTION_STORAGE_KEY = "cloudstash.motion";
 
 function runBootstrap(): void {
   new Function(MOTION_BOOTSTRAP_SCRIPT)();

@@ -3,7 +3,7 @@
 import { useCallback, useRef, useState } from "react";
 import type { KeyboardEvent as ReactKeyboardEvent } from "react";
 
-import type { FileEntry } from "@ft5/ipc-contracts";
+import type { FileEntry } from "@cloudstash/ipc-contracts";
 
 import type { ExplorerStore } from "./store";
 

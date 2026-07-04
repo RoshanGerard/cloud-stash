@@ -14,7 +14,7 @@
 //   fs-sync-service/spec.md "Requirement: `UploadRegistry` tracks
 //   in-flight uploads in memory".
 //
-// Naming note. The IPC-exposed `UploadJob` from `@ft5/ipc-contracts`
+// Naming note. The IPC-exposed `UploadJob` from `@cloudstash/ipc-contracts`
 // (sync-service/commands.ts) is the wire shape — `uploadJobId`,
 // `datasourceId`, `sourcePath`, `targetPath`, `bytesUploaded`,
 // `contentLength`, `startedAt`, no `abortController`. This service-internal
@@ -38,7 +38,7 @@
  * bytes. The `update` API enforces this at the type level via
  * `UploadJobUpdate`.
  *
- * Mirrors the IPC-exposed `UploadJob` from `@ft5/ipc-contracts`
+ * Mirrors the IPC-exposed `UploadJob` from `@cloudstash/ipc-contracts`
  * (sync-service/commands.ts) plus an `abortController` field. Field
  * `readonly` markers match the IPC type so projecting one to the other in
  * §10.1 is a structural drop-the-controller.

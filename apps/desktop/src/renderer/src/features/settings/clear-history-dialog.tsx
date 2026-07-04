@@ -16,7 +16,7 @@ import { toast } from "sonner";
 import type {
   DownloadTerminalStatus,
   SyncClearDownloadHistoryRequest,
-} from "@ft5/ipc-contracts/sync-service-desktop";
+} from "@cloudstash/ipc-contracts/sync-service-desktop";
 
 import { Button } from "@/components/ui/button";
 import {

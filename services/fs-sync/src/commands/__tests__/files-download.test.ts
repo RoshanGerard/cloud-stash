@@ -20,18 +20,18 @@ import type {
   DownloadOptions,
   DownloadResult,
   Target,
-} from "@ft5/fs-datasource-engine";
+} from "@cloudstash/fs-datasource-engine";
 import type {
   DatasourceFileEntry,
   DatasourceType,
   EventName,
   EventPayloadMap,
-} from "@ft5/ipc-contracts";
+} from "@cloudstash/ipc-contracts";
 import {
   DatasourceError,
   DatasourceErrorTag,
   FilesErrorTag,
-} from "@ft5/ipc-contracts";
+} from "@cloudstash/ipc-contracts";
 
 import { createDownloadRegistry } from "../../downloads/registry.js";
 import { applyMigrations } from "../../db/migrations.js";
@@ -272,7 +272,7 @@ function streamFromBytes(buf: Buffer): Readable {
 // normalize differs from input — using `path.join` produces canonical
 // absolute paths that won't trip that check on either platform.
 const HOMEDIR = nodePath.resolve(nodePath.sep, "home", "alice");
-const SYNC_APP_DIR = nodePath.join(HOMEDIR, "ft5", "sync_app");
+const SYNC_APP_DIR = nodePath.join(HOMEDIR, "cloudstash", "sync_app");
 const PARENT = nodePath.join(HOMEDIR, "Downloads");
 const TO_PATH = nodePath.join(PARENT, "welcome.pdf");
 
@@ -541,7 +541,7 @@ describe("files:download — toPath validation (§13.3, §13.4)", () => {
     expect(downloadFile).not.toHaveBeenCalled();
   });
 
-  it("rejects a path inside the service data dir `~/ft5/sync_app/`", async () => {
+  it("rejects a path inside the service data dir `~/cloudstash/sync_app/`", async () => {
     const downloadFile = vi.fn();
     const handler = makeFilesDownloadHandler(
       makeDeps({

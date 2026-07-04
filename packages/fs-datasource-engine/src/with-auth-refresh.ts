@@ -16,8 +16,8 @@
 // use it or implement their own retry policy directly against the public
 // `refreshCredentials()` primitive.
 
-import { DatasourceError, DatasourceErrorTag } from "@ft5/ipc-contracts";
-import type { DatasourceType } from "@ft5/ipc-contracts";
+import { DatasourceError, DatasourceErrorTag } from "@cloudstash/ipc-contracts";
+import type { DatasourceType } from "@cloudstash/ipc-contracts";
 
 import type { DatasourceClient } from "./base-client.js";
 

@@ -93,17 +93,17 @@ import type {
   DownloadResult,
   FileMetadata,
   Target,
-} from "@ft5/fs-datasource-engine";
-import { withAuthRefresh } from "@ft5/fs-datasource-engine";
+} from "@cloudstash/fs-datasource-engine";
+import { withAuthRefresh } from "@cloudstash/fs-datasource-engine";
 import type {
   DatasourceFileEntry,
   DatasourceType,
-} from "@ft5/ipc-contracts";
+} from "@cloudstash/ipc-contracts";
 import {
   DatasourceError,
   DatasourceErrorTag,
   FilesErrorTag,
-} from "@ft5/ipc-contracts";
+} from "@cloudstash/ipc-contracts";
 
 import type { CommandHandler } from "../ipc/server.js";
 import type { EventBus } from "../events/event-bus.js";

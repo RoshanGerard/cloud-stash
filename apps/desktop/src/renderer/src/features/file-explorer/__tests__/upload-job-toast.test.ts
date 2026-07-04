@@ -49,7 +49,7 @@
 // injected so the helper is exercised as a plain function — no Sonner,
 // no window.api.
 
-import { FilesErrorTag } from "@ft5/ipc-contracts";
+import { FilesErrorTag } from "@cloudstash/ipc-contracts";
 import { beforeEach, describe, expect, it, vi, type Mock } from "vitest";
 
 import {

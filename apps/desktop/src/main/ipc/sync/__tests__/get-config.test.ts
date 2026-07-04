@@ -9,7 +9,7 @@
 
 import { describe, expect, it, vi } from "vitest";
 
-import type { ServiceConfig } from "@ft5/ipc-contracts/sync-service-desktop";
+import type { ServiceConfig } from "@cloudstash/ipc-contracts/sync-service-desktop";
 
 import type { SyncClient } from "../../../sync/client.js";
 import { SyncCommandError } from "../../../sync/client.js";

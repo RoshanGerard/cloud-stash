@@ -20,8 +20,8 @@
 import type {
   SyncAuthenticateStartRequest,
   SyncAuthenticateStartResponse,
-} from "@ft5/ipc-contracts/sync-service-desktop";
-import type { SyncAuthenticateStartError } from "@ft5/ipc-contracts/sync-service";
+} from "@cloudstash/ipc-contracts/sync-service-desktop";
+import type { SyncAuthenticateStartError } from "@cloudstash/ipc-contracts/sync-service";
 
 import { SyncClient, SyncCommandError } from "../../sync/client.js";
 import { getSyncClient } from "../../sync/sync-client-holder.js";

@@ -26,7 +26,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 
-import type { DatasourceSummary } from "@ft5/ipc-contracts";
+import type { DatasourceSummary } from "@cloudstash/ipc-contracts";
 
 import { Button } from "@/components/ui/button";
 import { DatasourcesProvider } from "@/features/datasources/store";
@@ -54,7 +54,7 @@ function providerKindFromId(providerId: string): ProviderKind {
   }
 }
 
-import type { DatasourceStatus } from "@ft5/ipc-contracts";
+import type { DatasourceStatus } from "@cloudstash/ipc-contracts";
 
 type ResolutionState =
   | { phase: "resolving" }

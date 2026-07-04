@@ -19,7 +19,7 @@
 // `readonly string[]`, so a later mutation of the OS buffer would be
 // a subtle bug.
 
-import type { DatasourcesPickFilesResponse } from "@ft5/ipc-contracts";
+import type { DatasourcesPickFilesResponse } from "@cloudstash/ipc-contracts";
 
 export interface PickFilesToUploadDeps {
   readonly showOpenDialog: () => Promise<{

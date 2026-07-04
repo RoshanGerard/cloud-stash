@@ -12,8 +12,8 @@
 // option with no source edit here. The extensibility test
 // `add-dialog-extensibility.test.tsx` enforces this via a regex scan.
 
-import { providers } from "@ft5/ipc-contracts";
-import type { ProviderDescriptor } from "@ft5/ipc-contracts";
+import { providers } from "@cloudstash/ipc-contracts";
+import type { ProviderDescriptor } from "@cloudstash/ipc-contracts";
 
 import { Icon, type IconName } from "@/components/icon";
 import { cn } from "@/lib/utils";

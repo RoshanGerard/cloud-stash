@@ -2,7 +2,7 @@
 // package (no Electron imports). The runtime surface (BaseDatasourceClient,
 // ClientFactory, ProviderRegistry, concrete strategies) arrives in
 // Phases 3–8. For now the package re-exports the shared contract types that
-// live in `@ft5/ipc-contracts` so consumers can begin programming against the
+// live in `@cloudstash/ipc-contracts` so consumers can begin programming against the
 // public types without yet instantiating any runtime.
 export type {
   AuthIntent,
@@ -18,8 +18,8 @@ export type {
   Quota,
   StoredCredentials,
   Target,
-} from "@ft5/ipc-contracts";
-export { DatasourceError } from "@ft5/ipc-contracts";
+} from "@cloudstash/ipc-contracts";
+export { DatasourceError } from "@cloudstash/ipc-contracts";
 
 // migrate-engine-events-to-consumer Decision 1: the engine no longer owns an
 // event bus. Public methods return typed results or throw a normalized

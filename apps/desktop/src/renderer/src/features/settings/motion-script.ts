@@ -17,8 +17,8 @@
  *    no-fouc-motion test guards the effective behaviour.
  *
  * State machine:
- *   localStorage["ft5.motion"] === "safe"  → setAttribute data-motion="safe"
+ *   localStorage["cloudstash.motion"] === "safe"  → setAttribute data-motion="safe"
  *   otherwise                              → removeAttribute data-motion
  */
 // ES5-safe: `var`, no arrow fns, no optional chaining.
-export const MOTION_BOOTSTRAP_SCRIPT = `(function(){try{var k="ft5.motion";var v=null;try{v=window.localStorage.getItem(k)}catch(_){v=null}var d=document.documentElement;if(v==="safe"){d.setAttribute("data-motion","safe")}else{d.removeAttribute("data-motion")}}catch(_){}})();`
+export const MOTION_BOOTSTRAP_SCRIPT = `(function(){try{var k="cloudstash.motion";var v=null;try{v=window.localStorage.getItem(k)}catch(_){v=null}var d=document.documentElement;if(v==="safe"){d.setAttribute("data-motion","safe")}else{d.removeAttribute("data-motion")}}catch(_){}})();`

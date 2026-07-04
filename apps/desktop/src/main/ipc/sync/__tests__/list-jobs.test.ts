@@ -13,8 +13,8 @@ import { describe, expect, it, vi } from "vitest";
 import type {
   JobStatus,
   JobSummary,
-} from "@ft5/ipc-contracts/sync-service";
-import type { SyncListJobsRequest } from "@ft5/ipc-contracts/sync-service-desktop";
+} from "@cloudstash/ipc-contracts/sync-service";
+import type { SyncListJobsRequest } from "@cloudstash/ipc-contracts/sync-service-desktop";
 
 import type { SyncClient } from "../../../sync/client.js";
 import { handleSyncListJobs } from "../list-jobs.js";

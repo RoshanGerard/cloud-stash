@@ -7,7 +7,7 @@
 // Prerequisites:
 //   - `pnpm install` has been run at the repo root.
 //   - Node >= 22 (the engine pin in root package.json is 24.14.1).
-//   - No other ft5-sync-dev service instance is currently running (a stale
+//   - No other cloudstash-sync-dev service instance is currently running (a stale
 //     `service-dev.pid` from a crashed process on the same data dir will
 //     cause the service to exit 3 — clean it up before running).
 //
@@ -48,9 +48,9 @@
 // Pre-existing Unix path mismatch (out of scope for sections 11.1-11.4 —
 // flagged for section-12 cleanup): the desktop's
 // `apps/desktop/src/main/sync/pipe-paths.ts` resolves dev to
-// `$HOME/ft5/sync_app/sync-dev.sock` while the service binds
-// `$HOME/ft5/sync_app/dev/sync-dev.sock`. On Windows both sides agree
-// (`\\.\pipe\ft5-sync-dev`). This smoke dials the SERVICE-bound path so it
+// `$HOME/cloudstash/sync_app/sync-dev.sock` while the service binds
+// `$HOME/cloudstash/sync_app/dev/sync-dev.sock`. On Windows both sides agree
+// (`\\.\pipe\cloudstash-sync-dev`). This smoke dials the SERVICE-bound path so it
 // proves the service half of `pnpm dev` works, but the desktop supervisor
 // will fail to dial on Mac/Linux until the mirror file is fixed.
 
@@ -85,17 +85,17 @@ function logErr(msg) {
 // ---- inlined path resolution (mirrors services/fs-sync/src/env/paths.ts) ----
 
 function resolveDataDir({ dev }) {
-  const override = process.env["FT5_SYNC_DATA_DIR"];
+  const override = process.env["CLOUDSTASH_SYNC_DATA_DIR"];
   if (override !== undefined && override !== "") {
     return override;
   }
-  const root = path.join(os.homedir(), "ft5", "sync_app");
+  const root = path.join(os.homedir(), "cloudstash", "sync_app");
   return dev ? path.join(root, "dev") : root;
 }
 
 function resolveSocketPath({ dev }) {
   if (IS_WIN) {
-    return dev ? "\\\\.\\pipe\\ft5-sync-dev" : "\\\\.\\pipe\\ft5-sync";
+    return dev ? "\\\\.\\pipe\\cloudstash-sync-dev" : "\\\\.\\pipe\\cloudstash-sync";
   }
   const basename = dev ? "sync-dev.sock" : "sync.sock";
   return path.join(resolveDataDir({ dev }), basename);

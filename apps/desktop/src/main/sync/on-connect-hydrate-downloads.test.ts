@@ -23,7 +23,7 @@
 
 import { describe, expect, it, vi } from "vitest";
 
-import type { DownloadJob } from "@ft5/ipc-contracts/sync-service";
+import type { DownloadJob } from "@cloudstash/ipc-contracts/sync-service";
 
 import { hydrateActiveDownloadsOnce } from "./on-connect-hydrate-downloads.js";
 
@@ -34,7 +34,7 @@ describe("hydrateActiveDownloadsOnce — fire-once on-supervisor-connect", () =>
         downloadJobId: "dl-1",
         datasourceId: "ds-1",
         sourcePath: "/projects/2026/welcome.pdf",
-        targetPath: "/Users/alice/Downloads/ft5/welcome.pdf",
+        targetPath: "/Users/alice/Downloads/CloudStash/welcome.pdf",
         bytesDownloaded: 12_345,
         contentLength: 100_000,
         startedAt: 1_700_000_000_000,

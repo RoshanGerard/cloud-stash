@@ -9,7 +9,7 @@ import type {
   FilesSearchRequest,
   FilesSearchValue,
   MimeFamily,
-} from "@ft5/ipc-contracts";
+} from "@cloudstash/ipc-contracts";
 
 import {
   enumerateSeededDirectorySizes,

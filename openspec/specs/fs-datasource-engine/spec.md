@@ -2,7 +2,7 @@
 
 ## Purpose
 
-The `fs-datasource-engine` capability is the shared, framework-agnostic main-process module that every datasource IPC handler calls into. It owns the public strategy interface (`DatasourceClient<T>`), the template base class that wraps every operation with event emission and single-flight token refresh, the factory and provider registry, the typed event bus with its streaming-throttle semantics, the credential-store port contract, the authentication-intent surface that keeps Electron UI out of the engine, and the normalized `DatasourceError` taxonomy. Concrete strategies for Amazon S3, OneDrive, and Google Drive conform to the interface; the engine lives at `packages/fs-datasource-engine` and imports only from `@ft5/ipc-contracts`, Node built-ins, and provider SDKs.
+The `fs-datasource-engine` capability is the shared, framework-agnostic main-process module that every datasource IPC handler calls into. It owns the public strategy interface (`DatasourceClient<T>`), the template base class that wraps every operation with event emission and single-flight token refresh, the factory and provider registry, the typed event bus with its streaming-throttle semantics, the credential-store port contract, the authentication-intent surface that keeps Electron UI out of the engine, and the normalized `DatasourceError` taxonomy. Concrete strategies for Amazon S3, OneDrive, and Google Drive conform to the interface; the engine lives at `packages/fs-datasource-engine` and imports only from `@cloudstash/ipc-contracts`, Node built-ins, and provider SDKs.
 ## Requirements
 ### Requirement: Engine is a framework-agnostic workspace package
 
@@ -11,12 +11,12 @@ The FS Datasource Engine SHALL live at `packages/fs-datasource-engine` as a pnpm
 #### Scenario: No Electron imports in the engine package
 
 - **WHEN** a Vitest test grep-scans every `.ts` file under `packages/fs-datasource-engine/src/` for import specifiers
-- **THEN** no file imports from `electron`, `@electron/*`, or any path under `apps/desktop/`; the only runtime imports are `@ft5/ipc-contracts`, Node built-ins, and provider SDK packages (`@aws-sdk/client-s3`, `@microsoft/microsoft-graph-client`, `googleapis`)
+- **THEN** no file imports from `electron`, `@electron/*`, or any path under `apps/desktop/`; the only runtime imports are `@cloudstash/ipc-contracts`, Node built-ins, and provider SDK packages (`@aws-sdk/client-s3`, `@microsoft/microsoft-graph-client`, `googleapis`)
 
 #### Scenario: Engine is consumed only by main-process IPC handlers
 
 - **WHEN** a Vitest test scans every `.ts` / `.tsx` file under `apps/desktop/src/renderer/` and `apps/desktop/src/preload/`
-- **THEN** no file imports from `@ft5/fs-datasource-engine`; only files under `apps/desktop/src/main/` (specifically the IPC handlers) import the engine
+- **THEN** no file imports from `@cloudstash/fs-datasource-engine`; only files under `apps/desktop/src/main/` (specifically the IPC handlers) import the engine
 
 ### Requirement: Public contract is the generic `DatasourceClient<T>` Strategy interface
 
@@ -614,7 +614,7 @@ Drive and OneDrive strategies maintain a path-handle LRU cache. After this migra
 
 ### Requirement: Engine exports a `withAuthRefresh` retry helper
 
-The engine SHALL export `withAuthRefresh<R>(client, op): Promise<R>` from `@ft5/fs-datasource-engine` as the default, replaceable one-shot refresh-then-retry policy. It SHALL run `op()`; if `op` rejects with a `DatasourceError` whose `tag === "auth-expired"`, it SHALL call `client.refreshCredentials()` and then retry `op()` exactly once. Any rejection whose tag is NOT `auth-expired` SHALL propagate WITHOUT a refresh. A second `auth-expired` thrown by the retry SHALL propagate unchanged (the helper does NOT refresh twice). The helper SHALL remain framework-agnostic — it SHALL NOT reference any specific caller (e.g., fs-sync). Callers MAY use it or implement their own retry policy against the public `refreshCredentials()` primitive.
+The engine SHALL export `withAuthRefresh<R>(client, op): Promise<R>` from `@cloudstash/fs-datasource-engine` as the default, replaceable one-shot refresh-then-retry policy. It SHALL run `op()`; if `op` rejects with a `DatasourceError` whose `tag === "auth-expired"`, it SHALL call `client.refreshCredentials()` and then retry `op()` exactly once. Any rejection whose tag is NOT `auth-expired` SHALL propagate WITHOUT a refresh. A second `auth-expired` thrown by the retry SHALL propagate unchanged (the helper does NOT refresh twice). The helper SHALL remain framework-agnostic — it SHALL NOT reference any specific caller (e.g., fs-sync). Callers MAY use it or implement their own retry policy against the public `refreshCredentials()` primitive.
 
 #### Scenario: Refreshes once then succeeds
 
@@ -713,7 +713,7 @@ The engine SHALL provide `abstract class BaseDatasourceClient<T extends Datasour
 
 ### Requirement: The engine defines no event bus; consumers own event emission
 
-The engine SHALL NOT define, export, instantiate, or inject an EventBus. `EngineContext` SHALL be `{ credentialStore: CredentialStore }` with NO bus field. The engine package entry point SHALL NOT export `createEventBus`, `EventBus`, `EventBusOptions`, `Clock`, or `ClockTimer`; `@ft5/ipc-contracts` SHALL NOT export `DatasourceEvent`, `AnyDatasourceEvent`, `PayloadMap`, or `CanonicalEventPayloads`. Callers observe operation outcomes via return values and thrown normalized `DatasourceError`, and progress via `options.onProgress`. Each consumer emits its own domain events on its own pub/sub mechanism.
+The engine SHALL NOT define, export, instantiate, or inject an EventBus. `EngineContext` SHALL be `{ credentialStore: CredentialStore }` with NO bus field. The engine package entry point SHALL NOT export `createEventBus`, `EventBus`, `EventBusOptions`, `Clock`, or `ClockTimer`; `@cloudstash/ipc-contracts` SHALL NOT export `DatasourceEvent`, `AnyDatasourceEvent`, `PayloadMap`, or `CanonicalEventPayloads`. Callers observe operation outcomes via return values and thrown normalized `DatasourceError`, and progress via `options.onProgress`. Each consumer emits its own domain events on its own pub/sub mechanism.
 
 #### Scenario: No event-bus surface in the engine package
 
@@ -727,14 +727,14 @@ The engine SHALL NOT define, export, instantiate, or inject an EventBus. `Engine
 
 #### Scenario: Public exports drop the event types
 
-- **WHEN** a typed test imports from `@ft5/fs-datasource-engine` and `@ft5/ipc-contracts`
+- **WHEN** a typed test imports from `@cloudstash/fs-datasource-engine` and `@cloudstash/ipc-contracts`
 - **THEN** no `EventBus` / `createEventBus` / `DatasourceEvent` / `AnyDatasourceEvent` / `PayloadMap` symbol is exported
 
 ### Requirement: `DatasourceErrorTag` values are referenced via the const object, not raw string literals
 
 Every TypeScript source and test file SHALL reference `DatasourceErrorTag`
 values through the `DatasourceErrorTag` const object exported from
-`@ft5/ipc-contracts` (e.g. `DatasourceErrorTag.AuthRevoked`) — across the
+`@cloudstash/ipc-contracts` (e.g. `DatasourceErrorTag.AuthRevoked`) — across the
 workspace (`packages/`, `services/`, `apps/`, `scripts/`, `tools/`) — rather than
 the equivalent raw string literal (e.g. `"auth-revoked"`) in any
 error-tag context: construction (`tag: ...`), comparison (`tag === ...` /
@@ -753,7 +753,7 @@ agree on the same tag vocabulary and field set:
 - The const-convention **guard test**
   (`packages/ipc-contracts/src/__tests__/error-tag-const-convention.test.ts`)
   — a non-bypassable CI/test-time backstop that grep-scans the workspace.
-- A custom **ESLint rule** `ft5/no-raw-error-tag-literal`
+- A custom **ESLint rule** `cloudstash/no-raw-error-tag-literal`
   (`tools/eslint-rules/no-raw-error-tag-literal.mjs`, wired as an inline
   plugin in `eslint.config.mjs`) — an AST rule providing editor-time
   feedback and opt-in suggestions. It is syntactic (no type services); it
@@ -786,7 +786,7 @@ The following are explicitly EXEMPT and MAY remain raw strings:
   out of scope; its only value shared with `DatasourceErrorTag` is
   `not-found`. A `not-found` literal on a `SyncCommandError` / `sync:*`
   site stays raw — recorded in the guard allowlist and carrying an
-  `// eslint-disable-next-line ft5/no-raw-error-tag-literal -- <reason>`
+  `// eslint-disable-next-line cloudstash/no-raw-error-tag-literal -- <reason>`
   for the rule — while `not-found` on a `DatasourceError` site MUST migrate.
 
 Because the five values shared with `FilesErrorTag` (`auth-revoked`,
@@ -814,8 +814,8 @@ engine-layer and map deterministically to `DatasourceErrorTag`.
 
 #### Scenario: ESLint rule flags a raw literal and offers an opt-in suggestion
 
-- **WHEN** a developer writes `tag: "auth-revoked"` (or any tag value in an enforced field) in editor and ESLint evaluates `ft5/no-raw-error-tag-literal`
-- **THEN** the rule reports the violation and offers opt-in suggestion(s) to the const reference (one suggestion for an unambiguous value; two — `DatasourceErrorTag.*` and `FilesErrorTag.*` — for one of the five shared values on `tag` / `errorTag`), inserting the `@ft5/ipc-contracts` import if absent; the rule never applies a fix via `eslint --fix`
+- **WHEN** a developer writes `tag: "auth-revoked"` (or any tag value in an enforced field) in editor and ESLint evaluates `cloudstash/no-raw-error-tag-literal`
+- **THEN** the rule reports the violation and offers opt-in suggestion(s) to the const reference (one suggestion for an unambiguous value; two — `DatasourceErrorTag.*` and `FilesErrorTag.*` — for one of the five shared values on `tag` / `errorTag`), inserting the `@cloudstash/ipc-contracts` import if absent; the rule never applies a fix via `eslint --fix`
 
 #### Scenario: ESLint rule does not flag type-position declarations or off-discriminant `case` arms
 

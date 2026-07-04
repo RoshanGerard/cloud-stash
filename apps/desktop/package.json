@@ -1,15 +1,16 @@
 {
-  "name": "@ft5/desktop",
+  "name": "@cloudstash/desktop",
+  "productName": "CloudStash",
   "private": true,
   "version": "0.0.0",
   "main": "dist/main/index.js",
   "scripts": {
     "postinstall": "electron-rebuild",
-    "prebuild": "pnpm --filter @ft5/ipc-contracts build",
+    "prebuild": "pnpm --filter @cloudstash/ipc-contracts build",
     "build": "electron-vite build",
-    "build:renderer": "pnpm --filter @ft5/renderer build",
+    "build:renderer": "pnpm --filter @cloudstash/renderer build",
     "build:desktop": "electron-vite build",
-    "prebuild:all": "pnpm --filter @ft5/ipc-contracts build",
+    "prebuild:all": "pnpm --filter @cloudstash/ipc-contracts build",
     "build:all": "pnpm build:renderer && pnpm build:desktop",
     "predev": "pnpm build:renderer",
     "dev": "electron-vite dev",
@@ -20,8 +21,8 @@
     "e2e:ui": "playwright test --config=playwright.config.ts --ui"
   },
   "dependencies": {
-    "@ft5/fs-datasource-engine": "workspace:*",
-    "@ft5/ipc-contracts": "workspace:*",
+    "@cloudstash/fs-datasource-engine": "workspace:*",
+    "@cloudstash/ipc-contracts": "workspace:*",
     "better-sqlite3": "12.9.0",
     "drizzle-orm": "0.45.2",
     "electron-updater": "6.8.3"

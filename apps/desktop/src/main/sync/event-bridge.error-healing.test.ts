@@ -13,10 +13,10 @@
 // state. `job-failed` and `job-cancelled` must NOT clear — those may
 // represent genuine error conditions.
 
-import { DatasourceErrorTag } from "@ft5/ipc-contracts";
+import { DatasourceErrorTag } from "@cloudstash/ipc-contracts";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import type { EventFrame } from "@ft5/ipc-contracts/sync-service";
+import type { EventFrame } from "@cloudstash/ipc-contracts/sync-service";
 
 import type { SyncClient } from "./client.js";
 import {

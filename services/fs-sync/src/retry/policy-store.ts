@@ -8,7 +8,7 @@ import type {
   BackoffStrategy,
   RetryPolicy,
   RetryPolicyScope,
-} from "@ft5/ipc-contracts/sync-service";
+} from "@cloudstash/ipc-contracts/sync-service";
 
 export const DEFAULT_POLICY: RetryPolicy = {
   scope: "global",

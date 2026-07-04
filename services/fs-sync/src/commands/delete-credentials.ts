@@ -23,7 +23,7 @@
 // through a single file with no locking either way, and (b) the engine's
 // CredentialStore.delete is documented idempotent.
 
-import type { CredentialStore } from "@ft5/fs-datasource-engine";
+import type { CredentialStore } from "@cloudstash/fs-datasource-engine";
 
 import type { CommandHandler } from "../ipc/server.js";
 

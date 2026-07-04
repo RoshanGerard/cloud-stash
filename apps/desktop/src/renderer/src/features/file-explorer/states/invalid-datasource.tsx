@@ -25,8 +25,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { providers } from "@ft5/ipc-contracts";
-import type { ProviderDescriptor, ProviderId } from "@ft5/ipc-contracts";
+import { providers } from "@cloudstash/ipc-contracts";
+import type { ProviderDescriptor, ProviderId } from "@cloudstash/ipc-contracts";
 
 import { Icon } from "@/components/icon";
 import { Button } from "@/components/ui/button";
@@ -211,7 +211,7 @@ export function InvalidDatasourceState({
   // (`expectedEmail`/`actualEmail`) per D5 — never parsed from `message`.
   const isAccountMismatch =
     sessionState.status === "failed" &&
-    // eslint-disable-next-line ft5/no-raw-error-tag-literal -- AuthFailedTag vocabulary (no const object) — out of scope
+    // eslint-disable-next-line cloudstash/no-raw-error-tag-literal -- AuthFailedTag vocabulary (no const object) — out of scope
     sessionState.tag === "account-mismatch";
   const expectedEmail = isAccountMismatch
     ? sessionState.expectedEmail

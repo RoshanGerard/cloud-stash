@@ -12,13 +12,13 @@
 
 import { describe, expect, it, vi } from "vitest";
 
-import type { DatasourceSummary } from "@ft5/ipc-contracts";
+import type { DatasourceSummary } from "@cloudstash/ipc-contracts";
 import type {
   SyncAuthenticateCompleteRequest,
-} from "@ft5/ipc-contracts/sync-service-desktop";
+} from "@cloudstash/ipc-contracts/sync-service-desktop";
 import type {
   SyncAuthenticateCompleteError,
-} from "@ft5/ipc-contracts/sync-service";
+} from "@cloudstash/ipc-contracts/sync-service";
 
 import type { SyncClient } from "../../../sync/client.js";
 import { SyncCommandError } from "../../../sync/client.js";

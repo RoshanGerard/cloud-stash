@@ -22,15 +22,15 @@ gap that blocked the following entries below:
 - **add-invalid-datasource-state §13.3** ("dashboard banner → Reconnect → banner unmounts") — same.
 
 **Updated `§1 HUMAN ops` instructions** (originally `add-drive-oauth-browser-consent §1.1–1.3`):
-The OAuth app config no longer lives at `apps/desktop/.env.local` (build-time inlined). It now lives at `~/ft5/sync_app/config.json` (service-owned, manual copy + edit).
+The OAuth app config no longer lives at `apps/desktop/.env.local` (build-time inlined). It now lives at `~/cloudstash/sync_app/config.json` (service-owned, manual copy + edit).
 
 Updated steps:
 1. Register a "Desktop app" OAuth 2.0 client in the org-owned GCP project + the equivalent in Azure for OneDrive (full step-by-step in `README.md` § "Provider OAuth registration (one-time setup)").
-2. `cp services/fs-sync/config.example.json ~/ft5/sync_app/config.json` (or PowerShell equivalent on Windows; full command in `README.md`).
+2. `cp services/fs-sync/config.example.json ~/cloudstash/sync_app/config.json` (or PowerShell equivalent on Windows; full command in `README.md`).
 3. Edit the file and populate `clientId` + `clientSecret` for each provider intended to be used.
 4. The previous GitHub Actions secrets `FT5_GOOGLE_OAUTH_CLIENT_ID` / `_SECRET` are obsolete (the build-time defines were removed in this change). Repo secrets stay provisioned-but-unused per design.md Decision 4 (deferred housekeeping).
 
-**Re-verification commands** for §12.x / §13.x: with the new `~/ft5/sync_app/config.json` populated, run `pnpm -F @ft5/desktop dev` and follow each scenario's existing manual flow. The credentials persistence path is now real (service writes via `ConfigFileCredentialStore.put` on every successful authenticate) and the §13.5 "missing-credential surface" arms now reach `<InvalidDatasourceState>` end-to-end.
+**Re-verification commands** for §12.x / §13.x: with the new `~/cloudstash/sync_app/config.json` populated, run `pnpm -F @cloudstash/desktop dev` and follow each scenario's existing manual flow. The credentials persistence path is now real (service writes via `ConfigFileCredentialStore.put` on every successful authenticate) and the §13.5 "missing-credential surface" arms now reach `<InvalidDatasourceState>` end-to-end.
 
 **Owner:** unassigned (HUMAN). To do during the next environment-loop pass.
 
@@ -147,7 +147,7 @@ this feature.
 - §1.3 Create local `apps/desktop/.env.local` (gitignored — pattern
   added by this change) from the committed `apps/desktop/.env.example`
   template, populated with the two values from §1.1. Rebuild via
-  `pnpm --filter @ft5/desktop build:all` so electron-vite's `loadEnv`
+  `pnpm --filter @cloudstash/desktop build:all` so electron-vite's `loadEnv`
   picks them up at the `define` map.
 
 **Status:** PENDING — operational, never automatable.
@@ -155,11 +155,11 @@ this feature.
 **Why deferred:** These are one-time human ops. The codebase wires
 everything correctly (verified by `apps/desktop/src/main/__tests__/oauth-build-constants.test.ts`
 and the `electron.vite.config.ts` non-dev fail-fast guard); they only
-take effect once a real client + secret exist. The `FT5_DEV_CREDENTIALS=1`
+take effect once a real client + secret exist. The `CLOUDSTASH_DEV_CREDENTIALS=1`
 override path is available as a smoke-test workaround that does not
 need any of this (`README.md` Section 2).
 
-**Re-verification command:** With §1 complete, run `pnpm --filter @ft5/desktop build:all`
+**Re-verification command:** With §1 complete, run `pnpm --filter @cloudstash/desktop build:all`
 and grep the resulting `apps/desktop/dist/main/index.js` for the client
 ID — the build inlines it at the `__FT5_GOOGLE_OAUTH_CLIENT_ID__`
 identifier. Length-only check (never echo the value).
@@ -171,9 +171,9 @@ runnable against real Google credentials.
 
 ## add-drive-oauth-browser-consent — §12.1 fresh add + real GCP client smoke
 
-**Scenario** (per the archived tasks.md §12.1): Run `pnpm -F @ft5/desktop dev`
+**Scenario** (per the archived tasks.md §12.1): Run `pnpm -F @cloudstash/desktop dev`
 with `apps/desktop/.env.local` containing real credentials and
-`FT5_DEV_CREDENTIALS` UNSET. Click Add Datasource → Google Drive →
+`CLOUDSTASH_DEV_CREDENTIALS` UNSET. Click Add Datasource → Google Drive →
 Connect. The system browser opens to the Google consent page. Complete
 consent. The dialog auto-closes. A new card appears in the dashboard.
 Upload a small file. Confirm the file appears at the Drive root.
@@ -197,7 +197,7 @@ the archived `design.md` "Known gap — credential persistence" entry.
 merges, repeat the §12.1 manual flow. The desktop broker should
 forward the `AuthResult` to the service via
 `client.authenticateComplete(...)`; the service's
-`ConfigFileCredentialStore` writes to `~/ft5/sync_app/credentials.json`
+`ConfigFileCredentialStore` writes to `~/cloudstash/sync_app/credentials.json`
 or its `--dev` equivalent; exploring the card succeeds and shows the
 Drive root.
 
@@ -239,7 +239,7 @@ plus the revoke step from the Google Account UI.
 ## add-drive-oauth-browser-consent — §12.3 cancel mid-consent smoke
 
 **Scenario** (per the archived tasks.md §12.3): With real GCP
-credentials in `.env.local` (§1 done), run `pnpm -F @ft5/desktop dev`,
+credentials in `.env.local` (§1 done), run `pnpm -F @cloudstash/desktop dev`,
 click Add Datasource → Google Drive → Connect. The browser opens to
 Google. Without completing consent, close the dialog in the desktop app
 (X / Escape / outside-click). The browser tab can be left open or
@@ -302,7 +302,7 @@ complete the second consent normally.
 
 With a connected real-GCP Google Drive datasource (id `ds-X`),
 manually delete its credential from the fs-sync-service credential
-file (`~/ft5/sync_app/credentials.json`, or the `--dev` equivalent).
+file (`~/cloudstash/sync_app/credentials.json`, or the `--dev` equivalent).
 Open the Explore page for `ds-X`. The file-explorer should render
 `<InvalidDatasourceState>` (red `AlertTriangle` icon, headline "This
 datasource needs reconfiguring", body "Its connection details are
@@ -338,7 +338,7 @@ unit-test covered:
 
 **Re-verification command:** With `add-drive-oauth-browser-consent` §1 done
 AND `implement-datasource-onboarding` merged, boot the dev build, add
-a Google Drive datasource, manually delete `~/ft5/sync_app/credentials.json`
+a Google Drive datasource, manually delete `~/cloudstash/sync_app/credentials.json`
 for that id (or its `--dev` equivalent), open the Explore page,
 observe `data-testid="file-explorer-state-invalid-datasource"`,
 click Reconnect, complete browser consent, observe entries.
@@ -354,7 +354,7 @@ loop.
 
 With a connected real-GCP Google Drive datasource (id `ds-X`),
 manually corrupt its credential JSON (e.g. overwrite `accessToken`
-with the empty string in `~/ft5/sync_app/credentials.json`). Open the
+with the empty string in `~/cloudstash/sync_app/credentials.json`). Open the
 Explore page for `ds-X`. The file-explorer should render
 `<InvalidDatasourceState>` (the engine's `factory.create` rejects the
 credential shape via the per-provider `validateCredentialShape` helper
@@ -518,7 +518,7 @@ full-repo tests passing on commit `c021fba`.
   `alwaysAsk === true` OR Shift+Click modifier set, and through
   `defaultFolder` otherwise).
 - **§27.7** Boot the dev build with
-  `localStorage.removeItem("ft5.downloads.defaultFolder")`; click
+  `localStorage.removeItem("cloudstash.downloads.defaultFolder")`; click
   Download; verify the first-run modal appears and blocks dismiss.
   **Covered in isolation by:**
   `apps/desktop/src/renderer/src/features/file-explorer/__tests__/first-download-modal.test.tsx`
@@ -549,9 +549,9 @@ are the trickiest to bench-reproduce (mid-flight close+reopen for
 hydration; 1-hour wait or token-expiry mock for auth-resume).
 
 **Re-verification command:** With a populated
-`~/ft5/sync_app/config.json` (per `add-drive-oauth-browser-consent §1`)
+`~/cloudstash/sync_app/config.json` (per `add-drive-oauth-browser-consent §1`)
 and at least one real datasource registered, run
-`pnpm -F @ft5/desktop dev` and walk each scenario.
+`pnpm -F @cloudstash/desktop dev` and walk each scenario.
 
 **Owner:** unassigned. To do during the next environment-loop pass,
 likely paired with the still-open §13.1 / §13.2 / §13.3 flows and
@@ -688,7 +688,7 @@ Expect:
    (verify via the provider's web UI).
 
 **Why deferred:** Requires real provider credentials and the
-`~/ft5/sync_app/config.json` setup from
+`~/cloudstash/sync_app/config.json` setup from
 `add-drive-oauth-browser-consent §1`. Code paths verified via:
 
 - `services/fs-sync/src/commands/__tests__/files-upload.test.ts`
@@ -703,7 +703,7 @@ Expect:
 **Re-verification command:**
 ```bash
 cd <worktree-root>
-pnpm -F @ft5/desktop dev
+pnpm -F @cloudstash/desktop dev
 ```
 Drag a file onto the file-explorer for each provider; confirm the
 toast lifecycle and the remote file's existence.
@@ -1077,7 +1077,7 @@ focus to the Reconnect button. Low priority.
 
 ## add-error-tag-literal-lint — §6.1 editor-integration smoke (deferred 2026-06-21)
 
-The ESLint rule `ft5/no-raw-error-tag-literal` is fully unit-tested via ESLint
+The ESLint rule `cloudstash/no-raw-error-tag-literal` is fully unit-tested via ESLint
 `RuleTester` (41 cases: construction / comparison both orders / `case` arms /
 optional-chaining; shared + unique values; one-vs-two suggestions; import
 insertion; `as const` parity), and `pnpm lint` is clean repo-wide. The one thing
@@ -1092,7 +1092,7 @@ file and confirm:
    and `FilesErrorTag.AuthRevoked`) — a unique value like `"auth-expired"` shows
    ONE; a `lastErrorTag`/`engineCause` value shows ONE (`DatasourceErrorTag.*`);
 3. applying a suggestion rewrites the literal AND inserts the
-   `@ft5/ipc-contracts` named import if absent;
+   `@cloudstash/ipc-contracts` named import if absent;
 4. `eslint --fix` / `pnpm lint:fix` does NOT auto-apply any of them (suggestions
    only, never a top-level fix — Decision 3).
 
@@ -1129,7 +1129,7 @@ was never exercised against a real provider.
 
 **Why deferred:** Requires a real GCP OAuth client + Azure app registration
 (client id / secret / redirect) AND two real accounts per provider — not
-configured in this environment. The dev-override `FT5_DEV_CREDENTIALS` path
+configured in this environment. The dev-override `CLOUDSTASH_DEV_CREDENTIALS` path
 bypasses the real token exchange, so it cannot exercise the id_token capture or
 the `sub` comparison.
 
@@ -1205,7 +1205,7 @@ NOT exportable via the Drive API and stay on the refusal path).
 the renderer "non-exportable Google Apps mime appends nothing" orchestrator test.
 
 **Why deferred:** Requires a running dev build with real Drive credentials
-(`~/ft5/sync_app/config.json` per `add-drive-oauth-browser-consent §1`). Until
+(`~/cloudstash/sync_app/config.json` per `add-drive-oauth-browser-consent §1`). Until
 run, treat Drive Docs Editors export as automated-green but NOT yet
 provider-verified.
 
@@ -1224,14 +1224,14 @@ stream-responder path — still holds). Optional one-line fix: pin
 
 ## migrate-download-registry-to-sqlite — real-restart interrupted-sweep smoke
 
-**Scenario:** start the dev build (`pnpm -F @ft5/desktop dev` or
+**Scenario:** start the dev build (`pnpm -F @cloudstash/desktop dev` or
 `pnpm dev:sync-service`), begin a large download so the `files:download`
-handler inserts an `in-flight` row into `~/ft5/sync_app/sync.db` `downloads`,
+handler inserts an `in-flight` row into `~/cloudstash/sync_app/sync.db` `downloads`,
 then hard-kill the fs-sync-service process mid-stream (Task Manager / `kill`,
 NOT a clean SIGINT). Restart the service and confirm:
 
 1. The previously `in-flight` row is now `status='interrupted'` with a
-   non-null `ended_at` (inspect with `sqlite3 ~/ft5/sync_app/sync.db
+   non-null `ended_at` (inspect with `sqlite3 ~/cloudstash/sync_app/sync.db
    "SELECT download_job_id, status, ended_at FROM downloads;"`).
 2. The partial file at the row's `target_path` is STILL on disk, untouched
    (the sweep is bookkeeping only — no replay, no file deletion).
@@ -1264,8 +1264,8 @@ interrupted-sweep as automated-green but NOT yet runtime-verified.
 
 ## add-download-history-ui — running-system download-history controls smoke
 
-**Scenario:** start the dev build (`pnpm -F @ft5/desktop dev`, with
-`pnpm dev:sync-service`) against a `~/ft5/sync_app/config.json` that already
+**Scenario:** start the dev build (`pnpm -F @cloudstash/desktop dev`, with
+`pnpm dev:sync-service`) against a `~/cloudstash/sync_app/config.json` that already
 holds at least one OAuth provider entry (real or fixture `clientId` /
 `clientSecret`). Open **Settings → Downloads** and confirm:
 

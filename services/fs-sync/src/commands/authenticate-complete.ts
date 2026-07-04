@@ -30,8 +30,8 @@
 import type {
   DatasourceSummary,
   ProviderId,
-} from "@ft5/ipc-contracts";
-import { providers } from "@ft5/ipc-contracts";
+} from "@cloudstash/ipc-contracts";
+import { providers } from "@cloudstash/ipc-contracts";
 
 import type { CommandHandler } from "../ipc/server.js";
 import type { EventBus } from "../events/event-bus.js";

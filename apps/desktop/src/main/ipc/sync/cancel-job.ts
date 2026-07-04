@@ -17,11 +17,11 @@
 //
 // Registration in `ipc/index.ts` is deferred to task 5.14.
 
-import type { NotCancelableErrorShape } from "@ft5/ipc-contracts/sync-service";
+import type { NotCancelableErrorShape } from "@cloudstash/ipc-contracts/sync-service";
 import type {
   SyncCancelJobRequest,
   SyncCancelJobResponse,
-} from "@ft5/ipc-contracts/sync-service-desktop";
+} from "@cloudstash/ipc-contracts/sync-service-desktop";
 
 import type { SyncClient } from "../../sync/client.js";
 import { SyncCommandError } from "../../sync/client.js";

@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer, webUtils, type IpcRendererEvent } from "electron";
 
-import { DATASOURCES_CHANNELS, FILES_CHANNELS } from "@ft5/ipc-contracts";
+import { DATASOURCES_CHANNELS, FILES_CHANNELS } from "@cloudstash/ipc-contracts";
 import type {
   DatasourcesActionRequest,
   DatasourcesActionResponse,
@@ -25,12 +25,12 @@ import type {
   FilesUploadRequest,
   FilesUploadResponse,
   PingResponse,
-} from "@ft5/ipc-contracts";
-import { SYNC_CHANNELS } from "@ft5/ipc-contracts/sync-service-desktop";
+} from "@cloudstash/ipc-contracts";
+import { SYNC_CHANNELS } from "@cloudstash/ipc-contracts/sync-service-desktop";
 
 // Local mirror of `DownloadJob` from the wire subpath (sync-service/commands).
 // The preload's import-boundary test (sync-surface.import-boundary.test.ts)
-// forbids importing from `@ft5/ipc-contracts/sync-service` here — that
+// forbids importing from `@cloudstash/ipc-contracts/sync-service` here — that
 // subpath is reserved for the main ↔ service daemon hop and must not bleed
 // into the renderer-facing layer. The renderer-facing barrel
 // (`sync-service-desktop`) does NOT re-export `DownloadJob`, and extending
@@ -52,7 +52,7 @@ interface DownloadJob {
 // migrate-upload-orchestration-out-of-engine §13.3 — local mirror of
 // `UploadJob` (parallel to `DownloadJob` above). Same import-boundary
 // rationale: the preload's import-boundary test forbids the
-// `@ft5/ipc-contracts/sync-service` subpath here. The renderer-facing
+// `@cloudstash/ipc-contracts/sync-service` subpath here. The renderer-facing
 // barrel `sync-service-desktop` does NOT re-export `UploadJob`, so we
 // mirror the structural shape locally for the
 // `onActiveUploadsHydrate(callback)` parameter type. The
@@ -102,7 +102,7 @@ import type {
   SyncSetConfigResponse,
   SyncSetRetryPolicyRequest,
   SyncSetRetryPolicyResponse,
-} from "@ft5/ipc-contracts/sync-service-desktop";
+} from "@cloudstash/ipc-contracts/sync-service-desktop";
 
 // The preload runs in the sandboxed, isolated world between Electron's main
 // process and the renderer. It is the ONLY place the renderer can reach the
@@ -382,7 +382,7 @@ const api = {
       ipcRenderer.invoke("preferences:getDefaultDownloadsFolder"),
     // Post-archive bug-fix follow-up — exposes `app.getPath("downloads")`
     // so the first-run downloads modal can pre-fill a REAL absolute
-    // path instead of the placeholder `"~/Downloads/ft5"` that fails
+    // path instead of the placeholder `"~/Downloads/CloudStash"` that fails
     // the service-side `path.isAbsolute` validator on every host.
     getOSDefaultDownloadsFolder: (): Promise<string> =>
       ipcRenderer.invoke("preferences:getOSDefaultDownloadsFolder"),

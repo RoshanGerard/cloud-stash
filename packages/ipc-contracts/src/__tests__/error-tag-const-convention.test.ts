@@ -3,7 +3,7 @@
 // "values are referenced via the const object, not raw string literals").
 //
 // Every `DatasourceErrorTag` / `FilesErrorTag` value MUST be referenced
-// through the const object exported from `@ft5/ipc-contracts`
+// through the const object exported from `@cloudstash/ipc-contracts`
 // (`DatasourceErrorTag.AuthRevoked`, `FilesErrorTag.Disconnected`, …) — never
 // as a raw string literal — in any error-tag context: construction (`tag:`),
 // comparison (`tag === …` / `!==`), or `switch`/`case` arm.
@@ -27,7 +27,7 @@ const __dirname = path.dirname(__filename);
 const repoRoot = path.resolve(__dirname, "..", "..", "..", "..");
 
 // Roots that carry TypeScript we own. `tools/` holds the convention's own
-// enforcement machinery (the ft5/no-raw-error-tag-literal ESLint rule + the
+// enforcement machinery (the cloudstash/no-raw-error-tag-literal ESLint rule + the
 // shared error-tag-vocabulary module); it is scanned so a future .ts/.tsx
 // there can never silently harbor a raw error-tag literal. Inert today —
 // tools/ currently holds only .mjs, and collectFiles scans .ts/.tsx only.
@@ -114,7 +114,7 @@ const WIRE_LITERAL_ALLOWLIST = new Set<string>([
   // scope for the const-ref convention (same family as `auth-revoked` above).
   // These are the genuine wire-payload literals: the broker emit + the
   // auth-failed event/store/renderer test fixtures. Each site also carries an
-  // `eslint-disable ft5/no-raw-error-tag-literal` comment (rule-disables are a
+  // `eslint-disable cloudstash/no-raw-error-tag-literal` comment (rule-disables are a
   // subset of this allowlist).
   'services/fs-sync/src/oauth/loopback-broker.ts|||tag: "account-mismatch",',
   'apps/desktop/src/main/sync/event-bridge.auth.test.ts|||tag: "account-mismatch",',

@@ -1,4 +1,4 @@
-# ft5-cloude-sync
+# cloudstash
 
 Electron desktop app that syncs a local Claude Code workspace to remote backends.
 
@@ -10,7 +10,7 @@ Two Node.js background services live under `services/`:
   mirror-sync jobs: a named-pipe JSON IPC transport, SQLite-backed job
   queue + snapshot diff, global concurrency cap of 2, retry split
   (system-level network + rate-limit, user-level provider-error),
-  ConfigFileCredentialStore plaintext JSON at `$HOME/ft5/sync_app/
+  ConfigFileCredentialStore plaintext JSON at `$HOME/cloudstash/sync_app/
   credentials.json` with `0600` / user-ACL enforcement, and per-OS
   install hooks (Windows Scheduled Task, macOS LaunchAgent, Linux
   `systemd --user`). See `services/fs-sync/README.md`.
@@ -31,8 +31,8 @@ OAuth-class datasources (Google Drive, OneDrive) require a per-provider
 "app" registration in the vendor's developer console. The resulting
 `clientId` / `clientSecret` pair identifies *this application* to the
 vendor and is consumed by the fs-sync service at authenticate-time.
-Configuration lives at `~/ft5/sync_app/config.json` (Unix) or
-`%USERPROFILE%\ft5\sync_app\config.json` (Windows) — service-owned,
+Configuration lives at `~/cloudstash/sync_app/config.json` (Unix) or
+`%USERPROFILE%\cloudstash\sync_app\config.json` (Windows) — service-owned,
 manually copied from the committed template. The service surfaces a
 `service-config-missing` error in the Add-Datasource dialog when a
 provider entry is missing or empty.
@@ -95,18 +95,18 @@ exercised.
 Linux / macOS:
 
 ```bash
-mkdir -p ~/ft5/sync_app
-cp services/fs-sync/config.example.json ~/ft5/sync_app/config.json
-chmod 0600 ~/ft5/sync_app/config.json
-$EDITOR ~/ft5/sync_app/config.json
+mkdir -p ~/cloudstash/sync_app
+cp services/fs-sync/config.example.json ~/cloudstash/sync_app/config.json
+chmod 0600 ~/cloudstash/sync_app/config.json
+$EDITOR ~/cloudstash/sync_app/config.json
 ```
 
 Windows (PowerShell):
 
 ```powershell
-New-Item -ItemType Directory -Force "$env:USERPROFILE\ft5\sync_app" | Out-Null
-Copy-Item services\fs-sync\config.example.json "$env:USERPROFILE\ft5\sync_app\config.json"
-notepad "$env:USERPROFILE\ft5\sync_app\config.json"
+New-Item -ItemType Directory -Force "$env:USERPROFILE\cloudstash\sync_app" | Out-Null
+Copy-Item services\fs-sync\config.example.json "$env:USERPROFILE\cloudstash\sync_app\config.json"
+notepad "$env:USERPROFILE\cloudstash\sync_app\config.json"
 ```
 
 The file shape (after editing):
@@ -163,7 +163,7 @@ targeted form, which reruns the desktop workspace's `postinstall` hook
 (`@electron/rebuild`):
 
 ```bash
-pnpm --filter @ft5/desktop run postinstall
+pnpm --filter @cloudstash/desktop run postinstall
 ```
 
 ### ABI flip between Node (tests) and Electron (dev)
@@ -179,7 +179,7 @@ Two helper scripts under `bin/` (also exposed as pnpm scripts) automate the
 flip. Each takes ~5 seconds and is idempotent:
 
 ```bash
-pnpm abi:electron   # before: pnpm --filter @ft5/desktop run dev (or package:*)
+pnpm abi:electron   # before: pnpm --filter @cloudstash/desktop run dev (or package:*)
 pnpm abi:node       # before: pnpm -w test --run, fs-sync tests, or dev:sync-service
 ```
 
@@ -191,10 +191,10 @@ Node.js version using NODE_MODULE_VERSION 137. This version of Node.js
 requires NODE_MODULE_VERSION 145.
 ```
 
-Run `pnpm abi:electron`, then retry `pnpm --filter @ft5/desktop run dev`.
+Run `pnpm abi:electron`, then retry `pnpm --filter @cloudstash/desktop run dev`.
 
 **Symptom (Node side)** — `pnpm -w test --run` or
-`pnpm --filter @ft5/fs-sync-service test` shows
+`pnpm --filter @cloudstash/fs-sync-service test` shows
 `NODE_MODULE_VERSION 145. This version of Node.js requires NODE_MODULE_VERSION
 137`. Run `pnpm abi:node`.
 
@@ -204,9 +204,9 @@ silent no-op), and `abi:node` runs `prebuild-install --runtime=node
 --target=$(node -v) --force` inside the pnpm-store copy of `better-sqlite3`.
 See `bin/README.md` for details.
 
-A properly-wired `postinstall` on `@ft5/fs-sync-service` that fetches the
+A properly-wired `postinstall` on `@cloudstash/fs-sync-service` that fetches the
 Node prebuild would turn the Node-side flip into a standard
-`pnpm --filter @ft5/fs-sync-service run postinstall`; that's a follow-up
+`pnpm --filter @cloudstash/fs-sync-service run postinstall`; that's a follow-up
 rather than a fix for this setup.
 
 ## Build and package
@@ -225,7 +225,7 @@ rather than a fix for this setup.
 
 The script lives in the repo, runs under Git Bash on Windows (or any POSIX
 shell), and handles the ABI dance for you — see "How `dev.sh` works" below
-for the details. PIDs and logs go under `node_modules/.cache/ft5-dev/` so
+for the details. PIDs and logs go under `node_modules/.cache/cloudstash-dev/` so
 they're auto-gitignored.
 
 **Hard constraint while dev is running:** do not run any `pnpm` command
@@ -253,7 +253,7 @@ a time (see "ABI flip" below). Two options to reconcile:
 
 `dev.sh` uses approach 1. Its sequence:
 
-1. `pnpm --filter @ft5/fs-sync-service build` — builds the service (may flip
+1. `pnpm --filter @cloudstash/fs-sync-service build` — builds the service (may flip
    the on-disk binary; that's fine, step 2 un-flips it).
 2. `pnpm abi:electron` — rebuilds `better-sqlite3` for ABI 145. Must be the
    last command that touches the binary before launch.
@@ -261,9 +261,9 @@ a time (see "ABI flip" below). Two options to reconcile:
    and starts the service with `ELECTRON_RUN_AS_NODE=1`, pointing it at
    `services/fs-sync/dist/main/index.js --dev`. Service now runs under
    Electron's Node (ABI 145) and happily loads the just-rebuilt binary.
-4. Waits 3s for the named pipe (`\\.\pipe\ft5-sync-dev`) to bind, then
-   launches the desktop via `pnpm --filter @ft5/desktop run dev`.
-5. Writes both PIDs to `node_modules/.cache/ft5-dev/` so `stop` can kill
+4. Waits 3s for the named pipe (`\\.\pipe\cloudstash-sync-dev`) to bind, then
+   launches the desktop via `pnpm --filter @cloudstash/desktop run dev`.
+5. Writes both PIDs to `node_modules/.cache/cloudstash-dev/` so `stop` can kill
    the whole process tree (`taskkill //F //T //PID <pid>` on Windows —
    plain `kill` doesn't walk Electron's renderer/GPU/utility children).
 
@@ -274,10 +274,10 @@ on your host:
 
 - `pnpm dev:sync-service` — runs the fs-sync service standalone under plain
   Node (`node --enable-source-maps services/fs-sync/dist/main/index.js --dev`).
-  Uses a dev-only pipe (`\\.\pipe\ft5-sync-dev` on Windows) and data dir
-  (`$HOME/ft5/sync_app/dev/`) so it doesn't collide with an installed prod
+  Uses a dev-only pipe (`\\.\pipe\cloudstash-sync-dev` on Windows) and data dir
+  (`$HOME/cloudstash/sync_app/dev/`) so it doesn't collide with an installed prod
   service. Requires the Node ABI (`pnpm abi:node`).
-- `pnpm --filter @ft5/desktop run dev` — runs the desktop under
+- `pnpm --filter @cloudstash/desktop run dev` — runs the desktop under
   electron-vite. Requires the Electron ABI (`pnpm abi:electron`). In dev
   mode the desktop process does **not** spawn the service — it expects one
   to be already running on the dev pipe. If you start the desktop alone and
@@ -294,12 +294,12 @@ The desktop app ships a real in-app OAuth consent flow: clicking
 **Add Datasource → Google Drive → Connect** opens the system browser to
 Google's consent screen, captures the redirect on a loopback port
 hosted by the fs-sync service, exchanges the code with PKCE, persists
-tokens at `~/ft5/sync_app/credentials.json`, and adds the connected
+tokens at `~/cloudstash/sync_app/credentials.json`, and adds the connected
 datasource to the dashboard.
 
 The one-time prerequisite is the **Provider OAuth registration**
 section above — register a Google Cloud OAuth Desktop client, then copy
-`services/fs-sync/config.example.json` to `~/ft5/sync_app/config.json`
+`services/fs-sync/config.example.json` to `~/cloudstash/sync_app/config.json`
 and populate the `google-drive` entry. After that, no further setup is
 needed for the in-app flow.
 
@@ -309,29 +309,29 @@ needed for the in-app flow.
 > Actions secrets. That path was removed in
 > `implement-datasource-onboarding` (see `electron.vite.config.ts` —
 > the `define` map no longer references those env vars). OAuth app
-> config now lives at `~/ft5/sync_app/config.json` and is read by the
+> config now lives at `~/cloudstash/sync_app/config.json` and is read by the
 > service at authenticate-time. Existing `.env.local` files become
 > inert; the `apps/desktop/.env.example` entries are marked deprecated.
 
-#### Dev override (`FT5_DEV_CREDENTIALS=1`)
+#### Dev override (`CLOUDSTASH_DEV_CREDENTIALS=1`)
 
 If you want to skip the browser flow entirely (CI smoke tests, offline
 development), set the env var when launching the **fs-sync service**
 (not the desktop):
 
 ```bash
-FT5_DEV_CREDENTIALS=1 pnpm dev:sync-service
+CLOUDSTASH_DEV_CREDENTIALS=1 pnpm dev:sync-service
 ```
 
 The service-side broker checks the var on every authenticate-start
 call. When set, it short-circuits the loopback flow: no browser opens,
 no HTTP server binds, and `auth-completed` fires immediately using
-credentials read from `~/ft5/sync_app/dev/dev-credentials.json` (dev
-data dir; production reads from `~/ft5/sync_app/dev-credentials.json`).
+credentials read from `~/cloudstash/sync_app/dev/dev-credentials.json` (dev
+data dir; production reads from `~/cloudstash/sync_app/dev-credentials.json`).
 The service logs a one-shot warning at the first invocation:
 
 ```
-[ft5] ⚠  FT5_DEV_CREDENTIALS=1 is active — the OAuth browser flow is bypassed.
+[cloudstash] ⚠  CLOUDSTASH_DEV_CREDENTIALS=1 is active — the OAuth browser flow is bypassed.
 NEVER set this in a production build.
 ```
 
@@ -381,11 +381,11 @@ Write-Host "refreshToken: $($tokens.refresh_token)"
 Then write the dev-credentials file at the service's data dir:
 
 - **Dev service** (`pnpm dev:sync-service` — uses dev data dir):
-  `~/ft5/sync_app/dev/dev-credentials.json` (Windows:
-  `%USERPROFILE%\ft5\sync_app\dev\dev-credentials.json`).
+  `~/cloudstash/sync_app/dev/dev-credentials.json` (Windows:
+  `%USERPROFILE%\cloudstash\sync_app\dev\dev-credentials.json`).
 - **Prod service** (installed background service):
-  `~/ft5/sync_app/dev-credentials.json` (Windows:
-  `%USERPROFILE%\ft5\sync_app\dev-credentials.json`).
+  `~/cloudstash/sync_app/dev-credentials.json` (Windows:
+  `%USERPROFILE%\cloudstash\sync_app\dev-credentials.json`).
 
 ```json
 {
@@ -418,8 +418,8 @@ await window.api.datasources.list()
 ```
 
 …copy the `id` of the Google Drive row, then save it to the service's
-`credentials.json` (dev: `~/ft5/sync_app/dev/credentials.json`; prod:
-`~/ft5/sync_app/credentials.json`):
+`credentials.json` (dev: `~/cloudstash/sync_app/dev/credentials.json`; prod:
+`~/cloudstash/sync_app/credentials.json`):
 
 ```json
 {
@@ -442,7 +442,7 @@ restart required.
 
 | Error / symptom                                              | Cause                                                                                                                         |
 |---                                                           |---                                                                                                                            |
-| Add-Datasource dialog shows "Service configuration missing. Add OAuth credentials to `<path>`." | `~/ft5/sync_app/config.json` is absent, or the requested provider's `clientId` / `clientSecret` is empty. See **Provider OAuth registration → Configure the service** above. |
+| Add-Datasource dialog shows "Service configuration missing. Add OAuth credentials to `<path>`." | `~/cloudstash/sync_app/config.json` is absent, or the requested provider's `clientId` / `clientSecret` is empty. See **Provider OAuth registration → Configure the service** above. |
 | Connect opens browser, you authorize, browser shows "you can close this tab", but desktop dialog hangs | Token-exchange failure — most often `redirect_uri_mismatch` (you registered a "Web application" client instead of a "Desktop app" client; only Desktop clients accept loopback redirects) or `invalid_client` (clientSecret mismatch in `config.json`). Inspect the fs-sync service log for the `auth-failed` message. |
 | Browser never opens after Connect                            | Corporate firewall / endpoint-protection product is quarantining the loopback listener on `127.0.0.1:<ephemeral-port>`. Disable the interfering product temporarily, or use the dev override path. |
 | `auth-revoked: Google Drive credentials must include meta.*` | `meta` block missing or a field isn't a string in `dev-credentials.json` / `credentials.json`. Re-check the JSON schema above. |
@@ -463,7 +463,7 @@ restart required.
 For a one-shot production build (without packaging), run:
 
 ```bash
-pnpm --filter @ft5/desktop run build:all
+pnpm --filter @cloudstash/desktop run build:all
 ```
 
 This produces the compiled main and preload bundles under
@@ -484,17 +484,17 @@ Windows host). For an explicit target, use the per-platform form from the
 desktop workspace:
 
 ```bash
-pnpm --filter @ft5/desktop package:win
-pnpm --filter @ft5/desktop package:mac
-pnpm --filter @ft5/desktop package:linux
+pnpm --filter @cloudstash/desktop package:win
+pnpm --filter @cloudstash/desktop package:mac
+pnpm --filter @cloudstash/desktop package:linux
 ```
 
 Each command runs `build:all` internally and then `electron-builder --<os>`.
 Outputs land under `apps/desktop/release/`:
 
-- `win`: `release/win-unpacked/FT5 Cloude Sync.exe` (directly runnable
+- `win`: `release/win-unpacked/CloudStash.exe` (directly runnable
   unpackaged app) and, on a host that can finish the NSIS step,
-  `release/FT5 Cloude Sync Setup.exe` (the installer).
+  `release/CloudStash Setup.exe` (the installer).
 - `mac`: `release/*.dmg`.
 - `linux`: `release/*.AppImage` and `release/*.deb`.
 
@@ -502,7 +502,7 @@ Outputs land under `apps/desktop/release/`:
 
 On Windows hosts **without Developer Mode enabled**, `package:win` always
 produces the unpackaged exe — you'll find a ~220 MB
-`apps/desktop/release/win-unpacked/FT5 Cloude Sync.exe` that launches and runs
+`apps/desktop/release/win-unpacked/CloudStash.exe` that launches and runs
 identically to the installed app. That's sufficient for local smoke-testing.
 
 The NSIS step that would produce the `Setup.exe` installer fails with:

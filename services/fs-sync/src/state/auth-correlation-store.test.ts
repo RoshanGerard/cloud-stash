@@ -13,7 +13,7 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { AuthIntent } from "@ft5/fs-datasource-engine";
+import type { AuthIntent } from "@cloudstash/fs-datasource-engine";
 
 import {
   createAuthCorrelationStore,

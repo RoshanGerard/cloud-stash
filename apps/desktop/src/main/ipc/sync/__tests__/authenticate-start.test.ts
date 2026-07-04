@@ -18,10 +18,10 @@ import { describe, expect, it, vi } from "vitest";
 
 import type {
   SyncAuthenticateStartRequest,
-} from "@ft5/ipc-contracts/sync-service-desktop";
+} from "@cloudstash/ipc-contracts/sync-service-desktop";
 import type {
   SyncAuthenticateStartError,
-} from "@ft5/ipc-contracts/sync-service";
+} from "@cloudstash/ipc-contracts/sync-service";
 
 import type { SyncClient } from "../../../sync/client.js";
 import { SyncCommandError } from "../../../sync/client.js";
@@ -96,7 +96,7 @@ describe("handleSyncAuthenticateStart", () => {
   it("translates SyncCommandError to {ok: false, error} envelope", async () => {
     const wireError: SyncAuthenticateStartError = {
       tag: "service-config-missing",
-      path: "/home/u/ft5/sync_app/config.json",
+      path: "/home/u/cloudstash/sync_app/config.json",
       providerId: "google-drive",
     };
     const err = new SyncCommandError("sync:authenticate-start", wireError);

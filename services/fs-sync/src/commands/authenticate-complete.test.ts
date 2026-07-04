@@ -16,19 +16,19 @@ import type {
   AuthResult,
   CredentialsSchema,
   DatasourceSummary,
-} from "@ft5/ipc-contracts";
+} from "@cloudstash/ipc-contracts";
 import type {
   CredentialsFormIntent,
   OAuthIntent,
-} from "@ft5/fs-datasource-engine";
+} from "@cloudstash/fs-datasource-engine";
 
 import { createEventBus, type EventBus } from "../events/event-bus.js";
-import type { EventName, EventPayloadMap } from "@ft5/ipc-contracts/sync-service";
+import type { EventName, EventPayloadMap } from "@cloudstash/ipc-contracts/sync-service";
 import {
   createAuthCorrelationStore,
   type AuthCorrelationStore,
 } from "../state/auth-correlation-store.js";
-import { providers } from "@ft5/ipc-contracts";
+import { providers } from "@cloudstash/ipc-contracts";
 import type { Connection } from "../ipc/server.js";
 
 import { makeAuthenticateCompleteHandler } from "./authenticate-complete.js";

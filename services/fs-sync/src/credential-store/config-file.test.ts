@@ -2,7 +2,7 @@ import * as fsp from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
 
-import type { StoredCredentials } from "@ft5/ipc-contracts";
+import type { StoredCredentials } from "@cloudstash/ipc-contracts";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
@@ -26,7 +26,7 @@ afterEach(async () => {
 function scratchDir(): string {
   const dir = path.join(
     os.tmpdir(),
-    `ft5-sync-creds-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    `cloudstash-sync-creds-${Date.now()}-${Math.random().toString(36).slice(2)}`,
   );
   cleanup.push(dir);
   return dir;

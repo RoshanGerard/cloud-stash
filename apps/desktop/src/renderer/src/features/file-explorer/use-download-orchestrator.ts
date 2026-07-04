@@ -30,12 +30,12 @@
 
 import { useCallback, useRef, useState } from "react";
 
-import { FilesErrorTag, GOOGLE_APPS_EXPORT_FORMATS } from "@ft5/ipc-contracts";
+import { FilesErrorTag, GOOGLE_APPS_EXPORT_FORMATS } from "@cloudstash/ipc-contracts";
 import type {
   FileEntry,
   FilesDownloadRequest,
   FilesDownloadResponse,
-} from "@ft5/ipc-contracts";
+} from "@cloudstash/ipc-contracts";
 
 import {
   getAlwaysAsk,
@@ -288,7 +288,7 @@ export function sanitizeFilenameForOS(name: string): string {
  * but invalid on Windows are scrubbed to `_` before they cross IPC.
  *
  * Bug-fix history: the original implementation hard-coded `/` between
- * folder and filename. On Windows that produced `C:\Users\...\ft5/file`,
+ * folder and filename. On Windows that produced `C:\Users\...\CloudStash/file`,
  * which the service's `path.normalize(input) === input` validator
  * (the post-archive defence-in-depth check from §6.5) rejects as
  * "contains traversal" because Windows' `path.normalize` rewrites the
@@ -296,7 +296,7 @@ export function sanitizeFilenameForOS(name: string): string {
  * the renderer voided the response, so the user saw "nothing happens".
  *
  * Exported so the first-download-modal can use the same logic when it
- * appends `ft5` to the OS-resolved downloads folder.
+ * appends `CloudStash` to the OS-resolved downloads folder.
  */
 export function joinFolderAndName(folder: string, filename: string): string {
   const stripped = folder.replace(/[/\\]+$/, "");

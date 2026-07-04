@@ -678,13 +678,13 @@ SHALL be dismissed silently.
 
 #### Scenario: Successful download surfaces Open + Show in folder
 
-- **WHEN** a download completes (the IPC reply is `{ ok: true, value: { savedPath: "/Users/alice/Downloads/ft5/welcome.pdf", bytes: 12345 } }`)
+- **WHEN** a download completes (the IPC reply is `{ ok: true, value: { savedPath: "/Users/alice/Downloads/CloudStash/welcome.pdf", bytes: 12345 } }`)
 - **THEN** the in-flight toast updates to the success variant with the file name "welcome.pdf", a quieter "Show in folder" link, and a primary "Open" button; the toast auto-dismisses after the upload-toast success duration
 
 #### Scenario: Open invokes shell.openPath
 
 - **WHEN** the user clicks "Open" on the success toast
-- **THEN** the renderer calls `window.api.files.openSavedPath("/Users/alice/Downloads/ft5/welcome.pdf")`; the preload routes to a main-process IPC that invokes `shell.openPath(savedPath)`; the toast dismisses
+- **THEN** the renderer calls `window.api.files.openSavedPath("/Users/alice/Downloads/CloudStash/welcome.pdf")`; the preload routes to a main-process IPC that invokes `shell.openPath(savedPath)`; the toast dismisses
 
 #### Scenario: Show in folder invokes shell.showItemInFolder
 
@@ -699,7 +699,7 @@ SHALL be dismissed silently.
 ### Requirement: First-run downloads modal collects the default folder
 
 The renderer SHALL render a blocking modal on the user's first-ever
-download attempt (detected by absence of the `ft5.downloads.defaultFolder`
+download attempt (detected by absence of the `cloudstash.downloads.defaultFolder`
 key in the renderer's preferences store). The modal SHALL:
 
 - Render via the shadcn `Dialog` primitive (modal, focus-trapped,
@@ -708,8 +708,8 @@ key in the renderer's preferences store). The modal SHALL:
   folder. You can change this later in Settings or use 'Save as…' to
   pick per file."
 - Pre-fill the path input with the OS default downloads folder
-  (`app.getPath("downloads")` joined with `"ft5"`, e.g.
-  `~/Downloads/ft5` on Unix).
+  (`app.getPath("downloads")` joined with `"CloudStash"`, e.g.
+  `~/Downloads/CloudStash` on Unix).
 - Provide a "Browse…" button that opens
   `dialog.showOpenDialog({ properties: ['openDirectory',
   'createDirectory'] })` and updates the path input on selection.
@@ -726,13 +726,13 @@ to the now-set default folder.
 
 #### Scenario: First-ever download triggers the modal
 
-- **WHEN** the user clicks Download on a file entry, the localStorage key `ft5.downloads.defaultFolder` is absent
+- **WHEN** the user clicks Download on a file entry, the localStorage key `cloudstash.downloads.defaultFolder` is absent
 - **THEN** the file-explorer renders `<FirstDownloadModal>` with the OS default downloads folder pre-filled; no IPC dispatch occurs yet
 
 #### Scenario: Modal commit persists default and dispatches the deferred download
 
-- **WHEN** the user accepts the pre-filled `~/Downloads/ft5` and clicks "Use this folder"
-- **THEN** the localStorage key `ft5.downloads.defaultFolder` is set to the chosen path; the modal closes; the originally-clicked download is dispatched against that path; a Sonner toast opens for the in-flight download
+- **WHEN** the user accepts the pre-filled `~/Downloads/CloudStash` and clicks "Use this folder"
+- **THEN** the localStorage key `cloudstash.downloads.defaultFolder` is set to the chosen path; the modal closes; the originally-clicked download is dispatched against that path; a Sonner toast opens for the in-flight download
 
 #### Scenario: Modal cannot be dismissed without commit
 
@@ -761,8 +761,8 @@ modal behavior.
 
 #### Scenario: Default folder display matches stored preference
 
-- **WHEN** the user opens Settings and the localStorage key `ft5.downloads.defaultFolder` is set to `/Users/alice/Downloads/ft5`
-- **THEN** the Default folder row displays `/Users/alice/Downloads/ft5` (truncated if long), an Open button, and a Change… button
+- **WHEN** the user opens Settings and the localStorage key `cloudstash.downloads.defaultFolder` is set to `/Users/alice/Downloads/CloudStash`
+- **THEN** the Default folder row displays `/Users/alice/Downloads/CloudStash` (truncated if long), an Open button, and a Change… button
 
 #### Scenario: Change… updates the default folder
 
@@ -772,7 +772,7 @@ modal behavior.
 #### Scenario: Always-ask toggle enables per-download save dialog
 
 - **WHEN** the user toggles "Always ask where to save" to on
-- **THEN** the localStorage key `ft5.downloads.alwaysAsk` is set to `"yes"`; the next Download click triggers `dialog.showSaveDialog` for the per-download path; the default folder is the dialog's starting location
+- **THEN** the localStorage key `cloudstash.downloads.alwaysAsk` is set to `"yes"`; the next Download click triggers `dialog.showSaveDialog` for the per-download path; the default folder is the dialog's starting location
 
 ### Requirement: Settings Downloads section includes download-history retention controls
 
@@ -840,9 +840,9 @@ modeled on the existing `motion-store.ts` pattern: `useSyncExternalStore`
 hook, `localStorage` persistence, no main-process write-through. Stored
 keys:
 
-- `ft5.downloads.defaultFolder`: absolute folder path string. Absent
+- `cloudstash.downloads.defaultFolder`: absolute folder path string. Absent
   if not yet set; first download triggers the modal that sets it.
-- `ft5.downloads.alwaysAsk`: `"yes"` (toggle on) or absent (toggle off).
+- `cloudstash.downloads.alwaysAsk`: `"yes"` (toggle on) or absent (toggle off).
   No `"no"` representation; key absence is the default.
 
 The download orchestrator SHALL compute `toPath` for each download as:
@@ -859,8 +859,8 @@ The download orchestrator SHALL compute `toPath` for each download as:
 
 #### Scenario: Default folder path resolution
 
-- **WHEN** the default folder is `/Users/alice/Downloads/ft5`, Always-ask is off, no Shift modifier, and the user downloads `welcome.pdf`
-- **THEN** `toPath` is computed as `/Users/alice/Downloads/ft5/welcome.pdf`; the download dispatches against that path
+- **WHEN** the default folder is `/Users/alice/Downloads/CloudStash`, Always-ask is off, no Shift modifier, and the user downloads `welcome.pdf`
+- **THEN** `toPath` is computed as `/Users/alice/Downloads/CloudStash/welcome.pdf`; the download dispatches against that path
 
 #### Scenario: Shift+Click forces Save-as
 
@@ -1166,19 +1166,19 @@ The section SHALL contain one row: a left-side stack with a `text-xs font-medium
 
 The `<DropdownMenuContent>` SHALL render with `align="end"`, lead with a `<DropdownMenuLabel className="text-muted-foreground text-xs uppercase tracking-wider">Page size</DropdownMenuLabel>`, and contain a `<DropdownMenuRadioGroup>` with five `<DropdownMenuRadioItem>` entries: `100`, `500`, `1,000`, `5,000`, `10,000` (display text uses comma separators for values ≥ 1000; the underlying string value is the un-formatted integer). All digit displays SHALL use `tabular-nums`.
 
-The selected value SHALL be persisted to the localStorage key `ft5.explorer.pageSize` (mirroring the `ft5.downloads.*` pattern) and SHALL default to `500` on first read. The selected value SHALL be passed as `pageSize` on every `files:list` call originating from the file-explorer (initial page-load and Load-more alike). Changing the setting SHALL NOT auto-refresh the current view; the new value applies to the next list call.
+The selected value SHALL be persisted to the localStorage key `cloudstash.explorer.pageSize` (mirroring the `cloudstash.downloads.*` pattern) and SHALL default to `500` on first read. The selected value SHALL be passed as `pageSize` on every `files:list` call originating from the file-explorer (initial page-load and Load-more alike). Changing the setting SHALL NOT auto-refresh the current view; the new value applies to the next list call.
 
 The codebase SHALL NOT introduce a shadcn `Select` primitive for this row — the `DropdownMenu` + `DropdownMenuRadioGroup` pattern matches the existing toolbar View-mode menu (`apps/desktop/src/renderer/src/features/file-explorer/toolbar.tsx`) and avoids a net-new primitive.
 
 #### Scenario: Default page size is 500 on first launch
 
-- **WHEN** the renderer launches with no value at `ft5.explorer.pageSize` and the user opens Settings
+- **WHEN** the renderer launches with no value at `cloudstash.explorer.pageSize` and the user opens Settings
 - **THEN** the Explorer section's Page-size trigger button shows `500` as the current value; the next `files:list` request emitted by the file-explorer carries `pageSize: 500`
 
 #### Scenario: Changing page size persists and applies to the next list call
 
 - **WHEN** the user opens Settings, opens the Page-size dropdown, selects `1,000`, closes the dialog, then navigates to a new folder
-- **THEN** the localStorage key `ft5.explorer.pageSize` is `"1000"` (no comma in the persisted value); the trigger button now shows `1,000`; the next `files:list` request carries `pageSize: 1000`; the previously rendered folder is NOT re-fetched
+- **THEN** the localStorage key `cloudstash.explorer.pageSize` is `"1000"` (no comma in the persisted value); the trigger button now shows `1,000`; the next `files:list` request carries `pageSize: 1000`; the previously rendered folder is NOT re-fetched
 
 #### Scenario: Page size dropdown is keyboard-reachable and labeled
 

@@ -2,7 +2,7 @@ import type {
   DatasourcesActionRequest,
   DatasourcesActionResponse,
   DatasourceSummary,
-} from "@ft5/ipc-contracts";
+} from "@cloudstash/ipc-contracts";
 
 import { getEngine } from "../../datasources/engine.js";
 

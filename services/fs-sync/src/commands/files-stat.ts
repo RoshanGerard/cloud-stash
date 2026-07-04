@@ -2,9 +2,9 @@
 // to `client.getMetadata({ kind: "path", path })`. Errors normalize through
 // `normalizeFilesError`.
 
-import type { DatasourceClient } from "@ft5/fs-datasource-engine";
-import { withAuthRefresh } from "@ft5/fs-datasource-engine";
-import type { DatasourceType } from "@ft5/ipc-contracts";
+import type { DatasourceClient } from "@cloudstash/fs-datasource-engine";
+import { withAuthRefresh } from "@cloudstash/fs-datasource-engine";
+import type { DatasourceType } from "@cloudstash/ipc-contracts";
 
 import type { CommandHandler } from "../ipc/server.js";
 

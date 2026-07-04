@@ -1,4 +1,4 @@
-// RuleTester suite for the custom ESLint rule `ft5/no-raw-error-tag-literal`
+// RuleTester suite for the custom ESLint rule `cloudstash/no-raw-error-tag-literal`
 // (Task 3). The rule lives at tools/eslint-rules/no-raw-error-tag-literal.mjs
 // (Decision 5); this test lives under scripts/ because the repo's vitest
 // `include` scans scripts/**, packages/**, apps/**, services/** — NOT tools/**
@@ -64,7 +64,7 @@ ruleTester.run("no-raw-error-tag-literal", rule, {
               messageId: "use",
               data: { ref: "DatasourceErrorTag.AuthExpired" },
               output:
-                'import { DatasourceErrorTag } from "@ft5/ipc-contracts";\nconst e = { tag: DatasourceErrorTag.AuthExpired };',
+                'import { DatasourceErrorTag } from "@cloudstash/ipc-contracts";\nconst e = { tag: DatasourceErrorTag.AuthExpired };',
             },
           ],
         },
@@ -82,13 +82,13 @@ ruleTester.run("no-raw-error-tag-literal", rule, {
               messageId: "use",
               data: { ref: "DatasourceErrorTag.AuthRevoked" },
               output:
-                'import { DatasourceErrorTag } from "@ft5/ipc-contracts";\nconst e = { tag: DatasourceErrorTag.AuthRevoked };',
+                'import { DatasourceErrorTag } from "@cloudstash/ipc-contracts";\nconst e = { tag: DatasourceErrorTag.AuthRevoked };',
             },
             {
               messageId: "use",
               data: { ref: "FilesErrorTag.AuthRevoked" },
               output:
-                'import { FilesErrorTag } from "@ft5/ipc-contracts";\nconst e = { tag: FilesErrorTag.AuthRevoked };',
+                'import { FilesErrorTag } from "@cloudstash/ipc-contracts";\nconst e = { tag: FilesErrorTag.AuthRevoked };',
             },
           ],
         },
@@ -106,7 +106,7 @@ ruleTester.run("no-raw-error-tag-literal", rule, {
               messageId: "use",
               data: { ref: "FilesErrorTag.Disconnected" },
               output:
-                'import { FilesErrorTag } from "@ft5/ipc-contracts";\nconst e = { errorTag: FilesErrorTag.Disconnected };',
+                'import { FilesErrorTag } from "@cloudstash/ipc-contracts";\nconst e = { errorTag: FilesErrorTag.Disconnected };',
             },
           ],
         },
@@ -124,7 +124,7 @@ ruleTester.run("no-raw-error-tag-literal", rule, {
               messageId: "use",
               data: { ref: "DatasourceErrorTag.RateLimited" },
               output:
-                'import { DatasourceErrorTag } from "@ft5/ipc-contracts";\nconst e = { engineCause: DatasourceErrorTag.RateLimited };',
+                'import { DatasourceErrorTag } from "@cloudstash/ipc-contracts";\nconst e = { engineCause: DatasourceErrorTag.RateLimited };',
             },
           ],
         },
@@ -142,7 +142,7 @@ ruleTester.run("no-raw-error-tag-literal", rule, {
               messageId: "use",
               data: { ref: "DatasourceErrorTag.NetworkError" },
               output:
-                'import { DatasourceErrorTag } from "@ft5/ipc-contracts";\nconst e = { lastErrorTag: DatasourceErrorTag.NetworkError };',
+                'import { DatasourceErrorTag } from "@cloudstash/ipc-contracts";\nconst e = { lastErrorTag: DatasourceErrorTag.NetworkError };',
             },
           ],
         },
@@ -160,7 +160,7 @@ ruleTester.run("no-raw-error-tag-literal", rule, {
               messageId: "use",
               data: { ref: "FilesErrorTag.Disconnected" },
               output:
-                'import { FilesErrorTag } from "@ft5/ipc-contracts";\nif (e.tag === FilesErrorTag.Disconnected) {}',
+                'import { FilesErrorTag } from "@cloudstash/ipc-contracts";\nif (e.tag === FilesErrorTag.Disconnected) {}',
             },
           ],
         },
@@ -177,7 +177,7 @@ ruleTester.run("no-raw-error-tag-literal", rule, {
               messageId: "use",
               data: { ref: "FilesErrorTag.Disconnected" },
               output:
-                'import { FilesErrorTag } from "@ft5/ipc-contracts";\nif (FilesErrorTag.Disconnected === e.tag) {}',
+                'import { FilesErrorTag } from "@cloudstash/ipc-contracts";\nif (FilesErrorTag.Disconnected === e.tag) {}',
             },
           ],
         },
@@ -195,13 +195,13 @@ ruleTester.run("no-raw-error-tag-literal", rule, {
               messageId: "use",
               data: { ref: "DatasourceErrorTag.Conflict" },
               output:
-                'import { DatasourceErrorTag } from "@ft5/ipc-contracts";\nswitch (e.tag) { case DatasourceErrorTag.Conflict: break; }',
+                'import { DatasourceErrorTag } from "@cloudstash/ipc-contracts";\nswitch (e.tag) { case DatasourceErrorTag.Conflict: break; }',
             },
             {
               messageId: "use",
               data: { ref: "FilesErrorTag.Conflict" },
               output:
-                'import { FilesErrorTag } from "@ft5/ipc-contracts";\nswitch (e.tag) { case FilesErrorTag.Conflict: break; }',
+                'import { FilesErrorTag } from "@cloudstash/ipc-contracts";\nswitch (e.tag) { case FilesErrorTag.Conflict: break; }',
             },
           ],
         },
@@ -219,7 +219,7 @@ ruleTester.run("no-raw-error-tag-literal", rule, {
               messageId: "use",
               data: { ref: "DatasourceErrorTag.AuthExpired" },
               output:
-                'import { DatasourceErrorTag } from "@ft5/ipc-contracts";\nif (e.tag !== DatasourceErrorTag.AuthExpired) {}',
+                'import { DatasourceErrorTag } from "@cloudstash/ipc-contracts";\nif (e.tag !== DatasourceErrorTag.AuthExpired) {}',
             },
           ],
         },
@@ -237,13 +237,13 @@ ruleTester.run("no-raw-error-tag-literal", rule, {
               messageId: "use",
               data: { ref: "DatasourceErrorTag.AuthRevoked" },
               output:
-                'import { DatasourceErrorTag } from "@ft5/ipc-contracts";\nconst e = { tag: DatasourceErrorTag.AuthRevoked as const };',
+                'import { DatasourceErrorTag } from "@cloudstash/ipc-contracts";\nconst e = { tag: DatasourceErrorTag.AuthRevoked as const };',
             },
             {
               messageId: "use",
               data: { ref: "FilesErrorTag.AuthRevoked" },
               output:
-                'import { FilesErrorTag } from "@ft5/ipc-contracts";\nconst e = { tag: FilesErrorTag.AuthRevoked as const };',
+                'import { FilesErrorTag } from "@cloudstash/ipc-contracts";\nconst e = { tag: FilesErrorTag.AuthRevoked as const };',
             },
           ],
         },
@@ -261,7 +261,7 @@ ruleTester.run("no-raw-error-tag-literal", rule, {
               messageId: "use",
               data: { ref: "FilesErrorTag.Disconnected" },
               output:
-                'import { FilesErrorTag } from "@ft5/ipc-contracts";\nif (err?.tag === FilesErrorTag.Disconnected) {}',
+                'import { FilesErrorTag } from "@cloudstash/ipc-contracts";\nif (err?.tag === FilesErrorTag.Disconnected) {}',
             },
           ],
         },
@@ -279,21 +279,21 @@ ruleTester.run("no-raw-error-tag-literal", rule, {
               messageId: "use",
               data: { ref: "DatasourceErrorTag.Conflict" },
               output:
-                'import { DatasourceErrorTag } from "@ft5/ipc-contracts";\nswitch (e?.tag) { case DatasourceErrorTag.Conflict: break; }',
+                'import { DatasourceErrorTag } from "@cloudstash/ipc-contracts";\nswitch (e?.tag) { case DatasourceErrorTag.Conflict: break; }',
             },
             {
               messageId: "use",
               data: { ref: "FilesErrorTag.Conflict" },
               output:
-                'import { FilesErrorTag } from "@ft5/ipc-contracts";\nswitch (e?.tag) { case FilesErrorTag.Conflict: break; }',
+                'import { FilesErrorTag } from "@cloudstash/ipc-contracts";\nswitch (e?.tag) { case FilesErrorTag.Conflict: break; }',
             },
           ],
         },
       ],
     },
-    // --- import APPEND to an existing @ft5/ipc-contracts value import ---
+    // --- import APPEND to an existing @cloudstash/ipc-contracts value import ---
     {
-      code: 'import { FilesErrorTag } from "@ft5/ipc-contracts";\nconst e = { tag: "auth-expired" };',
+      code: 'import { FilesErrorTag } from "@cloudstash/ipc-contracts";\nconst e = { tag: "auth-expired" };',
       errors: [
         {
           messageId: "raw",
@@ -303,7 +303,7 @@ ruleTester.run("no-raw-error-tag-literal", rule, {
               messageId: "use",
               data: { ref: "DatasourceErrorTag.AuthExpired" },
               output:
-                'import { FilesErrorTag, DatasourceErrorTag } from "@ft5/ipc-contracts";\nconst e = { tag: DatasourceErrorTag.AuthExpired };',
+                'import { FilesErrorTag, DatasourceErrorTag } from "@cloudstash/ipc-contracts";\nconst e = { tag: DatasourceErrorTag.AuthExpired };',
             },
           ],
         },
@@ -311,7 +311,7 @@ ruleTester.run("no-raw-error-tag-literal", rule, {
     },
     // --- NO duplicate import when the enum is already imported ---
     {
-      code: 'import { DatasourceErrorTag } from "@ft5/ipc-contracts";\nconst e = { tag: "auth-expired" };',
+      code: 'import { DatasourceErrorTag } from "@cloudstash/ipc-contracts";\nconst e = { tag: "auth-expired" };',
       errors: [
         {
           messageId: "raw",
@@ -321,7 +321,7 @@ ruleTester.run("no-raw-error-tag-literal", rule, {
               messageId: "use",
               data: { ref: "DatasourceErrorTag.AuthExpired" },
               output:
-                'import { DatasourceErrorTag } from "@ft5/ipc-contracts";\nconst e = { tag: DatasourceErrorTag.AuthExpired };',
+                'import { DatasourceErrorTag } from "@cloudstash/ipc-contracts";\nconst e = { tag: DatasourceErrorTag.AuthExpired };',
             },
           ],
         },

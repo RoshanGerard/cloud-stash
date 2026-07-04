@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { THEME_BOOTSTRAP_SCRIPT } from "../theme-script";
 
-const THEME_STORAGE_KEY = "ft5.theme";
+const THEME_STORAGE_KEY = "cloudstash.theme";
 
 /**
  * Evaluate the pre-paint bootstrap script against the current jsdom globals.

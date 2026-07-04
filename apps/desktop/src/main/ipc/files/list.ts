@@ -1,4 +1,4 @@
-import type { FilesListRequest, FilesListResponse } from "@ft5/ipc-contracts";
+import type { FilesListRequest, FilesListResponse } from "@cloudstash/ipc-contracts";
 
 import type { SyncClient } from "../../sync/client.js";
 import { getSyncClient } from "../../sync/sync-client-holder.js";

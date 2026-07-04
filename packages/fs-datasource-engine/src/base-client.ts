@@ -51,8 +51,8 @@ import type {
   Quota,
   StoredCredentials,
   Target,
-} from "@ft5/ipc-contracts";
-import { DatasourceError, DatasourceErrorTag, EntryKind } from "@ft5/ipc-contracts";
+} from "@cloudstash/ipc-contracts";
+import { DatasourceError, DatasourceErrorTag, EntryKind } from "@cloudstash/ipc-contracts";
 
 import type { Readable } from "node:stream";
 

@@ -25,7 +25,7 @@
 //      Open dispatches `window.api.files.showSavedInFolder(folder)`.
 //      Change… dispatches `window.api.dialog.showOpenDialog` with
 //      `properties: ['openDirectory', 'createDirectory']`. Always-ask
-//      writes `"yes"` to `ft5.downloads.alwaysAsk`; toggling off
+//      writes `"yes"` to `cloudstash.downloads.alwaysAsk`; toggling off
 //      removes the key.
 //
 // Dialog focus-restoration mirrors AddDatasourceDialog: the parent passes

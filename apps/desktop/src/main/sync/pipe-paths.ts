@@ -29,10 +29,10 @@ export interface ResolveSyncPipePathOptions {
 
 /**
  * Returns the IPC pipe path for the desktop↔fs-sync-service transport.
- * Windows: named pipe (`\\.\pipe\ft5-sync[-dev]`).
- * Unix: socket file under `$HOME/ft5/sync_app[/dev]/sync[-dev].sock`.
+ * Windows: named pipe (`\\.\pipe\cloudstash-sync[-dev]`).
+ * Unix: socket file under `$HOME/cloudstash/sync_app[/dev]/sync[-dev].sock`.
  *
- * Honours `FT5_SYNC_DATA_DIR` over the default home-relative path on Unix,
+ * Honours `CLOUDSTASH_SYNC_DATA_DIR` over the default home-relative path on Unix,
  * matching the service's `resolveDataDir` behaviour. Windows ignores the
  * env var because the named-pipe namespace is global, not filesystem-bound.
  *
@@ -45,18 +45,18 @@ export function resolveSyncPipePath(
   const platform = options.platform ?? process.platform;
 
   if (platform === "win32") {
-    return options.dev ? "\\\\.\\pipe\\ft5-sync-dev" : "\\\\.\\pipe\\ft5-sync";
+    return options.dev ? "\\\\.\\pipe\\cloudstash-sync-dev" : "\\\\.\\pipe\\cloudstash-sync";
   }
 
   const homedir = options.homedir ?? os.homedir;
   const env = options.env ?? process.env;
-  const override = env["FT5_SYNC_DATA_DIR"];
+  const override = env["CLOUDSTASH_SYNC_DATA_DIR"];
   const dataDir =
     override !== undefined && override !== ""
       ? override
       : options.dev
-        ? path.join(homedir(), "ft5", "sync_app", "dev")
-        : path.join(homedir(), "ft5", "sync_app");
+        ? path.join(homedir(), "cloudstash", "sync_app", "dev")
+        : path.join(homedir(), "cloudstash", "sync_app");
   const basename = options.dev ? "sync-dev.sock" : "sync.sock";
   return path.join(dataDir, basename);
 }

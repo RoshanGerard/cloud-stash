@@ -17,7 +17,7 @@ import { contextBridge, ipcRenderer } from "electron";
 
 import {
   SYNC_CHANNELS,
-} from "@ft5/ipc-contracts/sync-service-desktop";
+} from "@cloudstash/ipc-contracts/sync-service-desktop";
 import type {
   SyncEvent,
   SyncListJobsRequest,
@@ -44,7 +44,7 @@ import type {
   SyncDeletePartialRequest,
   SyncDeletePartialResponse,
   SyncListLeftoverResponse,
-} from "@ft5/ipc-contracts/sync-service-desktop";
+} from "@cloudstash/ipc-contracts/sync-service-desktop";
 
 type ExposedSync = {
   listJobs: (req: SyncListJobsRequest) => Promise<SyncListJobsResponse>;

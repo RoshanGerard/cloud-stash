@@ -21,7 +21,7 @@
 import { useCallback, useEffect, useRef, useState, type JSX } from "react";
 import { toast } from "sonner";
 
-import type { LeftoverEntry } from "@ft5/ipc-contracts/sync-service-desktop";
+import type { LeftoverEntry } from "@cloudstash/ipc-contracts/sync-service-desktop";
 
 import { Button } from "@/components/ui/button";
 import {

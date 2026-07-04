@@ -12,7 +12,7 @@
 
 import { describe, expect, it, vi } from "vitest";
 
-import type { DatasourcesPickFilesResponse } from "@ft5/ipc-contracts";
+import type { DatasourcesPickFilesResponse } from "@cloudstash/ipc-contracts";
 
 import { handlePickFilesToUpload } from "../pick-files-to-upload.js";
 

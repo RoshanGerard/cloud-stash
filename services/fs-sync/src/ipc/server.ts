@@ -1,4 +1,4 @@
-// Named-pipe IPC server. On Windows listens on `\\.\pipe\ft5-sync[-dev]`;
+// Named-pipe IPC server. On Windows listens on `\\.\pipe\cloudstash-sync[-dev]`;
 // on Unix listens on a filesystem socket inside the data dir with mode
 // 0600. One bidirectional connection per client; the server writes
 // responses (correlated by id) AND unsolicited event frames on the same
@@ -20,7 +20,7 @@ import type {
   EventFrame,
   RequestFrame,
   ResponseFrame,
-} from "@ft5/ipc-contracts/sync-service";
+} from "@cloudstash/ipc-contracts/sync-service";
 
 import { FramingDecoder, encodeFrame } from "./framing.js";
 

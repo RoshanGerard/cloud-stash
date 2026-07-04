@@ -324,7 +324,7 @@ describe("InvalidDatasourceState — useAuthSession lifecycle", () => {
       "failed",
       {
         status: "failed",
-        // eslint-disable-next-line ft5/no-raw-error-tag-literal -- AuthFailedTag vocabulary (no const object) — out of scope
+        // eslint-disable-next-line cloudstash/no-raw-error-tag-literal -- AuthFailedTag vocabulary (no const object) — out of scope
         tag: "auth-revoked",
       } as AuthSessionState,
     ],
@@ -608,7 +608,7 @@ describe("InvalidDatasourceState — Wrong-account callout (enforce-oauth-reconn
   it("renders the 'Wrong account' callout naming BOTH accounts and keeps the generic 'Reconnect failed' line OUT", async () => {
     await renderThenFail({
       status: "failed",
-      // eslint-disable-next-line ft5/no-raw-error-tag-literal -- AuthFailedTag vocabulary (no const object) — out of scope
+      // eslint-disable-next-line cloudstash/no-raw-error-tag-literal -- AuthFailedTag vocabulary (no const object) — out of scope
       tag: "account-mismatch",
       expectedEmail: "acme@gmail.com",
       actualEmail: "other@gmail.com",
@@ -631,7 +631,7 @@ describe("InvalidDatasourceState — Wrong-account callout (enforce-oauth-reconn
   it("keeps Reconnect LIVE (not disabled) on an account-mismatch block", async () => {
     await renderThenFail({
       status: "failed",
-      // eslint-disable-next-line ft5/no-raw-error-tag-literal -- AuthFailedTag vocabulary (no const object) — out of scope
+      // eslint-disable-next-line cloudstash/no-raw-error-tag-literal -- AuthFailedTag vocabulary (no const object) — out of scope
       tag: "account-mismatch",
       expectedEmail: "acme@gmail.com",
       actualEmail: "other@gmail.com",
@@ -645,7 +645,7 @@ describe("InvalidDatasourceState — Wrong-account callout (enforce-oauth-reconn
   it("omits the 'You signed in as' clause when actualEmail is undefined", async () => {
     await renderThenFail({
       status: "failed",
-      // eslint-disable-next-line ft5/no-raw-error-tag-literal -- AuthFailedTag vocabulary (no const object) — out of scope
+      // eslint-disable-next-line cloudstash/no-raw-error-tag-literal -- AuthFailedTag vocabulary (no const object) — out of scope
       tag: "account-mismatch",
       expectedEmail: "acme@gmail.com",
       // actualEmail intentionally absent (best-effort field may be undefined).
@@ -661,7 +661,7 @@ describe("InvalidDatasourceState — Wrong-account callout (enforce-oauth-reconn
   it("falls back to a generic phrase (never a blank email) when expectedEmail is empty — email-less account", async () => {
     await renderThenFail({
       status: "failed",
-      // eslint-disable-next-line ft5/no-raw-error-tag-literal -- AuthFailedTag vocabulary (no const object) — out of scope
+      // eslint-disable-next-line cloudstash/no-raw-error-tag-literal -- AuthFailedTag vocabulary (no const object) — out of scope
       tag: "account-mismatch",
       expectedEmail: "",
     } as AuthSessionState);
@@ -678,7 +678,7 @@ describe("InvalidDatasourceState — Wrong-account callout (enforce-oauth-reconn
   it("the callout's alert-triangle icon is amber and aria-hidden (real-text alert, not icon-only)", async () => {
     await renderThenFail({
       status: "failed",
-      // eslint-disable-next-line ft5/no-raw-error-tag-literal -- AuthFailedTag vocabulary (no const object) — out of scope
+      // eslint-disable-next-line cloudstash/no-raw-error-tag-literal -- AuthFailedTag vocabulary (no const object) — out of scope
       tag: "account-mismatch",
       expectedEmail: "acme@gmail.com",
     } as AuthSessionState);
@@ -695,7 +695,7 @@ describe("InvalidDatasourceState — Wrong-account callout (enforce-oauth-reconn
   it("a NON-account-mismatch failed tag shows the dead-end copy + 'Try Again' and no callout", async () => {
     await renderThenFail({
       status: "failed",
-      // eslint-disable-next-line ft5/no-raw-error-tag-literal -- AuthFailedTag vocabulary (no const object) — out of scope
+      // eslint-disable-next-line cloudstash/no-raw-error-tag-literal -- AuthFailedTag vocabulary (no const object) — out of scope
       tag: "provider-error",
     } as AuthSessionState);
 
@@ -863,7 +863,7 @@ describe("InvalidDatasourceState — scope-insufficient auth-error callout (fix-
     // wrong-account. The amber callout must win; the red one is suppressed.
     mockSessionState = {
       status: "failed",
-      // eslint-disable-next-line ft5/no-raw-error-tag-literal -- AuthFailedTag vocabulary (no const object) — out of scope
+      // eslint-disable-next-line cloudstash/no-raw-error-tag-literal -- AuthFailedTag vocabulary (no const object) — out of scope
       tag: "account-mismatch",
       expectedEmail: "acme@gmail.com",
       actualEmail: "other@gmail.com",

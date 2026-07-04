@@ -30,7 +30,7 @@ import type {
   EventFrame,
   Frame,
   RequestFrame,
-} from "@ft5/ipc-contracts/sync-service";
+} from "@cloudstash/ipc-contracts/sync-service";
 
 import {
   FrameParseError,

@@ -4,10 +4,10 @@
 // chunk-tolerant / malformed-JSON / size-capped behaviour as the service.
 // We reuse the service's test cases verbatim (see
 // services/fs-sync/src/ipc/framing.test.ts) to prove byte-for-byte parity;
-// a future follow-up may consolidate both into a shared `@ft5/sync-framing`
+// a future follow-up may consolidate both into a shared `@cloudstash/sync-framing`
 // package.
 
-import type { Frame } from "@ft5/ipc-contracts/sync-service";
+import type { Frame } from "@cloudstash/ipc-contracts/sync-service";
 import { describe, expect, it } from "vitest";
 
 import {

@@ -7,7 +7,7 @@ import type {
   Ref,
 } from "react";
 
-import type { FileEntry } from "@ft5/ipc-contracts";
+import type { FileEntry } from "@cloudstash/ipc-contracts";
 
 import { Icon, type IconName } from "@/components/icon";
 import { cn } from "@/lib/utils";

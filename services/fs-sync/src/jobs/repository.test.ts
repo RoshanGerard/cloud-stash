@@ -5,7 +5,7 @@ import * as path from "node:path";
 import Database from "better-sqlite3";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import { DatasourceErrorTag } from "@ft5/ipc-contracts";
+import { DatasourceErrorTag } from "@cloudstash/ipc-contracts";
 
 import { applyMigrations } from "../db/migrations.js";
 
@@ -19,7 +19,7 @@ let repo: JobRepository;
 beforeEach(() => {
   const file = path.join(
     os.tmpdir(),
-    `ft5-sync-repo-${Date.now()}-${Math.random().toString(36).slice(2)}.db`,
+    `cloudstash-sync-repo-${Date.now()}-${Math.random().toString(36).slice(2)}.db`,
   );
   cleanup.push(file);
   db = new Database(file);

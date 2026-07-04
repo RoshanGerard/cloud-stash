@@ -32,8 +32,8 @@ import {
   waitFor,
 } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
-import { FilesErrorTag } from "@ft5/ipc-contracts";
-import type { FileEntry } from "@ft5/ipc-contracts";
+import { FilesErrorTag } from "@cloudstash/ipc-contracts";
+import type { FileEntry } from "@cloudstash/ipc-contracts";
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({
@@ -77,7 +77,7 @@ let showSaveDialogMock: Mock;
 function installApiMock(entries: FileEntry[]): void {
   downloadMock = vi.fn().mockResolvedValue({
     ok: true,
-    value: { savedPath: "/Users/alice/Downloads/ft5/welcome.pdf", bytes: 1024 },
+    value: { savedPath: "/Users/alice/Downloads/CloudStash/welcome.pdf", bytes: 1024 },
   });
   showSaveDialogMock = vi.fn();
 
@@ -145,7 +145,7 @@ describe("FileExplorer handleDownload wiring (§23/§24 follow-up)", () => {
     // Pre-seed the default folder so the first-run-modal branch is bypassed.
     window.localStorage.setItem(
       DOWNLOADS_DEFAULT_FOLDER_KEY,
-      "/Users/alice/Downloads/ft5",
+      "/Users/alice/Downloads/CloudStash",
     );
 
     const entry = seedEntry({
@@ -187,7 +187,7 @@ describe("FileExplorer handleDownload wiring (§23/§24 follow-up)", () => {
     expect(downloadMock).toHaveBeenCalledWith({
       datasourceId: "ds-1",
       path: "/welcome.pdf",
-      toPath: "/Users/alice/Downloads/ft5/welcome.pdf",
+      toPath: "/Users/alice/Downloads/CloudStash/welcome.pdf",
       conflictPolicy: "fail",
     });
     // No save-as dialog (no Shift, no Always-ask).
@@ -219,7 +219,7 @@ describe("FileExplorer handleDownload wiring (§23/§24 follow-up)", () => {
   it("on { ok: false, error } envelope, does NOT emit a toast.error from the dispatch caller (toaster owns failure UX)", async () => {
     window.localStorage.setItem(
       DOWNLOADS_DEFAULT_FOLDER_KEY,
-      "/Users/alice/Downloads/ft5",
+      "/Users/alice/Downloads/CloudStash",
     );
 
     const entry = seedEntry({
@@ -276,7 +276,7 @@ describe("FileExplorer handleDownload wiring (§23/§24 follow-up)", () => {
   it("on IPC-reject (downloadMock rejects), the .catch path emits a toast.error with the rejection message", async () => {
     window.localStorage.setItem(
       DOWNLOADS_DEFAULT_FOLDER_KEY,
-      "/Users/alice/Downloads/ft5",
+      "/Users/alice/Downloads/CloudStash",
     );
 
     const entry = seedEntry({

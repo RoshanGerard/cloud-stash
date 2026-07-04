@@ -4,7 +4,7 @@
 // add-engine-rename-download §21 — first-run downloads modal.
 //
 // Shown on the user's first-ever Download click (detected by absence
-// of `ft5.downloads.defaultFolder` in localStorage). Collects the
+// of `cloudstash.downloads.defaultFolder` in localStorage). Collects the
 // default downloads folder, persists it via `setDefaultFolder` (which
 // writes the localStorage key + mirrors into the main-process slot
 // per §20), and signals the deferred download trigger via the
@@ -28,8 +28,8 @@
 // Default-folder pre-fill: post-archive bug fix wires the modal to
 // `app.getPath("downloads")` via the preload bridge
 // (`window.api.preferences.getOSDefaultDownloadsFolder`) and appends
-// `ft5` with the host's path separator. The earlier placeholder string
-// `"~/Downloads/ft5"` was NOT absolute and failed the service-side
+// `CloudStash` with the host's path separator. The earlier placeholder string
+// `"~/Downloads/CloudStash"` was NOT absolute and failed the service-side
 // `path.isAbsolute` validator on every host — the user could press
 // "Use this folder" and every subsequent download would silently drop.
 //
@@ -89,7 +89,7 @@ export function FirstDownloadModal({
   // commit CTA is disabled until either resolution completes or the
   // user types / picks a folder. This is the post-archive bug fix:
   // gating the CTA on a non-empty value prevents the user from
-  // committing the previous `"~/Downloads/ft5"` placeholder, which the
+  // committing the previous `"~/Downloads/CloudStash"` placeholder, which the
   // service-side `path.isAbsolute` validator rejected.
   const [folder, setFolder] = useState<string>("");
   const inputId = useId();
@@ -118,7 +118,7 @@ export function FirstDownloadModal({
         if (cancelled) return;
         // Only seed if the user hasn't already typed something.
         setFolder((current) =>
-          current === "" ? joinFolderAndName(downloads, "ft5") : current,
+          current === "" ? joinFolderAndName(downloads, "CloudStash") : current,
         );
       } catch {
         // Bridge failure leaves the input empty — the user can still

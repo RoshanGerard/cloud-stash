@@ -162,7 +162,7 @@ async function bootstrap(): Promise<void> {
   // `getEngine()`. Initialized once per process lifetime. Credentials are
   // the fs-sync service's concern and are NOT part of the desktop engine
   // (wire-fs-sync-service section 9).
-  const dbPath = path.join(app.getPath("userData"), "ft5.db");
+  const dbPath = path.join(app.getPath("userData"), "cloudstash.db");
   const db = openDatabase(dbPath);
   runMigrations(db, DEFAULT_MIGRATIONS);
   initEngine(db);
