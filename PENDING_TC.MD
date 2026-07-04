@@ -1561,6 +1561,17 @@ Light/Dark switch flips the whole surface (graphite ⇄ paper) including the
 theme-swapped brand mark (`mark-dark` ⇄ `mark-light`), (c) the Bricolage Grotesque
 wordmark/headings render, (d) the app-tile favicon shows in the window.
 
+**Partially CONFIRMED (2026-07-05, static-export Playwright).** Served the production
+`out/` build and screenshotted `/` at 1280×820 in BOTH themes (localStorage
+`cloudstash.theme` default→light and `dark`): confirmed the dark first paint is
+graphite monochrome with NO theme flash; the brand mark swaps (light cloud ⇄ dark
+cloud + silver fold) between themes; the Bricolage wordmark + "Datasources" heading
+render; and the flat inverted-monochrome primary button (ink slab on light / silver
+slab on dark — no gradient/emboss). REMAINING to smoke in a real Electron boot: the
+**populated** `DatasourceCard` grid (needs `window.api`; the browser run shows the
+error state instead) and the **live in-app** Light/Dark switch interaction (vs. a
+reload).
+
 **Why deferred.** Needs a live Electron app (the renderer's `app://` protocol + a
 running fs-sync service + config) — same class as the other running-system smokes in
 this file. The underlying guarantees are unit-tested: `no-fouc.test.tsx` proves the
