@@ -38,7 +38,7 @@
     <filter id="softShadow" x="105" y="158" width="820" height="760" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
       <feDropShadow dx="0" dy="38" stdDeviation="42" flood-color="#000000" flood-opacity="0.58"/>
     </filter>
-    <filter id="innerGlow" x="130" y="180" width="780" height="690" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+    <filter id="innerGlow" x="0" y="120" width="1024" height="860" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
       <feDropShadow dx="0" dy="-2" stdDeviation="2" flood-color="#FFFFFF" flood-opacity="0.18"/>
       <feDropShadow dx="0" dy="18" stdDeviation="25" flood-color="#000000" flood-opacity="0.28"/>
     </filter>

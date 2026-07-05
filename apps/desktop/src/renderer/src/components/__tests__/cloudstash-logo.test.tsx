@@ -37,6 +37,17 @@ import { CloudStashGlyph, CloudStashLogo } from "../cloudstash-logo";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const LOGO_SRC_PATH = join(__dirname, "..", "cloudstash-logo.tsx");
+// The served dark-mark asset (what ships and renders in the header). Path:
+// __tests__ → components → src → renderer → public/brand/…
+const MARK_DARK_ASSET_PATH = join(
+  __dirname,
+  "..",
+  "..",
+  "..",
+  "public",
+  "brand",
+  "cloudstash-mark-dark.svg",
+);
 
 afterEach(() => {
   cleanup();
@@ -139,6 +150,48 @@ describe("CloudStashGlyph — currentColor glyph for 16–32px surfaces", () => 
     const svg = container.querySelector("svg")!;
     expect(svg.getAttribute("width")).toBe("20");
     expect(svg.getAttribute("height")).toBe("20");
+  });
+});
+
+describe("served dark-mark asset — filter region covers the full artwork", () => {
+  // Regression guard for the left-truncation bug: the `innerGlow` filter used
+  // `filterUnits="userSpaceOnUse"` with a region (x=130 … width=780) that
+  // clipped the cloud, whose geometry spans x≈62..929 and y≈205..825. Anything
+  // outside the filter rect is not painted, so the left bulge + front pocket
+  // (x<130) and the right lobe edge (x>910) were cut off — visible as the dark
+  // mark being sliced on the left while the light mark (unbounded filter
+  // region) rendered whole. The region MUST fully contain the geometry.
+  const CLOUD_MIN_X = 62;
+  const CLOUD_MAX_X = 929;
+  const CLOUD_MIN_Y = 205;
+  const CLOUD_MAX_Y = 825;
+
+  function readInnerGlowRegion() {
+    const svg = readFileSync(MARK_DARK_ASSET_PATH, "utf8");
+    const tag = svg.match(/<filter\s+id="innerGlow"[^>]*>/);
+    expect(tag, "innerGlow filter must exist").not.toBeNull();
+    const attr = (name: string) => {
+      const m = tag![0].match(new RegExp(`${name}="(-?[0-9.]+)"`));
+      return m ? Number(m[1]) : NaN;
+    };
+    return {
+      x: attr("x"),
+      y: attr("y"),
+      width: attr("width"),
+      height: attr("height"),
+    };
+  }
+
+  it("innerGlow region's left/right edges enclose the cloud's horizontal span", () => {
+    const r = readInnerGlowRegion();
+    expect(r.x).toBeLessThanOrEqual(CLOUD_MIN_X);
+    expect(r.x + r.width).toBeGreaterThanOrEqual(CLOUD_MAX_X);
+  });
+
+  it("innerGlow region's top/bottom edges enclose the cloud's vertical span", () => {
+    const r = readInnerGlowRegion();
+    expect(r.y).toBeLessThanOrEqual(CLOUD_MIN_Y);
+    expect(r.y + r.height).toBeGreaterThanOrEqual(CLOUD_MAX_Y);
   });
 });
 
