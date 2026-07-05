@@ -27,9 +27,9 @@ remaining open work is the OpenSpec lifecycle for this back-fill.
   D2 theme-swap kept, D3 client-side search filter, D4 `1af16bf` superseded).
 - [x] 2.3 `specs/datasources-ui/spec.md` — MODIFIED mark scenario (SVG → raster
   PNG) + ADDED search-filter requirement (3 scenarios mirroring the test).
-- [ ] 2.4 `openspec validate backfill-header-mark-and-search` passes.
-- [ ] 2.5 `/opsx:sync` — apply the delta to canonical `datasources-ui/spec.md`;
-  REPLACE the old "SVG artwork" mark scenario (do not append a duplicate);
-  post-sync check: exactly one mark scenario, reading PNG/raster.
-- [ ] 2.6 `openspec validate datasources-ui --type spec` passes.
+- [x] 2.4 `openspec validate backfill-header-mark-and-search` passes.
+- [x] 2.5 `/opsx:sync` — applied the delta to canonical `datasources-ui/spec.md`;
+  REPLACED the old "SVG artwork" mark scenario (no duplicate); post-sync check:
+  exactly one mark scenario, reading PNG/raster; no leftover SVG mark wording.
+- [x] 2.6 `openspec validate datasources-ui --type spec` passes.
 - [ ] 2.7 `/opsx:archive` (after advisor checkpoint b).

@@ -28,6 +28,25 @@ The main window SHALL render a datasources dashboard as the default view loaded 
 - **WHEN** `window.api.datasources.list()` rejects
 - **THEN** the dashboard renders an error panel with the error message, a "Retry" button that re-invokes the IPC, and does NOT render stale cards from any previous state
 
+### Requirement: Dashboard toolbar filters the datasource grid via a search field
+
+The datasources dashboard toolbar SHALL provide a search field, placed before the Add-datasource action, that filters the populated datasource grid client-side. A datasource is visible when the trimmed query matches its display name OR its provider id, compared case-insensitively. An empty query shows every datasource (no filtering). When a non-empty query matches no datasource, the grid is replaced by a distinct no-matches state rather than a blank grid.
+
+#### Scenario: Search filters the populated grid by name or provider
+
+- **WHEN** the dashboard is in the populated state and the user types a query that matches a subset of datasources by display name or provider id (e.g. "onedrive")
+- **THEN** only the matching datasource cards remain mounted and the non-matching cards are removed
+
+#### Scenario: A non-matching query shows a no-matches state, not a blank grid
+
+- **WHEN** the user types a non-empty query that matches no datasource
+- **THEN** no datasource cards are mounted and a distinct no-matches indicator (`data-testid="datasources-no-matches"`) is shown
+
+#### Scenario: Clearing the query restores the full list
+
+- **WHEN** the user clears the search field back to an empty query
+- **THEN** every datasource card in the loaded list is shown again
+
 ### Requirement: Datasource card surfaces the standardized summary fields
 
 Every `DatasourceCard` SHALL render the following fields from its `DatasourceSummary`: provider icon, datasource display name, connection status badge, last-sync timestamp (or "never" if null), item count, and a quick-actions control surface. The card SHALL additionally render a storage usage bar with used/quota labels IF AND ONLY IF `provider.capabilities.quota === true` for the card's provider descriptor.
@@ -240,7 +259,7 @@ Primitives SHALL meet a defined accessibility baseline: every interactive primit
 
 The renderer SHALL present the **CloudStash Monochrome** visual identity. The palette SHALL be monochrome graphite with a monochrome accent and status colours only. On the dark (canonical) theme: a dark canvas, layered graphite surfaces, a silver text ramp, and a silver accent for focus/active/selection. On the light theme, the inverse: a light canvas, layered surfaces, an ink/graphite text ramp, and a graphite accent — the accent darkens on the light ground so it stays AA-legible (silver has insufficient contrast on a light surface). The four status hues (success/warning/danger/info) SHALL be reserved for status only. The accent SHALL be a monochrome neutral in BOTH themes; there SHALL be no crimson brand colour and no chromatic (blue/coloured) accent; the previous `--brand-primary` crimson token SHALL be removed and no feature code SHALL depend on it. The primary button SHALL use a flat inverted-monochrome treatment — a solid single-tone fill with no gradient or embossed highlight: a light-silver fill on ink foreground on the dark theme, and the inverse (an ink/graphite fill on light foreground) on the light theme — rather than a coloured fill. All identity colours SHALL meet WCAG AA text/UI contrast in both the light and dark themes.
 
-The CloudStash **mark** SHALL be shipped as fixed SVG artwork swapped by theme (a dark-optimised mark on the dark theme and a light-optimised mark on the light theme) rather than tinted through a single colour token, because the mark is a multi-gradient asset that is not `currentColor`-tintable. A `currentColor` **glyph** variant SHALL be provided for small surfaces (16–32px: favicon, tray) so those inherit the theme foreground. The header wordmark SHALL render the CloudStash name (no Forti5 identity remains).
+The CloudStash **mark** SHALL be shipped as fixed transparent PNG artwork swapped by theme (a dark-optimised silver mark on the dark theme and a light-optimised graphite mark on the light theme) rather than tinted through a single colour token, because the mark is a tonal raster asset (the two-cloud mark) that is not `currentColor`-tintable. A `currentColor` **glyph** variant SHALL be provided for small surfaces (16–32px: favicon, tray) so those inherit the theme foreground. The header wordmark SHALL render the CloudStash name (no Forti5 identity remains).
 
 Typography SHALL layer a distinctive display typeface for the wordmark and section headings on top of the existing UI type: the display face (an OFL, self-hosted face loaded via `next/font`, e.g. Bricolage Grotesque) SHALL be used for the wordmark and headings, while Geist Sans remains the UI/body font and Geist Mono the monospace face. No display/UI font SHALL be fetched at runtime (all faces ship with the app).
 
@@ -249,10 +268,10 @@ Typography SHALL layer a distinctive display typeface for the wordmark and secti
 - **WHEN** a Vitest test scans the renderer's global stylesheet
 - **THEN** the light and dark theme variable sets define a monochrome graphite/silver palette with status hues reserved for status tokens; no `--brand-primary` (crimson) token is defined or referenced by any feature `.tsx`; the accent/ring tokens resolve to a monochrome neutral (silver on the dark theme, graphite on the light theme), not blue or crimson
 
-#### Scenario: Mark is theme-swapped SVG artwork with a currentColor glyph
+#### Scenario: Mark is theme-swapped raster (PNG) artwork with a currentColor glyph
 
 - **WHEN** the app header renders on the dark theme and on the light theme
-- **THEN** `CloudStashLogo` renders the dark-optimised mark on dark and the light-optimised mark on light (theme-swapped SVG assets, not a single token-tinted SVG), the wordmark reads "CloudStash", and a `currentColor` glyph variant exists for 16–32px surfaces (favicon/tray)
+- **THEN** `CloudStashLogo` renders the dark-optimised mark on dark and the light-optimised mark on light (theme-swapped transparent PNG assets — a silver cloud on the dark theme, a graphite cloud on the light theme — NOT a single token-tinted image), the two `<img>` marks are decorative (`alt=""`, `aria-hidden`) with the sole "CloudStash" accessible name on the wrapper, the wordmark reads "CloudStash", and a `currentColor` glyph variant exists for 16–32px surfaces (favicon/tray)
 
 #### Scenario: Display face applies to the wordmark/headings, Geist to UI, no runtime fetch
 
