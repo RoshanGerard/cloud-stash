@@ -32,4 +32,4 @@ remaining open work is the OpenSpec lifecycle for this back-fill.
   REPLACED the old "SVG artwork" mark scenario (no duplicate); post-sync check:
   exactly one mark scenario, reading PNG/raster; no leftover SVG mark wording.
 - [x] 2.6 `openspec validate datasources-ui --type spec` passes.
-- [ ] 2.7 `/opsx:archive` (after advisor checkpoint b).
+- [x] 2.7 `/opsx:archive` (after advisor checkpoint b — verified back-fill matches shipped code).
