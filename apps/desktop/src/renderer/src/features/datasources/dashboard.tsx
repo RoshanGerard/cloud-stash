@@ -17,7 +17,6 @@ import { Icon } from "@/components/icon";
 
 import { AddDatasourceDialog } from "./add-dialog";
 import { DatasourceCard } from "./card";
-import { DashboardBackground } from "./dashboard-background";
 import { EmptyDatasourcesIllustration } from "./illustrations/empty-datasources";
 import { useDatasourceActions, useDatasources } from "./store";
 
@@ -34,22 +33,14 @@ export function DatasourcesToolbar({
 }) {
   return (
     <div className="flex items-center justify-between gap-3 border-b border-border p-4">
-      {/* Review-round-3, Task 4: "Datasources" title modernized. Leading
-          `folder-sync` glyph + `text-lg tracking-tight` gives the heading a
-          more deliberate page-title feel and complements the domain (a
-          synced folder surface). The glyph is decorative — `aria-hidden`
-          keeps it out of the accessible name; screen readers still read
-          just "Datasources". */}
-      <div className="flex items-center gap-2">
-        <Icon
-          name="folder-sync"
-          className="text-muted-foreground size-5"
-          aria-hidden
-        />
-        <h1 className="font-display text-lg font-semibold tracking-tight">
-          Datasources
-        </h1>
-      </div>
+      {/* Page title in the Bricolage display face — matches the visual-
+          refinement mockup's toolbar heading (a clean wordmark-adjacent
+          heading, no leading glyph). `text-lg` keeps it within the
+          Visual-direction requirement (section headings are text-base/text-lg);
+          `tracking-tight` gives the display face its intended set-width. */}
+      <h1 className="font-display text-lg font-semibold tracking-tight">
+        Datasources
+      </h1>
       <Button
         ref={triggerRef}
         size="sm"
@@ -222,28 +213,25 @@ export function DatasourcesDashboard() {
     // flex-col` keeps the previous behaviour of the dashboard filling the
     // height of its slot.
     //
-    // Review-round-2, Task 2: the tiled CSS watermark is gone. The root
-    // is now `relative` so <DashboardBackground /> (absolute inset-0,
-    // aria-hidden) can layer behind the content, and the content lives
-    // inside a `relative z-10` wrapper so nothing falls behind the
-    // decorative SVG.
+    // Canvas: the hex-network watermark is gone (it read as busy against the
+    // visual-refinement mockup). The dashboard canvas now carries only the
+    // calm graphite radial via `bg-canvas-gradient` (theme-scoped token in
+    // globals.css) — a decorative depth cue behind the toolbar + content, so
+    // no z-index layering is needed and the content sits directly on it.
     <div
       data-testid="datasources-dashboard-root"
-      className="relative flex h-full flex-col"
+      className="bg-canvas-gradient flex h-full flex-col"
     >
-      <DashboardBackground />
-      <div className="relative z-10 flex h-full flex-col">
-        <DatasourcesToolbar
-          onAddDatasourceClick={onAddDatasourceClick}
-          triggerRef={toolbarTriggerRef}
-        />
-        <DashboardStates onAddDatasourceClick={onAddDatasourceClick} />
-        <AddDatasourceDialog
-          open={addDialogOpen}
-          onOpenChange={setAddDialogOpen}
-          returnFocusTo={returnFocusTo}
-        />
-      </div>
+      <DatasourcesToolbar
+        onAddDatasourceClick={onAddDatasourceClick}
+        triggerRef={toolbarTriggerRef}
+      />
+      <DashboardStates onAddDatasourceClick={onAddDatasourceClick} />
+      <AddDatasourceDialog
+        open={addDialogOpen}
+        onOpenChange={setAddDialogOpen}
+        returnFocusTo={returnFocusTo}
+      />
     </div>
   );
 }

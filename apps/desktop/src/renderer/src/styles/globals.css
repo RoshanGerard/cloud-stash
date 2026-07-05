@@ -15,6 +15,17 @@
   -webkit-app-region: no-drag;
 }
 
+/* Canvas depth — the calm graphite radial the visual-refinement mockup pitches
+   for the app canvas (a soft top-right glow over near-black), replacing the
+   earlier hex-network watermark on the dashboard. `background-image` layers over
+   whatever `background-color` the surface already carries, so it stays a purely
+   decorative depth cue. The gradient stops live in `--gradient-canvas` (theme-
+   scoped below) so feature code references only this utility — no colour literal
+   crosses the literals-ban boundary. */
+@utility bg-canvas-gradient {
+  background-image: var(--gradient-canvas);
+}
+
 /* shadcn/ui v4 — new-york style, CloudStash Monochrome palette. The identity
    is graphite surfaces + a monochrome (silver/graphite) accent, with the four
    status hues reserved for status only. Both themes are class-driven via
@@ -50,6 +61,14 @@
   --input: oklch(0.843 0.0129 255.5); /* #C6CCD4 */
   --ring: oklch(0.268 0.0241 264); /* #202632 — graphite accent (AA on light) */
   --radius: 0.5rem;
+  /* Monochrome-light canvas glow (visual-refinement mockup `.app` light):
+     a near-white top-right glow settling into the cool paper canvas. */
+  --gradient-canvas: radial-gradient(
+    120% 90% at 82% -8%,
+    #ffffff 0%,
+    #eef1f4 44%,
+    #e6eaef 100%
+  );
 }
 
 /* Canonical CloudStash graphite Dark (Decision 1): a near-black canvas,
@@ -76,6 +95,14 @@
   --input: oklch(0.359 0.0304 261.9); /* #343D4D */
   --ring: oklch(0.933 0.0075 260.7); /* #E6E9EE — silver accent = focus ring */
   --radius: 0.5rem;
+  /* Canonical graphite canvas glow (visual-refinement mockup `.app` dark):
+     a soft top-right graphite lift fading into the near-black canvas. */
+  --gradient-canvas: radial-gradient(
+    120% 90% at 82% -8%,
+    #101821 0%,
+    #080f14 46%,
+    #060b10 100%
+  );
 }
 
 @theme inline {
