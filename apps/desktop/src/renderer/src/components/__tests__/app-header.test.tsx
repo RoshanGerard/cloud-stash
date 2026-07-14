@@ -36,7 +36,7 @@ afterEach(() => {
 describe("AppHeader — brand chrome (Decision 14)", () => {
   it("renders the CloudStash theme-swapped brand mark", () => {
     render(<AppHeader />);
-    // restyle-cloudstash-monochrome §4.1 — the mark is now theme-swapped .svg
+    // fix-cloudstash-visual-drift — the mark is theme-swapped transparent .png
     // artwork rendered as two <img> elements inside a role="img" wrapper
     // (was an inline <svg> tinted through the retired crimson brand token).
     const logo = document.querySelector("[data-testid='cloudstash-logo']");

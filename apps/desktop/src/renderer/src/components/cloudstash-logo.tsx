@@ -1,19 +1,20 @@
 // CloudStash brand mark — CloudStash Monochrome identity
 // (restyle-cloudstash-monochrome §4.1, design.md Decision 3).
 //
-// The mark is multi-gradient 3D artwork (a layered cloud + folded silver
-// ribbon seam), NOT a single `currentColor`-tintable shape. So it ships as
-// fixed .svg asset files (in `public/brand/`, served at `app://local/brand/…`)
-// and is swapped by theme rather than tinted through a token. Two forms:
+// The mark is tonal raster artwork (the CloudStash two-cloud mark — a filled
+// cloud behind a white-outlined cloud with a folded seam), NOT a single
+// `currentColor`-tintable shape. So it ships as transparent .png asset files
+// (in `public/brand/`, served at `app://local/brand/…`) and is swapped by
+// theme rather than tinted through a token. Two forms:
 //
 //   • CloudStashLogo — the full mark for the header/chrome. Renders the
 //     dark-optimised mark on the dark theme and the light-optimised mark on
 //     the light theme as two <img> elements, toggled PURELY by CSS via the
 //     `.dark`-class Tailwind variant (`hidden dark:block` / `block dark:hidden`).
 //     `.dark` is already on <html> before first paint, so the swap is
-//     FOUC-free with no JS theme read. <img> (not inline SVG) is deliberate:
-//     the two mark files reuse SVG element ids (`fold`, …); inlining both into
-//     one DOM would collide, whereas <img> scopes each file's ids.
+//     FOUC-free with no JS theme read. The marks are transparent raster .png
+//     files (a silver cloud tuned for dark, a graphite cloud tuned for light),
+//     so they render as <img>; there is no single tintable vector.
 //
 //   • CloudStashGlyph — the 16–32px surface variant (favicon/tray). A single
 //     inline <svg> whose two paths stroke with `currentColor`, so it inherits
@@ -28,7 +29,7 @@
 // exactly one accessible name, stable across the swap.
 //
 // Colour-literal ban: NO hex/rgb/hsl/oklch literal appears in this file. The
-// mark hex lives only in the .svg asset files; the glyph uses `currentColor`
+// mark artwork lives only in the .png asset files; the glyph uses `currentColor`
 // and `fill="none"` (neither is a colour literal).
 
 import type { SVGProps } from "react";
@@ -49,8 +50,8 @@ export interface CloudStashLogoProps {
 // Asset paths resolve root-relative against the `app://local` origin the
 // renderer is loaded from (`app://local/brand/…` → `<rendererRoot>/brand/…`).
 // `basePath` is "" so no prefix is needed.
-const MARK_DARK_SRC = "/brand/cloudstash-mark-dark.svg";
-const MARK_LIGHT_SRC = "/brand/cloudstash-mark-light.svg";
+const MARK_DARK_SRC = "/brand/cloudstash-mark-dark.png";
+const MARK_LIGHT_SRC = "/brand/cloudstash-mark-light.png";
 
 export function CloudStashLogo({ size = 28, className }: CloudStashLogoProps) {
   return (

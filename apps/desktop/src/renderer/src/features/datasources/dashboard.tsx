@@ -11,13 +11,13 @@
 import { useCallback, useRef, useState, type MouseEvent, type Ref } from "react";
 
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card } from "@/components/ui/card";
 import { Icon } from "@/components/icon";
 
 import { AddDatasourceDialog } from "./add-dialog";
 import { DatasourceCard } from "./card";
-import { DashboardBackground } from "./dashboard-background";
 import { EmptyDatasourcesIllustration } from "./illustrations/empty-datasources";
 import { useDatasourceActions, useDatasources } from "./store";
 
@@ -28,49 +28,78 @@ import { useDatasourceActions, useDatasources } from "./store";
 export function DatasourcesToolbar({
   onAddDatasourceClick,
   triggerRef,
+  query,
+  onQueryChange,
 }: {
   onAddDatasourceClick: (event: MouseEvent<HTMLElement>) => void;
   triggerRef?: Ref<HTMLButtonElement>;
+  query: string;
+  onQueryChange: (value: string) => void;
 }) {
   return (
-    <div className="flex items-center justify-between gap-3 border-b border-border p-4">
-      {/* Review-round-3, Task 4: "Datasources" title modernized. Leading
-          `folder-sync` glyph + `text-lg tracking-tight` gives the heading a
-          more deliberate page-title feel and complements the domain (a
-          synced folder surface). The glyph is decorative — `aria-hidden`
-          keeps it out of the accessible name; screen readers still read
-          just "Datasources". */}
-      <div className="flex items-center gap-2">
-        <Icon
-          name="folder-sync"
-          className="text-muted-foreground size-5"
-          aria-hidden
-        />
+    <div className="flex items-start justify-between gap-4 p-4">
+      {/* Page header (visual-refinement mockup, Title B): the display-face
+          title plus a one-line subtitle gives the section a job and real
+          hierarchy — it reads as a page header, not a bare filter strip. The
+          heavy full-width divider is dropped; section spacing separates it from
+          the grid. The subtitle is a sibling paragraph (NOT nested in the
+          heading), so the page keeps exactly one top-level heading whose
+          accessible name stays "Datasources" (a11y contract). `text-lg` keeps
+          the heading within the Visual-direction text-base/text-lg rule. */}
+      <div className="flex flex-col gap-0.5">
         <h1 className="font-display text-lg font-semibold tracking-tight">
           Datasources
         </h1>
+        <p className="text-muted-foreground text-sm">
+          Connect and sync your cloud storage in one place.
+        </p>
       </div>
-      <Button
-        ref={triggerRef}
-        size="sm"
-        onClick={onAddDatasourceClick}
-        data-testid="add-datasource-trigger"
-      >
-        {/* Decision 15: icon+label on every primary CTA. The shadcn Button
-            default gap-2 handles spacing; the `aria-hidden` keeps the
-            glyph out of the accessible name (the text label is the
-            screen-reader source of truth). */}
-        <Icon name="plus" className="size-4" aria-hidden />
-        Add datasource
-      </Button>
+      {/* Actions: a real search field (filters the populated grid by name /
+          provider — see DashboardPopulated) sits before the primary CTA, per
+          the mockup. It's a functional control, not decoration. The leading
+          glyph is decorative (`aria-hidden`); the input carries its own
+          `aria-label`. */}
+      <div className="flex items-center gap-2">
+        <div className="relative">
+          <Icon
+            name="search"
+            aria-hidden
+            className="text-muted-foreground pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2"
+          />
+          <Input
+            type="search"
+            value={query}
+            onChange={(event) => onQueryChange(event.target.value)}
+            placeholder="Search datasources"
+            aria-label="Search datasources"
+            data-testid="datasources-search"
+            className="h-8 w-48 pl-8 sm:w-60"
+          />
+        </div>
+        <Button
+          ref={triggerRef}
+          size="sm"
+          onClick={onAddDatasourceClick}
+          data-testid="add-datasource-trigger"
+        >
+          {/* Decision 15: icon+label on every primary CTA. The shadcn Button
+              default gap-2 handles spacing; the `aria-hidden` keeps the
+              glyph out of the accessible name (the text label is the
+              screen-reader source of truth). */}
+          <Icon name="plus" className="size-4" aria-hidden />
+          Add datasource
+        </Button>
+      </div>
     </div>
   );
 }
 
 export function DashboardStates({
   onAddDatasourceClick,
+  query,
 }: {
   onAddDatasourceClick: (event: MouseEvent<HTMLElement>) => void;
+  query: string;
 }) {
   const state = useDatasources();
   const actions = useDatasourceActions();
@@ -91,7 +120,7 @@ export function DashboardStates({
       />
     );
   }
-  return <DashboardPopulated datasources={state.datasources} />;
+  return <DashboardPopulated datasources={state.datasources} query={query} />;
 }
 
 function DashboardLoading() {
@@ -171,15 +200,41 @@ function DashboardError({
 
 function DashboardPopulated({
   datasources,
+  query,
 }: {
   datasources: import("@cloudstash/ipc-contracts").DatasourceSummary[];
+  query: string;
 }) {
+  // Client-side filter over the loaded list — matches display name or provider
+  // id, case-insensitively. An empty query shows everything (no filtering cost).
+  const needle = query.trim().toLowerCase();
+  const visible = needle
+    ? datasources.filter(
+        (ds) =>
+          ds.displayName.toLowerCase().includes(needle) ||
+          ds.providerId.toLowerCase().includes(needle),
+      )
+    : datasources;
+
+  if (needle && visible.length === 0) {
+    return (
+      <div
+        data-testid="datasources-no-matches"
+        className="flex flex-col items-center justify-center gap-2 p-8 text-center"
+      >
+        <p className="text-muted-foreground text-sm">
+          No datasources match &ldquo;{query}&rdquo;.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div
       data-testid="datasources-grid"
       className="grid grid-cols-1 gap-3 p-4 sm:grid-cols-2 lg:grid-cols-3"
     >
-      {datasources.map((ds) => (
+      {visible.map((ds) => (
         <DatasourceCard key={ds.id} summary={ds} />
       ))}
     </div>
@@ -199,6 +254,10 @@ export function DatasourcesDashboard() {
   // not implicitly focus the button. The toolbar-trigger fallback handles
   // the case where the empty-state CTA unmounts after the add succeeds.
   const [addDialogOpen, setAddDialogOpen] = useState(false);
+  // Search query — lifted here so the toolbar input and the populated grid
+  // share it. Client-side filter only (no backend round-trip); see
+  // DashboardPopulated.
+  const [query, setQuery] = useState("");
   const openerRef = useRef<HTMLElement | null>(null);
   const toolbarTriggerRef = useRef<HTMLButtonElement | null>(null);
 
@@ -222,28 +281,29 @@ export function DatasourcesDashboard() {
     // flex-col` keeps the previous behaviour of the dashboard filling the
     // height of its slot.
     //
-    // Review-round-2, Task 2: the tiled CSS watermark is gone. The root
-    // is now `relative` so <DashboardBackground /> (absolute inset-0,
-    // aria-hidden) can layer behind the content, and the content lives
-    // inside a `relative z-10` wrapper so nothing falls behind the
-    // decorative SVG.
+    // Canvas: flat. The hex-network watermark AND the radial "depth" gradient
+    // are both gone — the gradient read as "shady" against the visual-
+    // refinement mockup, which calls for a flat, modern canvas. The root
+    // inherits the flat `--background` from the body; no per-surface background.
     <div
       data-testid="datasources-dashboard-root"
-      className="relative flex h-full flex-col"
+      className="flex h-full flex-col"
     >
-      <DashboardBackground />
-      <div className="relative z-10 flex h-full flex-col">
-        <DatasourcesToolbar
-          onAddDatasourceClick={onAddDatasourceClick}
-          triggerRef={toolbarTriggerRef}
-        />
-        <DashboardStates onAddDatasourceClick={onAddDatasourceClick} />
-        <AddDatasourceDialog
-          open={addDialogOpen}
-          onOpenChange={setAddDialogOpen}
-          returnFocusTo={returnFocusTo}
-        />
-      </div>
+      <DatasourcesToolbar
+        onAddDatasourceClick={onAddDatasourceClick}
+        triggerRef={toolbarTriggerRef}
+        query={query}
+        onQueryChange={setQuery}
+      />
+      <DashboardStates
+        onAddDatasourceClick={onAddDatasourceClick}
+        query={query}
+      />
+      <AddDatasourceDialog
+        open={addDialogOpen}
+        onOpenChange={setAddDialogOpen}
+        returnFocusTo={returnFocusTo}
+      />
     </div>
   );
 }

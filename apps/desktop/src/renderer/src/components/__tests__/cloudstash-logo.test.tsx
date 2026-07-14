@@ -4,15 +4,16 @@
 // Monochrome identity. The old inline-polygon Forti5 mark (6 crimson polygons
 // tinted through the retired crimson brand token) is gone.
 //
-// New contract (design.md Decision 3 + datasources-ui scenario "Mark is
-// theme-swapped SVG artwork with a currentColor glyph"):
+// New contract (fix-cloudstash-visual-drift + datasources-ui scenario "Mark is
+// theme-swapped raster artwork with a currentColor glyph"):
 //
 //   - CloudStashLogo renders the mark as TWO theme-swapped <img> elements: a
 //     dark-optimised mark shown on the dark theme (`hidden dark:block`) and a
 //     light-optimised mark shown on the light theme (`block dark:hidden`),
 //     toggled purely by CSS via the `.dark`-class Tailwind variant — no JS
-//     theme read. The marks are multi-gradient artwork (NOT currentColor-
-//     tintable), so they live as .svg asset files served from public/brand/.
+//     theme read. The marks are tonal raster artwork (a transparent silver
+//     cloud on dark, a graphite cloud on light — NOT currentColor-tintable),
+//     so they live as .png asset files served from public/brand/.
 //   - The accessible "CloudStash" name lives on a wrapper element that is
 //     never `display:none`, so the theme swap can never drop it (a name
 //     attached to one <img> would vanish in the theme where that img is
@@ -23,7 +24,7 @@
 //     <svg> whose paths stroke with `currentColor` so it inherits the theme
 //     foreground.
 //   - No hex/rgb/hsl/oklch colour literal appears in the .tsx source (the mark
-//     hex lives only in the .svg asset files; the glyph uses currentColor).
+//     artwork lives only in the .png asset files; the glyph uses currentColor).
 
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -46,7 +47,7 @@ describe("CloudStashLogo — theme-swapped mark", () => {
   it("renders the dark-optimised mark, shown on dark via `hidden dark:block`", () => {
     const { container } = render(<CloudStashLogo />);
     const dark = container.querySelector<HTMLImageElement>(
-      'img[src="/brand/cloudstash-mark-dark.svg"]',
+      'img[src="/brand/cloudstash-mark-dark.png"]',
     );
     expect(dark).not.toBeNull();
     // Hidden on light, shown on dark — the CSS-only theme swap.
@@ -57,7 +58,7 @@ describe("CloudStashLogo — theme-swapped mark", () => {
   it("renders the light-optimised mark, shown on light via `block dark:hidden`", () => {
     const { container } = render(<CloudStashLogo />);
     const light = container.querySelector<HTMLImageElement>(
-      'img[src="/brand/cloudstash-mark-light.svg"]',
+      'img[src="/brand/cloudstash-mark-light.png"]',
     );
     expect(light).not.toBeNull();
     expect(light!.className).toContain("block");
@@ -70,8 +71,8 @@ describe("CloudStashLogo — theme-swapped mark", () => {
     expect(imgs).toHaveLength(2);
     const srcs = imgs.map((i) => i.getAttribute("src")).sort();
     expect(srcs).toEqual([
-      "/brand/cloudstash-mark-dark.svg",
-      "/brand/cloudstash-mark-light.svg",
+      "/brand/cloudstash-mark-dark.png",
+      "/brand/cloudstash-mark-light.png",
     ]);
   });
 

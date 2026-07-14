@@ -153,6 +153,30 @@ describe("DatasourcesDashboard state machine (task 5.1)", () => {
     ).toBeNull();
   });
 
+  it("toolbar shows the page title and a one-line subtitle (Title B)", () => {
+    // Toolbar renders in every state; keep it in loading so nothing is async.
+    listMock.mockReturnValue(new Promise<never>(() => {}));
+
+    render(
+      <DatasourcesProvider>
+        <DatasourcesDashboard />
+      </DatasourcesProvider>,
+    );
+
+    // Exactly-one-h1 a11y contract holds: the heading's accessible name is
+    // still just "Datasources" (the subtitle is a sibling <p>, not inside it).
+    expect(
+      screen.getByRole("heading", { level: 1, name: "Datasources" }),
+    ).toBeInTheDocument();
+
+    // The subtitle line renders beneath it and is not a heading.
+    const subtitle = screen.getByText(
+      /connect and sync your cloud storage/i,
+    );
+    expect(subtitle).toBeInTheDocument();
+    expect(subtitle.tagName).toBe("P");
+  });
+
   it("empty state: renders illustration, heading, and Add datasource CTA", async () => {
     listMock.mockResolvedValue({ datasources: [] });
 
@@ -215,6 +239,50 @@ describe("DatasourcesDashboard state machine (task 5.1)", () => {
       return heading?.textContent ?? "";
     });
     expect(renderedNames).toEqual(POPULATED_FIXTURE.map((s) => s.displayName));
+  });
+
+  it("search field filters the populated grid by name/provider, with a no-matches state", async () => {
+    listMock.mockResolvedValue({ datasources: POPULATED_FIXTURE });
+
+    const { container } = render(
+      <DatasourcesProvider>
+        <DatasourcesDashboard />
+      </DatasourcesProvider>,
+    );
+
+    await waitFor(() => {
+      expect(
+        container.querySelectorAll("[data-testid='datasource-card']").length,
+      ).toBe(POPULATED_FIXTURE.length);
+    });
+
+    const search = screen.getByRole("searchbox", {
+      name: /search datasources/i,
+    });
+
+    // Query matching only the OneDrive datasource (by provider id + name).
+    fireEvent.change(search, { target: { value: "onedrive" } });
+    await waitFor(() => {
+      expect(
+        container.querySelectorAll("[data-testid='datasource-card']").length,
+      ).toBe(1);
+    });
+    expect(screen.getByText("Team OneDrive")).toBeInTheDocument();
+
+    // A non-matching query shows the no-matches state and mounts no cards.
+    fireEvent.change(search, { target: { value: "no-such-source" } });
+    expect(screen.getByTestId("datasources-no-matches")).toBeInTheDocument();
+    expect(
+      container.querySelector("[data-testid='datasource-card']"),
+    ).toBeNull();
+
+    // Clearing the query restores the full list.
+    fireEvent.change(search, { target: { value: "" } });
+    await waitFor(() => {
+      expect(
+        container.querySelectorAll("[data-testid='datasource-card']").length,
+      ).toBe(POPULATED_FIXTURE.length);
+    });
   });
 
   it("failed list: error panel with retry re-invokes list() and recovers", async () => {
