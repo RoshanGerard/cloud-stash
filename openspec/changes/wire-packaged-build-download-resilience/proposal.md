@@ -86,7 +86,7 @@ This change is the live-environment smoke pass.
 4. **Partial-file cleanup verification.** When the test asserts the
    "delete on range-not-honored" disposition, how does it observe the
    filesystem state from outside the packaged process? Recommend a
-   per-test temp directory (`os.tmpdir()/ft5-test-<uuid>`) the test
+   per-test temp directory (`os.tmpdir()/cloudstash-test-<uuid>`) the test
    probes after the download terminal event fires. Per-test cleanup
    removes the directory regardless of test outcome.
 

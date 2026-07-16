@@ -48,7 +48,7 @@ in the dialog.
    ID**.
 2. **Application type: Desktop application** (not Web application —
    only Desktop clients accept the loopback redirect this app uses).
-   Name it (e.g. "FT5 Sync Dev").
+   Name it (e.g. "CloudStash Sync Dev").
 3. **APIs & Services → OAuth consent screen** — configure with the
    `auth/drive` scope, add the dev email accounts that will sign in
    during testing as **Test users** (without app verification, only

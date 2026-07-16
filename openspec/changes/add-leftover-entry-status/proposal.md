@@ -47,7 +47,7 @@ factually wrong for a cancel (the list explicitly includes `cancelled` and
    "Cancelled · 3 days ago" for a cancel (no failure detail) vs
    "Failed · ran out of retries · 3 days ago" for a failure with a message?
 3. Any existing wire vocabulary to reuse (`DownloadTerminalStatus` from
-   `@ft5/ipc-contracts/sync-service`) rather than a new enum?
+   `@cloudstash/ipc-contracts/sync-service`) rather than a new enum?
 
 ## Impact
 

@@ -1,11 +1,11 @@
 ## 1. Prerequisite — Azure app registration (HUMAN op)
 
-- [ ] 1.1 (HUMAN) Register the FT5 app in Azure AD as a **public client**: supported account types "any organizational directory + personal Microsoft accounts" (`common`); delegated Microsoft Graph permissions `Files.ReadWrite.All` + `User.Read`; loopback redirect `http://localhost` registered under the **Mobile & desktop** platform. Optionally complete Microsoft Publisher Verification to suppress the unverified-app banner.
+- [ ] 1.1 (HUMAN) Register the CloudStash app in Azure AD as a **public client**: supported account types "any organizational directory + personal Microsoft accounts" (`common`); delegated Microsoft Graph permissions `Files.ReadWrite.All` + `User.Read`; loopback redirect `http://localhost` registered under the **Mobile & desktop** platform. Optionally complete Microsoft Publisher Verification to suppress the unverified-app banner.
 - [ ] 1.2 (HUMAN) Wire the registered `clientId` into the OneDrive `OAuthAppConfig` in the service config store, with `clientSecret: ""`. Confirm **no end-user account configuration** is required (users sign in + consent in the system browser as today).
 
 ## 2. Dependency + MSAL client seam
 
-- [ ] 2.1 Add `@azure/msal-node` to `packages/fs-datasource-engine/package.json` dependencies; install; confirm the engine builds (`pnpm --filter @ft5/fs-datasource-engine build`).
+- [ ] 2.1 Add `@azure/msal-node` to `packages/fs-datasource-engine/package.json` dependencies; install; confirm the engine builds (`pnpm --filter @cloudstash/fs-datasource-engine build`).
 - [ ] 2.2 Define a duck-typed `PublicClientApplicationLike` interface (`getAuthCodeUrl`, `acquireTokenByCode`, `acquireTokenSilent`, `getTokenCache()` → `{ serialize, deserialize, getAccountByHomeId }`) plus a `MsalClientFactory`, mirroring the existing `GraphFactory` pattern. Provide `createDefaultMsalFactory` that builds the real `PublicClientApplication` (authority `https://login.microsoftonline.com/common`, `clientId` from config); allow injection for tests.
 - [ ] 2.3 Add a test fake MSAL client modelling a `serialize`/`deserialize` cache round-trip with deterministic canned results (auth-code + silent), including a fixed `homeAccountId` / `sub` / `email` and `idTokenClaims`.
 
@@ -42,6 +42,6 @@
 
 - [ ] 8.1 Remove the now-dead hand-rolled OneDrive auth code (raw-`fetch` `exchangeCodeForTokens`, raw-`fetch` refresh, `captureAccountFromIdToken` hand-decode, `readIdTokenTid`); confirm no remaining references in `onedrive-client.ts`.
 - [ ] 8.2 Confirm `services/fs-sync/src/oauth/loopback-broker.ts` and the IPC / event / renderer auth surfaces are unchanged and their existing tests still pass.
-- [ ] 8.3 Full `@ft5/fs-datasource-engine` + `fs-sync` test suites, typecheck, and lint green (including the `ft5/no-raw-error-tag-literal` rule).
+- [ ] 8.3 Full `@cloudstash/fs-datasource-engine` + `fs-sync` test suites, typecheck, and lint green (including the `cloudstash/no-raw-error-tag-literal` rule).
 - [ ] 8.4 `openspec validate migrate-onedrive-auth-to-msal --strict` is green.
 - [ ] 8.5 Defer the real-provider packaged OAuth smoke (blocked on the §1 Azure registration) to PENDING_TC and record it in the change's completion notes.

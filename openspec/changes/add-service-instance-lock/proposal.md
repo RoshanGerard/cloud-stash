@@ -7,7 +7,7 @@
 
 The fs-sync service is a detached process that survives desktop app
 close. It accepts client connections on a named pipe / socket
-(`\\.\pipe\ft5-sync` on Windows; `~/ft5/sync_app/sync.sock` on Unix).
+(`\\.\pipe\cloudstash-sync` on Windows; `~/cloudstash/sync_app/sync.sock` on Unix).
 Today the service accepts **any number of concurrent desktop client
 connections** — a second desktop instance can connect alongside the
 first and issue commands independently.
@@ -48,7 +48,7 @@ malicious local script).
   layout and the supervisor protocol — that's a separate change.
 - Programmatic test harness multi-connect. Tests that spawn a service
   and connect from multiple test workers may need a per-test
-  data-dir override (the existing `FT5_SYNC_DATA_DIR` mechanism) to
+  data-dir override (the existing `CLOUDSTASH_SYNC_DATA_DIR` mechanism) to
   spawn separate service instances.
 
 ## Open questions (resolve during `/opsx:propose`)
@@ -75,7 +75,7 @@ malicious local script).
 3. **Renderer overlay UX.** When the desktop main process receives
    `another-instance-active` from supervisor.connect, the new instance
    SHALL render a blocking overlay with copy "Another instance of
-   ft5-cloude-sync is already running" and an Exit button that calls
+   CloudStash is already running" and an Exit button that calls
    `app.quit()`. Open: should the existing instance receive any
    notification ("hey, someone tried to launch you")? Recommend no —
    the existing instance just stays as-is.
