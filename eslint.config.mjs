@@ -59,6 +59,12 @@ export default tseslint.config(
       "**/release/**",
       "**/coverage/**",
       "pnpm-lock.yaml",
+      // Git worktree checkouts under .worktrees/ are self-contained clones of
+      // other branches, not source of the current tree. ESLint's flat config
+      // does not honour .gitignore (Prettier 3 does), so without this it walks
+      // orphaned worktrees and flags their stale, pre-rebrand `ft5/`-namespaced
+      // eslint-disable comments (`Definition for rule 'ft5/...' not found`).
+      "**/.worktrees/**",
     ],
   },
   ...tseslint.configs.recommended,
