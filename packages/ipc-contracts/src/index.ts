@@ -10,10 +10,7 @@ export interface PingResponse {
 // desktop main reach `WINDOW_CHANNELS` / `WindowMaximizeChangePayload` without
 // a subpath import.
 export { WINDOW_CHANNELS } from "./window-controls.js";
-export type {
-  WindowChannelName,
-  WindowMaximizeChangePayload,
-} from "./window-controls.js";
+export type { WindowChannelName, WindowMaximizeChangePayload } from "./window-controls.js";
 
 // `ConsentEvent`, `DatasourcesStartConsent{Request,Response}`,
 // `DatasourcesCancelConsent{Request,Response}` were retired by

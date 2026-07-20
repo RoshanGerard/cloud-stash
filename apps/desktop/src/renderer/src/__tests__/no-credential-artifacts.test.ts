@@ -45,11 +45,7 @@ function* walkTsFiles(dir: string): Generator<string> {
         continue;
       }
       yield* walkTsFiles(full);
-    } else if (
-      entry.isFile() &&
-      /\.(ts|tsx)$/.test(entry.name) &&
-      full !== THIS_FILE
-    ) {
+    } else if (entry.isFile() && /\.(ts|tsx)$/.test(entry.name) && full !== THIS_FILE) {
       yield full;
     }
   }
@@ -64,9 +60,7 @@ describe("renderer — no credential artifacts (9.7)", () => {
       for (const [i, line] of lines.entries()) {
         for (const needle of FORBIDDEN) {
           if (line.includes(needle)) {
-            violations.push(
-              `${path.relative(RENDERER_SRC, file)}:${i + 1}  contains "${needle}"`,
-            );
+            violations.push(`${path.relative(RENDERER_SRC, file)}:${i + 1}  contains "${needle}"`);
           }
         }
       }

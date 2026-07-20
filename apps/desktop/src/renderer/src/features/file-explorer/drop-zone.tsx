@@ -115,10 +115,7 @@ function classifyDrop(dt: DataTransfer | null): DropClassification {
     for (let i = 0; i < items.length; i += 1) {
       const item = items[i];
       if (!item || item.kind !== "file") continue;
-      const entry =
-        typeof item.webkitGetAsEntry === "function"
-          ? item.webkitGetAsEntry()
-          : null;
+      const entry = typeof item.webkitGetAsEntry === "function" ? item.webkitGetAsEntry() : null;
       if (entry && entry.isDirectory) {
         hasFolder = true;
         continue;
@@ -157,15 +154,7 @@ function classifyDrop(dt: DataTransfer | null): DropClassification {
 }
 
 export function DropZone(props: DropZoneProps): ReactElement {
-  const {
-    datasourceId,
-    currentPath,
-    status,
-    conflictResolver,
-    toaster,
-    api,
-    children,
-  } = props;
+  const { datasourceId, currentPath, status, conflictResolver, toaster, api, children } = props;
 
   const [isDragActive, setIsDragActive] = useState(false);
   // dragenter/dragleave bubble through every child — use a counter to
@@ -175,15 +164,12 @@ export function DropZone(props: DropZoneProps): ReactElement {
 
   const blocked = isBlocked(status);
 
-  const handleDragEnter = useCallback(
-    (e: React.DragEvent<HTMLDivElement>) => {
-      if (!dataTransferHasFiles(e.dataTransfer)) return;
-      e.preventDefault();
-      dragEnterCountRef.current += 1;
-      setIsDragActive(true);
-    },
-    [],
-  );
+  const handleDragEnter = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    if (!dataTransferHasFiles(e.dataTransfer)) return;
+    e.preventDefault();
+    dragEnterCountRef.current += 1;
+    setIsDragActive(true);
+  }, []);
 
   const handleDragOver = useCallback(
     (e: React.DragEvent<HTMLDivElement>) => {
@@ -198,16 +184,13 @@ export function DropZone(props: DropZoneProps): ReactElement {
     [isDragActive],
   );
 
-  const handleDragLeave = useCallback(
-    (e: React.DragEvent<HTMLDivElement>) => {
-      if (!dataTransferHasFiles(e.dataTransfer)) return;
-      dragEnterCountRef.current = Math.max(0, dragEnterCountRef.current - 1);
-      if (dragEnterCountRef.current === 0) {
-        setIsDragActive(false);
-      }
-    },
-    [],
-  );
+  const handleDragLeave = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    if (!dataTransferHasFiles(e.dataTransfer)) return;
+    dragEnterCountRef.current = Math.max(0, dragEnterCountRef.current - 1);
+    if (dragEnterCountRef.current === 0) {
+      setIsDragActive(false);
+    }
+  }, []);
 
   const handleDrop = useCallback(
     (e: React.DragEvent<HTMLDivElement>) => {
@@ -223,9 +206,7 @@ export function DropZone(props: DropZoneProps): ReactElement {
       const { files, hasFolder } = classifyDrop(e.dataTransfer);
 
       if (hasFolder) {
-        toast.info(
-          "Folder upload is coming soon — drop individual files for now",
-        );
+        toast.info("Folder upload is coming soon — drop individual files for now");
       }
 
       if (files.length === 0) return;
@@ -242,14 +223,7 @@ export function DropZone(props: DropZoneProps): ReactElement {
       // the injected toaster — we intentionally do not await.
       void orchestrator.start();
     },
-    [
-      api,
-      blocked,
-      conflictResolver,
-      currentPath,
-      datasourceId,
-      toaster,
-    ],
+    [api, blocked, conflictResolver, currentPath, datasourceId, toaster],
   );
 
   return (

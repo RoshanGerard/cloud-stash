@@ -66,12 +66,11 @@ function readBudgetMs(): number {
 describe("render-budget guardrail — Details mode @ 300 entries", () => {
   beforeEach(() => {
     if (typeof window !== "undefined" && !("ResizeObserver" in window)) {
-      (window as unknown as { ResizeObserver: unknown }).ResizeObserver =
-        class MockResizeObserver {
-          observe() {}
-          unobserve() {}
-          disconnect() {}
-        };
+      (window as unknown as { ResizeObserver: unknown }).ResizeObserver = class MockResizeObserver {
+        observe() {}
+        unobserve() {}
+        disconnect() {}
+      };
     }
   });
 

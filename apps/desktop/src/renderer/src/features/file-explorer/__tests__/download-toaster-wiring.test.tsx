@@ -11,15 +11,7 @@
 // hydrate channel; this test installs the channel and asserts the
 // file-explorer mounts a listener.
 
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-  type Mock,
-} from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from "vitest";
 import { cleanup, render } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 
@@ -40,9 +32,7 @@ import { __resetExplorerStoreCacheForTests } from "../store.js";
 let onActiveDownloadsHydrateMock: Mock;
 
 function installApiMock(): void {
-  onActiveDownloadsHydrateMock = vi
-    .fn()
-    .mockImplementation(() => () => {});
+  onActiveDownloadsHydrateMock = vi.fn().mockImplementation(() => () => {});
 
   (window as unknown as { api: unknown }).api = {
     ping: vi.fn().mockResolvedValue({ ok: true, ts: 1 }),

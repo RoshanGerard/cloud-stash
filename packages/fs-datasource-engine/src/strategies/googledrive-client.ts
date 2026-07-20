@@ -254,10 +254,7 @@ const REQUIRED_DRIVE_SCOPE = "https://www.googleapis.com/auth/drive";
 // the `https://`-prefixed and bare-host forms across surfaces; accept both
 // (enforce-oauth-reconnect-account-match — design.md Open Questions: Google
 // `iss = https://accounts.google.com`).
-const GOOGLE_ID_TOKEN_ISSUERS = [
-  "https://accounts.google.com",
-  "accounts.google.com",
-];
+const GOOGLE_ID_TOKEN_ISSUERS = ["https://accounts.google.com", "accounts.google.com"];
 
 // Resumable-upload chunk size. Google recommends multiples of 256 KiB; we
 // pick 10 MiB to match the OneDrive strategy's chunk cadence and keep the
@@ -266,8 +263,7 @@ const UPLOAD_CHUNK_BYTES = 10 * 1024 * 1024;
 
 // Default field set for `files.list` and `files.get`. Keep in sync across
 // call sites so every response carries the fields `buildFileEntry` needs.
-const DEFAULT_FILE_FIELDS =
-  "id, name, mimeType, parents, size, modifiedTime, createdTime";
+const DEFAULT_FILE_FIELDS = "id, name, mimeType, parents, size, modifiedTime, createdTime";
 const DEFAULT_LIST_FIELDS = `nextPageToken, files(${DEFAULT_FILE_FIELDS})`;
 
 // Pagination bounds for `doListDirectoryImpl` (add-engine-listdirectory-
@@ -363,10 +359,7 @@ const DRIVE_MIME_TO_EXT: Readonly<Record<string, string>> = {
  *
  * Exported for direct unit testing; production call site is `buildFileEntry`.
  */
-export function appendExtensionIfMissing(
-  name: string,
-  mimeType: string | undefined,
-): string {
+export function appendExtensionIfMissing(name: string, mimeType: string | undefined): string {
   if (name === "") return name;
   if (mimeType === undefined) return name;
   if (extname(name) !== "") return name;
@@ -427,11 +420,7 @@ function parseContentRangeHeader(
   const start = Number.parseInt(match[1]!, 10);
   const end = Number.parseInt(match[2]!, 10);
   const total = Number.parseInt(match[3]!, 10);
-  if (
-    Number.isNaN(start) ||
-    Number.isNaN(end) ||
-    Number.isNaN(total)
-  ) {
+  if (Number.isNaN(start) || Number.isNaN(end) || Number.isNaN(total)) {
     return undefined;
   }
   return { start, end, total };
@@ -444,9 +433,7 @@ function parseContentRangeHeader(
  * `contentLength` contract (`null` when the provider omits the header — common
  * on server-generated export streams).
  */
-function parseContentLengthHeader(
-  headers: Record<string, string>,
-): number | null {
+function parseContentLengthHeader(headers: Record<string, string>): number | null {
   const raw = headers["content-length"] ?? headers["Content-Length"];
   return raw !== undefined && raw !== "" ? Number.parseInt(raw, 10) : null;
 }
@@ -484,9 +471,7 @@ interface GoogleDriveCredsMeta {
 /** Read `meta.account` into an `AccountIdentity` when it is a well-formed
  * `{ sub: string; email: string }`; otherwise `undefined`. Tolerant of legacy
  * credentials that lack the field (D8). */
-function readAccountFromMeta(
-  meta: Record<string, unknown>,
-): AccountIdentity | undefined {
+function readAccountFromMeta(meta: Record<string, unknown>): AccountIdentity | undefined {
   const account = meta.account;
   if (account === null || typeof account !== "object") return undefined;
   const { sub, email } = account as Record<string, unknown>;
@@ -494,9 +479,7 @@ function readAccountFromMeta(
   return { sub, email: typeof email === "string" ? email : "" };
 }
 
-function readCredsFromStored(
-  credentials: StoredCredentials,
-): GoogleDriveCredsMeta {
+function readCredsFromStored(credentials: StoredCredentials): GoogleDriveCredsMeta {
   const authResult = credentials.authResult;
   const meta = (authResult.meta ?? {}) as Record<string, unknown>;
   if (
@@ -547,10 +530,7 @@ export function createDefaultDriveFactory(): DriveFactory {
             setCredentials(creds: { access_token: string }): void;
           };
         };
-        drive(opts: {
-          version: string;
-          auth: unknown;
-        }): GoogleDriveClientLike;
+        drive(opts: { version: string; auth: unknown }): GoogleDriveClientLike;
       };
     };
     const oauth = new mod.google.auth.OAuth2();
@@ -646,12 +626,10 @@ export class GoogleDriveClient extends BaseDatasourceClient<"google-drive"> {
     this.expectedAccount = expectedAccount;
     this.driveFactory = options.driveFactory ?? createDefaultDriveFactory();
     this.fetchImpl =
-      options.fetchImpl ??
-      ((globalThis as { fetch: typeof fetch }).fetch).bind(globalThis);
+      options.fetchImpl ?? (globalThis as { fetch: typeof fetch }).fetch.bind(globalThis);
     this.lruCap = options.lruCap ?? 512;
     this.codeVerifierFactory =
-      options.codeVerifierFactory ??
-      (() => randomBytes(48).toString("base64url"));
+      options.codeVerifierFactory ?? (() => randomBytes(48).toString("base64url"));
     // No engine-bus subscription: cache eviction is performed inline by the
     // mutating ops (doDeleteFileImpl / doRenameImpl) — see
     // migrate-engine-cache-invalidation. Upload-success population stays
@@ -670,17 +648,11 @@ export class GoogleDriveClient extends BaseDatasourceClient<"google-drive"> {
   // Cache helpers
   // -------------------------------------------------------------------------
 
-  private cachePathHandle(
-    path: string,
-    handle: string,
-    ambiguousSiblings?: string[],
-  ): void {
+  private cachePathHandle(path: string, handle: string, ambiguousSiblings?: string[]): void {
     this.pathHandleCache.delete(path);
     this.pathHandleCache.set(path, {
       fileId: handle,
-      ...(ambiguousSiblings && ambiguousSiblings.length > 0
-        ? { ambiguousSiblings }
-        : {}),
+      ...(ambiguousSiblings && ambiguousSiblings.length > 0 ? { ambiguousSiblings } : {}),
     });
     while (this.pathHandleCache.size > this.lruCap) {
       const oldest = this.pathHandleCache.keys().next().value;
@@ -843,9 +815,7 @@ export class GoogleDriveClient extends BaseDatasourceClient<"google-drive"> {
         // rule of the initial walk; we clear here so ambiguity carried
         // from a prior step is not inadvertently returned for the leaf.
         terminalSiblings =
-          isTerminal && cachedStep.ambiguousSiblings
-            ? cachedStep.ambiguousSiblings
-            : undefined;
+          isTerminal && cachedStep.ambiguousSiblings ? cachedStep.ambiguousSiblings : undefined;
         continue;
       }
       const q = `name='${encodeDriveQuery(name)}' and '${parentId}' in parents and trashed=false`;
@@ -900,11 +870,7 @@ export class GoogleDriveClient extends BaseDatasourceClient<"google-drive"> {
       }
       // Cache the step, carrying the terminal-segment siblings alongside
       // the fileId so a subsequent cache hit re-surfaces the ambiguity.
-      this.cachePathHandle(
-        runningPath,
-        chosenId,
-        isTerminal ? terminalSiblings : undefined,
-      );
+      this.cachePathHandle(runningPath, chosenId, isTerminal ? terminalSiblings : undefined);
     }
     return {
       fileId: parentId,
@@ -943,16 +909,10 @@ export class GoogleDriveClient extends BaseDatasourceClient<"google-drive"> {
     // Folders never need extension repair; files do (per
     // `appendExtensionIfMissing`'s lookup table — Drive returns extension-
     // less `name` titles for several common mimes).
-    const name = folder
-      ? rawName
-      : appendExtensionIfMissing(rawName, file.mimeType);
+    const name = folder ? rawName : appendExtensionIfMissing(rawName, file.mimeType);
     const kind: "file" | "folder" = folder ? "folder" : "file";
-    const mimeFamily: DatasourceMimeFamily = folder
-      ? "folder"
-      : mimeFamilyFromMime(file.mimeType);
-    const modifiedAt = file.modifiedTime
-      ? new Date(file.modifiedTime).getTime()
-      : 0;
+    const mimeFamily: DatasourceMimeFamily = folder ? "folder" : mimeFamilyFromMime(file.mimeType);
+    const modifiedAt = file.modifiedTime ? new Date(file.modifiedTime).getTime() : 0;
     const size = folder ? undefined : parseSize(file.size);
     const providerMetadata: ProviderMetadata<"google-drive"> = {
       fileId: id,
@@ -1002,8 +962,13 @@ export class GoogleDriveClient extends BaseDatasourceClient<"google-drive"> {
         retryable: false,
         datasourceType: "google-drive",
         datasourceId: this.datasourceId,
-        raw: { kind: "scope-insufficient", requiredScope: REQUIRED_DRIVE_SCOPE, actualScope: scope },
-        message: "Drive permissions are too narrow — reconnect with full access to see your existing files.",
+        raw: {
+          kind: "scope-insufficient",
+          requiredScope: REQUIRED_DRIVE_SCOPE,
+          actualScope: scope,
+        },
+        message:
+          "Drive permissions are too narrow — reconnect with full access to see your existing files.",
       });
     }
   }
@@ -1033,7 +998,8 @@ export class GoogleDriveClient extends BaseDatasourceClient<"google-drive"> {
       throw this.normalizeErrorImpl({
         code: typeof parsed.error === "string" ? parsed.error : "tokeninfo-error",
         status: resp.status,
-        message: typeof parsed.error_description === "string" ? parsed.error_description : undefined,
+        message:
+          typeof parsed.error_description === "string" ? parsed.error_description : undefined,
       });
     }
     const scope = parsed.scope;
@@ -1096,9 +1062,7 @@ export class GoogleDriveClient extends BaseDatasourceClient<"google-drive"> {
     // The verifier is NEVER stored on `this` (no instance field), never
     // persisted via `CredentialStore`, and never logged.
     const codeVerifier = this.codeVerifierFactory();
-    const codeChallenge = createHash("sha256")
-      .update(codeVerifier)
-      .digest("base64url");
+    const codeChallenge = createHash("sha256").update(codeVerifier).digest("base64url");
     const params = new URLSearchParams({
       client_id: clientId,
       response_type: "code",
@@ -1131,10 +1095,7 @@ export class GoogleDriveClient extends BaseDatasourceClient<"google-drive"> {
     return intent;
   }
 
-  private async exchangeCodeForTokens(
-    code: string,
-    codeVerifier: string,
-  ): Promise<AuthResult> {
+  private async exchangeCodeForTokens(code: string, codeVerifier: string): Promise<AuthResult> {
     const { clientId, clientSecret, redirectUri } = this.getOAuthAppConfig();
     const body = new URLSearchParams({
       client_id: clientId,
@@ -1194,9 +1155,7 @@ export class GoogleDriveClient extends BaseDatasourceClient<"google-drive"> {
         code: typeof parsed.error === "string" ? parsed.error : "provider-error",
         status: resp.status,
         message:
-          typeof parsed.error_description === "string"
-            ? parsed.error_description
-            : undefined,
+          typeof parsed.error_description === "string" ? parsed.error_description : undefined,
       });
     }
     const accessToken = parsed.access_token;
@@ -1368,8 +1327,7 @@ export class GoogleDriveClient extends BaseDatasourceClient<"google-drive"> {
     // handle-form listing is NOT guaranteed to be re-addressable via
     // `{kind: "path"}`; callers MUST re-address via the child entry's
     // `handle`. See the class header's "Synthesized paths" note.
-    const pathPrefix =
-      target.kind === "path" ? (target.path === "/" ? "" : target.path) : "";
+    const pathPrefix = target.kind === "path" ? (target.path === "/" ? "" : target.path) : "";
     const q = `'${fileId}' in parents and trashed=false`;
     // Clamp pageSize to Drive's hard ceiling [1, 1000]; default 1000 when
     // omitted (the prior behavior). The cursor maps to the SDK `pageToken`.
@@ -1381,9 +1339,7 @@ export class GoogleDriveClient extends BaseDatasourceClient<"google-drive"> {
         fields: DEFAULT_LIST_FIELDS,
         orderBy: "folder,name",
         pageSize,
-        ...(options.cursor !== undefined
-          ? { pageToken: options.cursor }
-          : {}),
+        ...(options.cursor !== undefined ? { pageToken: options.cursor } : {}),
       });
       resp = result.data;
     } catch (err) {
@@ -1466,8 +1422,7 @@ export class GoogleDriveClient extends BaseDatasourceClient<"google-drive"> {
     } catch (err) {
       throw this.normalizeErrorImpl(err);
     }
-    const resolvedPath =
-      target.kind === "path" ? target.path : `/${file.name ?? fileId}`;
+    const resolvedPath = target.kind === "path" ? target.path : `/${file.name ?? fileId}`;
     const entry = this.buildFileEntry(file, {
       path: resolvedPath,
       ...(ambiguousSiblings ? { ambiguousSiblings } : {}),
@@ -1569,18 +1524,15 @@ export class GoogleDriveClient extends BaseDatasourceClient<"google-drive"> {
     // the cleanup — doing so would abort the cleanup HTTP call itself,
     // leaving the resumable session orphaned on Drive's side. Errors in
     // the cleanup are logged and swallowed (best-effort cleanup).
-    const cancelContentRange =
-      total > 0 ? `bytes */${total}` : `bytes */0`;
+    const cancelContentRange = total > 0 ? `bytes */${total}` : `bytes */0`;
     options.signal?.addEventListener(
       "abort",
       () => {
-         
         this.fetchImpl(sessionUrl, {
           method: "DELETE",
           headers: { "Content-Range": cancelContentRange },
           signal: AbortSignal.timeout(5000),
         }).catch((err) => {
-           
           console.warn("[google-drive] upload-session cleanup failed:", err);
         });
       },
@@ -1668,8 +1620,7 @@ export class GoogleDriveClient extends BaseDatasourceClient<"google-drive"> {
       }
     } else {
       for await (const piece of stream as AsyncIterable<Buffer>) {
-        pending =
-          pending.length === 0 ? piece : Buffer.concat([pending, piece]);
+        pending = pending.length === 0 ? piece : Buffer.concat([pending, piece]);
         while (pending.length >= UPLOAD_CHUNK_BYTES) {
           const chunk = pending.subarray(0, UPLOAD_CHUNK_BYTES);
           pending = pending.subarray(UPLOAD_CHUNK_BYTES);
@@ -1696,9 +1647,7 @@ export class GoogleDriveClient extends BaseDatasourceClient<"google-drive"> {
     // for handle-targets we synthesize `/<name>` (same as search).
     const parentPath = parent.kind === "path" ? parent.path : "";
     const entryPath =
-      parentPath === "" || parentPath === "/"
-        ? `/${name}`
-        : `${parentPath}/${name}`;
+      parentPath === "" || parentPath === "/" ? `/${name}` : `${parentPath}/${name}`;
     const entry = this.buildFileEntry(lastFile, { path: entryPath });
     // LRU population on upload success is internal (per migrate-upload-
     // orchestration-out-of-engine Decision 4). The constructor's bus
@@ -1721,19 +1670,14 @@ export class GoogleDriveClient extends BaseDatasourceClient<"google-drive"> {
     // (parent, name), refuse to silently pick the oldest — that would be a
     // data-loss trap. Handle-form targets explicitly name one fileId so
     // they bypass the guard.
-    if (
-      target.kind === "path" &&
-      ambiguousSiblings &&
-      ambiguousSiblings.length > 0
-    ) {
+    if (target.kind === "path" && ambiguousSiblings && ambiguousSiblings.length > 0) {
       throw new DatasourceError<"google-drive">({
         tag: DatasourceErrorTag.Conflict,
         datasourceType: "google-drive",
         datasourceId: this.datasourceId,
         retryable: false,
         raw: { ambiguousSiblings: [fileId, ...ambiguousSiblings] },
-        message:
-          "Ambiguous path — multiple files at this path. Re-address via handle.",
+        message: "Ambiguous path — multiple files at this path. Re-address via handle.",
       });
     }
     try {
@@ -1801,9 +1745,7 @@ export class GoogleDriveClient extends BaseDatasourceClient<"google-drive"> {
     // `keep-both` all need it for the sibling list query. Reusing the
     // resolution saves a `files.get` round-trip per attempt.
     const parentInfo =
-      conflictPolicy === "fail" ||
-      conflictPolicy === "overwrite" ||
-      conflictPolicy === "keep-both"
+      conflictPolicy === "fail" || conflictPolicy === "overwrite" || conflictPolicy === "keep-both"
         ? await this.resolveRenameParent(target, fileId)
         : null;
 
@@ -1969,8 +1911,7 @@ export class GoogleDriveClient extends BaseDatasourceClient<"google-drive"> {
       const segs = pathSegments(target.path);
       segs.pop();
       const parent = segs.length === 0 ? "" : `/${segs.join("/")}`;
-      entryPath =
-        parent === "" ? `/${effectiveName}` : `${parent}/${effectiveName}`;
+      entryPath = parent === "" ? `/${effectiveName}` : `${parent}/${effectiveName}`;
     } else {
       entryPath = `/${effectiveName}`;
     }
@@ -2085,8 +2026,7 @@ export class GoogleDriveClient extends BaseDatasourceClient<"google-drive"> {
         // fs-sync's existing rewrite-from-0 path (a `rangeStart > 0` retry
         // gets the full body again with no `contentRange`) — zero fs-sync
         // change. See design.md D2 (resilient-by-restart).
-        const entry =
-          GOOGLE_APPS_EXPORT_FORMATS[metaMimeType as GoogleAppsExportableMime];
+        const entry = GOOGLE_APPS_EXPORT_FORMATS[metaMimeType as GoogleAppsExportableMime];
         const exportOptions: Record<string, unknown> = {
           responseType: "stream",
           ...(options.signal ? { signal: options.signal } : {}),
@@ -2100,9 +2040,7 @@ export class GoogleDriveClient extends BaseDatasourceClient<"google-drive"> {
         } catch (err) {
           throw this.normalizeErrorImpl(err);
         }
-        const exportContentLength = parseContentLengthHeader(
-          exportResp.headers ?? {},
-        );
+        const exportContentLength = parseContentLengthHeader(exportResp.headers ?? {});
         return {
           stream: this.wrapDownloadStream(
             exportResp.data as Readable,
@@ -2139,10 +2077,7 @@ export class GoogleDriveClient extends BaseDatasourceClient<"google-drive"> {
     };
     let resp: { data: unknown; headers?: Record<string, string> };
     try {
-      resp = await this.drive().files.get(
-        { fileId, alt: "media" },
-        sdkOptions,
-      );
+      resp = await this.drive().files.get({ fileId, alt: "media" }, sdkOptions);
     } catch (err) {
       throw this.normalizeErrorImpl(err);
     }
@@ -2157,11 +2092,7 @@ export class GoogleDriveClient extends BaseDatasourceClient<"google-drive"> {
     // contract surfaces `contentLength: null` and the byte-counter
     // observes `total: null` per tick — fs-sync handles that case.
     return {
-      stream: this.wrapDownloadStream(
-        resp.data as Readable,
-        contentLength,
-        options,
-      ),
+      stream: this.wrapDownloadStream(resp.data as Readable, contentLength, options),
       contentLength,
       ...(contentRange ? { contentRange } : {}),
     };
@@ -2246,8 +2177,7 @@ export class GoogleDriveClient extends BaseDatasourceClient<"google-drive"> {
         datasourceId: this.datasourceId,
         retryable: false,
         raw: "google-drive-no-refresh-token",
-        message:
-          "No refresh token stored — interactive re-authentication required",
+        message: "No refresh token stored — interactive re-authentication required",
       });
     }
     const body = new URLSearchParams({
@@ -2275,9 +2205,7 @@ export class GoogleDriveClient extends BaseDatasourceClient<"google-drive"> {
   // normalizeError — map Drive errors to the 8-tag taxonomy
   // -------------------------------------------------------------------------
 
-  protected override normalizeErrorImpl(
-    raw: unknown,
-  ): DatasourceError<"google-drive"> {
+  protected override normalizeErrorImpl(raw: unknown): DatasourceError<"google-drive"> {
     if (raw instanceof DatasourceError) {
       return raw as DatasourceError<"google-drive">;
     }
@@ -2299,11 +2227,9 @@ export class GoogleDriveClient extends BaseDatasourceClient<"google-drive"> {
         };
       };
     };
-    const status =
-      r.response?.status ?? r.status ?? r.statusCode ?? 0;
+    const status = r.response?.status ?? r.status ?? r.statusCode ?? 0;
     const headers = r.response?.headers ?? {};
-    const reason =
-      r.response?.data?.error?.errors?.[0]?.reason ?? "";
+    const reason = r.response?.data?.error?.errors?.[0]?.reason ?? "";
     const innerMessage = r.response?.data?.error?.message;
     const topMessage = r.message ?? innerMessage;
     const name = r.name ?? "";
@@ -2320,14 +2246,8 @@ export class GoogleDriveClient extends BaseDatasourceClient<"google-drive"> {
         datasourceId: this.datasourceId,
         retryable,
         raw,
-        ...(extra.retryAfterMs !== undefined
-          ? { retryAfterMs: extra.retryAfterMs }
-          : {}),
-        ...(extra.message
-          ? { message: extra.message }
-          : topMessage
-            ? { message: topMessage }
-            : {}),
+        ...(extra.retryAfterMs !== undefined ? { retryAfterMs: extra.retryAfterMs } : {}),
+        ...(extra.message ? { message: extra.message } : topMessage ? { message: topMessage } : {}),
       });
 
     const retryAfterMs = ((): number | undefined => {
@@ -2402,18 +2322,14 @@ export class GoogleDriveClient extends BaseDatasourceClient<"google-drive"> {
       // renderer's "Authentication error: <message>" detail. `actualScope` is
       // omitted — the 403 does not carry the issued scope (the proactive path
       // includes it).
-      if (
-        reason === "insufficientPermissions" ||
-        reason === "ACCESS_TOKEN_SCOPE_INSUFFICIENT"
-      ) {
+      if (reason === "insufficientPermissions" || reason === "ACCESS_TOKEN_SCOPE_INSUFFICIENT") {
         return new DatasourceError<"google-drive">({
           tag: DatasourceErrorTag.AuthRevoked,
           datasourceType: "google-drive",
           datasourceId: this.datasourceId,
           retryable: false,
           raw: { kind: "scope-insufficient", requiredScope: REQUIRED_DRIVE_SCOPE },
-          message:
-            topMessage ?? "request had insufficient authentication scopes",
+          message: topMessage ?? "request had insufficient authentication scopes",
         });
       }
       // domainPolicy / dailyLimitExceeded / quotaExceeded /
@@ -2466,10 +2382,13 @@ export function createGoogleDriveClient(
 }
 
 /** Canonical `ProviderFactoryFn` entry for the registry. */
-export const createGoogleDriveClientForRegistry: ProviderFactoryFn<"google-drive"> =
-  (datasourceId, credentials, ctx) => {
-    return createGoogleDriveClient(datasourceId, credentials, ctx);
-  };
+export const createGoogleDriveClientForRegistry: ProviderFactoryFn<"google-drive"> = (
+  datasourceId,
+  credentials,
+  ctx,
+) => {
+  return createGoogleDriveClient(datasourceId, credentials, ctx);
+};
 
 /**
  * Canonical `PreAuthFactoryFn` entry for `factory.createForAuth(...)` —
@@ -2490,13 +2409,7 @@ export const createGoogleDriveClientForAuth: PreAuthFactoryFn<"google-drive"> = 
   // reconnect same-account anchor; threaded to the 5th constructor slot so the
   // exchange can hard-block a different-account reconnect (D4). `undefined` on
   // first connect (capture-only).
-  return new GoogleDriveClient(
-    { datasourceId, ctx },
-    null,
-    {},
-    preAuth,
-    expectedAccount,
-  );
+  return new GoogleDriveClient({ datasourceId, ctx }, null, {}, preAuth, expectedAccount);
 };
 
 /**
@@ -2514,10 +2427,7 @@ export const validateGoogleDriveCredentialShape: CredentialShapeValidator = (
   datasourceId,
 ) => {
   const authResult = (credentials as { authResult?: unknown }).authResult;
-  if (
-    authResult === null ||
-    typeof authResult !== "object"
-  ) {
+  if (authResult === null || typeof authResult !== "object") {
     throw new DatasourceError<"google-drive">({
       tag: DatasourceErrorTag.InvalidDatasource,
       datasourceType: "google-drive",

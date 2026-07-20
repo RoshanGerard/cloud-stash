@@ -78,10 +78,7 @@ describe("downloads:list-active handler — §14.1 (unit)", () => {
 
     expect(result.ok).toBe(true);
     if (!result.ok) return;
-    expect(result.result.jobs.map((j) => j.downloadJobId)).toEqual([
-      "job-older",
-      "job-newer",
-    ]);
+    expect(result.result.jobs.map((j) => j.downloadJobId)).toEqual(["job-older", "job-newer"]);
     expect(result.result.jobs.map((j) => j.startedAt)).toEqual([1000, 2000]);
   });
 
@@ -119,9 +116,7 @@ describe("downloads:list-active handler — §14.1 (unit)", () => {
       // Property-level absence — `toEqual` would silently pass with
       // `abortController: undefined`. We assert the key is not on the
       // object at all so the wire shape is clean.
-      expect(Object.prototype.hasOwnProperty.call(job, "abortController")).toBe(
-        false,
-      );
+      expect(Object.prototype.hasOwnProperty.call(job, "abortController")).toBe(false);
     }
     // And the projection preserves every other field verbatim.
     expect(result.result.jobs[0]).toEqual({
@@ -265,8 +260,7 @@ describe("downloads:list-active — §14.3 (integration with §13 files:download
     // on a never-resolving promise so the registry holds both entries
     // for the duration of the assertion.
     const downloadFile = vi.fn((target, options) => {
-      const sourcePath =
-        target.kind === "path" ? target.path : `handle:${target.handle}`;
+      const sourcePath = target.kind === "path" ? target.path : `handle:${target.handle}`;
       onProgressByPath[sourcePath] = options?.onProgress;
       // Return a never-settling Promise — the await inside the handler
       // parks here forever (test process exit reaps it).
@@ -369,9 +363,7 @@ describe("downloads:list-active — §14.3 (integration with §13 files:download
     });
     // No abortController on the wire shape.
     for (const job of result.result.jobs) {
-      expect(
-        Object.prototype.hasOwnProperty.call(job, "abortController"),
-      ).toBe(false);
+      expect(Object.prototype.hasOwnProperty.call(job, "abortController")).toBe(false);
     }
   });
 });

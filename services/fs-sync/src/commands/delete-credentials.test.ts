@@ -26,10 +26,12 @@ interface FakeStore extends CredentialStore {
   delete: ReturnType<typeof vi.fn>;
 }
 
-function makeFakeStore(opts: {
-  storedCreds?: Record<string, StoredCredentials>;
-  deleteThrows?: Error;
-} = {}): FakeStore {
+function makeFakeStore(
+  opts: {
+    storedCreds?: Record<string, StoredCredentials>;
+    deleteThrows?: Error;
+  } = {},
+): FakeStore {
   const stored = { ...(opts.storedCreds ?? {}) };
   return {
     get: vi.fn(async (id: string) => stored[id] ?? null),

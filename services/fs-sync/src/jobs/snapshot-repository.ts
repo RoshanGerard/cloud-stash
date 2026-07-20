@@ -77,9 +77,7 @@ export class SnapshotRepository {
 
   delete(datasourceId: string, relPath: string): void {
     this.db
-      .prepare(
-        `DELETE FROM sync_snapshot WHERE datasource_id = ? AND rel_path = ?`,
-      )
+      .prepare(`DELETE FROM sync_snapshot WHERE datasource_id = ? AND rel_path = ?`)
       .run(datasourceId, relPath);
   }
 }

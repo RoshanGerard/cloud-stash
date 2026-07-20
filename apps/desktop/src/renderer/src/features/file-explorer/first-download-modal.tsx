@@ -79,11 +79,7 @@ export interface FirstDownloadModalProps {
   onOpenChange?: (open: boolean) => void;
 }
 
-export function FirstDownloadModal({
-  open,
-  onCommit,
-  onOpenChange,
-}: FirstDownloadModalProps) {
+export function FirstDownloadModal({ open, onCommit, onOpenChange }: FirstDownloadModalProps) {
   // The pre-fill is resolved asynchronously via the preload bridge
   // (`app.getPath("downloads")`), so the input starts empty and the
   // commit CTA is disabled until either resolution completes or the
@@ -193,9 +189,8 @@ export function FirstDownloadModal({
         <DialogHeader>
           <DialogTitle>Where should downloads go?</DialogTitle>
           <DialogDescription id={descId}>
-            Choose a default folder. You can change this later in
-            Settings or use &ldquo;Save as&hellip;&rdquo; to pick per
-            file.
+            Choose a default folder. You can change this later in Settings or use &ldquo;Save
+            as&hellip;&rdquo; to pick per file.
           </DialogDescription>
         </DialogHeader>
 
@@ -213,22 +208,14 @@ export function FirstDownloadModal({
               spellCheck={false}
               autoComplete="off"
             />
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleBrowse}
-            >
+            <Button type="button" variant="outline" onClick={handleBrowse}>
               Browse&hellip;
             </Button>
           </div>
         </div>
 
         <DialogFooter>
-          <Button
-            type="button"
-            onClick={handleCommit}
-            disabled={folder === ""}
-          >
+          <Button type="button" onClick={handleCommit} disabled={folder === ""}>
             Use this folder
           </Button>
         </DialogFooter>

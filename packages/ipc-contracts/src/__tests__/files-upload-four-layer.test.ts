@@ -16,12 +16,7 @@
 // Sibling tests live alongside this one for `datasources.pickFilesToUpload`
 // (8.2) and to assert the retired `datasources.upload` channel is gone (8.3).
 
-import {
-  existsSync,
-  readFileSync,
-  readdirSync,
-  statSync,
-} from "node:fs";
+import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
@@ -37,10 +32,7 @@ describe("files.upload four-layer wiring", () => {
   });
 
   it("(1) contract declares the channel literal AND exports the types", () => {
-    const contractPath = path.join(
-      repoRoot,
-      "packages/ipc-contracts/src/files.ts",
-    );
+    const contractPath = path.join(repoRoot, "packages/ipc-contracts/src/files.ts");
     const contents = readFileSync(contractPath, "utf8");
     expect(
       contents.includes(`"files:upload"`),
@@ -57,25 +49,15 @@ describe("files.upload four-layer wiring", () => {
   });
 
   it("(2) handler file exists at apps/desktop/src/main/ipc/files/upload.ts", () => {
-    const handlerPath = path.join(
-      repoRoot,
-      "apps/desktop/src/main/ipc/files/upload.ts",
-    );
-    expect(
-      existsSync(handlerPath),
-      `expected handler file at ${handlerPath}`,
-    ).toBe(true);
+    const handlerPath = path.join(repoRoot, "apps/desktop/src/main/ipc/files/upload.ts");
+    expect(existsSync(handlerPath), `expected handler file at ${handlerPath}`).toBe(true);
   });
 
   it("(3) preload references the channel and exposes upload on the files namespace", () => {
-    const preloadPath = path.join(
-      repoRoot,
-      "apps/desktop/src/preload/index.ts",
-    );
+    const preloadPath = path.join(repoRoot, "apps/desktop/src/preload/index.ts");
     const contents = readFileSync(preloadPath, "utf8");
     expect(
-      contents.includes("FILES_CHANNELS.upload") ||
-        contents.includes(`"files:upload"`),
+      contents.includes("FILES_CHANNELS.upload") || contents.includes(`"files:upload"`),
       `preload/index.ts must reference FILES_CHANNELS.upload (or the literal)`,
     ).toBe(true);
     // Confirm the preload exposes the bridge to the renderer at all — without

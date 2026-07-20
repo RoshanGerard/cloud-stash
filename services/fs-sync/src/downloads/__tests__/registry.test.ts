@@ -73,14 +73,12 @@ interface DownloadRow {
 }
 
 function readRow(db: Database.Database, id: string): DownloadRow | undefined {
-  return db
-    .prepare("SELECT * FROM downloads WHERE download_job_id = ?")
-    .get(id) as DownloadRow | undefined;
+  return db.prepare("SELECT * FROM downloads WHERE download_job_id = ?").get(id) as
+    | DownloadRow
+    | undefined;
 }
 
-function makeEntry(
-  overrides: Partial<DownloadJobEntry> = {},
-): DownloadJobEntry {
+function makeEntry(overrides: Partial<DownloadJobEntry> = {}): DownloadJobEntry {
   return {
     downloadJobId: "job-A",
     datasourceId: "ds-1",
@@ -183,9 +181,7 @@ describe("DownloadRegistry", () => {
     it("update on a missing downloadJobId is a silent no-op (no throw, registry unchanged)", () => {
       const { registry } = makeRegistry();
       registry.set(makeEntry());
-      expect(() =>
-        registry.update("does-not-exist", { bytesDownloaded: 1 }),
-      ).not.toThrow();
+      expect(() => registry.update("does-not-exist", { bytesDownloaded: 1 })).not.toThrow();
       // Existing entry untouched.
       expect(registry.get("job-A")?.bytesDownloaded).toBe(0);
       expect(registry.size()).toBe(1);
@@ -218,9 +214,7 @@ describe("DownloadRegistry", () => {
     it("finalize on a missing downloadJobId is a silent no-op (no throw)", () => {
       const { registry } = makeRegistry();
       registry.set(makeEntry({ downloadJobId: "job-A" }));
-      expect(() =>
-        registry.finalize("does-not-exist", { status: "completed" }),
-      ).not.toThrow();
+      expect(() => registry.finalize("does-not-exist", { status: "completed" })).not.toThrow();
       expect(registry.size()).toBe(1);
       expect(registry.get("job-A")).toBeDefined();
     });
@@ -452,9 +446,7 @@ describe("DownloadRegistry", () => {
       registry.finalize("job-A", { status: "completed" });
       expect(registry.findByKey("ds-1", "/welcome.pdf")).toBeUndefined();
       // A fresh entry on the same (datasourceId, sourcePath) is now allowed.
-      registry.set(
-        makeEntry({ downloadJobId: "job-B", startedAt: 2_000 }),
-      );
+      registry.set(makeEntry({ downloadJobId: "job-B", startedAt: 2_000 }));
       expect(registry.findByKey("ds-1", "/welcome.pdf")).toBe("job-B");
     });
 
@@ -573,16 +565,11 @@ describe("DownloadRegistry", () => {
       // Memory contract unchanged.
       expect(registry.get("job-A")?.downloadJobId).toBe("job-A");
       expect(registry.size()).toBe(2);
-      expect(registry.snapshot().map((e) => e.downloadJobId)).toEqual([
-        "job-A",
-        "job-B",
-      ]);
+      expect(registry.snapshot().map((e) => e.downloadJobId)).toEqual(["job-A", "job-B"]);
       expect(registry.findByKey("ds-2", "/other.pdf")).toBe("job-B");
 
       // Both rows mirrored.
-      const count = db
-        .prepare("SELECT COUNT(*) AS n FROM downloads")
-        .get() as { n: number };
+      const count = db.prepare("SELECT COUNT(*) AS n FROM downloads").get() as { n: number };
       expect(count.n).toBe(2);
     });
   });
@@ -669,9 +656,7 @@ describe("DownloadRegistry", () => {
       const { registry, db } = makeRegistry();
       registry.update("ghost", { bytesDownloaded: 5_000 });
       expect(readRow(db, "ghost")).toBeUndefined();
-      const count = db
-        .prepare("SELECT COUNT(*) AS n FROM downloads")
-        .get() as { n: number };
+      const count = db.prepare("SELECT COUNT(*) AS n FROM downloads").get() as { n: number };
       expect(count.n).toBe(0);
     });
   });
@@ -755,9 +740,7 @@ describe("DownloadRegistry", () => {
       const outcome: DownloadFinalizeOutcome = { status: "completed" };
       expect(() => registry.finalize("ghost", outcome)).not.toThrow();
       expect(readRow(db, "ghost")).toBeUndefined();
-      const count = db
-        .prepare("SELECT COUNT(*) AS n FROM downloads")
-        .get() as { n: number };
+      const count = db.prepare("SELECT COUNT(*) AS n FROM downloads").get() as { n: number };
       expect(count.n).toBe(0);
     });
   });

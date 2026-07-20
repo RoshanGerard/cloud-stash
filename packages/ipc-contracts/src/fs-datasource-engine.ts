@@ -25,9 +25,7 @@ export type DatasourceType = ProviderId;
  * Hybrid addressing. The engine accepts both human-facing paths and
  * provider-native opaque handles. See Decision 3 in design.md.
  */
-export type Target =
-  | { kind: "path"; path: string }
-  | { kind: "handle"; handle: string };
+export type Target = { kind: "path"; path: string } | { kind: "handle"; handle: string };
 
 // ---------------------------------------------------------------------------
 // Mime family + provider metadata
@@ -268,8 +266,7 @@ export const DatasourceErrorTag = {
    * datasource is bound to (fresh `sub` ≠ the bound `meta.account.sub`). */
   AccountMismatch: "account-mismatch",
 } as const;
-export type DatasourceErrorTag =
-  (typeof DatasourceErrorTag)[keyof typeof DatasourceErrorTag];
+export type DatasourceErrorTag = (typeof DatasourceErrorTag)[keyof typeof DatasourceErrorTag];
 
 export interface DatasourceErrorInit<T extends DatasourceType = DatasourceType> {
   tag: DatasourceErrorTag;
@@ -289,9 +286,7 @@ export interface DatasourceErrorInit<T extends DatasourceType = DatasourceType> 
  *
  * Instances pass both `instanceof Error` and `instanceof DatasourceError`.
  */
-export class DatasourceError<
-  T extends DatasourceType = DatasourceType,
-> extends Error {
+export class DatasourceError<T extends DatasourceType = DatasourceType> extends Error {
   readonly tag: DatasourceErrorTag;
   readonly datasourceType: T;
   readonly datasourceId: string;
@@ -335,9 +330,7 @@ export class DatasourceError<
  * string; consumers need `retryable` / `retryAfterMs` for recovery UX and
  * `raw` for provider-specific diagnostics.
  */
-export interface SerializedDatasourceError<
-  T extends DatasourceType = DatasourceType,
-> {
+export interface SerializedDatasourceError<T extends DatasourceType = DatasourceType> {
   tag: DatasourceErrorTag;
   datasourceType: T;
   datasourceId: string;

@@ -43,8 +43,7 @@ export default tseslint.config(
     // (ServiceErrorTag / AuthFailedTag, off-taxonomy fixtures) carry a per-site
     // `// eslint-disable-next-line cloudstash/no-raw-error-tag-literal -- <reason>`,
     // mirroring the Vitest guard's WIRE_LITERAL_ALLOWLIST (Decision 4).
-    plugins: { cloudstash: { rules: { "no-raw-error-tag-literal": noRawErrorTagLiteral } },
-    },
+    plugins: { cloudstash: { rules: { "no-raw-error-tag-literal": noRawErrorTagLiteral } } },
     rules: {
       "cloudstash/no-raw-error-tag-literal": "error",
     },

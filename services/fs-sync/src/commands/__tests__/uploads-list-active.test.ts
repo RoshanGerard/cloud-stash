@@ -53,10 +53,7 @@ describe("uploads:list-active handler — §10.1 (unit)", () => {
 
     expect(result.ok).toBe(true);
     if (!result.ok) return;
-    expect(result.result.jobs.map((j) => j.uploadJobId)).toEqual([
-      "job-older",
-      "job-newer",
-    ]);
+    expect(result.result.jobs.map((j) => j.uploadJobId)).toEqual(["job-older", "job-newer"]);
     expect(result.result.jobs.map((j) => j.startedAt)).toEqual([1000, 2000]);
   });
 
@@ -94,9 +91,7 @@ describe("uploads:list-active handler — §10.1 (unit)", () => {
       // Property-level absence — `toEqual` would silently pass with
       // `abortController: undefined`. Assert the key is not on the
       // object at all so the wire shape is clean.
-      expect(
-        Object.prototype.hasOwnProperty.call(job, "abortController"),
-      ).toBe(false);
+      expect(Object.prototype.hasOwnProperty.call(job, "abortController")).toBe(false);
     }
     expect(result.result.jobs[0]).toEqual({
       uploadJobId: "j1",

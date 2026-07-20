@@ -20,10 +20,7 @@ import type {
   MimeFamily,
 } from "@cloudstash/ipc-contracts";
 
-function mapMimeFamily(
-  source: DatasourceMimeFamily,
-  kind: "file" | "folder",
-): MimeFamily {
+function mapMimeFamily(source: DatasourceMimeFamily, kind: "file" | "folder"): MimeFamily {
   if (kind === "folder") return "unknown";
   switch (source) {
     case "image":
@@ -48,18 +45,11 @@ function parentPathOf(path: string): string {
   return parent === "" ? "/" : parent;
 }
 
-function flattenProviderMetadata(
-  meta: unknown,
-): Record<string, string | number | boolean | null> {
+function flattenProviderMetadata(meta: unknown): Record<string, string | number | boolean | null> {
   if (meta === null || typeof meta !== "object") return {};
   const out: Record<string, string | number | boolean | null> = {};
   for (const [k, v] of Object.entries(meta as Record<string, unknown>)) {
-    if (
-      v === null ||
-      typeof v === "string" ||
-      typeof v === "number" ||
-      typeof v === "boolean"
-    ) {
+    if (v === null || typeof v === "string" || typeof v === "number" || typeof v === "boolean") {
       out[k] = v;
     }
     // Non-primitive values (arrays, nested objects) are dropped: the UI

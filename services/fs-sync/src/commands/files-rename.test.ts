@@ -25,9 +25,7 @@ function makeFakeClient(
     rename: vi.fn(),
     downloadFile: vi.fn(),
     getQuota: vi.fn(),
-    refreshCredentials: vi
-      .fn()
-      .mockResolvedValue({ accessToken: "new", refreshToken: "r" }),
+    refreshCredentials: vi.fn().mockResolvedValue({ accessToken: "new", refreshToken: "r" }),
     ...overrides,
   } as unknown as DatasourceClient<DatasourceType>;
 }
@@ -98,11 +96,7 @@ describe("files:rename handler", () => {
       ctx,
     );
 
-    expect(rename).toHaveBeenCalledWith(
-      { kind: "handle", handle: "h-foo" },
-      "bar.pdf",
-      "fail",
-    );
+    expect(rename).toHaveBeenCalledWith({ kind: "handle", handle: "h-foo" }, "bar.pdf", "fail");
   });
 
   it("the handler does NOT inspect or carry `kind` (Decision 1) — request literal carries only path / handle / newName / conflictPolicy", async () => {
@@ -192,9 +186,7 @@ describe("files:rename handler", () => {
     expect(result.ok).toBe(false);
     if (!result.ok) {
       expect(result.error.tag).toBe("other");
-      expect(result.error.message).toBe(
-        "S3 folder rename is not supported in this version",
-      );
+      expect(result.error.message).toBe("S3 folder rename is not supported in this version");
       expect(result.error.retryable).toBe(false);
     }
   });
@@ -216,9 +208,7 @@ describe("files:rename handler", () => {
         }),
       )
       .mockResolvedValueOnce(renamedEngineEntry);
-    const refreshCredentials = vi
-      .fn()
-      .mockResolvedValue({ accessToken: "new", refreshToken: "r" });
+    const refreshCredentials = vi.fn().mockResolvedValue({ accessToken: "new", refreshToken: "r" });
     const client = makeFakeClient({ rename, refreshCredentials });
     const handler = makeFilesRenameHandler({ resolveClient: async () => client });
 
@@ -258,9 +248,7 @@ describe("files:rename handler", () => {
         message: "token expired",
       }),
     );
-    const refreshCredentials = vi
-      .fn()
-      .mockResolvedValue({ accessToken: "new", refreshToken: "r" });
+    const refreshCredentials = vi.fn().mockResolvedValue({ accessToken: "new", refreshToken: "r" });
     const client = makeFakeClient({ rename, refreshCredentials });
     const handler = makeFilesRenameHandler({ resolveClient: async () => client });
 

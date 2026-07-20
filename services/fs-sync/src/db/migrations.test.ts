@@ -44,9 +44,7 @@ describe("applyMigrations", () => {
     try {
       applyMigrations(db);
       const rows = db
-        .prepare(
-          "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name",
-        )
+        .prepare("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name")
         .all() as Array<{ name: string }>;
       const names = rows.map((r) => r.name);
       expect(names).toEqual(
@@ -71,9 +69,7 @@ describe("applyMigrations", () => {
 
       // The downloads table exists.
       const table = db
-        .prepare(
-          "SELECT name FROM sqlite_master WHERE type='table' AND name='downloads'",
-        )
+        .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='downloads'")
         .get();
       expect(table).toBeTruthy();
 
@@ -81,22 +77,17 @@ describe("applyMigrations", () => {
       // TEXT PRIMARY KEY is also present, so assert containment, not equality).
       const indexNames = (
         db
-          .prepare(
-            "SELECT name FROM sqlite_master WHERE type='index' AND tbl_name='downloads'",
-          )
+          .prepare("SELECT name FROM sqlite_master WHERE type='index' AND tbl_name='downloads'")
           .all() as Array<{ name: string }>
       ).map((r) => r.name);
       expect(indexNames).toEqual(
-        expect.arrayContaining([
-          "downloads_status_idx",
-          "downloads_started_at_idx",
-        ]),
+        expect.arrayContaining(["downloads_status_idx", "downloads_started_at_idx"]),
       );
 
       // Fresh install seeds schema_version = 2.
-      const meta = db
-        .prepare("SELECT schema_version FROM service_meta")
-        .get() as { schema_version: number };
+      const meta = db.prepare("SELECT schema_version FROM service_meta").get() as {
+        schema_version: number;
+      };
       expect(meta.schema_version).toBe(2);
     } finally {
       db.close();
@@ -111,10 +102,7 @@ describe("applyMigrations", () => {
       // would seed service_meta at the bumped version and defeat the premise):
       // the 0001 tables, a recorded 0001 migration, a v1 service_meta row, and
       // a sentinel row in another table.
-      const initialSql = fs.readFileSync(
-        path.join(repoDrizzleDir(), "0001_initial.sql"),
-        "utf8",
-      );
+      const initialSql = fs.readFileSync(path.join(repoDrizzleDir(), "0001_initial.sql"), "utf8");
       db.exec(initialSql);
       db.exec(`
         CREATE TABLE IF NOT EXISTS schema_migrations (
@@ -122,9 +110,10 @@ describe("applyMigrations", () => {
           applied_at INTEGER NOT NULL
         );
       `);
-      db.prepare(
-        "INSERT INTO schema_migrations (name, applied_at) VALUES (?, ?)",
-      ).run("0001_initial.sql", Date.now());
+      db.prepare("INSERT INTO schema_migrations (name, applied_at) VALUES (?, ?)").run(
+        "0001_initial.sql",
+        Date.now(),
+      );
       db.prepare(
         "INSERT INTO service_meta (id, schema_version, installed_at, service_uuid) VALUES (?, ?, ?, ?)",
       ).run(1, 1, Date.now(), "00000000-0000-0000-0000-000000000001");
@@ -134,11 +123,7 @@ describe("applyMigrations", () => {
 
       // No downloads table yet, 0002 not recorded.
       expect(
-        db
-          .prepare(
-            "SELECT name FROM sqlite_master WHERE type='table' AND name='downloads'",
-          )
-          .get(),
+        db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='downloads'").get(),
       ).toBeFalsy();
 
       // Forward-only migration on next start.
@@ -146,18 +131,14 @@ describe("applyMigrations", () => {
 
       // downloads table now exists.
       expect(
-        db
-          .prepare(
-            "SELECT name FROM sqlite_master WHERE type='table' AND name='downloads'",
-          )
-          .get(),
+        db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='downloads'").get(),
       ).toBeTruthy();
 
       // schema_migrations now records both files.
       const migs = (
-        db
-          .prepare("SELECT name FROM schema_migrations ORDER BY name")
-          .all() as Array<{ name: string }>
+        db.prepare("SELECT name FROM schema_migrations ORDER BY name").all() as Array<{
+          name: string;
+        }>
       ).map((r) => r.name);
       expect(migs).toEqual(["0001_initial.sql", "0002_downloads.sql"]);
 
@@ -172,9 +153,9 @@ describe("applyMigrations", () => {
       // Forward-only migrations are filename-tracked, independent of the seeded
       // version value: the existing v1 service_meta row keeps schema_version = 1
       // (Decision 6 — the version is not bumped on upgrade).
-      const meta = db
-        .prepare("SELECT schema_version FROM service_meta")
-        .get() as { schema_version: number };
+      const meta = db.prepare("SELECT schema_version FROM service_meta").get() as {
+        schema_version: number;
+      };
       expect(meta.schema_version).toBe(1);
     } finally {
       db.close();
@@ -232,15 +213,10 @@ describe("applyMigrations", () => {
     const db = new Database(scratchDbPath());
     try {
       applyMigrations(db);
-      const rows = db
-        .prepare(
-          "SELECT name FROM schema_migrations ORDER BY name",
-        )
-        .all() as Array<{ name: string }>;
-      expect(rows.map((r) => r.name)).toEqual([
-        "0001_initial.sql",
-        "0002_downloads.sql",
-      ]);
+      const rows = db.prepare("SELECT name FROM schema_migrations ORDER BY name").all() as Array<{
+        name: string;
+      }>;
+      expect(rows.map((r) => r.name)).toEqual(["0001_initial.sql", "0002_downloads.sql"]);
     } finally {
       db.close();
     }
@@ -253,17 +229,12 @@ describe("applyMigrations", () => {
     );
     cleanup.push(dir);
     await fsp.mkdir(dir, { recursive: true });
-    await fsp.writeFile(
-      path.join(dir, "0001_test.sql"),
-      "CREATE TABLE custom_t (x INTEGER);",
-    );
+    await fsp.writeFile(path.join(dir, "0001_test.sql"), "CREATE TABLE custom_t (x INTEGER);");
     const db = new Database(scratchDbPath());
     try {
       applyMigrations(db, { migrationsDir: dir });
       const row = db
-        .prepare(
-          "SELECT name FROM sqlite_master WHERE type='table' AND name='custom_t'",
-        )
+        .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='custom_t'")
         .get();
       expect(row).toBeTruthy();
     } finally {

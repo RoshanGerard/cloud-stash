@@ -77,10 +77,6 @@ export class PolicyStore {
    * falls back to the global row, then to DEFAULT_POLICY.
    */
   effectiveFor(datasourceId: string): RetryPolicy {
-    return (
-      this.get("datasource", datasourceId) ??
-      this.get("global") ??
-      DEFAULT_POLICY
-    );
+    return this.get("datasource", datasourceId) ?? this.get("global") ?? DEFAULT_POLICY;
   }
 }

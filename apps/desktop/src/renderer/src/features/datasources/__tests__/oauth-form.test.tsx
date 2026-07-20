@@ -15,23 +15,8 @@
 // Replaces the legacy datasources.startConsent / cancelConsent / consent-*
 // surface entirely.
 
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-  type Mock,
-} from "vitest";
-import {
-  act,
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-} from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from "vitest";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import type { SyncEvent } from "@cloudstash/ipc-contracts/sync-service-desktop";
 
@@ -61,25 +46,19 @@ const FIXTURE_SUMMARY = {
 };
 
 function installApiMock() {
-  authenticateStartMock = vi
-    .fn()
-    .mockResolvedValue({
-      ok: true,
-      result: { correlationId: "corr-test", kind: "oauth" },
-    });
-  authenticateCancelMock = vi
-    .fn()
-    .mockResolvedValue({ ok: true, result: { cancelled: true } });
+  authenticateStartMock = vi.fn().mockResolvedValue({
+    ok: true,
+    result: { correlationId: "corr-test", kind: "oauth" },
+  });
+  authenticateCancelMock = vi.fn().mockResolvedValue({ ok: true, result: { cancelled: true } });
   authenticateCompleteMock = vi.fn();
   addMock = vi.fn();
-  const syncOnEventMock = vi
-    .fn()
-    .mockImplementation((cb: (e: SyncEvent) => void) => {
-      syncOnEventCapture = cb;
-      return () => {
-        syncOnEventCapture = null;
-      };
-    });
+  const syncOnEventMock = vi.fn().mockImplementation((cb: (e: SyncEvent) => void) => {
+    syncOnEventCapture = cb;
+    return () => {
+      syncOnEventCapture = null;
+    };
+  });
 
   (window as unknown as { api: unknown }).api = {
     ping: vi.fn().mockResolvedValue({ ok: true, ts: 1 }),
@@ -254,9 +233,7 @@ describe("OAuthForm — surfaces cancel and timeout inline with Retry", () => {
     await act(async () => {});
 
     fireEvent.click(screen.getByRole("button", { name: /^connect/i }));
-    await waitFor(() =>
-      expect(authenticateStartMock).toHaveBeenCalledTimes(1),
-    );
+    await waitFor(() => expect(authenticateStartMock).toHaveBeenCalledTimes(1));
 
     act(() => {
       syncOnEventCapture!({
@@ -277,9 +254,7 @@ describe("OAuthForm — surfaces cancel and timeout inline with Retry", () => {
     await act(async () => {});
 
     fireEvent.click(screen.getByRole("button", { name: /^connect/i }));
-    await waitFor(() =>
-      expect(authenticateStartMock).toHaveBeenCalledTimes(1),
-    );
+    await waitFor(() => expect(authenticateStartMock).toHaveBeenCalledTimes(1));
 
     act(() => {
       syncOnEventCapture!({
@@ -300,9 +275,7 @@ describe("OAuthForm — surfaces cancel and timeout inline with Retry", () => {
     await act(async () => {});
 
     fireEvent.click(screen.getByRole("button", { name: /^connect/i }));
-    await waitFor(() =>
-      expect(authenticateStartMock).toHaveBeenCalledTimes(1),
-    );
+    await waitFor(() => expect(authenticateStartMock).toHaveBeenCalledTimes(1));
 
     act(() => {
       syncOnEventCapture!({
@@ -328,9 +301,7 @@ describe("OAuthForm — surfaces cancel and timeout inline with Retry", () => {
     await act(async () => {});
 
     fireEvent.click(screen.getByRole("button", { name: /^connect/i }));
-    await waitFor(() =>
-      expect(authenticateStartMock).toHaveBeenCalledTimes(1),
-    );
+    await waitFor(() => expect(authenticateStartMock).toHaveBeenCalledTimes(1));
 
     act(() => {
       syncOnEventCapture!({
@@ -371,14 +342,10 @@ describe("OAuthForm — service-config-missing inline copy", () => {
     await act(async () => {});
 
     fireEvent.click(screen.getByRole("button", { name: /^connect/i }));
-    await waitFor(() =>
-      expect(authenticateStartMock).toHaveBeenCalledTimes(1),
-    );
+    await waitFor(() => expect(authenticateStartMock).toHaveBeenCalledTimes(1));
 
     const failed = await screen.findByTestId("oauth-failed");
-    expect(failed.textContent).toMatch(
-      /service configuration missing/i,
-    );
+    expect(failed.textContent).toMatch(/service configuration missing/i);
     // Path is rendered as <code>
     expect(failed.querySelector("code")?.textContent).toBe(
       "/home/user/cloudstash/sync_app/config.json",
@@ -398,9 +365,7 @@ describe("OAuthForm — unmount cancels active session", () => {
     await act(async () => {});
 
     fireEvent.click(screen.getByRole("button", { name: /^connect/i }));
-    await waitFor(() =>
-      expect(authenticateStartMock).toHaveBeenCalledTimes(1),
-    );
+    await waitFor(() => expect(authenticateStartMock).toHaveBeenCalledTimes(1));
 
     unmount();
 
@@ -427,9 +392,7 @@ describe("OAuthForm — unmount cancels active session", () => {
     await act(async () => {});
 
     fireEvent.click(screen.getByRole("button", { name: /^connect/i }));
-    await waitFor(() =>
-      expect(authenticateStartMock).toHaveBeenCalledTimes(1),
-    );
+    await waitFor(() => expect(authenticateStartMock).toHaveBeenCalledTimes(1));
 
     act(() => {
       syncOnEventCapture!({

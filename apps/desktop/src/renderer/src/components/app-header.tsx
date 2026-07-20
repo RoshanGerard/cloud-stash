@@ -24,13 +24,7 @@
 // returnFocusTo — same pattern as AddDatasourceDialog in the datasources
 // feature).
 
-import {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-  type HTMLAttributes,
-} from "react";
+import { useCallback, useEffect, useRef, useState, type HTMLAttributes } from "react";
 
 import { cn } from "@/lib/utils";
 import { CloudStashLogo } from "@/components/cloudstash-logo";
@@ -58,13 +52,9 @@ export function AppHeader({ className, ...rest }: AppHeaderProps) {
   // render, avoiding a hydration mismatch; the controls + macOS inset then
   // appear once the effect runs. `window.api.platform` is the static preload
   // tag (add-frameless-window-chrome).
-  const [platform, setPlatform] = useState<NodeJS.Platform | undefined>(
-    undefined,
-  );
+  const [platform, setPlatform] = useState<NodeJS.Platform | undefined>(undefined);
   useEffect(() => {
-    setPlatform(
-      typeof window !== "undefined" ? window.api?.platform : undefined,
-    );
+    setPlatform(typeof window !== "undefined" ? window.api?.platform : undefined);
   }, []);
   const isMac = platform === "darwin";
   const showWindowControls = platform === "win32" || platform === "linux";

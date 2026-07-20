@@ -40,11 +40,7 @@ export function LargeIconsView({
   onCopyPath,
   onProperties,
 }: LargeIconsViewProps) {
-  const state = useSyncExternalStore(
-    store.subscribe,
-    store.getSnapshot,
-    store.getSnapshot,
-  );
+  const state = useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
   const { selection, onEntryClick } = useSelection(store);
 
   if (state.entries.length === 0) {

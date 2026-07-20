@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 /**
  * Icon adapter — the ONE place in renderer feature code that imports from
@@ -55,8 +55,8 @@ import {
   UploadIcon,
   WifiOffIcon,
   type LucideProps,
-} from "lucide-react"
-import type { ComponentType } from "react"
+} from "lucide-react";
+import type { ComponentType } from "react";
 
 export type IconName =
   | "sun"
@@ -126,7 +126,7 @@ export type IconName =
   // `cloud-off` = disconnected, `key-round` = auth-revoked. The syncing
   // state reuses `refresh-cw`; empty reuses `folder-open`.
   | "cloud-off"
-  | "key-round"
+  | "key-round";
 
 const REGISTRY: Record<IconName, ComponentType<LucideProps>> = {
   sun: SunIcon,
@@ -166,24 +166,24 @@ const REGISTRY: Record<IconName, ComponentType<LucideProps>> = {
   "wifi-off": WifiOffIcon,
   "cloud-off": CloudOffIcon,
   "key-round": KeyRoundIcon,
-}
+};
 
 // Every name registered in the adapter. Consumers that need to validate a
 // runtime string against the IconName union (e.g. a provider descriptor's
 // icon field) should import this rather than duplicating a static array —
 // that decoupling avoids the "adapter grew a name but downstream allowlist
 // didn't" drift flagged in code review I-2 (review-round-1).
-export const ICON_NAMES = Object.keys(REGISTRY) as readonly IconName[]
+export const ICON_NAMES = Object.keys(REGISTRY) as readonly IconName[];
 
 export function isIconName(value: string): value is IconName {
-  return (ICON_NAMES as readonly string[]).includes(value)
+  return (ICON_NAMES as readonly string[]).includes(value);
 }
 
 export type IconProps = {
-  name: IconName
-} & Omit<LucideProps, "ref">
+  name: IconName;
+} & Omit<LucideProps, "ref">;
 
 export function Icon({ name, ...rest }: IconProps) {
-  const Component = REGISTRY[name]
-  return <Component {...rest} />
+  const Component = REGISTRY[name];
+  return <Component {...rest} />;
 }

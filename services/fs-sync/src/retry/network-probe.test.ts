@@ -115,11 +115,12 @@ describe("NetworkProbe — success path", () => {
     const payload = events[0]?.payload as { releasedJobIds: string[] };
     expect(payload.releasedJobIds.sort()).toEqual(["a", "b", "c"]);
 
-    expect(repo.listByStatus("queued").map((j) => j.id).sort()).toEqual([
-      "a",
-      "b",
-      "c",
-    ]);
+    expect(
+      repo
+        .listByStatus("queued")
+        .map((j) => j.id)
+        .sort(),
+    ).toEqual(["a", "b", "c"]);
     expect(repo.listByStatus("waiting-network")).toHaveLength(0);
     await probe.stop();
   });

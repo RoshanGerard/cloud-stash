@@ -258,10 +258,7 @@ export function _createBridge(
             try {
               resolveRegistry().setStatus(datasourceId, "connected");
             } catch (err) {
-              console.warn(
-                "[sync-event-bridge] healing datasource status failed:",
-                err,
-              );
+              console.warn("[sync-event-bridge] healing datasource status failed:", err);
             }
           }
         }
@@ -315,10 +312,7 @@ export function _createBridge(
           try {
             void openExternal(authorizeUrl);
           } catch (err) {
-            console.warn(
-              "[sync-event-bridge] shell.openExternal failed:",
-              err,
-            );
+            console.warn("[sync-event-bridge] shell.openExternal failed:", err);
           }
         }
         return; // do NOT forward to renderer
@@ -333,10 +327,10 @@ export function _createBridge(
             // warning matching Risks §1's `bridge-registry-add-failed`
             // diagnostic; do NOT throw (the event stream must keep
             // flowing).
-            console.warn(
-              "[sync-event-bridge] bridge-registry-add-failed:",
-              { datasourceId: summary.id, errorMessage: (err as Error).message },
-            );
+            console.warn("[sync-event-bridge] bridge-registry-add-failed:", {
+              datasourceId: summary.id,
+              errorMessage: (err as Error).message,
+            });
           }
         }
         return; // do NOT forward to renderer
@@ -374,10 +368,23 @@ export function _createBridge(
 
       // wire result is `{ jobs: readonly JobSummary[] }` — use type narrowing
       // via `unknown` to avoid direct readonly→mutable cast conflicts.
-      const wireResult = result as unknown as { jobs: Array<{ id: string; kind: string; status: string; datasourceId: string; sourcePath: string; targetPath: string | null; conflictPolicy: string; attempt: number; lastErrorTag: string | null; lastErrorMessage: string | null; createdAt: number; updatedAt: number }> };
-      const jobs = wireResult.jobs.filter(
-        (j) => ACTIVE_STATUSES.has(j.status),
-      );
+      const wireResult = result as unknown as {
+        jobs: Array<{
+          id: string;
+          kind: string;
+          status: string;
+          datasourceId: string;
+          sourcePath: string;
+          targetPath: string | null;
+          conflictPolicy: string;
+          attempt: number;
+          lastErrorTag: string | null;
+          lastErrorMessage: string | null;
+          createdAt: number;
+          updatedAt: number;
+        }>;
+      };
+      const jobs = wireResult.jobs.filter((j) => ACTIVE_STATUSES.has(j.status));
 
       // Seed the job-kind + owning-datasource maps from the state snapshot.
       for (const j of jobs) {

@@ -244,10 +244,7 @@ export interface DatasourceClient<T extends DatasourceType> {
    * fs-sync's download handler derives its own `downloading` /
    * `file-downloaded` / `download-failed` / `download-cancelled` from those.
    */
-  downloadFile(
-    target: Target,
-    options?: DownloadOptions,
-  ): Promise<DownloadResult>;
+  downloadFile(target: Target, options?: DownloadOptions): Promise<DownloadResult>;
   getQuota(): Promise<Quota>;
   /**
    * Refresh the datasource's credentials with the provider as a public,
@@ -285,9 +282,9 @@ export interface BaseClientInit {
 // Template base class
 // ---------------------------------------------------------------------------
 
-export abstract class BaseDatasourceClient<T extends DatasourceType>
-  implements DatasourceClient<T>
-{
+export abstract class BaseDatasourceClient<
+  T extends DatasourceType,
+> implements DatasourceClient<T> {
   abstract readonly type: T;
   readonly datasourceId: string;
 
@@ -329,13 +326,8 @@ export abstract class BaseDatasourceClient<T extends DatasourceType>
     target: Target,
     options: { cursor?: string; pageSize?: number },
   ): Promise<{ entries: DatasourceFileEntry<T>[]; nextCursor: string | null }>;
-  protected abstract doSearchImpl(
-    query: string,
-    scope?: Target,
-  ): Promise<DatasourceFileEntry<T>[]>;
-  protected abstract doGetMetadataImpl(
-    target: Target,
-  ): Promise<FileMetadata<T>>;
+  protected abstract doSearchImpl(query: string, scope?: Target): Promise<DatasourceFileEntry<T>[]>;
+  protected abstract doGetMetadataImpl(target: Target): Promise<FileMetadata<T>>;
   /**
    * Primitive for `uploadFile()` (per migrate-upload-orchestration-out-of-engine).
    * The base calls this directly (per migrate-engine-retry-policy-to-consumer
@@ -626,10 +618,7 @@ export abstract class BaseDatasourceClient<T extends DatasourceType>
    * relies on those values to validate `range-not-honored` /
    * `range-mismatch` (Decision 3's safeguards).
    */
-  async downloadFile(
-    target: Target,
-    options: DownloadOptions = {},
-  ): Promise<DownloadResult> {
+  async downloadFile(target: Target, options: DownloadOptions = {}): Promise<DownloadResult> {
     try {
       return await this.doDownloadFileImpl(target, options);
     } catch (err) {
@@ -745,10 +734,7 @@ export abstract class BaseDatasourceClient<T extends DatasourceType>
                 datasourceId: this.datasourceId,
                 retryable: false,
                 raw: refreshErr,
-                message:
-                  refreshErr instanceof Error
-                    ? refreshErr.message
-                    : String(refreshErr),
+                message: refreshErr instanceof Error ? refreshErr.message : String(refreshErr),
               });
         throw refreshNormalized;
       }
@@ -803,9 +789,7 @@ export abstract class BaseDatasourceClient<T extends DatasourceType>
     return decorated;
   }
 
-  private async completeAuth(
-    run: () => Promise<AuthResult>,
-  ): Promise<AuthResult> {
+  private async completeAuth(run: () => Promise<AuthResult>): Promise<AuthResult> {
     let result: AuthResult;
     try {
       result = await run();

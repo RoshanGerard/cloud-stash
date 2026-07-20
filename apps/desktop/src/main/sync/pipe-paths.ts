@@ -39,9 +39,7 @@ export interface ResolveSyncPipePathOptions {
  * MUST stay in lockstep with `resolveSocketPath` in
  * `services/fs-sync/src/env/paths.ts` — see MIRROR INVARIANT above.
  */
-export function resolveSyncPipePath(
-  options: ResolveSyncPipePathOptions,
-): string {
+export function resolveSyncPipePath(options: ResolveSyncPipePathOptions): string {
   const platform = options.platform ?? process.platform;
 
   if (platform === "win32") {

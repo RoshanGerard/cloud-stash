@@ -12,15 +12,7 @@
 // this test installs the channel and asserts the file-explorer mounts
 // a listener that drives `hydrateActiveUploads` on the toaster.
 
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-  type Mock,
-} from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from "vitest";
 import { cleanup, render } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 
@@ -43,9 +35,7 @@ import { __resetExplorerStoreCacheForTests } from "../store.js";
 let onActiveUploadsHydrateMock: Mock;
 
 function installApiMock(): void {
-  onActiveUploadsHydrateMock = vi
-    .fn()
-    .mockImplementation(() => () => {});
+  onActiveUploadsHydrateMock = vi.fn().mockImplementation(() => () => {});
 
   (window as unknown as { api: unknown }).api = {
     ping: vi.fn().mockResolvedValue({ ok: true, ts: 1 }),

@@ -6,13 +6,7 @@
 // indirectly via the dashboard tests.
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-} from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 
 import { AppHeader } from "../app-header";
@@ -20,12 +14,11 @@ import { AppHeader } from "../app-header";
 beforeEach(() => {
   // Radix Dialog needs ResizeObserver on mount.
   if (!("ResizeObserver" in window)) {
-    (window as unknown as { ResizeObserver: unknown }).ResizeObserver =
-      class MockResizeObserver {
-        observe() {}
-        unobserve() {}
-        disconnect() {}
-      };
+    (window as unknown as { ResizeObserver: unknown }).ResizeObserver = class MockResizeObserver {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    };
   }
 });
 
@@ -41,17 +34,13 @@ describe("AppHeader — brand chrome (Decision 14)", () => {
     // (was an inline <svg> tinted through the retired crimson brand token).
     const logo = document.querySelector("[data-testid='cloudstash-logo']");
     expect(logo).not.toBeNull();
-    const marks = logo!.querySelectorAll(
-      "img[src^='/brand/cloudstash-mark-']",
-    );
+    const marks = logo!.querySelectorAll("img[src^='/brand/cloudstash-mark-']");
     expect(marks.length).toBe(2);
   });
 
   it("renders the product wordmark 'CloudStash'", () => {
     render(<AppHeader />);
-    expect(
-      screen.getByText(/CloudStash/i),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/CloudStash/i)).toBeInTheDocument();
   });
 
   // restyle-cloudstash-monochrome §4.3 (design.md Decision 4) — the display
@@ -99,9 +88,7 @@ describe("AppHeader — brand chrome (Decision 14)", () => {
     const settings = screen.getByRole("button", { name: /open settings/i });
     fireEvent.click(settings);
     // DialogTitle renders as an accessible heading.
-    expect(
-      screen.getByRole("heading", { name: /^settings$/i }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /^settings$/i })).toBeInTheDocument();
   });
 
   it("places the Settings button before the ThemeSwitcher in DOM order", () => {
@@ -153,12 +140,8 @@ describe("AppHeader — window chrome (add-frameless-window-chrome)", () => {
     stubApi("win32");
     render(<AppHeader />);
     expect(await screen.findByTestId("window-controls")).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: /^minimize$/i }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: /^maximize$/i }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^minimize$/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^maximize$/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /^close$/i })).toBeInTheDocument();
   });
 
@@ -179,9 +162,7 @@ describe("AppHeader — window chrome (add-frameless-window-chrome)", () => {
   it("renders NO custom controls and no inset when there is no platform bridge", async () => {
     render(<AppHeader />);
     await waitFor(() =>
-      expect(screen.getByText(/^CloudStash$/).closest("div")).not.toHaveClass(
-        "pl-20",
-      ),
+      expect(screen.getByText(/^CloudStash$/).closest("div")).not.toHaveClass("pl-20"),
     );
     expect(screen.queryByTestId("window-controls")).toBeNull();
   });

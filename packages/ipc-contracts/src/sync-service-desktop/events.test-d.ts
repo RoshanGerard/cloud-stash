@@ -12,9 +12,7 @@
 
 import { describe, expectTypeOf, it } from "vitest";
 
-import type {
-  JobSummary,
-} from "../sync-service/commands.js";
+import type { JobSummary } from "../sync-service/commands.js";
 import type {
   AuthCancelledPayload,
   AuthCompletedPayload,
@@ -72,9 +70,7 @@ describe("sync-service-desktop SyncEventKind enumeration", () => {
 
 describe("sync-service-desktop SyncEventPayloadMap", () => {
   it("sync-state-seed payload carries in-progress jobs", () => {
-    expectTypeOf<SyncEventPayloadMap["sync-state-seed"]>().toEqualTypeOf<
-      SyncStateSeedPayload
-    >();
+    expectTypeOf<SyncEventPayloadMap["sync-state-seed"]>().toEqualTypeOf<SyncStateSeedPayload>();
     expectTypeOf<SyncStateSeedPayload>().toEqualTypeOf<{
       readonly jobs: ReadonlyArray<JobSummary>;
     }>();
@@ -90,54 +86,28 @@ describe("sync-service-desktop SyncEventPayloadMap", () => {
   });
 
   it("service lifecycle payloads re-use the wire-contract shapes", () => {
-    expectTypeOf<SyncEventPayloadMap["job-enqueued"]>().toEqualTypeOf<
-      JobEnqueuedPayload
-    >();
-    expectTypeOf<SyncEventPayloadMap["job-started"]>().toEqualTypeOf<
-      JobStartedPayload
-    >();
-    expectTypeOf<SyncEventPayloadMap["job-progress"]>().toEqualTypeOf<
-      JobProgressPayload
-    >();
-    expectTypeOf<SyncEventPayloadMap["job-completed"]>().toEqualTypeOf<
-      JobCompletedPayload
-    >();
-    expectTypeOf<SyncEventPayloadMap["job-failed"]>().toEqualTypeOf<
-      JobFailedPayload
-    >();
-    expectTypeOf<SyncEventPayloadMap["job-cancelled"]>().toEqualTypeOf<
-      JobCancelledPayload
-    >();
-    expectTypeOf<SyncEventPayloadMap["job-recovered"]>().toEqualTypeOf<
-      JobRecoveredPayload
-    >();
-    expectTypeOf<SyncEventPayloadMap["sync-completed"]>().toEqualTypeOf<
-      SyncCompletedPayload
-    >();
-    expectTypeOf<SyncEventPayloadMap["source-unavailable"]>().toEqualTypeOf<
-      SourceUnavailablePayload
-    >();
-    expectTypeOf<SyncEventPayloadMap["network-available"]>().toEqualTypeOf<
-      NetworkAvailablePayload
-    >();
+    expectTypeOf<SyncEventPayloadMap["job-enqueued"]>().toEqualTypeOf<JobEnqueuedPayload>();
+    expectTypeOf<SyncEventPayloadMap["job-started"]>().toEqualTypeOf<JobStartedPayload>();
+    expectTypeOf<SyncEventPayloadMap["job-progress"]>().toEqualTypeOf<JobProgressPayload>();
+    expectTypeOf<SyncEventPayloadMap["job-completed"]>().toEqualTypeOf<JobCompletedPayload>();
+    expectTypeOf<SyncEventPayloadMap["job-failed"]>().toEqualTypeOf<JobFailedPayload>();
+    expectTypeOf<SyncEventPayloadMap["job-cancelled"]>().toEqualTypeOf<JobCancelledPayload>();
+    expectTypeOf<SyncEventPayloadMap["job-recovered"]>().toEqualTypeOf<JobRecoveredPayload>();
+    expectTypeOf<SyncEventPayloadMap["sync-completed"]>().toEqualTypeOf<SyncCompletedPayload>();
+    expectTypeOf<
+      SyncEventPayloadMap["source-unavailable"]
+    >().toEqualTypeOf<SourceUnavailablePayload>();
+    expectTypeOf<
+      SyncEventPayloadMap["network-available"]
+    >().toEqualTypeOf<NetworkAvailablePayload>();
   });
 
   it("authenticate lifecycle payloads re-use the wire-contract shapes", () => {
-    expectTypeOf<SyncEventPayloadMap["auth-initiated"]>().toEqualTypeOf<
-      AuthInitiatedPayload
-    >();
-    expectTypeOf<SyncEventPayloadMap["auth-completed"]>().toEqualTypeOf<
-      AuthCompletedPayload
-    >();
-    expectTypeOf<SyncEventPayloadMap["auth-cancelled"]>().toEqualTypeOf<
-      AuthCancelledPayload
-    >();
-    expectTypeOf<SyncEventPayloadMap["auth-failed"]>().toEqualTypeOf<
-      AuthFailedPayload
-    >();
-    expectTypeOf<SyncEventPayloadMap["auth-timeout"]>().toEqualTypeOf<
-      AuthTimeoutPayload
-    >();
+    expectTypeOf<SyncEventPayloadMap["auth-initiated"]>().toEqualTypeOf<AuthInitiatedPayload>();
+    expectTypeOf<SyncEventPayloadMap["auth-completed"]>().toEqualTypeOf<AuthCompletedPayload>();
+    expectTypeOf<SyncEventPayloadMap["auth-cancelled"]>().toEqualTypeOf<AuthCancelledPayload>();
+    expectTypeOf<SyncEventPayloadMap["auth-failed"]>().toEqualTypeOf<AuthFailedPayload>();
+    expectTypeOf<SyncEventPayloadMap["auth-timeout"]>().toEqualTypeOf<AuthTimeoutPayload>();
   });
 });
 
@@ -149,10 +119,7 @@ describe("sync-service-desktop SyncEvent discriminated union", () => {
       readonly payload: SyncStateSeedPayload;
     }>();
 
-    type DisconnectedVariant = Extract<
-      SyncEvent,
-      { kind: "service-disconnected" }
-    >;
+    type DisconnectedVariant = Extract<SyncEvent, { kind: "service-disconnected" }>;
     expectTypeOf<DisconnectedVariant>().toEqualTypeOf<{
       readonly kind: "service-disconnected";
       readonly payload: ServiceDisconnectedPayload;

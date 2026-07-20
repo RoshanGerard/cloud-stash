@@ -1,19 +1,15 @@
-"use client"
+"use client";
 
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Icon, type IconName } from "@/components/icon"
+} from "@/components/ui/dropdown-menu";
+import { Icon, type IconName } from "@/components/icon";
 
-import {
-  setPreference,
-  usePreference,
-  type ThemePreference,
-} from "./theme-store"
+import { setPreference, usePreference, type ThemePreference } from "./theme-store";
 
 /**
  * User-facing theme picker — Light / Dark / System.
@@ -26,29 +22,29 @@ import {
  */
 
 const OPTIONS: ReadonlyArray<{
-  value: ThemePreference
-  label: string
-  icon: IconName
+  value: ThemePreference;
+  label: string;
+  icon: IconName;
 }> = [
   { value: "light", label: "Light", icon: "sun" },
   { value: "dark", label: "Dark", icon: "moon" },
   { value: "system", label: "System", icon: "monitor" },
-]
+];
 
 function iconForPreference(pref: ThemePreference): IconName {
   switch (pref) {
     case "light":
-      return "sun"
+      return "sun";
     case "dark":
-      return "moon"
+      return "moon";
     case "system":
-      return "monitor"
+      return "monitor";
   }
 }
 
 export function ThemeSwitcher() {
-  const preference = usePreference()
-  const indicator = iconForPreference(preference)
+  const preference = usePreference();
+  const indicator = iconForPreference(preference);
 
   return (
     <DropdownMenu>
@@ -66,15 +62,12 @@ export function ThemeSwitcher() {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         {OPTIONS.map((opt) => (
-          <DropdownMenuItem
-            key={opt.value}
-            onSelect={() => setPreference(opt.value)}
-          >
+          <DropdownMenuItem key={opt.value} onSelect={() => setPreference(opt.value)}>
             <Icon name={opt.icon} className="size-4" aria-hidden />
             <span>{opt.label}</span>
           </DropdownMenuItem>
         ))}
       </DropdownMenuContent>
     </DropdownMenu>
-  )
+  );
 }

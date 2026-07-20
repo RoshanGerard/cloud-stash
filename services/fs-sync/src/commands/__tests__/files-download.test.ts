@@ -27,11 +27,7 @@ import type {
   EventName,
   EventPayloadMap,
 } from "@cloudstash/ipc-contracts";
-import {
-  DatasourceError,
-  DatasourceErrorTag,
-  FilesErrorTag,
-} from "@cloudstash/ipc-contracts";
+import { DatasourceError, DatasourceErrorTag, FilesErrorTag } from "@cloudstash/ipc-contracts";
 
 import { createDownloadRegistry } from "../../downloads/registry.js";
 import { applyMigrations } from "../../db/migrations.js";
@@ -180,10 +176,7 @@ function makeFakeFs(opts: { writableParents?: string[] } = {}): FakeFs {
           return;
         }
         let settled = false;
-        const settle = (
-          op: "resolve" | "reject",
-          value?: unknown,
-        ): void => {
+        const settle = (op: "resolve" | "reject", value?: unknown): void => {
           if (settled) return;
           settled = true;
           signal.removeEventListener("abort", onAbort);
@@ -219,9 +212,9 @@ function makeFakeFs(opts: { writableParents?: string[] } = {}): FakeFs {
     // = vi.fn(...)`.
     open: async (path: string, _flags: "wx") => {
       if (files.has(path)) {
-        const err = new Error(
-          `EEXIST: file already exists, open '${path}'`,
-        ) as Error & { code: string };
+        const err = new Error(`EEXIST: file already exists, open '${path}'`) as Error & {
+          code: string;
+        };
         err.code = "EEXIST";
         throw err;
       }
@@ -276,9 +269,7 @@ const SYNC_APP_DIR = nodePath.join(HOMEDIR, "cloudstash", "sync_app");
 const PARENT = nodePath.join(HOMEDIR, "Downloads");
 const TO_PATH = nodePath.join(PARENT, "welcome.pdf");
 
-function makeDeps(
-  override: Partial<FilesDownloadDeps> = {},
-): FilesDownloadDeps {
+function makeDeps(override: Partial<FilesDownloadDeps> = {}): FilesDownloadDeps {
   const fakeFs = makeFakeFs({ writableParents: [PARENT] });
   const registry = createDownloadRegistry();
   const { bus } = captureFsSyncEvents();
@@ -321,10 +312,12 @@ describe("files:download — happy path (§13.1, §13.2)", () => {
     const registry = createDownloadRegistry();
     const { bus, events } = captureFsSyncEvents();
     const payload = Buffer.alloc(1024, 0xab);
-    const downloadFile = vi.fn(async (): Promise<DownloadResult> => ({
-      stream: streamFromBytes(payload),
-      contentLength: 1024,
-    }));
+    const downloadFile = vi.fn(
+      async (): Promise<DownloadResult> => ({
+        stream: streamFromBytes(payload),
+        contentLength: 1024,
+      }),
+    );
     const getMetadata = vi.fn().mockResolvedValue(sampleEntry);
     const client = makeFakeClient({ downloadFile, getMetadata });
     const handler = makeFilesDownloadHandler(
@@ -398,10 +391,12 @@ describe("files:download — finalize writes the terminal downloads row", () => 
   it("success → status='completed', final bytes, ended_at set, no failure", async () => {
     const { db, registry } = makeDbRegistry();
     const fakeFs = makeFakeFs({ writableParents: [PARENT] });
-    const downloadFile = vi.fn(async (): Promise<DownloadResult> => ({
-      stream: streamFromBytes(Buffer.alloc(1024, 0xab)),
-      contentLength: 1024,
-    }));
+    const downloadFile = vi.fn(
+      async (): Promise<DownloadResult> => ({
+        stream: streamFromBytes(Buffer.alloc(1024, 0xab)),
+        contentLength: 1024,
+      }),
+    );
     const getMetadata = vi.fn().mockResolvedValue(sampleEntry);
     const client = makeFakeClient({ downloadFile, getMetadata });
     const handler = makeFilesDownloadHandler(
@@ -428,10 +423,12 @@ describe("files:download — finalize writes the terminal downloads row", () => 
   it("byte-count-mismatch failure → status='failed' with the terminal tag/message", async () => {
     const { db, registry } = makeDbRegistry();
     const fakeFs = makeFakeFs({ writableParents: [PARENT] });
-    const downloadFile = vi.fn(async (): Promise<DownloadResult> => ({
-      stream: streamFromBytes(Buffer.alloc(512, 0xab)),
-      contentLength: 1024,
-    }));
+    const downloadFile = vi.fn(
+      async (): Promise<DownloadResult> => ({
+        stream: streamFromBytes(Buffer.alloc(512, 0xab)),
+        contentLength: 1024,
+      }),
+    );
     const client = makeFakeClient({ downloadFile });
     const handler = makeFilesDownloadHandler(
       makeDeps({ resolveClient: async () => client, registry, fs: fakeFs }),
@@ -452,27 +449,22 @@ describe("files:download — finalize writes the terminal downloads row", () => 
   it("cancel (abort) → status='cancelled', ended_at set", async () => {
     const { db, registry } = makeDbRegistry();
     const fakeFs = makeFakeFs({ writableParents: [PARENT] });
-    const downloadFile = vi.fn(
-      async (_target, options): Promise<DownloadResult> => {
-        const stream = new Readable({ read() {} });
-        setTimeout(() => stream.push(Buffer.alloc(256, 0xaa)), 0);
-        options?.signal?.addEventListener("abort", () => {
-          const err = new Error("aborted");
-          err.name = "AbortError";
-          stream.destroy(err);
-        });
-        return { stream, contentLength: 1024 };
-      },
-    );
+    const downloadFile = vi.fn(async (_target, options): Promise<DownloadResult> => {
+      const stream = new Readable({ read() {} });
+      setTimeout(() => stream.push(Buffer.alloc(256, 0xaa)), 0);
+      options?.signal?.addEventListener("abort", () => {
+        const err = new Error("aborted");
+        err.name = "AbortError";
+        stream.destroy(err);
+      });
+      return { stream, contentLength: 1024 };
+    });
     const client = makeFakeClient({ downloadFile });
     const handler = makeFilesDownloadHandler(
       makeDeps({ resolveClient: async () => client, registry, fs: fakeFs }),
     );
     const cancelHandler = makeSyncCancelDownloadHandler({ registry });
-    const inflight = handler(
-      { datasourceId: "ds-1", path: "/welcome.pdf", toPath: TO_PATH },
-      ctx,
-    );
+    const inflight = handler({ datasourceId: "ds-1", path: "/welcome.pdf", toPath: TO_PATH }, ctx);
     await new Promise((resolve) => setImmediate(resolve));
     await cancelHandler({ downloadJobId: "job-1" }, ctx);
     const result = await inflight;
@@ -523,8 +515,19 @@ describe("files:download — toPath validation (§13.3, §13.4)", () => {
     // `path.join` (which would collapse the `..` at construction time).
     const sep = nodePath.sep;
     const traversal =
-      HOMEDIR + sep + "Downloads" + sep + ".." + sep + ".." + sep + ".." + sep +
-      "etc" + sep + "passwd";
+      HOMEDIR +
+      sep +
+      "Downloads" +
+      sep +
+      ".." +
+      sep +
+      ".." +
+      sep +
+      ".." +
+      sep +
+      "etc" +
+      sep +
+      "passwd";
     const result = await handler(
       {
         datasourceId: "ds-1",
@@ -584,9 +587,7 @@ describe("files:download — toPath validation (§13.3, §13.4)", () => {
     );
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.error.message).toBe(
-        "toPath validation: parent directory not writable",
-      );
+      expect(result.error.message).toBe("toPath validation: parent directory not writable");
     }
     expect(downloadFile).not.toHaveBeenCalled();
   });
@@ -872,9 +873,7 @@ describe("files:download — handler-owned auth refresh (§4 / Decision 5)", () 
     // add-failed-download-cleanup-affordance §3 — auth-revoked is a KEEP
     // disposition, but the token died PRE-STREAM so zero bytes reached disk:
     // there is no partial worth deleting, so partialKept === false.
-    expect(
-      (failed[0]?.payload as { partialKept?: boolean }).partialKept,
-    ).toBe(false);
+    expect((failed[0]?.payload as { partialKept?: boolean }).partialKept).toBe(false);
   });
 });
 
@@ -898,10 +897,7 @@ describe("files:download — range-not-honored detection (§13.7 / §13.8 + §12
     const fakeFs = makeFakeFs({ writableParents: [PARENT] });
     let call = 0;
     const downloadFile = vi.fn(
-      async (
-        _target: Target,
-        opts: DownloadOptions | undefined,
-      ): Promise<DownloadResult> => {
+      async (_target: Target, opts: DownloadOptions | undefined): Promise<DownloadResult> => {
         call++;
         if (call === 1) {
           // Cycle 1 / attempt 1: return a stream that drains 512 bytes
@@ -951,10 +947,7 @@ describe("files:download — range-not-honored detection (§13.7 / §13.8 + §12
       }),
     );
     vi.useFakeTimers();
-    const inflight = handler(
-      { datasourceId: "ds-1", path: "/welcome.pdf", toPath: TO_PATH },
-      ctx,
-    );
+    const inflight = handler({ datasourceId: "ds-1", path: "/welcome.pdf", toPath: TO_PATH }, ctx);
     // First retry sleep is 1000ms (network-error → expBackoff(1)).
     // Then the rewrite-from-0 path emits a SECOND download-retrying
     // with waitMs=0 (no sleep). Then cycle continues to attempt 3.
@@ -1045,9 +1038,7 @@ describe("files:download — range-mismatch detection (§13.9, §13.10)", () => 
     // add-failed-download-cleanup-affordance §3 — range-mismatch is a DELETE
     // disposition (the partial was unlinked before emit), so there is nothing
     // deletable: partialKept === false.
-    expect(
-      (terminal[0]?.payload as { partialKept?: boolean }).partialKept,
-    ).toBe(false);
+    expect((terminal[0]?.payload as { partialKept?: boolean }).partialKept).toBe(false);
   });
 });
 
@@ -1060,10 +1051,12 @@ describe("files:download — byte-count assertion (§13.11, §13.12)", () => {
     const fakeFs = makeFakeFs({ writableParents: [PARENT] });
     // Engine claims 1024 bytes but only emits 512 — the stream ends, the
     // pipe drains, but the disk file has the wrong byte count.
-    const downloadFile = vi.fn(async (): Promise<DownloadResult> => ({
-      stream: streamFromBytes(Buffer.alloc(512, 0xab)),
-      contentLength: 1024,
-    }));
+    const downloadFile = vi.fn(
+      async (): Promise<DownloadResult> => ({
+        stream: streamFromBytes(Buffer.alloc(512, 0xab)),
+        contentLength: 1024,
+      }),
+    );
     const client = makeFakeClient({ downloadFile });
     const { bus, events } = captureFsSyncEvents();
     const handler = makeFilesDownloadHandler(
@@ -1087,9 +1080,7 @@ describe("files:download — byte-count assertion (§13.11, §13.12)", () => {
     // add-failed-download-cleanup-affordance §3 — byte-count-mismatch is a
     // KEEP disposition and 512 bytes reached disk, so the kept partial is
     // deletable: partialKept === true.
-    expect(
-      (terminal[0]?.payload as { partialKept?: boolean }).partialKept,
-    ).toBe(true);
+    expect((terminal[0]?.payload as { partialKept?: boolean }).partialKept).toBe(true);
   });
 });
 
@@ -1100,10 +1091,12 @@ describe("files:download — byte-count assertion (§13.11, §13.12)", () => {
 describe("files:download — post-download integrity check (§13.13, §13.14)", () => {
   it("on local-hash mismatch with provider hash: terminal failure with tag:'other' message:'integrity check failed'", async () => {
     const fakeFs = makeFakeFs({ writableParents: [PARENT] });
-    const downloadFile = vi.fn(async (): Promise<DownloadResult> => ({
-      stream: streamFromBytes(Buffer.alloc(1024, 0xab)),
-      contentLength: 1024,
-    }));
+    const downloadFile = vi.fn(
+      async (): Promise<DownloadResult> => ({
+        stream: streamFromBytes(Buffer.alloc(1024, 0xab)),
+        contentLength: 1024,
+      }),
+    );
     const getMetadata = vi.fn().mockResolvedValue(sampleEntry);
     const client = makeFakeClient({ downloadFile, getMetadata });
     const { bus, events } = captureFsSyncEvents();
@@ -1127,17 +1120,17 @@ describe("files:download — post-download integrity check (§13.13, §13.14)", 
     expect(terminal).toHaveLength(1);
     // add-failed-download-cleanup-affordance §3 — integrity-failed is a DELETE
     // disposition (the partial was unlinked before emit): partialKept === false.
-    expect(
-      (terminal[0]?.payload as { partialKept?: boolean }).partialKept,
-    ).toBe(false);
+    expect((terminal[0]?.payload as { partialKept?: boolean }).partialKept).toBe(false);
   });
 
   it("skips the integrity check when the provider does not advertise a comparable hash", async () => {
     const fakeFs = makeFakeFs({ writableParents: [PARENT] });
-    const downloadFile = vi.fn(async (): Promise<DownloadResult> => ({
-      stream: streamFromBytes(Buffer.alloc(1024, 0xab)),
-      contentLength: 1024,
-    }));
+    const downloadFile = vi.fn(
+      async (): Promise<DownloadResult> => ({
+        stream: streamFromBytes(Buffer.alloc(1024, 0xab)),
+        contentLength: 1024,
+      }),
+    );
     const noHashEntry: DatasourceFileEntry<"google-drive"> = {
       ...sampleEntry,
       providerMetadata: {},
@@ -1198,17 +1191,11 @@ describe("files:download — cancel mid-pipe (§13.15, §13.16)", () => {
     // Kick off the download and cancel it concurrently via the cancel
     // command surface.
     const cancelHandler = makeSyncCancelDownloadHandler({ registry });
-    const inflight = handler(
-      { datasourceId: "ds-1", path: "/welcome.pdf", toPath: TO_PATH },
-      ctx,
-    );
+    const inflight = handler({ datasourceId: "ds-1", path: "/welcome.pdf", toPath: TO_PATH }, ctx);
     // Wait one microtask so the handler has a chance to register the
     // entry; then issue the cancel.
     await new Promise((resolve) => setImmediate(resolve));
-    const cancelResult = await cancelHandler(
-      { downloadJobId: "job-1" },
-      ctx,
-    );
+    const cancelResult = await cancelHandler({ downloadJobId: "job-1" }, ctx);
     expect(cancelResult).toEqual({
       ok: true,
       result: { cancelled: true },
@@ -1219,9 +1206,7 @@ describe("files:download — cancel mid-pipe (§13.15, §13.16)", () => {
     if (!result.ok) {
       expect(result.error.tag).toBe("cancelled");
     }
-    const cancelEvents = events.filter(
-      (e) => e.name === "download-cancelled",
-    );
+    const cancelEvents = events.filter((e) => e.name === "download-cancelled");
     expect(cancelEvents).toHaveLength(1);
     expect(cancelEvents[0]?.payload).toMatchObject({
       datasourceId: "ds-1",
@@ -1236,10 +1221,7 @@ describe("files:download — cancel mid-pipe (§13.15, §13.16)", () => {
   it("sync:cancel-download on an unknown downloadJobId is idempotent: returns { cancelled: false }", async () => {
     const registry = createDownloadRegistry();
     const cancelHandler = makeSyncCancelDownloadHandler({ registry });
-    const result = await cancelHandler(
-      { downloadJobId: "ghost" },
-      ctx,
-    );
+    const result = await cancelHandler({ downloadJobId: "ghost" }, ctx);
     expect(result).toEqual({ ok: true, result: { cancelled: false } });
   });
 });
@@ -1375,8 +1357,9 @@ describe("files:download — handler-owned download-progress throttle (§1, Deci
     //   - tick 7 (1s-time window, 13%)
     // Ticks 2-5 are coalesced (held as pending, superseded).
     const downloading = events.filter((e) => e.name === "downloading");
-    expect(downloading.map((e) => (e.payload as { progress: number }).progress))
-      .toEqual([1, 12, 13]);
+    expect(downloading.map((e) => (e.payload as { progress: number }).progress)).toEqual([
+      1, 12, 13,
+    ]);
   });
 
   it("(flush-on-terminal) the last HELD progress is flushed as `downloading` BEFORE the terminal `file-downloaded`, and NO `downloading` is emitted after the terminal", async () => {
@@ -1421,8 +1404,7 @@ describe("files:download — handler-owned download-progress throttle (§1, Deci
 
     // The 18% pending tick was flushed as a `downloading` event.
     const downloading = events.filter((e) => e.name === "downloading");
-    expect(downloading.map((e) => (e.payload as { progress: number }).progress))
-      .toEqual([10, 18]);
+    expect(downloading.map((e) => (e.payload as { progress: number }).progress)).toEqual([10, 18]);
 
     // Ordering: the LAST `downloading` precedes the terminal
     // `file-downloaded`, and NO `downloading` follows the terminal.
@@ -1483,8 +1465,7 @@ describe("files:download — handler-owned download-progress throttle (§1, Deci
     }
     // The 18% held tick was flushed.
     const downloading = events.filter((e) => e.name === "downloading");
-    expect(downloading.map((e) => (e.payload as { progress: number }).progress))
-      .toEqual([10, 18]);
+    expect(downloading.map((e) => (e.payload as { progress: number }).progress)).toEqual([10, 18]);
     // Ordering: last `downloading` precedes the terminal `download-failed`,
     // and no `downloading` follows the terminal.
     const names = events.map((e) => e.name);
@@ -1553,8 +1534,7 @@ describe("files:download — handler-owned download-progress throttle (§1, Deci
     // first tick crossed an emit gate (rest held + flushed). flush-on-
     // terminal emits the last pending (19%), so we expect 10% then 19%.
     const downloading = events.filter((e) => e.name === "downloading");
-    expect(downloading.map((e) => (e.payload as { progress: number }).progress))
-      .toEqual([10, 19]);
+    expect(downloading.map((e) => (e.payload as { progress: number }).progress)).toEqual([10, 19]);
   });
 
   it("(within-cycle bytes on resume) the `downloading` emit carries the engine's within-cycle `loaded` verbatim — matching the removed engine-bus path — NOT the absolute on-disk count", async () => {
@@ -1640,9 +1620,7 @@ describe("files:download — handler-owned download-progress throttle (§1, Deci
     // The absolute on-disk value must NOT leak onto the wire — that would be
     // a behavior change versus the pre-migration engine-bus path.
     expect(
-      downloading.some(
-        (e) => (e.payload as { bytesLoaded: number }).bytesLoaded === 768,
-      ),
+      downloading.some((e) => (e.payload as { bytesLoaded: number }).bytesLoaded === 768),
     ).toBe(false);
   });
 });
@@ -1654,10 +1632,12 @@ describe("files:download — handler-owned download-progress throttle (§1, Deci
 describe("files:download — registry release on terminal events (§13.19, §13.20)", () => {
   it("on file-downloaded: registry entry is removed", async () => {
     const fakeFs = makeFakeFs({ writableParents: [PARENT] });
-    const downloadFile = vi.fn(async (): Promise<DownloadResult> => ({
-      stream: streamFromBytes(Buffer.alloc(1024, 0xab)),
-      contentLength: 1024,
-    }));
+    const downloadFile = vi.fn(
+      async (): Promise<DownloadResult> => ({
+        stream: streamFromBytes(Buffer.alloc(1024, 0xab)),
+        contentLength: 1024,
+      }),
+    );
     const getMetadata = vi.fn().mockResolvedValue({
       ...sampleEntry,
       providerMetadata: {},
@@ -1751,18 +1731,13 @@ describe("files:download — `downloading` IPC emit shape (§13.21, §13.22)", (
         fsSyncBus: bus,
       }),
     );
-    await handler(
-      { datasourceId: "ds-1", path: "/welcome.pdf", toPath: TO_PATH },
-      ctx,
-    );
+    await handler({ datasourceId: "ds-1", path: "/welcome.pdf", toPath: TO_PATH }, ctx);
     const downloading = events.filter((e) => e.name === "downloading");
     // The 512/1024 tick emits a 50% `downloading`. (A subsequent
     // flush-on-terminal would be a no-op here — the 50% tick already
     // emitted, leaving no pending; the success path's 100%-on-disk count
     // is reported by the terminal `file-downloaded`, not a `downloading`.)
-    const fiftyPct = downloading.find(
-      (e) => (e.payload as { progress: number }).progress === 50,
-    );
+    const fiftyPct = downloading.find((e) => (e.payload as { progress: number }).progress === 50);
     expect(fiftyPct).toBeDefined();
     expect(fiftyPct!.payload).toMatchObject({
       datasourceId: "ds-1",
@@ -1771,9 +1746,7 @@ describe("files:download — `downloading` IPC emit shape (§13.21, §13.22)", (
     });
     // The wire payload is fs-sync's downloadJobId-keyed shape; the
     // downloadJobId is the one minted by the handler ("job-1").
-    expect((fiftyPct!.payload as { downloadJobId: string }).downloadJobId).toBe(
-      "job-1",
-    );
+    expect((fiftyPct!.payload as { downloadJobId: string }).downloadJobId).toBe("job-1");
   });
 });
 
@@ -1809,9 +1782,7 @@ describe("files:download — concurrent-rejection guard (§13.23, §13.24)", () 
     expect(result.ok).toBe(false);
     if (!result.ok) {
       expect(result.error.tag).toBe("other");
-      expect(result.error.message).toBe(
-        "download already in progress for this entry",
-      );
+      expect(result.error.message).toBe("download already in progress for this entry");
       expect(result.error.retryable).toBe(false);
     }
     expect(downloadFile).not.toHaveBeenCalled();
@@ -2274,7 +2245,10 @@ function makeStepDownloadFile(
 } {
   let i = 0;
   let lastRangeStart: number | undefined;
-  const fn = async (target: unknown, options: { rangeStart?: number; signal?: AbortSignal }): Promise<DownloadResult> => {
+  const fn = async (
+    target: unknown,
+    options: { rangeStart?: number; signal?: AbortSignal },
+  ): Promise<DownloadResult> => {
     lastRangeStart = options?.rangeStart;
     const step = steps[i++];
     if (step === undefined) {
@@ -2306,7 +2280,8 @@ function makeStepDownloadFile(
           contentLength: step.contentLength ?? 1024,
         };
         if (step.contentRange !== undefined) {
-          (r as { contentRange?: { start: number; end: number; total: number } }).contentRange = step.contentRange;
+          (r as { contentRange?: { start: number; end: number; total: number } }).contentRange =
+            step.contentRange;
         }
         return r;
       }
@@ -2316,7 +2291,8 @@ function makeStepDownloadFile(
           contentLength: step.contentLength,
         };
         if (step.contentRange !== undefined) {
-          (r as { contentRange?: { start: number; end: number; total: number } }).contentRange = step.contentRange;
+          (r as { contentRange?: { start: number; end: number; total: number } }).contentRange =
+            step.contentRange;
         }
         return r;
       }
@@ -2411,7 +2387,9 @@ describe("files:download — exhausts env budget after CONSECUTIVE_FAIL_LIMIT (�
     vi.useFakeTimers();
     try {
       const fakeFs = makeFakeFs({ writableParents: [PARENT] });
-      const unlinkSpy = vi.fn(async () => { /* ok */ });
+      const unlinkSpy = vi.fn(async () => {
+        /* ok */
+      });
       fakeFs.unlink = unlinkSpy;
       const netError = () =>
         new DatasourceError({
@@ -2452,9 +2430,7 @@ describe("files:download — exhausts env budget after CONSECUTIVE_FAIL_LIMIT (�
       expect(result.ok).toBe(false);
       if (!result.ok) {
         expect(result.error.tag).toBe("exhausted-retries");
-        expect(result.error.message).toBe(
-          "exhausted-retries: network-error",
-        );
+        expect(result.error.message).toBe("exhausted-retries: network-error");
         expect(result.error.retryable).toBe(true);
       }
       const retrying = events.filter((e) => e.name === "download-retrying");
@@ -2583,7 +2559,9 @@ describe("files:download — walltime ceiling supersedes count (§6.7)", () => {
     // some Vitest version interactions; real timers + a stubbed
     // `deps.now()` is sufficient.
     const fakeFs = makeFakeFs({ writableParents: [PARENT] });
-    const unlinkSpy = vi.fn(async () => { /* ok */ });
+    const unlinkSpy = vi.fn(async () => {
+      /* ok */
+    });
     fakeFs.unlink = unlinkSpy;
     // The handler calls `deps.now()` at TWO synchronous sites before
     // any retry decision: (1) registry entry's `startedAt`, (2) the
@@ -2632,9 +2610,7 @@ describe("files:download — walltime ceiling supersedes count (§6.7)", () => {
     expect(result.ok).toBe(false);
     if (!result.ok) {
       expect(result.error.tag).toBe("exhausted-retries");
-      expect(result.error.message).toBe(
-        "walltime-exceeded: network-error",
-      );
+      expect(result.error.message).toBe("walltime-exceeded: network-error");
     }
     const failed = events.filter((e) => e.name === "download-failed");
     expect(failed).toHaveLength(1);
@@ -2700,9 +2676,7 @@ describe("files:download — rate-limited honors retryAfterMs (§6.8)", () => {
       );
       // Advance 4999ms — sleep should still be pending.
       await pump(4999);
-      const partialEvents = events.filter(
-        (e) => e.name === "download-retrying",
-      );
+      const partialEvents = events.filter((e) => e.name === "download-retrying");
       expect(partialEvents).toHaveLength(1);
       expect(partialEvents[0]?.payload).toMatchObject({
         waitMs: 5000,
@@ -2758,7 +2732,9 @@ describe("files:download — cancel during retry sleep (§6.9)", () => {
       const client = makeFakeClient({ downloadFile });
       const registry = createDownloadRegistry();
       const { bus, events } = captureFsSyncEvents();
-      const unlinkSpy = vi.fn(async () => { /* ok */ });
+      const unlinkSpy = vi.fn(async () => {
+        /* ok */
+      });
       fakeFs.unlink = unlinkSpy;
       const handler = makeFilesDownloadHandler(
         makeDeps({
@@ -2775,18 +2751,13 @@ describe("files:download — cancel during retry sleep (§6.9)", () => {
       // Advance past the throw; we need the download-retrying event +
       // the start of the sleep.
       await pump(0);
-      const beforeCancel = events.filter(
-        (e) => e.name === "download-retrying",
-      );
+      const beforeCancel = events.filter((e) => e.name === "download-retrying");
       expect(beforeCancel).toHaveLength(1);
       // Half-way through the 1000ms backoff.
       await pump(500);
       // Fire the cancel.
       const cancelHandler = makeSyncCancelDownloadHandler({ registry });
-      const cancelResult = await cancelHandler(
-        { downloadJobId: "job-1" },
-        ctx,
-      );
+      const cancelResult = await cancelHandler({ downloadJobId: "job-1" }, ctx);
       expect(cancelResult).toEqual({ ok: true, result: { cancelled: true } });
       // Drain microtasks; the abort should resolve sleepCancellable.
       await pump(0);
@@ -2821,7 +2792,9 @@ describe("files:download — non-retryable tag bypasses env budget (§6.10)", ()
     vi.useFakeTimers();
     try {
       const fakeFs = makeFakeFs({ writableParents: [PARENT] });
-      const unlinkSpy = vi.fn(async () => { /* ok */ });
+      const unlinkSpy = vi.fn(async () => {
+        /* ok */
+      });
       fakeFs.unlink = unlinkSpy;
       const authRevoked = new DatasourceError({
         tag: DatasourceErrorTag.AuthRevoked,
@@ -2939,10 +2912,7 @@ describe("files:download — range-not-honored unlinks partial in-flight, NOT te
       }),
     );
     vi.useFakeTimers();
-    const inflight = handler(
-      { datasourceId: "ds-1", path: "/welcome.pdf", toPath: TO_PATH },
-      ctx,
-    );
+    const inflight = handler({ datasourceId: "ds-1", path: "/welcome.pdf", toPath: TO_PATH }, ctx);
     await vi.advanceTimersByTimeAsync(1100);
     await vi.advanceTimersByTimeAsync(0);
     const result = await inflight;
@@ -2990,7 +2960,9 @@ describe("files:download — range-not-honored unlinks partial in-flight, NOT te
 describe("files:download — range-mismatch deletes partial (§6.12)", () => {
   it("contentRange.start !== bytesWritten → unlink + correct event", async () => {
     const fakeFs = makeFakeFs({ writableParents: [PARENT] });
-    const unlinkSpy = vi.fn(async () => { /* ok */ });
+    const unlinkSpy = vi.fn(async () => {
+      /* ok */
+    });
     fakeFs.unlink = unlinkSpy;
     let call = 0;
     const downloadFile = vi.fn(async (): Promise<DownloadResult> => {
@@ -3052,12 +3024,16 @@ describe("files:download — range-mismatch deletes partial (§6.12)", () => {
 describe("files:download — integrity-failed deletes partial (§6.13)", () => {
   it("provider-hash mismatch on post-pipe check → unlink + 'integrity check failed' event", async () => {
     const fakeFs = makeFakeFs({ writableParents: [PARENT] });
-    const unlinkSpy = vi.fn(async () => { /* ok */ });
+    const unlinkSpy = vi.fn(async () => {
+      /* ok */
+    });
     fakeFs.unlink = unlinkSpy;
-    const downloadFile = vi.fn(async (): Promise<DownloadResult> => ({
-      stream: streamFromBytes(Buffer.alloc(1024, 0xab)),
-      contentLength: 1024,
-    }));
+    const downloadFile = vi.fn(
+      async (): Promise<DownloadResult> => ({
+        stream: streamFromBytes(Buffer.alloc(1024, 0xab)),
+        contentLength: 1024,
+      }),
+    );
     const getMetadata = vi.fn().mockResolvedValue(sampleEntry);
     const client = makeFakeClient({ downloadFile, getMetadata });
     const { bus, events } = captureFsSyncEvents();
@@ -3096,12 +3072,16 @@ describe("files:download — integrity-failed deletes partial (§6.13)", () => {
 describe("files:download — byte-count-mismatch keeps partial (§6.14)", () => {
   it("bytesWritten ≠ contentLength → download-failed { tag: 'other', message: 'byte count mismatch' }; unlink NOT called", async () => {
     const fakeFs = makeFakeFs({ writableParents: [PARENT] });
-    const unlinkSpy = vi.fn(async () => { /* ok */ });
+    const unlinkSpy = vi.fn(async () => {
+      /* ok */
+    });
     fakeFs.unlink = unlinkSpy;
-    const downloadFile = vi.fn(async (): Promise<DownloadResult> => ({
-      stream: streamFromBytes(Buffer.alloc(512, 0xab)),
-      contentLength: 1024,
-    }));
+    const downloadFile = vi.fn(
+      async (): Promise<DownloadResult> => ({
+        stream: streamFromBytes(Buffer.alloc(512, 0xab)),
+        contentLength: 1024,
+      }),
+    );
     const client = makeFakeClient({ downloadFile });
     const { bus, events } = captureFsSyncEvents();
     const handler = makeFilesDownloadHandler(
@@ -3143,10 +3123,12 @@ describe("files:download — unlink failure is non-fatal (§6.15)", () => {
     });
     fakeFs.unlink = unlinkSpy;
     // Drive the integrity-failed path (one of the DELETE_ON_TERMINAL set).
-    const downloadFile = vi.fn(async (): Promise<DownloadResult> => ({
-      stream: streamFromBytes(Buffer.alloc(1024, 0xab)),
-      contentLength: 1024,
-    }));
+    const downloadFile = vi.fn(
+      async (): Promise<DownloadResult> => ({
+        stream: streamFromBytes(Buffer.alloc(1024, 0xab)),
+        contentLength: 1024,
+      }),
+    );
     const getMetadata = vi.fn().mockResolvedValue(sampleEntry);
     const client = makeFakeClient({ downloadFile, getMetadata });
     const { bus, events } = captureFsSyncEvents();
@@ -3306,10 +3288,7 @@ function makeHangingDownloadFile(opts: {
   hangCount: number;
   tail?: () => Promise<DownloadResult>;
 }): {
-  fn: (
-    target: unknown,
-    options: { signal?: AbortSignal },
-  ) => Promise<DownloadResult>;
+  fn: (target: unknown, options: { signal?: AbortSignal }) => Promise<DownloadResult>;
   callCount: () => number;
 } {
   let i = 0;
@@ -3462,9 +3441,7 @@ describe("files:download — per-attempt timeout counts against budget (§11.8)"
       expect(result.ok).toBe(false);
       if (!result.ok) {
         expect(result.error.tag).toBe("exhausted-retries");
-        expect(result.error.message).toBe(
-          "exhausted-retries: network-error",
-        );
+        expect(result.error.message).toBe("exhausted-retries: network-error");
         expect(result.error.retryable).toBe(true);
       }
       const retrying = events.filter((e) => e.name === "download-retrying");
@@ -3523,18 +3500,11 @@ describe("files:download — user cancel during hung attempt (§11.9)", () => {
       // Halfway through the per-attempt timeout — engine still hung.
       await pump(PER_ATTEMPT_TIMEOUT_MS / 2);
       // Verify pre-cancel state: no retrying yet, no terminal yet.
-      expect(events.filter((e) => e.name === "download-retrying")).toHaveLength(
-        0,
-      );
-      expect(events.filter((e) => e.name === "download-cancelled")).toHaveLength(
-        0,
-      );
+      expect(events.filter((e) => e.name === "download-retrying")).toHaveLength(0);
+      expect(events.filter((e) => e.name === "download-cancelled")).toHaveLength(0);
       // Fire the cancel.
       const cancelHandler = makeSyncCancelDownloadHandler({ registry });
-      const cancelResult = await cancelHandler(
-        { downloadJobId: "job-1" },
-        ctx,
-      );
+      const cancelResult = await cancelHandler({ downloadJobId: "job-1" }, ctx);
       expect(cancelResult).toEqual({ ok: true, result: { cancelled: true } });
       // Drain microtasks so the engine fake's signal-listener fires and
       // the handler's catch runs.
@@ -3548,9 +3518,7 @@ describe("files:download — user cancel during hung attempt (§11.9)", () => {
         expect(result.error.tag).toBe("cancelled");
       }
       // Cancel branch fired, NOT timeout-synthesis.
-      expect(events.filter((e) => e.name === "download-retrying")).toHaveLength(
-        0,
-      );
+      expect(events.filter((e) => e.name === "download-retrying")).toHaveLength(0);
       const cancelled = events.filter((e) => e.name === "download-cancelled");
       expect(cancelled).toHaveLength(1);
     } finally {
@@ -3619,7 +3587,7 @@ describe("files:download — Decision 3 rewrite-from-0 budget + sticky flag (§1
             message: `blip ${call}`,
           });
           // unreachable but required for generator type:
-           
+
           yield Buffer.alloc(0);
         })(),
       );
@@ -3635,10 +3603,7 @@ describe("files:download — Decision 3 rewrite-from-0 budget + sticky flag (§1
       }),
     );
     vi.useFakeTimers();
-    const inflight = handler(
-      { datasourceId: "ds-1", path: "/welcome.pdf", toPath: TO_PATH },
-      ctx,
-    );
+    const inflight = handler({ datasourceId: "ds-1", path: "/welcome.pdf", toPath: TO_PATH }, ctx);
     // Pump enough fake time for all retries' sleeps to drain. The
     // mid-stream net-error retries use expBackoff: 1s, 2s, 4s, 8s, 16s
     // (cumulative 31s for 5 retries). The rewrite-from-0 emit has
@@ -3653,29 +3618,21 @@ describe("files:download — Decision 3 rewrite-from-0 budget + sticky flag (§1
       expect(result.error.tag).toBe("exhausted-retries");
       // The 6th occurrence is a post-rewrite mid-stream network-error
       // — the engineCause that overflows the budget.
-      expect(result.error.message).toBe(
-        "exhausted-retries: network-error",
-      );
+      expect(result.error.message).toBe("exhausted-retries: network-error");
     }
     // Five `download-retrying` events fire (attempt 1..5); the 6th
     // increments to 6 which trips the `> CONSECUTIVE_FAIL_LIMIT` guard
     // BEFORE emitting another retrying event.
     const retrying = events.filter((e) => e.name === "download-retrying");
     expect(retrying).toHaveLength(5);
-    expect((retrying[0]!.payload as { engineCause: string }).engineCause).toBe(
-      "network-error",
-    );
+    expect((retrying[0]!.payload as { engineCause: string }).engineCause).toBe("network-error");
     // Attempt 2 is the rewrite-from-0 trigger — engineCause is
     // "range-not-honored" with waitMs=0.
-    expect((retrying[1]!.payload as { engineCause: string }).engineCause).toBe(
-      "range-not-honored",
-    );
+    expect((retrying[1]!.payload as { engineCause: string }).engineCause).toBe("range-not-honored");
     expect((retrying[1]!.payload as { waitMs: number }).waitMs).toBe(0);
     // Attempts 3..5 are post-rewrite net-errors.
     for (let i = 2; i < 5; i++) {
-      expect(
-        (retrying[i]!.payload as { engineCause: string }).engineCause,
-      ).toBe("network-error");
+      expect((retrying[i]!.payload as { engineCause: string }).engineCause).toBe("network-error");
     }
   });
 
@@ -3684,10 +3641,7 @@ describe("files:download — Decision 3 rewrite-from-0 budget + sticky flag (§1
     const rangeStartsObserved: Array<number | undefined> = [];
     let call = 0;
     const downloadFile = vi.fn(
-      async (
-        _target: Target,
-        opts: DownloadOptions | undefined,
-      ): Promise<DownloadResult> => {
+      async (_target: Target, opts: DownloadOptions | undefined): Promise<DownloadResult> => {
         rangeStartsObserved.push(opts?.rangeStart);
         call++;
         if (call === 1) {
@@ -3753,10 +3707,7 @@ describe("files:download — Decision 3 rewrite-from-0 budget + sticky flag (§1
       }),
     );
     vi.useFakeTimers();
-    const inflight = handler(
-      { datasourceId: "ds-1", path: "/welcome.pdf", toPath: TO_PATH },
-      ctx,
-    );
+    const inflight = handler({ datasourceId: "ds-1", path: "/welcome.pdf", toPath: TO_PATH }, ctx);
     await vi.advanceTimersByTimeAsync(10_000);
     await vi.advanceTimersByTimeAsync(0);
     const result = await inflight;
@@ -3764,10 +3715,10 @@ describe("files:download — Decision 3 rewrite-from-0 budget + sticky flag (§1
 
     expect(result.ok).toBe(true);
     expect(rangeStartsObserved).toEqual([
-      0,    // attempt 1: cycle start, no resume
-      256,  // attempt 2: resume from cycle 1 partial (TRIGGERS rewrite)
-      0,    // attempt 3: post-rewrite, rangeUnsupported = true
-      0,    // attempt 4: post-second-blip recovery, sticky stays
+      0, // attempt 1: cycle start, no resume
+      256, // attempt 2: resume from cycle 1 partial (TRIGGERS rewrite)
+      0, // attempt 3: post-rewrite, rangeUnsupported = true
+      0, // attempt 4: post-second-blip recovery, sticky stays
     ]);
     // Final file is the cycle-4 stream's content (full 1024 bytes 0xcc).
     const finalBytes = fakeFs.files.get(TO_PATH);
@@ -3777,9 +3728,7 @@ describe("files:download — Decision 3 rewrite-from-0 budget + sticky flag (§1
     // (waitMs:0, range-not-honored), cycle-3 net-error.
     const retrying = events.filter((e) => e.name === "download-retrying");
     expect(retrying).toHaveLength(3);
-    expect((retrying[1]!.payload as { engineCause: string }).engineCause).toBe(
-      "range-not-honored",
-    );
+    expect((retrying[1]!.payload as { engineCause: string }).engineCause).toBe("range-not-honored");
     expect((retrying[1]!.payload as { waitMs: number }).waitMs).toBe(0);
   });
 });
@@ -3847,8 +3796,7 @@ describe("files:download — pre-cycle metadata prefetch (§12.7, Decision 17)",
     const downloadingEvents = events.filter((e) => e.name === "downloading");
     expect(downloadingEvents.length).toBeGreaterThanOrEqual(1);
     const evt = downloadingEvents.find(
-      (e) =>
-        (e.payload as { bytesLoaded?: number }).bytesLoaded === 167_772_160,
+      (e) => (e.payload as { bytesLoaded?: number }).bytesLoaded === 167_772_160,
     );
     expect(evt).toBeDefined();
     expect(evt!.payload).toMatchObject({
@@ -3908,9 +3856,7 @@ describe("files:download — pre-cycle metadata prefetch (§12.7, Decision 17)",
         expect((e.payload as { bytesTotal: number | null }).bytesTotal).toBeNull();
       }
       // Registry's contentLength stays null throughout.
-      expect(
-        registry.findByKey("ds-1", "/welcome.mp4"),
-      ).toBeUndefined(); // already cleaned up post-success
+      expect(registry.findByKey("ds-1", "/welcome.mp4")).toBeUndefined(); // already cleaned up post-success
       // Warning was logged for the prefetch failure.
       expect(warnSpy).toHaveBeenCalled();
       const warnMsg = warnSpy.mock.calls
@@ -4005,9 +3951,7 @@ describe("files:download — pre-cycle metadata prefetch (§12.7, Decision 17)",
     // Capture the onProgress the handler passes, and park the engine GET on
     // a deferred so we can drive the ticks WHILE the registry entry is live.
     let resolveDownload!: (r: DownloadResult) => void;
-    let capturedOnProgress:
-      | ((loaded: number, total: number | null) => void)
-      | undefined;
+    let capturedOnProgress: ((loaded: number, total: number | null) => void) | undefined;
     const downloadFile = vi.fn(
       (target, options) =>
         new Promise<DownloadResult>((res) => {
@@ -4075,10 +4019,12 @@ describe("files:download — pre-cycle metadata prefetch (§12.7, Decision 17)",
     const registry = createDownloadRegistry();
     const { bus } = captureFsSyncEvents();
     const payload = Buffer.alloc(1024, 0xab);
-    const downloadFile = vi.fn(async (): Promise<DownloadResult> => ({
-      stream: streamFromBytes(payload),
-      contentLength: 1024,
-    }));
+    const downloadFile = vi.fn(
+      async (): Promise<DownloadResult> => ({
+        stream: streamFromBytes(payload),
+        contentLength: 1024,
+      }),
+    );
     const getMetadata = vi.fn().mockResolvedValue({
       handle: "h-1",
       kind: "file" as const,
@@ -4229,10 +4175,12 @@ describe("files:download — pre-cycle metadata prefetch (§12.7, Decision 17)",
     // the wrap, the integrity getMetadata throw is caught → providerHash
     // null → the check is SKIPPED → the download reports ok:true: RED.
     const fakeFs = makeFakeFs({ writableParents: [PARENT] });
-    const downloadFile = vi.fn(async (): Promise<DownloadResult> => ({
-      stream: streamFromBytes(Buffer.alloc(1024, 0xab)),
-      contentLength: 1024,
-    }));
+    const downloadFile = vi.fn(
+      async (): Promise<DownloadResult> => ({
+        stream: streamFromBytes(Buffer.alloc(1024, 0xab)),
+        contentLength: 1024,
+      }),
+    );
     // Call #1 (prefetch) resolves with the sized entry; call #2 (integrity)
     // rejects auth-expired; the refresh retry (call #3) resolves with the
     // hashed sampleEntry so the check can run.
@@ -4354,9 +4302,7 @@ describe("files:download — destination-conflict gate (add-download-overwrite-c
     expect(result.ok).toBe(false);
     if (!result.ok) {
       expect(result.error.tag).toBe("conflict");
-      expect(result.error.message).toBe(
-        `destination already exists at ${TO_PATH}`,
-      );
+      expect(result.error.message).toBe(`destination already exists at ${TO_PATH}`);
       expect(result.error.retryable).toBe(false);
       expect(result.error.existingPath).toBe(TO_PATH);
       expect(result.error.existingSize).toBe(4_194_304);
@@ -4378,10 +4324,12 @@ describe("files:download — destination-conflict gate (add-download-overwrite-c
     // No file pre-populated → stat returns null → gate passes.
     const registry = createDownloadRegistry();
     const payload = Buffer.alloc(1024, 0xab);
-    const downloadFile = vi.fn(async (): Promise<DownloadResult> => ({
-      stream: streamFromBytes(payload),
-      contentLength: 1024,
-    }));
+    const downloadFile = vi.fn(
+      async (): Promise<DownloadResult> => ({
+        stream: streamFromBytes(payload),
+        contentLength: 1024,
+      }),
+    );
     const getMetadata = vi.fn().mockResolvedValue(sampleEntry);
     const client = makeFakeClient({ downloadFile, getMetadata });
     const handler = makeFilesDownloadHandler(
@@ -4426,10 +4374,12 @@ describe("files:download — destination-conflict gate (add-download-overwrite-c
 
     const registry = createDownloadRegistry();
     const newPayload = Buffer.alloc(1024, 0xab);
-    const downloadFile = vi.fn(async (): Promise<DownloadResult> => ({
-      stream: streamFromBytes(newPayload),
-      contentLength: 1024,
-    }));
+    const downloadFile = vi.fn(
+      async (): Promise<DownloadResult> => ({
+        stream: streamFromBytes(newPayload),
+        contentLength: 1024,
+      }),
+    );
     const getMetadata = vi.fn().mockResolvedValue(sampleEntry);
     const client = makeFakeClient({ downloadFile, getMetadata });
     const handler = makeFilesDownloadHandler(
@@ -4614,9 +4564,7 @@ describe("files:download — destination-conflict gate (add-download-overwrite-c
     expect(result.ok).toBe(false);
     if (!result.ok) {
       expect(result.error.tag).toBe("other");
-      expect(result.error.message).toBe(
-        "download already in progress for this entry",
-      );
+      expect(result.error.message).toBe("download already in progress for this entry");
     }
     expect(downloadFile).not.toHaveBeenCalled();
   });
@@ -4640,10 +4588,12 @@ describe("files:download — destination-conflict gate (add-download-overwrite-c
     });
     const wrappedRegistry: typeof registry = { ...registry, set: setSpy };
     const newPayload = Buffer.alloc(2048, 0x77);
-    const downloadFile = vi.fn(async (): Promise<DownloadResult> => ({
-      stream: streamFromBytes(newPayload),
-      contentLength: 2048,
-    }));
+    const downloadFile = vi.fn(
+      async (): Promise<DownloadResult> => ({
+        stream: streamFromBytes(newPayload),
+        contentLength: 2048,
+      }),
+    );
     const getMetadata = vi.fn().mockResolvedValue(sampleEntry);
     const client = makeFakeClient({ downloadFile, getMetadata });
     const handler = makeFilesDownloadHandler(
@@ -4701,10 +4651,12 @@ describe("files:download — destination-conflict gate (add-download-overwrite-c
     fakeFs.files.set(TO_PATH_1, Buffer.alloc(512, 0xaa));
     fakeFs.files.set(TO_PATH_2, Buffer.alloc(512, 0xbb));
     const registry = createDownloadRegistry();
-    const downloadFile = vi.fn(async (): Promise<DownloadResult> => ({
-      stream: streamFromBytes(Buffer.alloc(1024, 0xcc)),
-      contentLength: 1024,
-    }));
+    const downloadFile = vi.fn(
+      async (): Promise<DownloadResult> => ({
+        stream: streamFromBytes(Buffer.alloc(1024, 0xcc)),
+        contentLength: 1024,
+      }),
+    );
     const getMetadata = vi.fn().mockResolvedValue(sampleEntry);
     const client = makeFakeClient({ downloadFile, getMetadata });
     const handler = makeFilesDownloadHandler(
@@ -4746,10 +4698,12 @@ describe("files:download — destination-conflict gate (add-download-overwrite-c
       mtimeMs: EXISTING_MTIME_MS,
     });
     const registry = createDownloadRegistry();
-    const downloadFile = vi.fn(async (): Promise<DownloadResult> => ({
-      stream: streamFromBytes(Buffer.alloc(128, 0x42)),
-      contentLength: 128,
-    }));
+    const downloadFile = vi.fn(
+      async (): Promise<DownloadResult> => ({
+        stream: streamFromBytes(Buffer.alloc(128, 0x42)),
+        contentLength: 128,
+      }),
+    );
     const getMetadata = vi.fn().mockResolvedValue(sampleEntry);
     const client = makeFakeClient({ downloadFile, getMetadata });
     const handler = makeFilesDownloadHandler(
@@ -4787,10 +4741,12 @@ describe("files:download — destination-conflict gate (add-download-overwrite-c
     const openSpy = vi.fn(fakeFs.open);
     fakeFs.open = openSpy;
     const registry = createDownloadRegistry();
-    const downloadFile = vi.fn(async (): Promise<DownloadResult> => ({
-      stream: streamFromBytes(Buffer.alloc(1024, 0xab)),
-      contentLength: 1024,
-    }));
+    const downloadFile = vi.fn(
+      async (): Promise<DownloadResult> => ({
+        stream: streamFromBytes(Buffer.alloc(1024, 0xab)),
+        contentLength: 1024,
+      }),
+    );
     const getMetadata = vi.fn().mockResolvedValue(sampleEntry);
     const client = makeFakeClient({ downloadFile, getMetadata });
     const handler = makeFilesDownloadHandler(
@@ -4890,9 +4846,7 @@ describe("files:download — destination-conflict gate (add-download-overwrite-c
     expect(result.ok).toBe(false);
     if (!result.ok) {
       expect(result.error.tag).toBe("other");
-      expect(result.error.message).toBe(
-        "download already in progress for this entry",
-      );
+      expect(result.error.message).toBe("download already in progress for this entry");
     }
     // §3.5's discriminator: carve-out did NOT fire, so the gate ran.
     expect(statSpy).toHaveBeenCalledWith(TO_PATH);
@@ -4926,10 +4880,12 @@ describe("files:download — destination-conflict gate (add-download-overwrite-c
     const registry = createDownloadRegistry();
     const { bus, events } = captureFsSyncEvents();
     const newPayload = Buffer.alloc(2048, 0xab);
-    const downloadFile = vi.fn(async (): Promise<DownloadResult> => ({
-      stream: streamFromBytes(newPayload),
-      contentLength: 2048,
-    }));
+    const downloadFile = vi.fn(
+      async (): Promise<DownloadResult> => ({
+        stream: streamFromBytes(newPayload),
+        contentLength: 2048,
+      }),
+    );
     const getMetadata = vi.fn().mockResolvedValue(sampleEntry);
     const client = makeFakeClient({ downloadFile, getMetadata });
     const handler = makeFilesDownloadHandler(

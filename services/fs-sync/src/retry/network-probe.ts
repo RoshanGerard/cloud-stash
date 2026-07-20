@@ -78,7 +78,9 @@ export class NetworkProbe {
     }, this.intervalMs);
     // First tick fires on a micro-delay so a freshly-added waiting-network
     // job doesn't immediately block the scheduler thread with a resolver.
-    void Promise.resolve().then(() => this.tick()).catch(() => void 0);
+    void Promise.resolve()
+      .then(() => this.tick())
+      .catch(() => void 0);
   }
 
   private disarm(): void {

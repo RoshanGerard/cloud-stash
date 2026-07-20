@@ -2,31 +2,13 @@
 //
 // implement-datasource-onboarding §23 — CustomForm migration tests.
 
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-  type Mock,
-} from "vitest";
-import {
-  act,
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-} from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from "vitest";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import type { SyncEvent } from "@cloudstash/ipc-contracts/sync-service-desktop";
 
 import { DatasourcesProvider } from "../store";
-import {
-  CustomForm,
-  type CustomFormProps,
-} from "../credential-forms/custom-form";
+import { CustomForm, type CustomFormProps } from "../credential-forms/custom-form";
 
 let authenticateStartMock: Mock;
 let authenticateCompleteMock: Mock;
@@ -58,9 +40,7 @@ function installApiMock() {
     result: { datasourceId: "ds-custom-new", summary: FIXTURE_SUMMARY },
   });
   addMock = vi.fn();
-  const syncOnEventMock = vi
-    .fn()
-    .mockImplementation((_cb: (e: SyncEvent) => void) => () => {});
+  const syncOnEventMock = vi.fn().mockImplementation((_cb: (e: SyncEvent) => void) => () => {});
 
   (window as unknown as { api: unknown }).api = {
     ping: vi.fn().mockResolvedValue({ ok: true, ts: 1 }),
@@ -78,9 +58,7 @@ function installApiMock() {
       onEvent: syncOnEventMock,
       authenticateStart: authenticateStartMock,
       authenticateComplete: authenticateCompleteMock,
-      authenticateCancel: vi
-        .fn()
-        .mockResolvedValue({ ok: true, result: { cancelled: true } }),
+      authenticateCancel: vi.fn().mockResolvedValue({ ok: true, result: { cancelled: true } }),
     },
   };
 }
@@ -174,10 +152,7 @@ describe("CustomForm — migrated to sync.authenticate{Start,Complete}", () => {
     await waitFor(() => {
       expect(authenticateStartMock).toHaveBeenCalledTimes(1);
     });
-    const arg = authenticateStartMock.mock.calls[0]![0] as Record<
-      string,
-      unknown
-    >;
+    const arg = authenticateStartMock.mock.calls[0]![0] as Record<string, unknown>;
     expect(arg).toEqual({ providerId: "amazon-s3" });
     expect("datasourceId" in arg).toBe(false);
   });

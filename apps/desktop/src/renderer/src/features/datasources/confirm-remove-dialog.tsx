@@ -58,20 +58,14 @@ export function ConfirmRemoveDatasourceDialog({
         <DialogHeader>
           <DialogTitle>Remove this datasource?</DialogTitle>
           <DialogDescription>
-            This deletes the local registry entry; cloud files are not
-            deleted.
+            This deletes the local registry entry; cloud files are not deleted.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
           <Button type="button" variant="ghost" onClick={onCancel}>
             Cancel
           </Button>
-          <Button
-            ref={removeRef}
-            type="button"
-            variant="destructive"
-            onClick={onConfirm}
-          >
+          <Button ref={removeRef} type="button" variant="destructive" onClick={onConfirm}>
             Remove
           </Button>
         </DialogFooter>

@@ -34,14 +34,7 @@ describe("ipc-contracts files entry shape", () => {
 
   it("MimeFamily is exactly the eight documented values", () => {
     expectTypeOf<MimeFamily>().toEqualTypeOf<
-      | "image"
-      | "video"
-      | "audio"
-      | "document"
-      | "archive"
-      | "code"
-      | "text"
-      | "unknown"
+      "image" | "video" | "audio" | "document" | "archive" | "code" | "text" | "unknown"
     >();
   });
 
@@ -475,7 +468,7 @@ describe("ipc-contracts files request/response pairs", () => {
   // file until the implementation phase (§2.2 / §2.8 / §2.10 / §2.12)
   // updates them in lockstep with the type changes.
 
-  it("rename: FilesRenameRequest carries conflictPolicy: \"fail\" | \"overwrite\" | \"keep-both\"", () => {
+  it('rename: FilesRenameRequest carries conflictPolicy: "fail" | "overwrite" | "keep-both"', () => {
     // Per add-engine-rename-download design.md Decision 7: rename's
     // conflict policy is a tri-state distinct from upload's (which is
     // "overwrite" | "duplicate" | "skip"). The wire type is non-optional;
@@ -510,7 +503,7 @@ describe("ipc-contracts files request/response pairs", () => {
     }>();
   });
 
-  it("FilesErrorEnvelope optionally carries existingPath alongside tag: \"conflict\"", () => {
+  it('FilesErrorEnvelope optionally carries existingPath alongside tag: "conflict"', () => {
     // Flat-optional shape mirrors the existing retryAfterMs? precedent
     // (NOT a discriminated union per design.md / specs/file-explorer
     // spec.md). Populated only when the response surfaces a rename
@@ -536,7 +529,7 @@ describe("ipc-contracts files request/response pairs", () => {
     expectTypeOf<FilesErrorEnvelope>().toMatchTypeOf<{ existingPath?: string }>();
   });
 
-  it("FilesErrorEnvelope optionally carries authErrorKind: \"scope-insufficient\" for insufficient-scope auth errors", () => {
+  it('FilesErrorEnvelope optionally carries authErrorKind: "scope-insufficient" for insufficient-scope auth errors', () => {
     // fix-insufficient-auth-scopes-recovery: a flat-optional discriminator
     // mirroring the existingPath? / retryAfterMs? precedent (NOT a
     // discriminated union). Threaded onto the envelope by normalizeFilesError
@@ -615,9 +608,7 @@ describe("ipc-contracts files request/response pairs", () => {
     }
 
     expectTypeOf<FilesRenameValue>().toEqualTypeOf<{ entry: FileEntry }>();
-    expectTypeOf<FilesRenameResponse>().toEqualTypeOf<
-      FilesEnvelope<FilesRenameValue>
-    >();
+    expectTypeOf<FilesRenameResponse>().toEqualTypeOf<FilesEnvelope<FilesRenameValue>>();
   });
 
   it("download: FilesDownloadResponse migrates to FilesEnvelope<FilesDownloadValue>", () => {
@@ -651,9 +642,7 @@ describe("ipc-contracts files request/response pairs", () => {
       savedPath: string;
       bytes: number;
     }>();
-    expectTypeOf<FilesDownloadResponse>().toEqualTypeOf<
-      FilesEnvelope<FilesDownloadValue>
-    >();
+    expectTypeOf<FilesDownloadResponse>().toEqualTypeOf<FilesEnvelope<FilesDownloadValue>>();
   });
 
   it("download: FilesDownloadRequest.toPath is non-optional", () => {
@@ -770,9 +759,7 @@ describe("ipc-contracts files request/response pairs", () => {
       existingModifiedAt: "2026-05-05T12:30:00.000Z",
     };
     expect(conflictWithHints.existingSize).toBe(4194304);
-    expect(conflictWithHints.existingModifiedAt).toBe(
-      "2026-05-05T12:30:00.000Z",
-    );
+    expect(conflictWithHints.existingModifiedAt).toBe("2026-05-05T12:30:00.000Z");
 
     // Both fields are structurally optional — assertions about other
     // tags (or rename-flavored conflicts) work without specifying
@@ -813,12 +800,8 @@ describe("ipc-contracts files request/response pairs", () => {
     expect(sizeOnly.existingSize).toBe(1024);
     expect(modifiedAtOnly.existingModifiedAt).toBe("2026-05-05T12:30:00.000Z");
 
-    expectTypeOf<FilesErrorEnvelope["existingSize"]>().toEqualTypeOf<
-      number | undefined
-    >();
-    expectTypeOf<FilesErrorEnvelope["existingModifiedAt"]>().toEqualTypeOf<
-      string | undefined
-    >();
+    expectTypeOf<FilesErrorEnvelope["existingSize"]>().toEqualTypeOf<number | undefined>();
+    expectTypeOf<FilesErrorEnvelope["existingModifiedAt"]>().toEqualTypeOf<string | undefined>();
     expectTypeOf<FilesErrorEnvelope>().toMatchTypeOf<{
       existingSize?: number;
       existingModifiedAt?: string;
@@ -836,15 +819,7 @@ describe("ipc-contracts files channel names", () => {
     expect(FILES_CHANNELS.download).toBe("files:download");
     expect(FILES_CHANNELS.upload).toBe("files:upload");
     expect(Object.keys(FILES_CHANNELS).sort()).toEqual(
-      [
-        "list",
-        "stat",
-        "search",
-        "rename",
-        "remove",
-        "download",
-        "upload",
-      ].sort(),
+      ["list", "stat", "search", "rename", "remove", "download", "upload"].sort(),
     );
   });
 

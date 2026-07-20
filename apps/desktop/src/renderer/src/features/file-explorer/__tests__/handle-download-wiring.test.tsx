@@ -15,22 +15,8 @@
 // This test asserts the second branch only — the first-run-modal flow has
 // its own coverage in `first-download-modal.test.tsx` + `use-download-orchestrator.test.ts`.
 
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-  type Mock,
-} from "vitest";
-import {
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-} from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from "vitest";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { FilesErrorTag } from "@cloudstash/ipc-contracts";
 import type { FileEntry } from "@cloudstash/ipc-contracts";
@@ -119,9 +105,7 @@ function installApiMock(entries: FileEntry[]): void {
     // localStorage default folder so the modal never renders, but the
     // mock keeps the surface uniform for future copies of this fixture.
     preferences: {
-      getOSDefaultDownloadsFolder: vi
-        .fn()
-        .mockResolvedValue("/Users/alice/Downloads"),
+      getOSDefaultDownloadsFolder: vi.fn().mockResolvedValue("/Users/alice/Downloads"),
       setDefaultDownloadsFolder: vi.fn().mockResolvedValue(undefined),
       getDefaultDownloadsFolder: vi.fn().mockResolvedValue(null),
     },
@@ -143,10 +127,7 @@ afterEach(() => {
 describe("FileExplorer handleDownload wiring (§23/§24 follow-up)", () => {
   it("context-menu Download → orchestrator dispatch with toPath = <defaultFolder>/<filename>; no first-run modal", async () => {
     // Pre-seed the default folder so the first-run-modal branch is bypassed.
-    window.localStorage.setItem(
-      DOWNLOADS_DEFAULT_FOLDER_KEY,
-      "/Users/alice/Downloads/CloudStash",
-    );
+    window.localStorage.setItem(DOWNLOADS_DEFAULT_FOLDER_KEY, "/Users/alice/Downloads/CloudStash");
 
     const entry = seedEntry({
       id: "f1",
@@ -159,9 +140,7 @@ describe("FileExplorer handleDownload wiring (§23/§24 follow-up)", () => {
 
     // Wait for the row to render (Details view's `explorer-row` testid).
     const row = await waitFor(() => {
-      const found = document.querySelector<HTMLElement>(
-        '[data-testid="explorer-row"]',
-      );
+      const found = document.querySelector<HTMLElement>('[data-testid="explorer-row"]');
       if (found === null) throw new Error("row not found");
       return found;
     });
@@ -170,9 +149,7 @@ describe("FileExplorer handleDownload wiring (§23/§24 follow-up)", () => {
     fireEvent.contextMenu(row);
 
     // Click the Download menu item by its stable testid.
-    const downloadItem = await screen.findByTestId(
-      "file-context-menu-download",
-    );
+    const downloadItem = await screen.findByTestId("file-context-menu-download");
     fireEvent.click(downloadItem);
 
     // Orchestrator → window.api.files.download is called once with the
@@ -217,10 +194,7 @@ describe("FileExplorer handleDownload wiring (§23/§24 follow-up)", () => {
   // unsignalled at the toast layer (rare edge cases — see Decision 15
   // "Future tightening" for the future fix).
   it("on { ok: false, error } envelope, does NOT emit a toast.error from the dispatch caller (toaster owns failure UX)", async () => {
-    window.localStorage.setItem(
-      DOWNLOADS_DEFAULT_FOLDER_KEY,
-      "/Users/alice/Downloads/CloudStash",
-    );
+    window.localStorage.setItem(DOWNLOADS_DEFAULT_FOLDER_KEY, "/Users/alice/Downloads/CloudStash");
 
     const entry = seedEntry({
       id: "f1",
@@ -241,17 +215,13 @@ describe("FileExplorer handleDownload wiring (§23/§24 follow-up)", () => {
     render(<FileExplorer datasourceId="ds-1" />);
 
     const row = await waitFor(() => {
-      const found = document.querySelector<HTMLElement>(
-        '[data-testid="explorer-row"]',
-      );
+      const found = document.querySelector<HTMLElement>('[data-testid="explorer-row"]');
       if (found === null) throw new Error("row not found");
       return found;
     });
 
     fireEvent.contextMenu(row);
-    const downloadItem = await screen.findByTestId(
-      "file-context-menu-download",
-    );
+    const downloadItem = await screen.findByTestId("file-context-menu-download");
     fireEvent.click(downloadItem);
 
     // Wait for the dispatch to complete (downloadMock resolved).
@@ -274,10 +244,7 @@ describe("FileExplorer handleDownload wiring (§23/§24 follow-up)", () => {
   // toaster has nothing to render and the .catch toast is the only
   // user signal.
   it("on IPC-reject (downloadMock rejects), the .catch path emits a toast.error with the rejection message", async () => {
-    window.localStorage.setItem(
-      DOWNLOADS_DEFAULT_FOLDER_KEY,
-      "/Users/alice/Downloads/CloudStash",
-    );
+    window.localStorage.setItem(DOWNLOADS_DEFAULT_FOLDER_KEY, "/Users/alice/Downloads/CloudStash");
 
     const entry = seedEntry({
       id: "f1",
@@ -292,24 +259,18 @@ describe("FileExplorer handleDownload wiring (§23/§24 follow-up)", () => {
     render(<FileExplorer datasourceId="ds-1" />);
 
     const row = await waitFor(() => {
-      const found = document.querySelector<HTMLElement>(
-        '[data-testid="explorer-row"]',
-      );
+      const found = document.querySelector<HTMLElement>('[data-testid="explorer-row"]');
       if (found === null) throw new Error("row not found");
       return found;
     });
 
     fireEvent.contextMenu(row);
-    const downloadItem = await screen.findByTestId(
-      "file-context-menu-download",
-    );
+    const downloadItem = await screen.findByTestId("file-context-menu-download");
     fireEvent.click(downloadItem);
 
     await waitFor(() => {
       expect(toastErrorMock).toHaveBeenCalledTimes(1);
     });
-    expect(toastErrorMock).toHaveBeenCalledWith(
-      "Download failed: preload bridge unavailable",
-    );
+    expect(toastErrorMock).toHaveBeenCalledWith("Download failed: preload bridge unavailable");
   });
 });

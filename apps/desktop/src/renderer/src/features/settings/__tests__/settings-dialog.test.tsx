@@ -6,43 +6,24 @@
 // toggling on writes `safe` to localStorage and sets `data-motion="safe"` on
 // <html>, which activates the CSS override in globals.css.
 
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-  type Mock,
-} from "vitest";
-import {
-  act,
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-} from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from "vitest";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 
 import { SettingsDialog } from "../settings-dialog";
 import { MOTION_STORAGE_KEY } from "../motion-store";
-import {
-  DOWNLOADS_ALWAYS_ASK_KEY,
-  DOWNLOADS_DEFAULT_FOLDER_KEY,
-} from "../downloads-store";
+import { DOWNLOADS_ALWAYS_ASK_KEY, DOWNLOADS_DEFAULT_FOLDER_KEY } from "../downloads-store";
 import { EXPLORER_PAGE_SIZE_KEY } from "../../file-explorer/store";
 
 // Radix DropdownMenu / Dialog rely on ResizeObserver at mount. Mirror the
 // polyfill used in card.test / add-dialog.test.
 beforeEach(() => {
   if (!("ResizeObserver" in window)) {
-    (window as unknown as { ResizeObserver: unknown }).ResizeObserver =
-      class MockResizeObserver {
-        observe() {}
-        unobserve() {}
-        disconnect() {}
-      };
+    (window as unknown as { ResizeObserver: unknown }).ResizeObserver = class MockResizeObserver {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    };
   }
   localStorage.clear();
   document.documentElement.removeAttribute("data-motion");
@@ -58,9 +39,7 @@ afterEach(() => {
 describe("SettingsDialog — Motion Safe section", () => {
   it("renders a dialog with the 'Settings' title when open", () => {
     render(<SettingsDialog open={true} onOpenChange={() => {}} />);
-    expect(
-      screen.getByRole("heading", { name: /settings/i }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /settings/i })).toBeInTheDocument();
   });
 
   it("renders a Motion Safe switch whose default state reflects the store (unchecked / always-on)", () => {
@@ -106,24 +85,14 @@ describe("SettingsDialog — Motion Safe section", () => {
 
     const onOpenChange = vi.fn();
     const { rerender } = render(
-      <SettingsDialog
-        open={true}
-        onOpenChange={onOpenChange}
-        returnFocusTo={trigger}
-      />,
+      <SettingsDialog open={true} onOpenChange={onOpenChange} returnFocusTo={trigger} />,
     );
 
     // Dialog close via prop. Radix invokes onCloseAutoFocus on the content,
     // which the SettingsDialog implementation uses to redirect focus to the
     // returnFocusTo element (same pattern as AddDatasourceDialog — focus
     // restoration is async under Radix, so we poll with waitFor).
-    rerender(
-      <SettingsDialog
-        open={false}
-        onOpenChange={onOpenChange}
-        returnFocusTo={trigger}
-      />,
-    );
+    rerender(<SettingsDialog open={false} onOpenChange={onOpenChange} returnFocusTo={trigger} />);
 
     await waitFor(() => {
       expect(document.activeElement).toBe(trigger);
@@ -184,34 +153,21 @@ describe("SettingsDialog — Downloads section", () => {
     installDownloadsApiMock();
     render(<SettingsDialog open={true} onOpenChange={() => {}} />);
 
-    expect(
-      screen.getByRole("heading", { name: /downloads/i }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /downloads/i })).toBeInTheDocument();
     // Motion heading still present — Downloads sits as a sibling, not
     // a replacement.
-    expect(
-      screen.getByRole("heading", { name: /motion/i }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /motion/i })).toBeInTheDocument();
   });
 
   it("renders the stored default folder path with Open and Change buttons", () => {
     installDownloadsApiMock();
-    localStorage.setItem(
-      DOWNLOADS_DEFAULT_FOLDER_KEY,
-      "/Users/alice/Downloads/CloudStash",
-    );
+    localStorage.setItem(DOWNLOADS_DEFAULT_FOLDER_KEY, "/Users/alice/Downloads/CloudStash");
 
     render(<SettingsDialog open={true} onOpenChange={() => {}} />);
 
-    expect(
-      screen.getByText("/Users/alice/Downloads/CloudStash"),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: /^open$/i }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: /change/i }),
-    ).toBeInTheDocument();
+    expect(screen.getByText("/Users/alice/Downloads/CloudStash")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^open$/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /change/i })).toBeInTheDocument();
   });
 
   it("renders 'Not set' and disables Open when no default folder is stored", () => {
@@ -223,36 +179,24 @@ describe("SettingsDialog — Downloads section", () => {
     expect(screen.getByText(/not set/i)).toBeInTheDocument();
     // Open is disabled when there's nothing to reveal; Change… stays
     // active so the user can pick a folder for the first time.
-    expect(
-      screen.getByRole("button", { name: /^open$/i }),
-    ).toBeDisabled();
-    expect(
-      screen.getByRole("button", { name: /change/i }),
-    ).not.toBeDisabled();
+    expect(screen.getByRole("button", { name: /^open$/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /change/i })).not.toBeDisabled();
   });
 
   it("Open invokes window.api.files.showSavedInFolder with the stored folder", () => {
     installDownloadsApiMock();
-    localStorage.setItem(
-      DOWNLOADS_DEFAULT_FOLDER_KEY,
-      "/Users/alice/Downloads/CloudStash",
-    );
+    localStorage.setItem(DOWNLOADS_DEFAULT_FOLDER_KEY, "/Users/alice/Downloads/CloudStash");
     render(<SettingsDialog open={true} onOpenChange={() => {}} />);
 
     fireEvent.click(screen.getByRole("button", { name: /^open$/i }));
 
     expect(showSavedInFolderMock).toHaveBeenCalledTimes(1);
-    expect(showSavedInFolderMock).toHaveBeenCalledWith(
-      "/Users/alice/Downloads/CloudStash",
-    );
+    expect(showSavedInFolderMock).toHaveBeenCalledWith("/Users/alice/Downloads/CloudStash");
   });
 
   it("Change opens the OS picker with directory-pick properties and updates the store on confirm", async () => {
     installDownloadsApiMock();
-    localStorage.setItem(
-      DOWNLOADS_DEFAULT_FOLDER_KEY,
-      "/Users/alice/Downloads/CloudStash",
-    );
+    localStorage.setItem(DOWNLOADS_DEFAULT_FOLDER_KEY, "/Users/alice/Downloads/CloudStash");
     showOpenDialogMock.mockResolvedValueOnce({
       canceled: false,
       filePaths: ["/Users/alice/cloud-files"],
@@ -272,26 +216,19 @@ describe("SettingsDialog — Downloads section", () => {
     expect(opts.properties).toContain("createDirectory");
 
     await waitFor(() => {
-      expect(localStorage.getItem(DOWNLOADS_DEFAULT_FOLDER_KEY)).toBe(
-        "/Users/alice/cloud-files",
-      );
+      expect(localStorage.getItem(DOWNLOADS_DEFAULT_FOLDER_KEY)).toBe("/Users/alice/cloud-files");
     });
 
     // Updated path should render immediately (the store hook re-renders
     // the dialog).
     await waitFor(() => {
-      expect(
-        screen.getByText("/Users/alice/cloud-files"),
-      ).toBeInTheDocument();
+      expect(screen.getByText("/Users/alice/cloud-files")).toBeInTheDocument();
     });
   });
 
   it("Change does NOT update the store on cancel", async () => {
     installDownloadsApiMock();
-    localStorage.setItem(
-      DOWNLOADS_DEFAULT_FOLDER_KEY,
-      "/Users/alice/Downloads/CloudStash",
-    );
+    localStorage.setItem(DOWNLOADS_DEFAULT_FOLDER_KEY, "/Users/alice/Downloads/CloudStash");
     showOpenDialogMock.mockResolvedValueOnce({
       canceled: true,
       filePaths: [],
@@ -355,10 +292,7 @@ describe("SettingsDialog — Downloads section", () => {
 
   it("focus-trap reaches the Downloads section: Tab from Motion's Switch lands on the Open button next", () => {
     installDownloadsApiMock();
-    localStorage.setItem(
-      DOWNLOADS_DEFAULT_FOLDER_KEY,
-      "/Users/alice/Downloads/CloudStash",
-    );
+    localStorage.setItem(DOWNLOADS_DEFAULT_FOLDER_KEY, "/Users/alice/Downloads/CloudStash");
     render(<SettingsDialog open={true} onOpenChange={() => {}} />);
 
     const motionSwitch = screen.getByRole("switch", {
@@ -374,9 +308,7 @@ describe("SettingsDialog — Downloads section", () => {
     // focusable controls appear in the expected sequence:
     // Motion switch → Open → Change → Always-ask switch.
     const all = Array.from(
-      document.querySelectorAll(
-        'button, [role="switch"], input, [tabindex]:not([tabindex="-1"])',
-      ),
+      document.querySelectorAll('button, [role="switch"], input, [tabindex]:not([tabindex="-1"])'),
     ).filter((el) => !(el as HTMLButtonElement).disabled);
 
     const motionIdx = all.indexOf(motionSwitch);
@@ -424,9 +356,7 @@ describe("SettingsDialog — Explorer section (page size)", () => {
 
     // Heading siblings appear in DOM order top-down: General → Browsing →
     // File-handling (Motion → Explorer → Downloads per V-4).
-    const headings = Array.from(
-      document.querySelectorAll("h3"),
-    ) as HTMLHeadingElement[];
+    const headings = Array.from(document.querySelectorAll("h3")) as HTMLHeadingElement[];
     const motionIdx = headings.indexOf(motion as HTMLHeadingElement);
     const explorerIdx = headings.indexOf(explorer as HTMLHeadingElement);
     const downloadsIdx = headings.indexOf(downloads as HTMLHeadingElement);
@@ -525,9 +455,7 @@ describe("SettingsDialog — Explorer section (page size)", () => {
 
     for (const { label, stored } of cases) {
       localStorage.clear();
-      const { unmount } = render(
-        <SettingsDialog open={true} onOpenChange={() => {}} />,
-      );
+      const { unmount } = render(<SettingsDialog open={true} onOpenChange={() => {}} />);
       openPageSizeMenu();
       const item = (await screen.findAllByRole("menuitemradio")).find(
         (el) => (el.textContent ?? "").trim() === label,
@@ -547,10 +475,7 @@ describe("SettingsDialog — Explorer section (page size)", () => {
 
   it("Tab order reaches the Page-size trigger between the Motion switch and the Downloads Open button", () => {
     installDownloadsApiMock();
-    localStorage.setItem(
-      DOWNLOADS_DEFAULT_FOLDER_KEY,
-      "/Users/alice/Downloads/CloudStash",
-    );
+    localStorage.setItem(DOWNLOADS_DEFAULT_FOLDER_KEY, "/Users/alice/Downloads/CloudStash");
     render(<SettingsDialog open={true} onOpenChange={() => {}} />);
 
     const motionSwitch = screen.getByRole("switch", { name: /motion safe/i });
@@ -558,9 +483,7 @@ describe("SettingsDialog — Explorer section (page size)", () => {
     const openButton = screen.getByRole("button", { name: /^open$/i });
 
     const all = Array.from(
-      document.querySelectorAll(
-        'button, [role="switch"], input, [tabindex]:not([tabindex="-1"])',
-      ),
+      document.querySelectorAll('button, [role="switch"], input, [tabindex]:not([tabindex="-1"])'),
     ).filter((el) => !(el as HTMLButtonElement).disabled);
 
     const motionIdx = all.indexOf(motionSwitch);
@@ -595,9 +518,7 @@ describe("SettingsDialog — Download history retention (add-download-history-ui
         },
       },
     });
-    setConfigMock = vi
-      .fn()
-      .mockResolvedValue({ ok: true, result: { ok: true } });
+    setConfigMock = vi.fn().mockResolvedValue({ ok: true, result: { ok: true } });
     (window as unknown as { api: unknown }).api = {
       sync: { getConfig: getConfigMock, setConfig: setConfigMock },
     };
@@ -635,9 +556,7 @@ describe("SettingsDialog — Download history retention (add-download-history-ui
     const toggle = await screen.findByRole("switch", {
       name: /auto-delete old history/i,
     });
-    await waitFor(() =>
-      expect(toggle.getAttribute("aria-checked")).toBe("false"),
-    );
+    await waitFor(() => expect(toggle.getAttribute("aria-checked")).toBe("false"));
   });
 
   it("the retention selector is dimmed/disabled when auto-prune is off", async () => {
@@ -662,12 +581,7 @@ describe("SettingsDialog — Download history retention (add-download-history-ui
     fireEvent.pointerDown(keepFor, { button: 0 });
 
     const items = await screen.findAllByRole("menuitemradio");
-    expect(items.map((i) => i.textContent)).toEqual([
-      "30 days",
-      "90 days",
-      "180 days",
-      "365 days",
-    ]);
+    expect(items.map((i) => i.textContent)).toEqual(["30 days", "90 days", "180 days", "365 days"]);
 
     fireEvent.click(screen.getByRole("menuitemradio", { name: "180 days" }));
 
@@ -690,9 +604,7 @@ describe("SettingsDialog — Download history retention (add-download-history-ui
 
     // add-leftover-download-cleanup VD6 — copy shifted from "files already
     // saved … are not deleted" to the leftover-aware wording.
-    expect(
-      await screen.findByText(/saved files are kept/i),
-    ).toBeInTheDocument();
+    expect(await screen.findByText(/saved files are kept/i)).toBeInTheDocument();
   });
 
   it("the auto-delete helper copy clarifies it removes records (not on-disk files) and points to Review leftover files", async () => {

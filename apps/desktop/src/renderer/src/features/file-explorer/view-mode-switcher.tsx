@@ -86,11 +86,7 @@ export function ViewModeSwitcher({
   onCopyPath,
   onProperties,
 }: ViewModeSwitcherProps) {
-  const state = useSyncExternalStore(
-    store.subscribe,
-    store.getSnapshot,
-    store.getSnapshot,
-  );
+  const state = useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
 
   const actions: ViewModeActionHandlers = {
     onOpen,
@@ -136,21 +132,11 @@ function renderForMode(
   switch (mode) {
     case "list":
       return (
-        <ListView
-          store={store}
-          focusedId={focusedId}
-          setFocusedId={setFocusedId}
-          {...actions}
-        />
+        <ListView store={store} focusedId={focusedId} setFocusedId={setFocusedId} {...actions} />
       );
     case "details":
       return (
-        <DetailsView
-          store={store}
-          focusedId={focusedId}
-          setFocusedId={setFocusedId}
-          {...actions}
-        />
+        <DetailsView store={store} focusedId={focusedId} setFocusedId={setFocusedId} {...actions} />
       );
     case "small":
       return (
@@ -163,12 +149,7 @@ function renderForMode(
       );
     case "tiles":
       return (
-        <TilesView
-          store={store}
-          focusedId={focusedId}
-          setFocusedId={setFocusedId}
-          {...actions}
-        />
+        <TilesView store={store} focusedId={focusedId} setFocusedId={setFocusedId} {...actions} />
       );
     case "medium":
       return (

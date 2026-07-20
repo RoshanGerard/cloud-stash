@@ -64,9 +64,9 @@ function seed(
 
 function ids(db: Database.Database): string[] {
   return (
-    db
-      .prepare(`SELECT download_job_id FROM downloads ORDER BY download_job_id`)
-      .all() as Array<{ download_job_id: string }>
+    db.prepare(`SELECT download_job_id FROM downloads ORDER BY download_job_id`).all() as Array<{
+      download_job_id: string;
+    }>
   ).map((r) => r.download_job_id);
 }
 
@@ -91,10 +91,7 @@ describe("downloads:clear-history handler", () => {
     seed(db, "c", "cancelled", NOW - 3 * DAY);
     seed(db, "live", "in-flight", null);
 
-    const res = await makeClearDownloadHistoryHandler({ db, fs: noopFs() })(
-      {},
-      ctx(),
-    );
+    const res = await makeClearDownloadHistoryHandler({ db, fs: noopFs() })({}, ctx());
 
     expect(res.ok).toBe(true);
     if (!res.ok) return;
@@ -114,10 +111,7 @@ describe("downloads:clear-history handler", () => {
       unlinked.push(p);
     });
 
-    const res = await makeClearDownloadHistoryHandler({ db, fs: { unlink } })(
-      {},
-      ctx(),
-    );
+    const res = await makeClearDownloadHistoryHandler({ db, fs: { unlink } })({}, ctx());
 
     expect(res.ok).toBe(true);
     if (!res.ok) return;
@@ -133,10 +127,7 @@ describe("downloads:clear-history handler", () => {
     seed(db, "failed", "failed", NOW - 1 * DAY, "/downloads/failed.part");
     const unlink = vi.fn(errnoUnlink("EACCES"));
 
-    const res = await makeClearDownloadHistoryHandler({ db, fs: { unlink } })(
-      {},
-      ctx(),
-    );
+    const res = await makeClearDownloadHistoryHandler({ db, fs: { unlink } })({}, ctx());
 
     // The unlink rejection is swallowed: the row is still deleted and counted,
     // and the handler does not throw.

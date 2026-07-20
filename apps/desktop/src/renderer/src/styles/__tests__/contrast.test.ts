@@ -35,10 +35,7 @@ function extractBlock(source: string, selector: RegExp): string {
 }
 
 function tokenOklch(block: string, token: string): { L: number; C: number; H: number } {
-  const re = new RegExp(
-    `${token}\\s*:\\s*oklch\\(\\s*([\\d.]+)\\s+([\\d.]+)\\s+([\\d.]+)`,
-    "i",
-  );
+  const re = new RegExp(`${token}\\s*:\\s*oklch\\(\\s*([\\d.]+)\\s+([\\d.]+)\\s+([\\d.]+)`, "i");
   const m = re.exec(block);
   if (!m) {
     // oklch(L 0 0) shorthand for pure neutrals (chroma/hue omitted-as-zero).
@@ -71,7 +68,10 @@ function relativeLuminance({ L, C, H }: { L: number; C: number; H: number }): nu
   return 0.2126 * R + 0.7152 * G + 0.0722 * B;
 }
 
-function contrast(a: { L: number; C: number; H: number }, b: { L: number; C: number; H: number }): number {
+function contrast(
+  a: { L: number; C: number; H: number },
+  b: { L: number; C: number; H: number },
+): number {
   const la = relativeLuminance(a);
   const lb = relativeLuminance(b);
   const [hi, lo] = la >= lb ? [la, lb] : [lb, la];
@@ -102,17 +102,25 @@ describe("CloudStash Monochrome — WCAG AA contrast (both themes)", () => {
 
       it("muted text (muted-foreground) clears AA on background AND on card", () => {
         // The risk pair: muted text on the canvas must not fall below 4.5:1.
-        expect(contrast(tok("--muted-foreground"), tok("--background"))).toBeGreaterThanOrEqual(TEXT_AA);
+        expect(contrast(tok("--muted-foreground"), tok("--background"))).toBeGreaterThanOrEqual(
+          TEXT_AA,
+        );
         expect(contrast(tok("--muted-foreground"), tok("--card"))).toBeGreaterThanOrEqual(TEXT_AA);
       });
 
       it("primary button label (primary-foreground on primary) clears AA", () => {
-        expect(contrast(tok("--primary-foreground"), tok("--primary"))).toBeGreaterThanOrEqual(TEXT_AA);
+        expect(contrast(tok("--primary-foreground"), tok("--primary"))).toBeGreaterThanOrEqual(
+          TEXT_AA,
+        );
       });
 
       it("secondary/accent surface labels clear AA", () => {
-        expect(contrast(tok("--secondary-foreground"), tok("--secondary"))).toBeGreaterThanOrEqual(TEXT_AA);
-        expect(contrast(tok("--accent-foreground"), tok("--accent"))).toBeGreaterThanOrEqual(TEXT_AA);
+        expect(contrast(tok("--secondary-foreground"), tok("--secondary"))).toBeGreaterThanOrEqual(
+          TEXT_AA,
+        );
+        expect(contrast(tok("--accent-foreground"), tok("--accent"))).toBeGreaterThanOrEqual(
+          TEXT_AA,
+        );
       });
 
       it("focus ring clears non-text UI contrast (3:1) on background AND card", () => {

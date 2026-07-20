@@ -1,12 +1,5 @@
 /** @vitest-environment jsdom */
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-} from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 
@@ -17,10 +10,7 @@ vi.mock("sonner", () => ({
   toast: { error: vi.fn(), success: vi.fn() },
 }));
 
-import {
-  __resetExplorerStoreCacheForTests,
-  createExplorerStore,
-} from "../store.js";
+import { __resetExplorerStoreCacheForTests, createExplorerStore } from "../store.js";
 import type { ExplorerStore } from "../store.js";
 import { DetailsView } from "../view-modes/details.js";
 import { seedEntry } from "./test-utils.js";
@@ -77,9 +67,7 @@ describe("inline rename UI", () => {
 
   it("flips the entry's name cell to a pre-filled, selected <input> when startEdit is called", () => {
     const store = makeStore();
-    seedEntries(store, [
-      seedEntry({ id: "e1", name: "report.pdf", path: "/report.pdf" }),
-    ]);
+    seedEntries(store, [seedEntry({ id: "e1", name: "report.pdf", path: "/report.pdf" })]);
 
     render(<DetailsView store={store} />);
 

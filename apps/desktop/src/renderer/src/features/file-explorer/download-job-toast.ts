@@ -177,10 +177,7 @@ export interface ToastApi {
       action?: { label: string; onClick: () => void };
     },
   ): string | number;
-  success(
-    message: string,
-    opts?: { id?: string | number; duration?: number },
-  ): string | number;
+  success(message: string, opts?: { id?: string | number; duration?: number }): string | number;
   error(
     message: string,
     opts?: {
@@ -303,11 +300,7 @@ export interface DownloadToaster {
    * — instant auth-revoked / other), the failure toast falls back to
    * dismiss-only because the correlation never happened.
    */
-  registerRetry(
-    datasourceId: string,
-    sourcePath: string,
-    retry: () => void,
-  ): void;
+  registerRetry(datasourceId: string, sourcePath: string, retry: () => void): void;
   /** Tear down the event subscription. Most callers don't need this — the renderer's lifetime is the app's lifetime — but it's exposed for completeness + tests. */
   dispose(): void;
 }
@@ -322,26 +315,20 @@ function sonnerAdapter(): ToastApi {
     // Sonner's `Observer.create()` spread merging the explicit empty
     // string over any prior description — see download-job-toast.ts
     // §11.16 retrying-handler doc-comment for the merge mechanics.
-    loading: (message, opts) =>
-      sonnerToast.loading(message, opts) as string | number,
-    success: (message, opts) =>
-      sonnerToast.success(message, opts) as string | number,
-    error: (message, opts) =>
-      sonnerToast.error(message, opts) as string | number,
+    loading: (message, opts) => sonnerToast.loading(message, opts) as string | number,
+    success: (message, opts) => sonnerToast.success(message, opts) as string | number,
+    error: (message, opts) => sonnerToast.error(message, opts) as string | number,
     custom: (render, opts) =>
-      sonnerToast.custom(
-        render as (id: string | number) => React.ReactElement,
-        opts,
-      ) as string | number,
+      sonnerToast.custom(render as (id: string | number) => React.ReactElement, opts) as
+        | string
+        | number,
     dismiss: (id) => {
       sonnerToast.dismiss(id);
     },
   };
 }
 
-function resolveEventApi(
-  injected: DownloadEventApi | undefined,
-): DownloadEventApi {
+function resolveEventApi(injected: DownloadEventApi | undefined): DownloadEventApi {
   if (injected) return injected;
   // Production fallback: subscribe to `window.api.sync.onEvent` and
   // filter to the four download kinds. The renderer-facing `SyncEvent`
@@ -356,9 +343,7 @@ function resolveEventApi(
       window?: {
         api?: {
           sync?: {
-            onEvent?: (
-              cb: (event: LooseEvent) => void,
-            ) => () => void;
+            onEvent?: (cb: (event: LooseEvent) => void) => () => void;
           };
         };
       };
@@ -372,9 +357,7 @@ function resolveEventApi(
   return {
     onDownloadEvent(callback) {
       const unsubscribe = bridge((event) => {
-        if (
-          DOWNLOAD_EVENT_KINDS.has(event.kind as DownloadEventKind)
-        ) {
+        if (DOWNLOAD_EVENT_KINDS.has(event.kind as DownloadEventKind)) {
           callback(event as DownloadEvent);
         }
       });
@@ -383,9 +366,7 @@ function resolveEventApi(
   };
 }
 
-function resolveSyncApi(
-  injected: SyncActionsApi | undefined,
-): SyncActionsApi {
+function resolveSyncApi(injected: SyncActionsApi | undefined): SyncActionsApi {
   if (injected) return injected;
   // Production fallback: pull from the preload bridge. Lazy resolution —
   // we look up `window.api.sync.cancelDownload` at click time so the
@@ -418,9 +399,7 @@ function resolveSyncApi(
         }
       ).window?.api?.sync?.cancelDownload;
       if (typeof fn !== "function") {
-        throw new Error(
-          "createDownloadJobToaster: window.api.sync.cancelDownload is unavailable",
-        );
+        throw new Error("createDownloadJobToaster: window.api.sync.cancelDownload is unavailable");
       }
       return fn(req);
     },
@@ -439,18 +418,14 @@ function resolveSyncApi(
         }
       ).window?.api?.sync?.deletePartial;
       if (typeof fn !== "function") {
-        throw new Error(
-          "createDownloadJobToaster: window.api.sync.deletePartial is unavailable",
-        );
+        throw new Error("createDownloadJobToaster: window.api.sync.deletePartial is unavailable");
       }
       return fn(req);
     },
   };
 }
 
-function resolveFilesApi(
-  injected: FilesActionsApi | undefined,
-): FilesActionsApi {
+function resolveFilesApi(injected: FilesActionsApi | undefined): FilesActionsApi {
   if (injected) return injected;
   const bridge = (
     globalThis as unknown as {
@@ -577,17 +552,11 @@ function formatProgressMessage(
 // because Sonner's `Observer.create()` carries the prior `type:
 // 'loading'` over to the custom render, leaving the spinner-chrome
 // overlay on top of the hand-rolled JSX.
-function formatRetryingMessage(
-  basename: string,
-  ctx: { attempt: number; limit: number },
-): string {
+function formatRetryingMessage(basename: string, ctx: { attempt: number; limit: number }): string {
   return `Downloading ${basename} — Reconnecting (${ctx.attempt}/${ctx.limit})`;
 }
 
-function formatRetryingDescription(ctx: {
-  engineCause: string;
-  waitMs: number;
-}): string {
+function formatRetryingDescription(ctx: { engineCause: string; waitMs: number }): string {
   // §12.4 (Decision 3 rewrite): on the rewrite-from-0 path the handler
   // emits `download-retrying { waitMs: 0, engineCause: "range-not-honored" }`
   // — no sleep precedes the rewrite, so "Waiting 0ms before retry"
@@ -599,10 +568,7 @@ function formatRetryingDescription(ctx: {
   return `Last error: ${ctx.engineCause}. Waiting ${ctx.waitMs}ms before retry.`;
 }
 
-function formatSeededRatio(
-  bytesDownloaded: number,
-  contentLength: number | null,
-): number {
+function formatSeededRatio(bytesDownloaded: number, contentLength: number | null): number {
   if (contentLength === null || contentLength <= 0) return 0;
   return Math.round((100 * bytesDownloaded) / contentLength);
 }
@@ -659,9 +625,7 @@ function retryKey(datasourceId: string, sourcePath: string): string {
   return `${datasourceId}|${sourcePath}`;
 }
 
-export function createDownloadJobToaster(
-  deps?: DownloadToasterDeps,
-): DownloadToaster {
+export function createDownloadJobToaster(deps?: DownloadToasterDeps): DownloadToaster {
   const toast: ToastApi = deps?.toast ?? sonnerAdapter();
   const eventApi = resolveEventApi(deps?.eventApi);
   const filesApi = resolveFilesApi(deps?.filesApi);
@@ -809,14 +773,11 @@ export function createDownloadJobToaster(
       const basename = existing?.basename ?? "download";
       const toastId = existing?.toastId ?? generateToastId();
       const { attempt, limit, waitMs, engineCause } = event.payload;
-      toast.loading(
-        formatRetryingMessage(basename, { attempt, limit }),
-        {
-          id: toastId,
-          description: formatRetryingDescription({ engineCause, waitMs }),
-          action: buildCancelAction(downloadJobId),
-        },
-      );
+      toast.loading(formatRetryingMessage(basename, { attempt, limit }), {
+        id: toastId,
+        description: formatRetryingDescription({ engineCause, waitMs }),
+        action: buildCancelAction(downloadJobId),
+      });
       // Carry `existing?.retry` forward — for hydrated-from-disk jobs
       // (no orchestrator pre-dispatch through `registerRetry`) this is
       // undefined, so a subsequent failure-toast falls back to dismiss-
@@ -838,8 +799,7 @@ export function createDownloadJobToaster(
       if (existing?.terminal === true) {
         return;
       }
-      const basename =
-        existing?.basename ?? basenameFromPath(event.payload.savedPath);
+      const basename = existing?.basename ?? basenameFromPath(event.payload.savedPath);
       // Post-archive smoke (2026-04-28): the success toast must spawn
       // with a FRESH id, NOT the loading toast's id. Re-using the
       // loading id raced Sonner's dismiss animation — `toast.dismiss(id)`
@@ -855,9 +815,7 @@ export function createDownloadJobToaster(
       // predictable for tests and debug logs.
       const loadingId = existing?.toastId;
       const successId =
-        loadingId !== undefined
-          ? `${String(loadingId)}-success`
-          : generateToastId();
+        loadingId !== undefined ? `${String(loadingId)}-success` : generateToastId();
       const savedPath = event.payload.savedPath;
       const onOpen = () => {
         void filesApi.openSavedPath(savedPath);
@@ -876,22 +834,19 @@ export function createDownloadJobToaster(
       if (existing !== undefined) {
         toast.dismiss(loadingId!);
       }
-      toast.custom(
-        (id) => buildSuccessRender(id, basename, onOpen, onShowInFolder),
-        {
-          id: successId,
-          // Sticky — `Number.POSITIVE_INFINITY`. Sonner respects this
-          // sentinel (same pattern used by the failure toast above) and
-          // surfaces its default close-button X on sticky toasts. Per
-          // SUCCESS_TOAST_DURATION_MS docstring: the success toast IS
-          // the affordance, so auto-dismiss would defeat the dual-
-          // action layout. The toast clears when the user clicks Open /
-          // Show in folder (handlers above call `toast.dismiss`) or via
-          // the close-button X. Pinned by test (c-duration).
-          duration: SUCCESS_TOAST_DURATION_MS,
-          actions: { onOpen, onShowInFolder },
-        },
-      );
+      toast.custom((id) => buildSuccessRender(id, basename, onOpen, onShowInFolder), {
+        id: successId,
+        // Sticky — `Number.POSITIVE_INFINITY`. Sonner respects this
+        // sentinel (same pattern used by the failure toast above) and
+        // surfaces its default close-button X on sticky toasts. Per
+        // SUCCESS_TOAST_DURATION_MS docstring: the success toast IS
+        // the affordance, so auto-dismiss would defeat the dual-
+        // action layout. The toast clears when the user clicks Open /
+        // Show in folder (handlers above call `toast.dismiss`) or via
+        // the close-button X. Pinned by test (c-duration).
+        duration: SUCCESS_TOAST_DURATION_MS,
+        actions: { onOpen, onShowInFolder },
+      });
       // Mark terminal in the tracker so a duplicate `file-downloaded`
       // (or a late `download-failed`) for the same jobId becomes a
       // no-op. The entry now references the success id rather than the
@@ -950,9 +905,7 @@ export function createDownloadJobToaster(
       if (event.payload.partialKept === true) {
         const loadingId = existing?.toastId;
         const failedId =
-          loadingId !== undefined
-            ? `${String(loadingId)}-failed`
-            : generateToastId();
+          loadingId !== undefined ? `${String(loadingId)}-failed` : generateToastId();
         const onRetry = () => {
           toast.dismiss(failedId);
           if (retry !== undefined) {
@@ -966,13 +919,7 @@ export function createDownloadJobToaster(
         const spawnCard = (deleteError?: string): void => {
           toast.custom(
             (id) =>
-              buildFailureWithDeleteRender(
-                id,
-                message,
-                onRetry,
-                onDeletePartial,
-                deleteError,
-              ),
+              buildFailureWithDeleteRender(id, message, onRetry, onDeletePartial, deleteError),
             {
               id: failedId,
               duration: Number.POSITIVE_INFINITY,
@@ -988,8 +935,7 @@ export function createDownloadJobToaster(
             },
             (err: unknown) => {
               // Keep the card; re-render with an inline error, Retry intact.
-              const reason =
-                err instanceof Error ? err.message : "unknown error";
+              const reason = err instanceof Error ? err.message : "unknown error";
               spawnCard(reason);
             },
           );
@@ -1045,9 +991,7 @@ export function createDownloadJobToaster(
 
   const unsubscribe = eventApi.onDownloadEvent(handleEvent);
 
-  function hydrateActiveDownloads(
-    jobs: readonly DownloadJobSummary[],
-  ): void {
+  function hydrateActiveDownloads(jobs: readonly DownloadJobSummary[]): void {
     for (const job of jobs) {
       // Skip if the live event stream beat us to this id (first
       // `downloading` event arrived before hydration ran). Defensive
@@ -1055,18 +999,10 @@ export function createDownloadJobToaster(
       // first connect before any live event reaches the renderer.
       if (tracker.has(job.downloadJobId)) continue;
       const basename = basenameFromPath(job.sourcePath);
-      const initialPct = formatSeededRatio(
-        job.bytesDownloaded,
-        job.contentLength,
-      );
+      const initialPct = formatSeededRatio(job.bytesDownloaded, job.contentLength);
       const initialId = generateToastId();
       const toastId = toast.loading(
-        formatProgressMessage(
-          basename,
-          initialPct,
-          job.bytesDownloaded,
-          job.contentLength,
-        ),
+        formatProgressMessage(basename, initialPct, job.bytesDownloaded, job.contentLength),
         {
           id: initialId,
           action: buildCancelAction(job.downloadJobId),
@@ -1076,11 +1012,7 @@ export function createDownloadJobToaster(
     }
   }
 
-  function registerRetry(
-    datasourceId: string,
-    sourcePath: string,
-    retry: () => void,
-  ): void {
+  function registerRetry(datasourceId: string, sourcePath: string, retry: () => void): void {
     pendingRetries.set(retryKey(datasourceId, sourcePath), retry);
   }
 
@@ -1128,11 +1060,7 @@ function buildSuccessRender(
         "bg-popover text-popover-foreground flex flex-col gap-3 rounded-md border p-4 shadow-md",
       role: "status",
     },
-    React.createElement(
-      "div",
-      { className: "text-sm font-medium" },
-      `✓ Downloaded ${basename}`,
-    ),
+    React.createElement("div", { className: "text-sm font-medium" }, `✓ Downloaded ${basename}`),
     React.createElement(
       "div",
       {
@@ -1198,8 +1126,7 @@ function buildFailureWithDeleteRender(
           {
             type: "button",
             onClick: onDeletePartial,
-            className:
-              "text-red-700 dark:text-red-300 text-xs underline-offset-2 hover:underline",
+            className: "text-red-700 dark:text-red-300 text-xs underline-offset-2 hover:underline",
           },
           "Delete partial",
         )

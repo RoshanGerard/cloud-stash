@@ -16,10 +16,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { applyMigrations } from "../db/migrations.js";
 import type { Connection } from "../ipc/server.js";
 
-import {
-  makeListLeftoverHandler,
-  type ListLeftoverFs,
-} from "./downloads-list-leftover.js";
+import { makeListLeftoverHandler, type ListLeftoverFs } from "./downloads-list-leftover.js";
 
 const ctx = (): { readonly connection: Connection } => ({
   connection: { id: 1, closed: false, sendEvent: () => void 0 },
@@ -66,10 +63,7 @@ function seed(
  * `present`, and rejects with the given errno code (default ENOENT) for
  * anything else — modelling a file that is no longer on disk.
  */
-function fakeFs(
-  present: Record<string, number>,
-  missingCode = "ENOENT",
-): ListLeftoverFs {
+function fakeFs(present: Record<string, number>, missingCode = "ENOENT"): ListLeftoverFs {
   return {
     async stat(p: string): Promise<{ size: number }> {
       if (Object.prototype.hasOwnProperty.call(present, p)) {

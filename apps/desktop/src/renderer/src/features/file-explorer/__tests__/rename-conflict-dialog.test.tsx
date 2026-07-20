@@ -12,20 +12,11 @@
 //
 
 import { afterEach, describe, expect, it } from "vitest";
-import {
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-  type RenderResult,
-} from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, type RenderResult } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { useEffect, useRef, type JSX } from "react";
 
-import {
-  RenameConflictDialog,
-  useRenameConflictDialog,
-} from "../rename-conflict-dialog.js";
+import { RenameConflictDialog, useRenameConflictDialog } from "../rename-conflict-dialog.js";
 import type { RenameConflictChoice } from "../store.js";
 
 // ---------------------------------------------------------------------------
@@ -57,18 +48,10 @@ describe("RenameConflictDialog (§25)", () => {
   it("renders the existingPath when open", async () => {
     const noop = (): void => {};
     render(<Harness existingPath="/parent/bar.pdf" onResolved={noop} />);
-    expect(
-      await screen.findByText(/parent\/bar\.pdf/),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: "Overwrite" }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: "Keep both" }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: "Cancel" }),
-    ).toBeInTheDocument();
+    expect(await screen.findByText(/parent\/bar\.pdf/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Overwrite" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Keep both" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Cancel" })).toBeInTheDocument();
   });
 
   it("Overwrite click resolves the prompt with 'overwrite'", async () => {
@@ -155,13 +138,9 @@ describe("RenameConflictDialog — download-mode props (§6)", () => {
         onCancel={() => {}}
       />,
     );
+    expect(screen.getByText("Download destination already exists")).toBeInTheDocument();
     expect(
-      screen.getByText("Download destination already exists"),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        "A file already exists at the download destination. Choose how to proceed.",
-      ),
+      screen.getByText("A file already exists at the download destination. Choose how to proceed."),
     ).toBeInTheDocument();
   });
 
@@ -175,9 +154,7 @@ describe("RenameConflictDialog — download-mode props (§6)", () => {
       />,
     );
     expect(screen.getByText("File already exists")).toBeInTheDocument();
-    expect(
-      screen.getByText(/Choose what to do for this rename/),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/Choose what to do for this rename/)).toBeInTheDocument();
   });
 
   it("renders hint block with size + modified date when both fields present", () => {
@@ -246,8 +223,6 @@ describe("RenameConflictDialog — download-mode props (§6)", () => {
         onCancel={() => {}}
       />,
     );
-    expect(
-      screen.queryByTestId("rename-conflict-existing-hint"),
-    ).toBeNull();
+    expect(screen.queryByTestId("rename-conflict-existing-hint")).toBeNull();
   });
 });

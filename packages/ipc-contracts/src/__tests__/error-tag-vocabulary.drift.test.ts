@@ -43,20 +43,14 @@ describe("TAG_VALUES", () => {
   it("contains every DatasourceErrorTag value", () => {
     const tagSet = new Set(TAG_VALUES);
     for (const v of allDatasourceValues) {
-      expect(
-        tagSet.has(v),
-        `TAG_VALUES is missing DatasourceErrorTag value "${v}"`,
-      ).toBe(true);
+      expect(tagSet.has(v), `TAG_VALUES is missing DatasourceErrorTag value "${v}"`).toBe(true);
     }
   });
 
   it("contains every FilesErrorTag value", () => {
     const tagSet = new Set(TAG_VALUES);
     for (const v of allFilesValues) {
-      expect(
-        tagSet.has(v),
-        `TAG_VALUES is missing FilesErrorTag value "${v}"`,
-      ).toBe(true);
+      expect(tagSet.has(v), `TAG_VALUES is missing FilesErrorTag value "${v}"`).toBe(true);
     }
   });
 
@@ -85,29 +79,23 @@ describe("VALUE_ENUM_MEMBERS", () => {
   it("every key is in TAG_VALUES", () => {
     const tagSet = new Set(TAG_VALUES);
     for (const key of Object.keys(VALUE_ENUM_MEMBERS)) {
-      expect(
-        tagSet.has(key),
-        `VALUE_ENUM_MEMBERS key "${key}" is not in TAG_VALUES`,
-      ).toBe(true);
+      expect(tagSet.has(key), `VALUE_ENUM_MEMBERS key "${key}" is not in TAG_VALUES`).toBe(true);
     }
   });
 
   it("every TAG_VALUES entry is a key in VALUE_ENUM_MEMBERS", () => {
     const memberKeys = new Set(Object.keys(VALUE_ENUM_MEMBERS));
     for (const v of TAG_VALUES) {
-      expect(
-        memberKeys.has(v),
-        `TAG_VALUES value "${v}" is missing from VALUE_ENUM_MEMBERS`,
-      ).toBe(true);
+      expect(memberKeys.has(v), `TAG_VALUES value "${v}" is missing from VALUE_ENUM_MEMBERS`).toBe(
+        true,
+      );
     }
   });
 
   it("each DatasourceErrorTag member name resolves to the correct value", () => {
     for (const [value, members] of Object.entries(VALUE_ENUM_MEMBERS)) {
       if ("DatasourceErrorTag" in members) {
-        const memberName = (members as Record<string, string>)[
-          "DatasourceErrorTag"
-        ];
+        const memberName = (members as Record<string, string>)["DatasourceErrorTag"];
         expect(
           DatasourceErrorTag[memberName as keyof typeof DatasourceErrorTag],
           `DatasourceErrorTag["${memberName}"] should equal "${value}" (from VALUE_ENUM_MEMBERS)`,

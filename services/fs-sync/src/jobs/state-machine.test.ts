@@ -42,11 +42,7 @@ describe("isLegalTransition", () => {
   });
 
   it("rejects every edge out of a terminal status", () => {
-    const terminals: ReadonlyArray<JobStatus> = [
-      "completed",
-      "failed",
-      "cancelled",
-    ];
+    const terminals: ReadonlyArray<JobStatus> = ["completed", "failed", "cancelled"];
     for (const from of terminals) {
       for (const to of ALL) {
         if (from !== to) {

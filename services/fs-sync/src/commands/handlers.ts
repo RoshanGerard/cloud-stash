@@ -12,10 +12,7 @@ import type {
 } from "@cloudstash/fs-datasource-engine";
 import type { DatasourceType } from "@cloudstash/ipc-contracts";
 
-import type {
-  CommandHandlers,
-  Connection,
-} from "../ipc/server.js";
+import type { CommandHandlers, Connection } from "../ipc/server.js";
 import { enqueueMirror, SyncAlreadyRunningError } from "../jobs/enqueue.js";
 import { JobRepository } from "../jobs/repository.js";
 import type { EventBus } from "../events/event-bus.js";
@@ -43,10 +40,7 @@ import { makeDownloadsListActiveHandler } from "./downloads-list-active.js";
 import { makeClearDownloadHistoryHandler } from "./downloads-clear-history.js";
 import { makeDeletePartialHandler } from "./downloads-delete-partial.js";
 import { makeListLeftoverHandler } from "./downloads-list-leftover.js";
-import {
-  createDefaultFilesUploadDeps,
-  makeFilesUploadHandler,
-} from "./files-upload.js";
+import { createDefaultFilesUploadDeps, makeFilesUploadHandler } from "./files-upload.js";
 import { makeUploadsListActiveHandler } from "./uploads-list-active.js";
 import { makeSyncCancelUploadHandler } from "./sync-cancel-upload.js";
 import type { DownloadRegistry } from "../downloads/registry.js";
@@ -65,9 +59,7 @@ export interface HandlersDeps {
    * that predate the `files:*` commands), `files:*` handlers are omitted
    * from the returned map. Production bootstrap always supplies it.
    */
-  readonly resolveClient?: (
-    datasourceId: string,
-  ) => Promise<DatasourceClient<DatasourceType>>;
+  readonly resolveClient?: (datasourceId: string) => Promise<DatasourceClient<DatasourceType>>;
   /**
    * Auth dependencies — added by implement-datasource-onboarding §9-§13.
    * When ANY of the auth deps are absent, ALL `sync:authenticate-*`,
@@ -210,11 +202,7 @@ export function buildCommandHandlers(deps: HandlersDeps): CommandHandlers {
           error: { tag: "not-found", message: `no job with id ${params.jobId}` },
         };
       }
-      if (
-        job.status === "completed" ||
-        job.status === "failed" ||
-        job.status === "cancelled"
-      ) {
+      if (job.status === "completed" || job.status === "failed" || job.status === "cancelled") {
         return {
           ok: false,
           error: {
@@ -234,8 +222,7 @@ export function buildCommandHandlers(deps: HandlersDeps): CommandHandlers {
           ok: false,
           error: {
             tag: "not-cancelable",
-            message:
-              `job ${params.jobId} is running; cancellation requires the scheduler — not yet wired`,
+            message: `job ${params.jobId} is running; cancellation requires the scheduler — not yet wired`,
           },
         };
       }
@@ -356,9 +343,7 @@ export function buildCommandHandlers(deps: HandlersDeps): CommandHandlers {
     // needs `downloadRegistry`, but the bundle stays atomic — wiring it
     // any time the registry is present would imply half a feature; keep
     // it gated with the rest per design.md Decision 4.
-    ...(deps.resolveClient &&
-    deps.downloadRegistry &&
-    deps.hashComputer
+    ...(deps.resolveClient && deps.downloadRegistry && deps.hashComputer
       ? {
           "files:download": makeFilesDownloadHandler(
             createDefaultFilesDownloadDeps({

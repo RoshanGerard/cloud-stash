@@ -45,15 +45,12 @@ describe("ensureDataDir", () => {
     expect(stat.isDirectory()).toBe(true);
   });
 
-  it.skipIf(process.platform === "win32")(
-    "enforces mode 0o700 on Unix",
-    async () => {
-      const dir = scratchDir();
-      await ensureDataDir(dir);
-      const stat = await fsp.stat(dir);
-      expect(stat.mode & 0o777).toBe(0o700);
-    },
-  );
+  it.skipIf(process.platform === "win32")("enforces mode 0o700 on Unix", async () => {
+    const dir = scratchDir();
+    await ensureDataDir(dir);
+    const stat = await fsp.stat(dir);
+    expect(stat.mode & 0o777).toBe(0o700);
+  });
 
   it.skipIf(process.platform === "win32")(
     "tightens mode on Unix even if the dir existed with a broader mode",

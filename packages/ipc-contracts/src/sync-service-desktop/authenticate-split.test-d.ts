@@ -20,11 +20,7 @@
 
 import { describe, expect, expectTypeOf, it } from "vitest";
 
-import type {
-  CredentialsSchema,
-  DatasourceSummary,
-  ProviderId,
-} from "../datasources.js";
+import type { CredentialsSchema, DatasourceSummary, ProviderId } from "../datasources.js";
 import type {
   SerializableAuthCompletion,
   ServiceConfig,
@@ -175,19 +171,17 @@ describe("sync-service-desktop deleteCredentials — renderer contract", () => {
 describe("sync-service-desktop SYNC_CHANNELS — implement-datasource-onboarding", () => {
   it("authenticateStart / authenticateComplete / authenticateCancel resolve to wire channels", () => {
     expect(SYNC_CHANNELS.authenticateStart).toBe("sync:authenticate-start");
-    expect(SYNC_CHANNELS.authenticateComplete).toBe(
-      "sync:authenticate-complete",
-    );
+    expect(SYNC_CHANNELS.authenticateComplete).toBe("sync:authenticate-complete");
     expect(SYNC_CHANNELS.authenticateCancel).toBe("sync:authenticate-cancel");
-    expectTypeOf<typeof SYNC_CHANNELS.authenticateStart>().toEqualTypeOf<
-      "sync:authenticate-start"
-    >();
-    expectTypeOf<typeof SYNC_CHANNELS.authenticateComplete>().toEqualTypeOf<
-      "sync:authenticate-complete"
-    >();
-    expectTypeOf<typeof SYNC_CHANNELS.authenticateCancel>().toEqualTypeOf<
-      "sync:authenticate-cancel"
-    >();
+    expectTypeOf<
+      typeof SYNC_CHANNELS.authenticateStart
+    >().toEqualTypeOf<"sync:authenticate-start">();
+    expectTypeOf<
+      typeof SYNC_CHANNELS.authenticateComplete
+    >().toEqualTypeOf<"sync:authenticate-complete">();
+    expectTypeOf<
+      typeof SYNC_CHANNELS.authenticateCancel
+    >().toEqualTypeOf<"sync:authenticate-cancel">();
   });
 
   it("getConfig / setConfig / deleteCredentials resolve to wire channels", () => {
@@ -198,12 +192,8 @@ describe("sync-service-desktop SYNC_CHANNELS — implement-datasource-onboarding
 
   it("retired single-shot `authenticate` channel is gone", () => {
     type Channels = typeof SYNC_CHANNELS;
-    type HasAuthenticate = "authenticate" extends keyof Channels
-      ? true
-      : false;
+    type HasAuthenticate = "authenticate" extends keyof Channels ? true : false;
     expectTypeOf<HasAuthenticate>().toEqualTypeOf<false>();
-    expect(
-      Object.prototype.hasOwnProperty.call(SYNC_CHANNELS, "authenticate"),
-    ).toBe(false);
+    expect(Object.prototype.hasOwnProperty.call(SYNC_CHANNELS, "authenticate")).toBe(false);
   });
 });

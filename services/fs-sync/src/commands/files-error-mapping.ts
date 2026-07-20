@@ -10,11 +10,7 @@
 // field so the renderer's ConflictResolutionDialog can prompt with the
 // colliding sibling path.
 
-import {
-  DatasourceError,
-  DatasourceErrorTag,
-  FilesErrorTag,
-} from "@cloudstash/ipc-contracts";
+import { DatasourceError, DatasourceErrorTag, FilesErrorTag } from "@cloudstash/ipc-contracts";
 
 export interface FilesErrorEnvelopeInner {
   readonly tag: FilesErrorTag;
@@ -67,13 +63,11 @@ const DRIVE_DOCS_EDITORS_PHRASE = "Use Export with Docs Editors files";
 // toast — not the per-subtype prose the strategy used to ship. The
 // parked follow-up `add-drive-docs-editors-export` still owns the
 // proper export path; this is just the friendly refusal.
-const FRIENDLY_DOCS_EDITORS_MESSAGE =
-  "Google Drive documents download not supported";
+const FRIENDLY_DOCS_EDITORS_MESSAGE = "Google Drive documents download not supported";
 
 function looksLikeDriveDocsEditorsRefusal(message: string): boolean {
   return (
-    message.includes(DRIVE_NOT_DOWNLOADABLE_REASON) ||
-    message.includes(DRIVE_DOCS_EDITORS_PHRASE)
+    message.includes(DRIVE_NOT_DOWNLOADABLE_REASON) || message.includes(DRIVE_DOCS_EDITORS_PHRASE)
   );
 }
 
@@ -85,8 +79,7 @@ function looksLikeDriveDocsEditorsRefusal(message: string): boolean {
 export function normalizeFilesError(err: unknown): FilesErrorEnvelopeInner {
   if (err instanceof DatasourceError) {
     const tag: FilesErrorTag =
-      err.tag === DatasourceErrorTag.AuthRevoked ||
-      err.tag === DatasourceErrorTag.AuthExpired
+      err.tag === DatasourceErrorTag.AuthRevoked || err.tag === DatasourceErrorTag.AuthExpired
         ? FilesErrorTag.AuthRevoked
         : err.tag === DatasourceErrorTag.NetworkError
           ? FilesErrorTag.Disconnected

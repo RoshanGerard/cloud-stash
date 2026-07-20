@@ -115,9 +115,7 @@ describe("OneDriveClient — preAuth (no creds)", () => {
     const intent = (await client.authenticate()) as OAuthIntent;
     expect(intent.kind).toBe("oauth");
     expect(intent.authorizeUrl).toContain("client_id=preauth-client-id");
-    expect(intent.authorizeUrl).toContain(
-      "redirect_uri=http%3A%2F%2F127.0.0.1%3A55555%2Fcallback",
-    );
+    expect(intent.authorizeUrl).toContain("redirect_uri=http%3A%2F%2F127.0.0.1%3A55555%2Fcallback");
     // Default multi-tenant authority on the preAuth path.
     expect(intent.authorizeUrl).toContain(
       "https://login.microsoftonline.com/common/oauth2/v2.0/authorize",
@@ -137,10 +135,7 @@ describe("OneDriveClient — preAuth (no creds)", () => {
 
     let capturedUrl: string | undefined;
     let capturedBody: string | undefined;
-    const fetchImpl = (async (
-      url: string,
-      init: { body: string },
-    ): Promise<Response> => {
+    const fetchImpl = (async (url: string, init: { body: string }): Promise<Response> => {
       capturedUrl = url;
       capturedBody = init.body;
       return new Response(
@@ -168,14 +163,10 @@ describe("OneDriveClient — preAuth (no creds)", () => {
     const intent = (await client.authenticate()) as OAuthIntent;
     await intent.completeWith("auth-code-xyz");
 
-    expect(capturedUrl).toBe(
-      "https://login.microsoftonline.com/common/oauth2/v2.0/token",
-    );
+    expect(capturedUrl).toBe("https://login.microsoftonline.com/common/oauth2/v2.0/token");
     const params = new URLSearchParams(capturedBody ?? "");
     expect(params.get("client_id")).toBe("preauth-client-id");
-    expect(params.get("redirect_uri")).toBe(
-      "http://127.0.0.1:55555/callback",
-    );
+    expect(params.get("redirect_uri")).toBe("http://127.0.0.1:55555/callback");
     expect(params.get("code")).toBe("auth-code-xyz");
 
     client.dispose();

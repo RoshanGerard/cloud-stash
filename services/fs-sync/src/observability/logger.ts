@@ -39,9 +39,7 @@ const DEFAULT_MAX_FILES = 5;
 export function createLogger(options: LoggerOptions): Logger {
   const maxBytes = options.maxBytes ?? DEFAULT_MAX_BYTES;
   const maxFiles = options.maxFiles ?? DEFAULT_MAX_FILES;
-  const level =
-    options.level ??
-    ((process.env["LOG_LEVEL"] as LogLevel | undefined) ?? "info");
+  const level = options.level ?? (process.env["LOG_LEVEL"] as LogLevel | undefined) ?? "info";
 
   let bytesWritten = (() => {
     try {
@@ -135,10 +133,7 @@ export function createLogger(options: LoggerOptions): Logger {
  * The old `sync:authenticate` channel stays redacted until it is
  * removed in 5.A.14.
  */
-export function redactCommandParams(
-  command: string,
-  params: unknown,
-): unknown {
+export function redactCommandParams(command: string, params: unknown): unknown {
   if (
     command === "sync:authenticate" ||
     command === "sync:authenticate-start" ||

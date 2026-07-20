@@ -1,13 +1,6 @@
 /** @vitest-environment jsdom */
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import {
-  act,
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-  within,
-} from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 
 import { createExplorerStore } from "../../store.js";
@@ -31,9 +24,7 @@ function makeStore(id = "medium-test"): ExplorerStore {
 }
 
 function getCells(): HTMLElement[] {
-  return Array.from(
-    document.querySelectorAll<HTMLElement>('[data-testid="explorer-cell"]'),
-  );
+  return Array.from(document.querySelectorAll<HTMLElement>('[data-testid="explorer-cell"]'));
 }
 
 describe("MediumIconsView", () => {
@@ -86,10 +77,7 @@ describe("MediumIconsView", () => {
     const nameEl = within(cell).getByText("hero.png");
     expect(icon).not.toBeNull();
     // Icon appears before name in DOM order (icon-above-name vertical stack).
-    expect(
-      icon!.compareDocumentPosition(nameEl) &
-        Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy();
+    expect(icon!.compareDocumentPosition(nameEl) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
 
     // No type label, no size label.
     expect(within(cell).queryByText(/image/i)).toBeNull();
@@ -99,9 +87,7 @@ describe("MediumIconsView", () => {
   it("renders the icon at 64 px (size-16)", () => {
     const store = makeStore();
     act(() => {
-      store.setEntries([
-        seedEntry({ id: "e1", name: "hero.png", path: "/hero.png" }),
-      ]);
+      store.setEntries([seedEntry({ id: "e1", name: "hero.png", path: "/hero.png" })]);
     });
     render(<MediumIconsView store={store} />);
 
@@ -113,9 +99,7 @@ describe("MediumIconsView", () => {
   it("outer container uses an auto-fill wrapping grid", () => {
     const store = makeStore();
     act(() => {
-      store.setEntries([
-        seedEntry({ id: "e1", name: "a.png", path: "/a.png" }),
-      ]);
+      store.setEntries([seedEntry({ id: "e1", name: "a.png", path: "/a.png" })]);
     });
     render(<MediumIconsView store={store} />);
     const grid = screen.getByRole("grid");

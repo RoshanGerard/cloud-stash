@@ -29,11 +29,7 @@ function makeStore(id = "ds-load-more"): ExplorerStore {
   return createExplorerStore(id);
 }
 
-function seedPage(
-  store: ExplorerStore,
-  count: number,
-  nextCursor: string | null,
-): void {
+function seedPage(store: ExplorerStore, count: number, nextCursor: string | null): void {
   const entries = Array.from({ length: count }, (_, i) =>
     seedEntry({ id: `e-${i}`, name: `file-${i}.txt` }),
   );
@@ -94,9 +90,7 @@ describe("LoadMoreRegion — state machine", () => {
     const store = makeStore();
     seedPage(store, 42, null);
     const { container } = render(<LoadMoreRegion store={store} />);
-    expect(
-      screen.queryByRole("button", { name: "Load more" }),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Load more" })).not.toBeInTheDocument();
     expect(screen.queryByText(/couldn't load more entries/i)).not.toBeInTheDocument();
     // The region collapses to an empty render (no stray chrome).
     expect(container).toBeEmptyDOMElement();
@@ -111,13 +105,9 @@ describe("LoadMoreRegion — state machine", () => {
     });
     render(<LoadMoreRegion store={store} />);
     // The failed row swaps in: button gone, headline present.
-    expect(
-      screen.queryByRole("button", { name: "Load more" }),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Load more" })).not.toBeInTheDocument();
     expect(screen.getByText("Couldn't load more entries")).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: "Retry" }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Retry" })).toBeInTheDocument();
   });
 });
 
@@ -232,10 +222,7 @@ describe("LoadMoreRegion — V-2 page-load-failed row", () => {
     seedPage(store, 500, "tokA");
     await driveLoadMoreFailure(store, { tag: FilesErrorTag.Other, message: "boom" });
     render(<LoadMoreRegion store={store} />);
-    expect(screen.getByTestId("load-more-failed")).toHaveAttribute(
-      "aria-live",
-      "assertive",
-    );
+    expect(screen.getByTestId("load-more-failed")).toHaveAttribute("aria-live", "assertive");
   });
 
   it("detail line carries the humanized wire tag + message (+ attempt phrasing)", async () => {
@@ -251,9 +238,7 @@ describe("LoadMoreRegion — V-2 page-load-failed row", () => {
     });
     render(<LoadMoreRegion store={store} />);
     const row = screen.getByTestId("load-more-failed");
-    expect(row).toHaveTextContent(
-      /Disconnected: connection timed out after 4 attempts/i,
-    );
+    expect(row).toHaveTextContent(/Disconnected: connection timed out after 4 attempts/i);
   });
 
   it("renders the generic wire tag `other` as 'Error: <message>' (the production-common copy)", async () => {
@@ -270,9 +255,7 @@ describe("LoadMoreRegion — V-2 page-load-failed row", () => {
     });
     render(<LoadMoreRegion store={store} />);
     const row = screen.getByTestId("load-more-failed");
-    expect(row).toHaveTextContent(
-      /Error: connection timed out after 4 attempts/i,
-    );
+    expect(row).toHaveTextContent(/Error: connection timed out after 4 attempts/i);
   });
 
   it("Retry button is full-width outline and wired to store.retryLoadMore()", async () => {

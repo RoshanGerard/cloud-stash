@@ -83,8 +83,7 @@ export function CloudStashLogo({ size = 28, className }: CloudStashLogoProps) {
   );
 }
 
-export interface CloudStashGlyphProps
-  extends Omit<SVGProps<SVGSVGElement>, "width" | "height"> {
+export interface CloudStashGlyphProps extends Omit<SVGProps<SVGSVGElement>, "width" | "height"> {
   /** Pixel size for both width and height (square 1024 viewBox). Defaults to 24. */
   size?: number;
 }
@@ -115,12 +114,7 @@ export function CloudStashGlyph({
       data-testid="cloudstash-glyph"
       {...rest}
     >
-      <path
-        d={GLYPH_OUTLINE_D}
-        stroke="currentColor"
-        strokeWidth={58}
-        strokeLinejoin="round"
-      />
+      <path d={GLYPH_OUTLINE_D} stroke="currentColor" strokeWidth={58} strokeLinejoin="round" />
       <path
         d={GLYPH_SEAM_D}
         stroke="currentColor"

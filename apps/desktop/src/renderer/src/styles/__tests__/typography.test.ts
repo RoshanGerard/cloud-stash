@@ -37,34 +37,20 @@ import { describe, it, expect } from "vitest";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-const LAYOUT_PATH = join(
-  __dirname,
-  "..",
-  "..",
-  "app",
-  "layout.tsx",
-);
+const LAYOUT_PATH = join(__dirname, "..", "..", "app", "layout.tsx");
 const GLOBALS_CSS_PATH = join(__dirname, "..", "globals.css");
 
-const RUNTIME_FONT_FETCH_DOMAINS = [
-  "fonts.googleapis.com",
-  "fonts.gstatic.com",
-  "use.typekit.net",
-];
+const RUNTIME_FONT_FETCH_DOMAINS = ["fonts.googleapis.com", "fonts.gstatic.com", "use.typekit.net"];
 
 describe("typography — Geist font wiring", () => {
   it("layout.tsx imports GeistSans from geist/font/sans", () => {
     const text = readFileSync(LAYOUT_PATH, "utf8");
-    expect(text).toMatch(
-      /import\s*\{[^}]*\bGeistSans\b[^}]*\}\s*from\s*["']geist\/font\/sans["']/,
-    );
+    expect(text).toMatch(/import\s*\{[^}]*\bGeistSans\b[^}]*\}\s*from\s*["']geist\/font\/sans["']/);
   });
 
   it("layout.tsx imports GeistMono from geist/font/mono", () => {
     const text = readFileSync(LAYOUT_PATH, "utf8");
-    expect(text).toMatch(
-      /import\s*\{[^}]*\bGeistMono\b[^}]*\}\s*from\s*["']geist\/font\/mono["']/,
-    );
+    expect(text).toMatch(/import\s*\{[^}]*\bGeistMono\b[^}]*\}\s*from\s*["']geist\/font\/mono["']/);
   });
 
   it("layout.tsx applies both font variables to the <html> className", () => {
@@ -73,10 +59,7 @@ describe("typography — Geist font wiring", () => {
     // so the text "<html>" appearing in a comment (no attributes) isn't the
     // match. Tolerates multi-line JSX attributes via `[\s\S]`.
     const htmlTagMatch = text.match(/<html\s[\s\S]*?>/);
-    expect(
-      htmlTagMatch,
-      "expected a <html> element in layout.tsx",
-    ).not.toBeNull();
+    expect(htmlTagMatch, "expected a <html> element in layout.tsx").not.toBeNull();
     const htmlTag = htmlTagMatch![0];
     expect(htmlTag).toMatch(/\bGeistSans\.variable\b/);
     expect(htmlTag).toMatch(/\bGeistMono\.variable\b/);
@@ -125,29 +108,13 @@ describe("typography — Geist font wiring", () => {
 // compile-time loader that throws outside the Next.js build, and the resolved
 // `.variable` token is a generated class name, not the literal CSS var name.
 
-const DASHBOARD_PATH = join(
-  __dirname,
-  "..",
-  "..",
-  "features",
-  "datasources",
-  "dashboard.tsx",
-);
-const DIALOG_PATH = join(
-  __dirname,
-  "..",
-  "..",
-  "components",
-  "ui",
-  "dialog.tsx",
-);
+const DASHBOARD_PATH = join(__dirname, "..", "..", "features", "datasources", "dashboard.tsx");
+const DIALOG_PATH = join(__dirname, "..", "..", "components", "ui", "dialog.tsx");
 
 describe("typography — Bricolage Grotesque display face wiring", () => {
   it("layout.tsx imports localFont from next/font/local", () => {
     const text = readFileSync(LAYOUT_PATH, "utf8");
-    expect(text).toMatch(
-      /import\s+localFont\s+from\s+["']next\/font\/local["']/,
-    );
+    expect(text).toMatch(/import\s+localFont\s+from\s+["']next\/font\/local["']/);
   });
 
   it("layout.tsx loads the display face via localFont and exposes --font-display-face", () => {
@@ -161,10 +128,7 @@ describe("typography — Bricolage Grotesque display face wiring", () => {
   it("layout.tsx applies the display font variable to the <html> className alongside Geist", () => {
     const text = readFileSync(LAYOUT_PATH, "utf8");
     const htmlTagMatch = text.match(/<html\s[\s\S]*?>/);
-    expect(
-      htmlTagMatch,
-      "expected a <html> element in layout.tsx",
-    ).not.toBeNull();
+    expect(htmlTagMatch, "expected a <html> element in layout.tsx").not.toBeNull();
     const htmlTag = htmlTagMatch![0];
     // Geist stays the UI/mono face; the display face is layered on top.
     expect(htmlTag).toMatch(/\bGeistSans\.variable\b/);

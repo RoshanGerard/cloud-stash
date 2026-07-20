@@ -11,11 +11,7 @@ import { FIXTURE_SUMMARIES } from "./helpers.js";
 
 import { openDatabase, runMigrations } from "../../../db/database.js";
 import { DEFAULT_MIGRATIONS } from "../../../db/migrations.js";
-import {
-  getEngine,
-  initEngine,
-  resetEngineForTests,
-} from "../../../datasources/engine.js";
+import { getEngine, initEngine, resetEngineForTests } from "../../../datasources/engine.js";
 import { handleDatasourcesList } from "../list.js";
 
 type SqliteDatabase = ReturnType<typeof openDatabase>;
@@ -56,9 +52,7 @@ describe("handleDatasourcesList", () => {
       expect(typeof ds.displayName).toBe("string");
       expect(typeof ds.providerId).toBe("string");
       expect(["connected", "syncing", "paused", "error"]).toContain(ds.status);
-      expect(ds.lastSyncAt === null || typeof ds.lastSyncAt === "number").toBe(
-        true,
-      );
+      expect(ds.lastSyncAt === null || typeof ds.lastSyncAt === "number").toBe(true);
       expect(typeof ds.itemCount).toBe("number");
       if (ds.errorReason !== undefined) {
         expect(typeof ds.errorReason).toBe("string");
@@ -68,9 +62,7 @@ describe("handleDatasourcesList", () => {
 
   it("fixture includes at least one datasource of each status variant", () => {
     const { datasources } = handleDatasourcesList();
-    const statusesPresent = new Set<DatasourceStatus>(
-      datasources.map((ds) => ds.status),
-    );
+    const statusesPresent = new Set<DatasourceStatus>(datasources.map((ds) => ds.status));
     expect(statusesPresent.has("connected")).toBe(true);
     expect(statusesPresent.has("syncing")).toBe(true);
     expect(statusesPresent.has("paused")).toBe(true);
@@ -93,9 +85,7 @@ describe("handleDatasourcesList", () => {
 
   it("datasources with error status include an errorReason string", () => {
     const { datasources } = handleDatasourcesList();
-    const errorOnes = datasources.filter(
-      (ds: DatasourceSummary) => ds.status === "error",
-    );
+    const errorOnes = datasources.filter((ds: DatasourceSummary) => ds.status === "error");
     for (const ds of errorOnes) {
       expect(typeof ds.errorReason).toBe("string");
       expect(ds.errorReason!.length).toBeGreaterThan(0);

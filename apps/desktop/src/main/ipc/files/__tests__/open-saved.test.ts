@@ -10,10 +10,7 @@
 
 import { describe, expect, it, vi } from "vitest";
 
-import {
-  handleFilesOpenSavedPath,
-  handleFilesShowSavedInFolder,
-} from "../open-saved.js";
+import { handleFilesOpenSavedPath, handleFilesShowSavedInFolder } from "../open-saved.js";
 
 describe("handleFilesOpenSavedPath — proxy over shell.openPath", () => {
   it("delegates to deps.openPath with the savedPath verbatim", async () => {
@@ -24,9 +21,7 @@ describe("handleFilesOpenSavedPath — proxy over shell.openPath", () => {
     });
 
     expect(openPath).toHaveBeenCalledTimes(1);
-    expect(openPath).toHaveBeenCalledWith(
-      "/Users/alice/Downloads/CloudStash/welcome.pdf",
-    );
+    expect(openPath).toHaveBeenCalledWith("/Users/alice/Downloads/CloudStash/welcome.pdf");
   });
 
   it("resolves void even when shell.openPath returns a non-empty error string", async () => {
@@ -52,9 +47,7 @@ describe("handleFilesShowSavedInFolder — proxy over shell.showItemInFolder", (
     });
 
     expect(showItemInFolder).toHaveBeenCalledTimes(1);
-    expect(showItemInFolder).toHaveBeenCalledWith(
-      "/Users/alice/Downloads/CloudStash/welcome.pdf",
-    );
+    expect(showItemInFolder).toHaveBeenCalledWith("/Users/alice/Downloads/CloudStash/welcome.pdf");
   });
 
   it("returns void synchronously (Electron's showItemInFolder is sync)", () => {

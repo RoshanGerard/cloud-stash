@@ -49,7 +49,7 @@ describe("app:// scheme is registered with privileged flags", () => {
     const hasFetch = /supportFetchAPI\s*:\s*true/.test(source);
     const hasCors = /corsEnabled\s*:\s*true/.test(source);
     const missing = [
-      !hasScheme && "scheme: \"app\"",
+      !hasScheme && 'scheme: "app"',
       !hasStandard && "standard: true",
       !hasSecure && "secure: true",
       !hasFetch && "supportFetchAPI: true",

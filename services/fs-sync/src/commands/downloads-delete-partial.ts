@@ -38,11 +38,7 @@ interface DownloadRow {
 }
 
 function isErrno(err: unknown, code: string): boolean {
-  return (
-    typeof err === "object" &&
-    err !== null &&
-    (err as { code?: unknown }).code === code
-  );
+  return typeof err === "object" && err !== null && (err as { code?: unknown }).code === code;
 }
 
 export function makeDeletePartialHandler(
@@ -51,9 +47,7 @@ export function makeDeletePartialHandler(
   const fs: DeletePartialFs = deps.fs ?? { unlink: (p) => nodeUnlink(p) };
   return async (params) => {
     const row = deps.db
-      .prepare(
-        `SELECT target_path, status FROM downloads WHERE download_job_id = ?`,
-      )
+      .prepare(`SELECT target_path, status FROM downloads WHERE download_job_id = ?`)
       .get(params.downloadJobId) as DownloadRow | undefined;
 
     // Not recorded → nothing we wrote to delete. No-op success.
@@ -69,11 +63,7 @@ export function makeDeletePartialHandler(
     // file; this stricter guard keeps the primitive safe for a future
     // Phase-2 caller (settings-list) that might pass any recorded
     // downloadJobId.
-    if (
-      row.status !== "failed" &&
-      row.status !== "cancelled" &&
-      row.status !== "interrupted"
-    ) {
+    if (row.status !== "failed" && row.status !== "cancelled" && row.status !== "interrupted") {
       const message =
         row.status === "in-flight"
           ? "download is still in flight; cannot delete the partial file"

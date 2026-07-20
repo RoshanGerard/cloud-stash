@@ -35,19 +35,9 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const repoRoot = path.resolve(__dirname, "..");
 
-const RENDERER_SRC = path.join(
-  repoRoot,
-  "apps",
-  "desktop",
-  "src",
-  "renderer",
-  "src",
-);
+const RENDERER_SRC = path.join(repoRoot, "apps", "desktop", "src", "renderer", "src");
 
-const SCAN_ROOTS = [
-  path.join(RENDERER_SRC, "features"),
-  path.join(RENDERER_SRC, "components"),
-];
+const SCAN_ROOTS = [path.join(RENDERER_SRC, "features"), path.join(RENDERER_SRC, "components")];
 
 // Phase 9.1: the former `components/ui/**` exemption was lifted. The scan
 // now reaches shadcn-vendored primitives too. They are currently clean, and
@@ -66,10 +56,7 @@ type Violation = {
 
 // Forbidden-pattern detection lives in a pure function so the negative-control
 // block can exercise it on synthetic input independently of the filesystem.
-function findViolationsInText(
-  text: string,
-  file: string,
-): Violation[] {
+function findViolationsInText(text: string, file: string): Violation[] {
   const violations: Violation[] = [];
 
   // Strip line and block comments from a *copy* of the text that we use for
@@ -193,10 +180,7 @@ function stripComments(text: string): string {
   return out;
 }
 
-function offsetToLineCol(
-  text: string,
-  offset: number,
-): { line: number; column: number } {
+function offsetToLineCol(text: string, offset: number): { line: number; column: number } {
   let line = 1;
   let column = 1;
   for (let i = 0; i < offset && i < text.length; i++) {
@@ -275,25 +259,19 @@ describe("literals-ban guardrail — forbidden pattern detection", () => {
   });
 
   it("flags raw font-size px/rem literals", () => {
-    const v1 = findViolationsInText(
-      'const s = "font-size: 14px";',
-      "s.tsx",
-    );
-    const v2 = findViolationsInText(
-      'const s = "font-size: 1.25rem";',
-      "s.tsx",
-    );
+    const v1 = findViolationsInText('const s = "font-size: 14px";', "s.tsx");
+    const v2 = findViolationsInText('const s = "font-size: 1.25rem";', "s.tsx");
     expect(v1.some((x) => x.rule === "raw-font-size")).toBe(true);
     expect(v2.some((x) => x.rule === "raw-font-size")).toBe(true);
   });
 
   it("ignores forbidden patterns inside line comments", () => {
-    const v = findViolationsInText('// #ff0000 is the bad colour\n', "s.tsx");
+    const v = findViolationsInText("// #ff0000 is the bad colour\n", "s.tsx");
     expect(v).toEqual([]);
   });
 
   it("ignores forbidden patterns inside block comments", () => {
-    const v = findViolationsInText('/* #ff0000 rgb(1,2,3) hsl(0,0,0) */\n', "s.tsx");
+    const v = findViolationsInText("/* #ff0000 rgb(1,2,3) hsl(0,0,0) */\n", "s.tsx");
     expect(v).toEqual([]);
   });
 
@@ -336,10 +314,7 @@ describe("literals-ban guardrail — feature code is clean", () => {
       violations,
       violations.length
         ? `Found forbidden visual-design literals:\n${violations
-            .map(
-              (v) =>
-                `  ${v.file}:${v.line}:${v.column}  [${v.rule}]  ${v.match}`,
-            )
+            .map((v) => `  ${v.file}:${v.line}:${v.column}  [${v.rule}]  ${v.match}`)
             .join("\n")}`
         : "",
     ).toEqual([]);

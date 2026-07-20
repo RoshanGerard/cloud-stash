@@ -211,13 +211,7 @@ async function bootstrap(): Promise<void> {
       // layout is resources/fs-sync/main/index.js. app.getAppPath() ends
       // in resources/app.asar (or resources/app), so `..` strips that
       // off and we land in resources/.
-      servicePath = path.join(
-        app.getAppPath(),
-        "..",
-        "fs-sync",
-        "main",
-        "index.js",
-      );
+      servicePath = path.join(app.getAppPath(), "..", "fs-sync", "main", "index.js");
     }
 
     // Decision 12: startSupervisor now returns SupervisorHandle.

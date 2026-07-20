@@ -34,16 +34,9 @@ import type { ExplorerStore } from "./store";
  * `store.setEntries(...)` in `act(() => { ... })` and do not need this
  * hook.
  */
-export function useExplorerData(
-  store: ExplorerStore,
-  datasourceId: string,
-): void {
+export function useExplorerData(store: ExplorerStore, datasourceId: string): void {
   // Subscribe to the store so currentPath changes trigger an effect run.
-  const state = useSyncExternalStore(
-    store.subscribe,
-    store.getSnapshot,
-    store.getSnapshot,
-  );
+  const state = useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
   const requestIdRef = useRef(0);
 
   useEffect(() => {
@@ -88,8 +81,7 @@ export function useExplorerData(
       .catch((error: unknown) => {
         if (cancelled) return;
         if (requestIdRef.current !== requestId) return;
-        const message =
-          error instanceof Error ? error.message : String(error);
+        const message = error instanceof Error ? error.message : String(error);
         store.setError(message);
         // Thrown errors (e.g. ipcRenderer reject) don't carry a tag; treat
         // as "other" so the UI falls back to the generic error surface

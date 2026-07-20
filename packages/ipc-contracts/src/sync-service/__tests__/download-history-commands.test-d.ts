@@ -52,9 +52,9 @@ describe("ServiceConfig download-history retention field", () => {
   });
 
   it("retentionDays is restricted to the preset union", () => {
-    expectTypeOf<
-      NonNullable<ServiceConfig["downloadHistory"]>["retentionDays"]
-    >().toEqualTypeOf<30 | 90 | 180 | 365>();
+    expectTypeOf<NonNullable<ServiceConfig["downloadHistory"]>["retentionDays"]>().toEqualTypeOf<
+      30 | 90 | 180 | 365
+    >();
   });
 });
 
@@ -100,9 +100,7 @@ describe("sync-service downloads:clear-history command contract", () => {
   });
 
   it("error carries the FilesCommandErrorShape", () => {
-    expectTypeOf<
-      CommandError<"downloads:clear-history">
-    >().toEqualTypeOf<FilesCommandErrorShape>();
+    expectTypeOf<CommandError<"downloads:clear-history">>().toEqualTypeOf<FilesCommandErrorShape>();
   });
 
   it("Request and Response aliases match the envelope shape", () => {

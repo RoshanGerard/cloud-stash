@@ -99,12 +99,8 @@ declare global {
       datasources: {
         list(): Promise<DatasourcesListResponse>;
         add(req: DatasourcesAddRequest): Promise<DatasourcesAddResponse>;
-        remove(
-          req: DatasourcesRemoveRequest,
-        ): Promise<DatasourcesRemoveResponse>;
-        action(
-          req: DatasourcesActionRequest,
-        ): Promise<DatasourcesActionResponse>;
+        remove(req: DatasourcesRemoveRequest): Promise<DatasourcesRemoveResponse>;
+        action(req: DatasourcesActionRequest): Promise<DatasourcesActionResponse>;
         pickFilesToUpload(): Promise<DatasourcesPickFilesResponse>;
       };
       files: {
@@ -117,17 +113,13 @@ declare global {
         upload(req: FilesUploadRequest): Promise<FilesUploadResponse>;
         openSavedPath(savedPath: string): Promise<void>;
         showSavedInFolder(savedPath: string): Promise<void>;
-        onActiveDownloadsHydrate(
-          callback: (jobs: readonly DownloadJob[]) => void,
-        ): () => void;
+        onActiveDownloadsHydrate(callback: (jobs: readonly DownloadJob[]) => void): () => void;
         // migrate-upload-orchestration-out-of-engine §13.3 — symmetric
         // upload-side hydrate channel. Fires once per app session on
         // the supervisor's first connect. Reconnects mid-session do
         // NOT re-fire — the live event feed (sync:event-stream filtered
         // to the four upload kinds) drives in-flight progress instead.
-        onActiveUploadsHydrate(
-          callback: (jobs: readonly UploadJob[]) => void,
-        ): () => void;
+        onActiveUploadsHydrate(callback: (jobs: readonly UploadJob[]) => void): () => void;
       };
       preferences: {
         setDefaultDownloadsFolder(folder: string): Promise<void>;
@@ -175,17 +167,11 @@ declare global {
         // migrate-upload-orchestration-out-of-engine §11 / §7.4 — the
         // `enqueueUpload` preload binding was deleted in chunk F. The
         // renderer's upload path is `window.api.files.upload`.
-        enqueueMirror(
-          req: SyncEnqueueMirrorRequest,
-        ): Promise<SyncEnqueueMirrorResponse>;
+        enqueueMirror(req: SyncEnqueueMirrorRequest): Promise<SyncEnqueueMirrorResponse>;
         cancelJob(req: SyncCancelJobRequest): Promise<SyncCancelJobResponse>;
-        cancelDownload(
-          req: SyncCancelDownloadRequest,
-        ): Promise<SyncCancelDownloadResponse>;
+        cancelDownload(req: SyncCancelDownloadRequest): Promise<SyncCancelDownloadResponse>;
         // migrate-upload-orchestration-out-of-engine §7.3 / §7.9.
-        cancelUpload(
-          req: SyncCancelUploadRequest,
-        ): Promise<SyncCancelUploadResponse>;
+        cancelUpload(req: SyncCancelUploadRequest): Promise<SyncCancelUploadResponse>;
         authenticateStart(
           req: SyncAuthenticateStartRequest,
         ): Promise<SyncAuthenticateStartResponse>;
@@ -197,25 +183,17 @@ declare global {
         ): Promise<SyncAuthenticateCancelResponse>;
         // `getStatus` has a void request type — no argument, mirrors ping().
         getStatus(): Promise<SyncGetStatusResponse>;
-        getRetryPolicy(
-          req: SyncGetRetryPolicyRequest,
-        ): Promise<SyncGetRetryPolicyResponse>;
-        setRetryPolicy(
-          req: SyncSetRetryPolicyRequest,
-        ): Promise<SyncSetRetryPolicyResponse>;
+        getRetryPolicy(req: SyncGetRetryPolicyRequest): Promise<SyncGetRetryPolicyResponse>;
+        setRetryPolicy(req: SyncSetRetryPolicyRequest): Promise<SyncSetRetryPolicyResponse>;
         // add-download-history-ui §5 — Settings → Downloads config +
         // clear-history. `getConfig` has a void request; writes route through
         // a renderer read-modify-write helper preserving `providers`.
         getConfig(): Promise<SyncGetConfigResponse>;
-        setConfig(
-          req: SyncSetConfigRequest,
-        ): Promise<SyncSetConfigResponse>;
+        setConfig(req: SyncSetConfigRequest): Promise<SyncSetConfigResponse>;
         clearDownloadHistory(
           req: SyncClearDownloadHistoryRequest,
         ): Promise<SyncClearDownloadHistoryResponse>;
-        deletePartial(
-          req: SyncDeletePartialRequest,
-        ): Promise<SyncDeletePartialResponse>;
+        deletePartial(req: SyncDeletePartialRequest): Promise<SyncDeletePartialResponse>;
         // add-leftover-download-cleanup §2.4 — Settings → "Review leftover
         // files" reads this on open. Void request (channel-only invoke).
         listLeftover(): Promise<SyncListLeftoverResponse>;

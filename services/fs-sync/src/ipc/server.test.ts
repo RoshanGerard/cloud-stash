@@ -54,11 +54,7 @@ async function collectResponses(
   const out = new Map<string, ResponseFrame>();
   return new Promise((resolve, reject) => {
     const timer = setTimeout(() => {
-      reject(
-        new Error(
-          `timeout collecting responses; got ${out.size}/${wantIds.length}`,
-        ),
-      );
+      reject(new Error(`timeout collecting responses; got ${out.size}/${wantIds.length}`));
     }, timeoutMs);
     const decoder = new FramingDecoder({
       onFrame: (f) => {
@@ -79,19 +75,17 @@ async function collectResponses(
 
 describe("IPC server — round-trip", () => {
   it("accepts a client connection, correlates request → response by id", async () => {
-    const handler: CommandHandler<"sync:get-status"> = vi
-      .fn()
-      .mockResolvedValue({
-        ok: true,
-        result: {
-          version: "0.0.0",
-          serviceUuid: "u-1",
-          runningJobs: 0,
-          queuedJobs: 0,
-          waitingNetworkJobs: 0,
-          monitorConnected: false,
-        },
-      });
+    const handler: CommandHandler<"sync:get-status"> = vi.fn().mockResolvedValue({
+      ok: true,
+      result: {
+        version: "0.0.0",
+        serviceUuid: "u-1",
+        runningJobs: 0,
+        queuedJobs: 0,
+        waitingNetworkJobs: 0,
+        monitorConnected: false,
+      },
+    });
     const handlers: CommandHandlers = { "sync:get-status": handler };
     const pipePath = pipeFor("rt");
     running = await startServer({ pipePath, handlers, commandNames: COMMAND_NAMES });

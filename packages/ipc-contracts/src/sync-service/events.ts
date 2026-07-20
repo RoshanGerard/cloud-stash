@@ -139,11 +139,7 @@ export interface AuthCancelledPayload {
  * loopback broker maps a reconnect `completeWith` rejection whose engine tag
  * is `account-mismatch` onto this member, with a `message` naming the bound
  * account email. */
-export type AuthFailedTag =
-  | "auth-revoked"
-  | "provider-error"
-  | "engine-error"
-  | "account-mismatch";
+export type AuthFailedTag = "auth-revoked" | "provider-error" | "engine-error" | "account-mismatch";
 
 /** Service emitted `auth-failed` on loopback `state` mismatch, on a
  * `completeWith` rejection, or on engine errors during `submit`.
@@ -268,8 +264,13 @@ export interface FileDownloadedPayload {
 export interface DownloadFailedPayload {
   readonly downloadJobId: string;
   readonly datasourceId: string;
-  readonly tag: "auth-revoked" | "disconnected" | "rate-limited" | "other"
-    | "invalid-datasource" | "exhausted-retries";
+  readonly tag:
+    | "auth-revoked"
+    | "disconnected"
+    | "rate-limited"
+    | "other"
+    | "invalid-datasource"
+    | "exhausted-retries";
   readonly message: string;
   /**
    * OPTIONAL UI hint (add-failed-download-cleanup-affordance). `true` when a
@@ -387,8 +388,7 @@ export interface UploadFailedPayload {
   readonly uploadJobId: string;
   readonly datasourceId: string;
   readonly targetPath: string;
-  readonly tag: "auth-revoked" | "disconnected" | "rate-limited" | "other"
-    | "invalid-datasource";
+  readonly tag: "auth-revoked" | "disconnected" | "rate-limited" | "other" | "invalid-datasource";
   readonly message: string;
 }
 
@@ -430,7 +430,7 @@ export interface EventPayloadMap {
   "credential-persisted": CredentialPersistedPayload;
   // add-engine-rename-download §13 — fs-sync's downloadJobId-keyed
   // download lifecycle events (DERIVED from the engine bus, NOT relayed).
-  "downloading": DownloadingPayload;
+  downloading: DownloadingPayload;
   // add-download-resilience — emitted at the start of each environmental
   // retry sleep (NOT for the auth-expired Layer 2 branch).
   "download-retrying": DownloadRetryingPayload;
@@ -441,7 +441,7 @@ export interface EventPayloadMap {
   // uploadJobId-keyed upload lifecycle events. The engine no longer
   // emits upload events; these are emitted by the `files-upload.ts`
   // handler.
-  "uploading": UploadingPayload;
+  uploading: UploadingPayload;
   "file-created": FileCreatedPayload;
   "upload-failed": UploadFailedPayload;
   "upload-cancelled": UploadCancelledPayload;
@@ -485,4 +485,3 @@ export const EVENT_NAMES: ReadonlyArray<EventName> = [
   "upload-failed",
   "upload-cancelled",
 ] as const;
-

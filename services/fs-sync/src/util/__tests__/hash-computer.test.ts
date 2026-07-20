@@ -62,9 +62,7 @@ describe("createHashComputer", () => {
     const hasher = createHashComputer();
     const digest = await hasher.hashFile(filePath, "sha256");
     // sha256("") = e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
-    expect(digest).toBe(
-      "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    );
+    expect(digest).toBe("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855");
   });
 
   it("returns the correct digest for each call when invoked in parallel", async () => {

@@ -36,22 +36,11 @@
 
 import { randomUUID } from "node:crypto";
 
-import type {
-  AccountIdentity,
-  ProviderId,
-  StoredCredentials,
-} from "@cloudstash/ipc-contracts";
-import {
-  DatasourceError,
-  DatasourceErrorTag,
-  providers,
-} from "@cloudstash/ipc-contracts";
+import type { AccountIdentity, ProviderId, StoredCredentials } from "@cloudstash/ipc-contracts";
+import { DatasourceError, DatasourceErrorTag, providers } from "@cloudstash/ipc-contracts";
 
 import type { OAuthAppConfig, PreAuthConfig } from "./auth-types.js";
-import type {
-  BaseClientContext,
-  DatasourceClient,
-} from "./base-client.js";
+import type { BaseClientContext, DatasourceClient } from "./base-client.js";
 import type { CredentialStore } from "./credential-store.js";
 // Provider strategies. Phases 6, 7, and 8 delivered the real S3, OneDrive,
 // and Google Drive strategies respectively.
@@ -161,10 +150,7 @@ export type PreAuthFactoryFn<P extends ProviderId = ProviderId> = (
  * sync-service `normalizeFilesError` and the dashboard banner both
  * consume the id to identify which datasource needs reconfiguring.
  */
-export type CredentialShapeValidator = (
-  creds: StoredCredentials,
-  datasourceId: string,
-) => void;
+export type CredentialShapeValidator = (creds: StoredCredentials, datasourceId: string) => void;
 
 /**
  * A single registry entry: bundles the strategy factory function with the
@@ -187,9 +173,7 @@ export type CredentialShapeValidator = (
  * and adding one entry here — no edits to `factory.create` /
  * `factory.createForAuth` themselves.
  */
-export interface ProviderRegistryEntry<
-  P extends ProviderId = ProviderId,
-> {
+export interface ProviderRegistryEntry<P extends ProviderId = ProviderId> {
   readonly create: ProviderFactoryFn<P>;
   readonly createForAuth: PreAuthFactoryFn<P>;
   readonly validateCredentialShape: CredentialShapeValidator;
@@ -373,8 +357,7 @@ export function createClientFactory(registry: ProviderRegistry): ClientFactory {
       // value matters for the lifetime of this single authenticate flow
       // (it threads through credential persistence and any errors the flow
       // surfaces).
-      const effectiveDatasourceId =
-        datasourceId ?? `pre-auth-${randomUUID()}`;
+      const effectiveDatasourceId = datasourceId ?? `pre-auth-${randomUUID()}`;
 
       const entry = registry[providerId];
       if (entry === undefined) {
@@ -428,12 +411,7 @@ export function createClientFactory(registry: ProviderRegistry): ClientFactory {
       // D4); `undefined` on first connect. OAuth strategies that have wired
       // it through to their constructor consume it; others (and
       // credentials-form) ignore the extra arg.
-      return entry.createForAuth(
-        effectiveDatasourceId,
-        oauthAppConfig,
-        baseCtx,
-        expectedAccount,
-      );
+      return entry.createForAuth(effectiveDatasourceId, oauthAppConfig, baseCtx, expectedAccount);
     },
   };
 }

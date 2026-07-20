@@ -1,13 +1,6 @@
 /** @vitest-environment jsdom */
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import {
-  act,
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-  within,
-} from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 
 import { createExplorerStore } from "../../store.js";
@@ -32,9 +25,7 @@ function makeStore(id = "tiles-test"): ExplorerStore {
 }
 
 function getTiles(): HTMLElement[] {
-  return Array.from(
-    document.querySelectorAll<HTMLElement>('[data-testid="explorer-tile"]'),
-  );
+  return Array.from(document.querySelectorAll<HTMLElement>('[data-testid="explorer-tile"]'));
 }
 
 describe("TilesView", () => {
@@ -70,9 +61,7 @@ describe("TilesView", () => {
   it("each tile shows a 64-px icon (size-16) plus name plus two metadata lines (type and size)", () => {
     const store = makeStore();
     act(() => {
-      store.setEntries([
-        seedEntry({ id: "e1", name: "alpha.png", path: "/alpha.png" }),
-      ]);
+      store.setEntries([seedEntry({ id: "e1", name: "alpha.png", path: "/alpha.png" })]);
     });
     render(<TilesView store={store} />);
     const tile = getTiles()[0]!;
@@ -92,9 +81,7 @@ describe("TilesView", () => {
   it("the size line carries the tabular-nums class", () => {
     const store = makeStore();
     act(() => {
-      store.setEntries([
-        seedEntry({ id: "e1", name: "alpha.png", path: "/alpha.png" }),
-      ]);
+      store.setEntries([seedEntry({ id: "e1", name: "alpha.png", path: "/alpha.png" })]);
     });
     render(<TilesView store={store} />);
     const tile = getTiles()[0]!;
@@ -105,9 +92,7 @@ describe("TilesView", () => {
   it("outer container uses a wrapping grid layout", () => {
     const store = makeStore();
     act(() => {
-      store.setEntries([
-        seedEntry({ id: "e1", name: "a.png", path: "/a.png" }),
-      ]);
+      store.setEntries([seedEntry({ id: "e1", name: "a.png", path: "/a.png" })]);
     });
     render(<TilesView store={store} />);
     const grid = screen.getByRole("grid");

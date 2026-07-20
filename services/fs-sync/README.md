@@ -16,12 +16,12 @@ calls flow through the engine's `DatasourceClient<T>` obtained from
 `CLOUDSTASH_SYNC_DATA_DIR` override. Created on first start with mode `0700`
 on Unix / user-only ACL on Windows. Contents:
 
-| File               | Role                                             |
-|--------------------|--------------------------------------------------|
-| `credentials.json` | `ConfigFileCredentialStore` plaintext JSON (v1). |
-| `sync.db`          | SQLite DB (WAL), owned by the service only.      |
-| `service.pid`      | PID file for the single-instance guard.          |
-| `service.log`      | JSON-lines log, 5 MB × 5 rotation.               |
+| File               | Role                                                |
+| ------------------ | --------------------------------------------------- |
+| `credentials.json` | `ConfigFileCredentialStore` plaintext JSON (v1).    |
+| `sync.db`          | SQLite DB (WAL), owned by the service only.         |
+| `service.pid`      | PID file for the single-instance guard.             |
+| `service.log`      | JSON-lines log, 5 MB × 5 rotation.                  |
 | `sync.sock`        | Unix socket (Unix only; Windows uses a named pipe). |
 
 ## IPC surface

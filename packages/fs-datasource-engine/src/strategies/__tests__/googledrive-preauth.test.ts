@@ -21,10 +21,7 @@ import { DatasourceError, providers } from "@cloudstash/ipc-contracts";
 
 import type { PreAuthConfig } from "../../auth-types.js";
 import type { BaseClientContext, CredentialStore } from "../../base-client.js";
-import {
-  GoogleDriveClient,
-  type GoogleDriveClientLike,
-} from "../googledrive-client.js";
+import { GoogleDriveClient, type GoogleDriveClientLike } from "../googledrive-client.js";
 
 // ---------------------------------------------------------------------------
 // Tiny harness — just enough to construct the strategy and call authenticate
@@ -63,14 +60,10 @@ function makeFakeDrive(): GoogleDriveClientLike {
         throw new Error("unexpected files.get call in authenticate-only test");
       },
       create: async () => {
-        throw new Error(
-          "unexpected files.create call in authenticate-only test",
-        );
+        throw new Error("unexpected files.create call in authenticate-only test");
       },
       delete: async () => {
-        throw new Error(
-          "unexpected files.delete call in authenticate-only test",
-        );
+        throw new Error("unexpected files.delete call in authenticate-only test");
       },
     },
     about: {
@@ -108,9 +101,7 @@ describe("GoogleDriveClient — preAuth (no creds)", () => {
     const intent = (await client.authenticate()) as OAuthIntent;
     expect(intent.kind).toBe("oauth");
     expect(intent.authorizeUrl).toContain("client_id=preauth-client-id");
-    expect(intent.authorizeUrl).toContain(
-      "redirect_uri=http%3A%2F%2F127.0.0.1%3A55555%2Fcallback",
-    );
+    expect(intent.authorizeUrl).toContain("redirect_uri=http%3A%2F%2F127.0.0.1%3A55555%2Fcallback");
 
     client.dispose();
   });
@@ -125,10 +116,7 @@ describe("GoogleDriveClient — preAuth (no creds)", () => {
     const driveFactory = (): GoogleDriveClientLike => makeFakeDrive();
 
     let capturedBody: string | undefined;
-    const fetchImpl = (async (
-      _url: string,
-      init: { body: string },
-    ): Promise<Response> => {
+    const fetchImpl = (async (_url: string, init: { body: string }): Promise<Response> => {
       capturedBody = init.body;
       return new Response(
         JSON.stringify({
@@ -165,9 +153,7 @@ describe("GoogleDriveClient — preAuth (no creds)", () => {
     const params = new URLSearchParams(capturedBody ?? "");
     expect(params.get("client_id")).toBe("preauth-client-id");
     expect(params.get("client_secret")).toBe("preauth-client-secret");
-    expect(params.get("redirect_uri")).toBe(
-      "http://127.0.0.1:55555/callback",
-    );
+    expect(params.get("redirect_uri")).toBe("http://127.0.0.1:55555/callback");
     expect(params.get("code")).toBe("auth-code-xyz");
 
     client.dispose();

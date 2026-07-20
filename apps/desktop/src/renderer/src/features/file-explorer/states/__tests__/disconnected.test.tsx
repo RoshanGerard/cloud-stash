@@ -11,9 +11,7 @@ describe("DisconnectedState", () => {
   it("renders headline, body, and a Retry action button", () => {
     render(<DisconnectedState onRetry={() => {}} />);
     expect(screen.getByText("Can't reach this datasource")).toBeInTheDocument();
-    expect(
-      screen.getByText("Check your network or try again in a moment."),
-    ).toBeInTheDocument();
+    expect(screen.getByText("Check your network or try again in a moment.")).toBeInTheDocument();
     const btn = screen.getByRole("button", { name: /retry/i });
     expect(btn).toBeInTheDocument();
     expect(btn.tagName).toBe("BUTTON");

@@ -28,14 +28,10 @@ import { mapEngineEntryToFileEntry } from "./files-entry-mapping.js";
 import { normalizeFilesError } from "./files-error-mapping.js";
 
 export interface FilesRenameDeps {
-  readonly resolveClient: (
-    datasourceId: string,
-  ) => Promise<DatasourceClient<DatasourceType>>;
+  readonly resolveClient: (datasourceId: string) => Promise<DatasourceClient<DatasourceType>>;
 }
 
-export function makeFilesRenameHandler(
-  deps: FilesRenameDeps,
-): CommandHandler<"files:rename"> {
+export function makeFilesRenameHandler(deps: FilesRenameDeps): CommandHandler<"files:rename"> {
   return async (params) => {
     let client: DatasourceClient<DatasourceType>;
     try {

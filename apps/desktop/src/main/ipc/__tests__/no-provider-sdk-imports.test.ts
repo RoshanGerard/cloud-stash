@@ -30,9 +30,7 @@ function buildPattern(spec: string): RegExp {
   const escaped = escapeRegex(spec);
   // Match both static imports (`from "<spec>"`, `from '<spec>'`) and
   // dynamic imports (`import("<spec>")`). Allow whitespace variations.
-  return new RegExp(
-    `(from\\s*["']${escaped}["'])|(import\\s*\\(\\s*["']${escaped}["']\\s*\\))`,
-  );
+  return new RegExp(`(from\\s*["']${escaped}["'])|(import\\s*\\(\\s*["']${escaped}["']\\s*\\))`);
 }
 
 function walk(dir: string, out: string[]): void {
@@ -94,8 +92,7 @@ describe("no-provider-sdk-imports guardrail", () => {
   // search so that comments / doc-strings that merely mention the old
   // API stay legal.
   const filesRoot = path.join(ipcRoot, "files");
-  const forbiddenEnginePattern =
-    /\b(?:engine|engineRef|engineClient)\s*\.\s*uploadFile\s*\(/;
+  const forbiddenEnginePattern = /\b(?:engine|engineRef|engineClient)\s*\.\s*uploadFile\s*\(/;
 
   it("no file under apps/desktop/src/main/ipc/files/ imports a provider SDK", () => {
     const files: string[] = [];

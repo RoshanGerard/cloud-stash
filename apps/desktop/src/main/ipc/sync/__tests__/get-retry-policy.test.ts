@@ -94,10 +94,7 @@ describe("handleSyncGetRetryPolicy", () => {
     });
 
     await expect(
-      handleSyncGetRetryPolicy(
-        { scope: "datasource", datasourceId: "missing" },
-        client,
-      ),
+      handleSyncGetRetryPolicy({ scope: "datasource", datasourceId: "missing" }, client),
     ).rejects.toBe(err);
   });
 
@@ -107,8 +104,6 @@ describe("handleSyncGetRetryPolicy", () => {
       throw err;
     });
 
-    await expect(
-      handleSyncGetRetryPolicy({ scope: "global" }, client),
-    ).rejects.toBe(err);
+    await expect(handleSyncGetRetryPolicy({ scope: "global" }, client)).rejects.toBe(err);
   });
 });

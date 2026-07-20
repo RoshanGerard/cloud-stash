@@ -61,9 +61,7 @@ const AGE_OPTIONS: ReadonlyArray<{
   { value: "365", label: "365 days", ms: 365 * DAY_MS },
 ];
 
-const ALL_STATUSES: ReadonlyArray<DownloadTerminalStatus> = STATUS_OPTIONS.map(
-  (o) => o.value,
-);
+const ALL_STATUSES: ReadonlyArray<DownloadTerminalStatus> = STATUS_OPTIONS.map((o) => o.value);
 
 export interface ClearHistoryDialogProps {
   open: boolean;
@@ -76,8 +74,7 @@ export function ClearHistoryDialog({
   onOpenChange,
   returnFocusTo,
 }: ClearHistoryDialogProps): JSX.Element {
-  const [selected, setSelected] =
-    useState<ReadonlyArray<DownloadTerminalStatus>>(ALL_STATUSES);
+  const [selected, setSelected] = useState<ReadonlyArray<DownloadTerminalStatus>>(ALL_STATUSES);
   const [age, setAge] = useState<string>("any");
   const [busy, setBusy] = useState(false);
 
@@ -116,17 +113,14 @@ export function ClearHistoryDialog({
     if (ageOpt?.ms != null) {
       filter.olderThanMs = ageOpt.ms;
     }
-    const req: SyncClearDownloadHistoryRequest =
-      Object.keys(filter).length > 0 ? { filter } : {};
+    const req: SyncClearDownloadHistoryRequest = Object.keys(filter).length > 0 ? { filter } : {};
 
     setBusy(true);
     try {
       const res = await window.api?.sync?.clearDownloadHistory(req);
       const deleted = res?.deleted ?? 0;
       if (deleted > 0) {
-        toast.success(
-          `Cleared ${deleted} download ${deleted === 1 ? "record" : "records"}`,
-        );
+        toast.success(`Cleared ${deleted} download ${deleted === 1 ? "record" : "records"}`);
       } else {
         toast("No matching records to clear");
       }
@@ -158,11 +152,7 @@ export function ClearHistoryDialog({
           <p className="text-muted-foreground text-xs font-medium uppercase tracking-wider">
             Status
           </p>
-          <div
-            className="flex flex-wrap gap-2"
-            role="group"
-            aria-label="Status to clear"
-          >
+          <div className="flex flex-wrap gap-2" role="group" aria-label="Status to clear">
             {STATUS_OPTIONS.map((o) => {
               const isOn = selected.includes(o.value);
               return (
@@ -198,11 +188,7 @@ export function ClearHistoryDialog({
                 <span className="tabular-nums">
                   {AGE_OPTIONS.find((o) => o.value === age)?.label ?? "Any time"}
                 </span>
-                <Icon
-                  name="chevron-down"
-                  className="size-3"
-                  aria-hidden="true"
-                />
+                <Icon name="chevron-down" className="size-3" aria-hidden="true" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -224,16 +210,11 @@ export function ClearHistoryDialog({
             add-leftover-download-cleanup VD6: Clear… now unlinks KEEP-eligible
             partials while leaving completed (saved) files untouched. */}
         <p className="text-muted-foreground bg-muted/50 rounded-md p-3 text-xs">
-          <strong>Saved files are kept</strong>; incomplete leftover files are
-          removed.
+          <strong>Saved files are kept</strong>; incomplete leftover files are removed.
         </p>
 
         <DialogFooter>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-          >
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
           <Button

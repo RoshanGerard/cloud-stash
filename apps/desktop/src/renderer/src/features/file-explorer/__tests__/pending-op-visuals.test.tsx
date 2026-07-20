@@ -9,14 +9,8 @@ import { act, cleanup, render, screen, within } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 
 import { DetailsPane } from "../details-pane.js";
-import {
-  entryError,
-  entryPendingOp,
-} from "../pending-op-state.js";
-import {
-  __resetExplorerStoreCacheForTests,
-  createExplorerStore,
-} from "../store.js";
+import { entryError, entryPendingOp } from "../pending-op-state.js";
+import { __resetExplorerStoreCacheForTests, createExplorerStore } from "../store.js";
 import type { ExplorerStore } from "../store.js";
 import { DetailsView } from "../view-modes/details.js";
 import { seedEntry } from "./test-utils.js";
@@ -73,9 +67,7 @@ describe("pending-op-state helper", () => {
       store.setEntries([entry]);
       store.setLastError("e1", "provider locked the file");
     });
-    expect(entryError(store.getSnapshot(), entry)).toBe(
-      "provider locked the file",
-    );
+    expect(entryError(store.getSnapshot(), entry)).toBe("provider locked the file");
   });
 
   it("entryError returns null when lastError is for a different entry", () => {
@@ -202,9 +194,7 @@ describe("DetailsPane — slide animation", () => {
     expect(aside!.getAttribute("data-state")).toBe("closed");
     // When closed, queryByRole must return null (matches the existing
     // Phase 5 visibility test: hidden attr or aria-hidden excludes the role).
-    expect(
-      screen.queryByRole("complementary", { name: /details/i }),
-    ).toBeNull();
+    expect(screen.queryByRole("complementary", { name: /details/i })).toBeNull();
   });
 
   it("carries data-state='open' + motion-safe slide-in classes when open", () => {
@@ -219,17 +209,9 @@ describe("DetailsPane — slide animation", () => {
     // The slide motion is whitelistable only when gated behind
     // `motion-safe:` + `data-[state=*]:` variants (see motion-budget +
     // shadcn reduced-motion tests).
-    expect(aside!.className).toMatch(
-      /motion-safe:data-\[state=open\]:animate-in/,
-    );
-    expect(aside!.className).toMatch(
-      /motion-safe:data-\[state=open\]:slide-in-from-right/,
-    );
-    expect(aside!.className).toMatch(
-      /motion-safe:data-\[state=closed\]:animate-out/,
-    );
-    expect(aside!.className).toMatch(
-      /motion-safe:data-\[state=closed\]:slide-out-to-right/,
-    );
+    expect(aside!.className).toMatch(/motion-safe:data-\[state=open\]:animate-in/);
+    expect(aside!.className).toMatch(/motion-safe:data-\[state=open\]:slide-in-from-right/);
+    expect(aside!.className).toMatch(/motion-safe:data-\[state=closed\]:animate-out/);
+    expect(aside!.className).toMatch(/motion-safe:data-\[state=closed\]:slide-out-to-right/);
   });
 });

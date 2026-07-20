@@ -27,11 +27,7 @@ export interface DetailsPaneProps {
 }
 
 export function DetailsPane({ store }: DetailsPaneProps) {
-  const state = useSyncExternalStore(
-    store.subscribe,
-    store.getSnapshot,
-    store.getSnapshot,
-  );
+  const state = useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
 
   const open = state.detailsPaneOpen;
   const selectedIds = state.selection;
@@ -69,17 +65,12 @@ export function DetailsPane({ store }: DetailsPaneProps) {
 }
 
 function EmptyState() {
-  return (
-    <p className="text-muted-foreground text-xs">Nothing selected</p>
-  );
+  return <p className="text-muted-foreground text-xs">Nothing selected</p>;
 }
 
 function SingleEntryBody({ entry }: { entry: FileEntry }) {
   const defsById = new Map(fieldCatalog.map((f) => [f.id, f] as const));
-  const providerRows = providerMetadataFields(entry).slice(
-    0,
-    PANE_PROVIDER_METADATA_LIMIT,
-  );
+  const providerRows = providerMetadataFields(entry).slice(0, PANE_PROVIDER_METADATA_LIMIT);
   const iconName = iconForEntry(entry);
 
   return (
@@ -95,18 +86,10 @@ function SingleEntryBody({ entry }: { entry: FileEntry }) {
         data-testid="details-pane-header"
         className="border-border mb-3 flex flex-col items-center gap-2 border-b pb-3"
       >
-        <Icon
-          name={iconName}
-          aria-hidden
-          className="text-muted-foreground size-10"
-        />
+        <Icon name={iconName} aria-hidden className="text-muted-foreground size-10" />
         <div className="flex min-w-0 flex-col items-center gap-0.5">
-          <span className="w-full truncate text-center text-sm font-medium">
-            {entry.name}
-          </span>
-          <span className="text-muted-foreground text-xs">
-            {formatType(entry)}
-          </span>
+          <span className="w-full truncate text-center text-sm font-medium">{entry.name}</span>
+          <span className="text-muted-foreground text-xs">{formatType(entry)}</span>
         </div>
       </div>
       <div data-testid="details-pane-fields" className="flex flex-col gap-1">
@@ -144,18 +127,12 @@ function MultiEntrySummary({ entries }: { entries: FileEntry[] }) {
   const count = entries.length;
   // Summary sums files only — directories excluded per spec scenario
   // "Multi-selection shows a summary".
-  const totalBytes = entries.reduce(
-    (acc, e) => (e.kind === "file" ? acc + (e.size ?? 0) : acc),
-    0,
-  );
+  const totalBytes = entries.reduce((acc, e) => (e.kind === "file" ? acc + (e.size ?? 0) : acc), 0);
   const commonParent = commonParentPath(entries.map((e) => e.parentPath));
 
   return (
     <div className="flex flex-col gap-1">
-      <FieldRow
-        label="Selection"
-        value={`${count} items selected`}
-      />
+      <FieldRow label="Selection" value={`${count} items selected`} />
       <FieldRow label="Combined size" value={formatSize(totalBytes)} numeric />
       <FieldRow label="Common parent" value={commonParent} />
     </div>

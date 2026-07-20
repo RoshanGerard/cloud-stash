@@ -145,8 +145,7 @@ export function RenameConflictDialog({
   // conventions stay aligned across all three conflict surfaces; per
   // add-download-overwrite-confirm/design.md "no new dep" rule.
   const hasSize = typeof existingSize === "number";
-  const hasModified =
-    typeof existingModifiedAt === "string" && existingModifiedAt.length > 0;
+  const hasModified = typeof existingModifiedAt === "string" && existingModifiedAt.length > 0;
   const renderHint = hasSize || hasModified;
 
   return (
@@ -164,9 +163,7 @@ export function RenameConflictDialog({
           >
             {hasSize ? formatSize(existingSize as number) : null}
             {hasSize && hasModified ? " · " : null}
-            {hasModified ? (
-              <>modified {formatDate(existingModifiedAt as string)}</>
-            ) : null}
+            {hasModified ? <>modified {formatDate(existingModifiedAt as string)}</> : null}
           </div>
         ) : null}
 
@@ -175,9 +172,7 @@ export function RenameConflictDialog({
             className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm"
             data-testid="rename-conflict-existing-path"
           >
-            <div className="font-mono text-xs text-amber-900">
-              {existingPath}
-            </div>
+            <div className="font-mono text-xs text-amber-900">{existingPath}</div>
           </div>
         ) : null}
 
@@ -191,11 +186,7 @@ export function RenameConflictDialog({
           >
             Overwrite
           </Button>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => onChoice("keep-both")}
-          >
+          <Button type="button" variant="outline" onClick={() => onChoice("keep-both")}>
             Keep both
           </Button>
         </div>
@@ -237,15 +228,12 @@ export function useRenameConflictDialog(): UseRenameConflictDialogResult {
     [],
   );
 
-  const onChoice = useCallback(
-    (choice: "overwrite" | "keep-both"): void => {
-      const res = resolveRef.current;
-      if (!res) return;
-      resolveRef.current = null;
-      res(choice);
-    },
-    [],
-  );
+  const onChoice = useCallback((choice: "overwrite" | "keep-both"): void => {
+    const res = resolveRef.current;
+    if (!res) return;
+    resolveRef.current = null;
+    res(choice);
+  }, []);
 
   const onCancel = useCallback((): void => {
     const res = resolveRef.current;
@@ -297,44 +285,36 @@ export interface UseDownloadConflictDialogResult {
 export function useDownloadConflictDialog(): UseDownloadConflictDialogResult {
   const [open, setOpen] = useState(false);
   const [existingPath, setExistingPath] = useState<string | null>(null);
-  const [existingSize, setExistingSize] = useState<number | undefined>(
-    undefined,
-  );
-  const [existingModifiedAt, setExistingModifiedAt] = useState<
-    string | undefined
-  >(undefined);
+  const [existingSize, setExistingSize] = useState<number | undefined>(undefined);
+  const [existingModifiedAt, setExistingModifiedAt] = useState<string | undefined>(undefined);
 
   const resolveRef = useRef<((c: DownloadConflictChoice) => void) | null>(null);
 
   const prompt: DownloadConflictPrompt = useMemo(
-    () =>
-      async (path, size, modifiedAt) => {
-        setExistingPath(path);
-        setExistingSize(size);
-        setExistingModifiedAt(modifiedAt);
-        setOpen(true);
-        const choice = await new Promise<DownloadConflictChoice>((res) => {
-          resolveRef.current = res;
-        });
-        resolveRef.current = null;
-        setOpen(false);
-        setExistingPath(null);
-        setExistingSize(undefined);
-        setExistingModifiedAt(undefined);
-        return choice;
-      },
-    [],
-  );
-
-  const onChoice = useCallback(
-    (choice: "overwrite" | "keep-both"): void => {
-      const res = resolveRef.current;
-      if (!res) return;
+    () => async (path, size, modifiedAt) => {
+      setExistingPath(path);
+      setExistingSize(size);
+      setExistingModifiedAt(modifiedAt);
+      setOpen(true);
+      const choice = await new Promise<DownloadConflictChoice>((res) => {
+        resolveRef.current = res;
+      });
       resolveRef.current = null;
-      res(choice);
+      setOpen(false);
+      setExistingPath(null);
+      setExistingSize(undefined);
+      setExistingModifiedAt(undefined);
+      return choice;
     },
     [],
   );
+
+  const onChoice = useCallback((choice: "overwrite" | "keep-both"): void => {
+    const res = resolveRef.current;
+    if (!res) return;
+    resolveRef.current = null;
+    res(choice);
+  }, []);
 
   const onCancel = useCallback((): void => {
     const res = resolveRef.current;

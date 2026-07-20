@@ -72,15 +72,10 @@ const BOOKKEEPING_SQL = `
  * Throws the original error on failure (not wrapped) — the caller is
  * bootstrap code that should fail loud.
  */
-export function runMigrations(
-  db: SqliteDatabase,
-  migrations: readonly Migration[],
-): void {
+export function runMigrations(db: SqliteDatabase, migrations: readonly Migration[]): void {
   db.exec(BOOKKEEPING_SQL);
 
-  const isApplied = db.prepare<[string]>(
-    "SELECT 1 FROM _migrations WHERE id = ?",
-  );
+  const isApplied = db.prepare<[string]>("SELECT 1 FROM _migrations WHERE id = ?");
   const recordApplied = db.prepare<[string, number]>(
     "INSERT INTO _migrations (id, applied_at) VALUES (?, ?)",
   );

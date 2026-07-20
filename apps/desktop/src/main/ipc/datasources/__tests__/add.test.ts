@@ -11,10 +11,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { openDatabase, runMigrations } from "../../../db/database.js";
 import { DEFAULT_MIGRATIONS } from "../../../db/migrations.js";
-import {
-  initEngine,
-  resetEngineForTests,
-} from "../../../datasources/engine.js";
+import { initEngine, resetEngineForTests } from "../../../datasources/engine.js";
 import { handleDatasourcesAdd } from "../add.js";
 import { handleDatasourcesList } from "../list.js";
 

@@ -12,15 +12,8 @@
 
 import { describe, expect, it, vi } from "vitest";
 
-import type {
-  AuthResult,
-  CredentialsSchema,
-  DatasourceSummary,
-} from "@cloudstash/ipc-contracts";
-import type {
-  CredentialsFormIntent,
-  OAuthIntent,
-} from "@cloudstash/fs-datasource-engine";
+import type { AuthResult, CredentialsSchema, DatasourceSummary } from "@cloudstash/ipc-contracts";
+import type { CredentialsFormIntent, OAuthIntent } from "@cloudstash/fs-datasource-engine";
 
 import { createEventBus, type EventBus } from "../events/event-bus.js";
 import type { EventName, EventPayloadMap } from "@cloudstash/ipc-contracts/sync-service";
@@ -55,10 +48,7 @@ function makeBusSpy(bus: EventBus): {
  * Build a credentials-form intent whose `submit` resolves to the supplied
  * AuthResult.
  */
-function makeFormIntent(opts: {
-  authResult: AuthResult;
-  schema?: CredentialsSchema;
-}): {
+function makeFormIntent(opts: { authResult: AuthResult; schema?: CredentialsSchema }): {
   intent: CredentialsFormIntent;
   submit: ReturnType<typeof vi.fn>;
 } {
@@ -141,10 +131,8 @@ describe("sync:authenticate-complete handler — implement-datasource-onboarding
     const completed = d.events.filter((e) => e.name === "auth-completed");
     expect(persisted).toHaveLength(1);
     expect(completed).toHaveLength(1);
-    const persistedPayload = persisted[0]!.payload as
-      EventPayloadMap["credential-persisted"];
-    const completedPayload = completed[0]!.payload as
-      EventPayloadMap["auth-completed"];
+    const persistedPayload = persisted[0]!.payload as EventPayloadMap["credential-persisted"];
+    const completedPayload = completed[0]!.payload as EventPayloadMap["auth-completed"];
     expect(persistedPayload.correlationId).toBe("corr-1");
     expect(completedPayload.correlationId).toBe("corr-1");
     expect(persistedPayload.datasourceId).toBe("ds-42");
@@ -207,12 +195,8 @@ describe("sync:authenticate-complete handler — implement-datasource-onboarding
     expect(oauthIntent.completeWith).not.toHaveBeenCalled();
 
     // No credential-persisted / auth-completed.
-    expect(
-      d.events.filter((e) => e.name === "credential-persisted"),
-    ).toHaveLength(0);
-    expect(
-      d.events.filter((e) => e.name === "auth-completed"),
-    ).toHaveLength(0);
+    expect(d.events.filter((e) => e.name === "credential-persisted")).toHaveLength(0);
+    expect(d.events.filter((e) => e.name === "auth-completed")).toHaveLength(0);
   });
 
   it("on submit rejection returns engine-error AND emits auth-failed; correlation consumed; no credential-persisted", async () => {
@@ -252,17 +236,12 @@ describe("sync:authenticate-complete handler — implement-datasource-onboarding
     // auth-failed emitted, credential-persisted NOT emitted.
     const failed = d.events.filter((e) => e.name === "auth-failed");
     expect(failed).toHaveLength(1);
-    const failedPayload = failed[0]!.payload as
-      EventPayloadMap["auth-failed"];
+    const failedPayload = failed[0]!.payload as EventPayloadMap["auth-failed"];
     expect(failedPayload.correlationId).toBe("corr-boom");
     expect(failedPayload.tag).toBe("engine-error");
     expect(failedPayload.message).toMatch(/bucket not found/);
 
-    expect(
-      d.events.filter((e) => e.name === "credential-persisted"),
-    ).toHaveLength(0);
-    expect(
-      d.events.filter((e) => e.name === "auth-completed"),
-    ).toHaveLength(0);
+    expect(d.events.filter((e) => e.name === "credential-persisted")).toHaveLength(0);
+    expect(d.events.filter((e) => e.name === "auth-completed")).toHaveLength(0);
   });
 });

@@ -24,22 +24,8 @@
 // `useAuthSession` is mocked at the module boundary so we can drive
 // sessionState transitions per test without the full DatasourcesProvider tree.
 
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-  type Mock,
-} from "vitest";
-import {
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-} from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from "vitest";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 
 import type { AuthSessionState } from "@/features/datasources/store";
@@ -89,20 +75,14 @@ describe("InvalidDatasourceState — render structure", () => {
         onRequestRemove={() => {}}
       />,
     );
-    expect(
-      screen.getByText("This datasource needs reconfiguring"),
-    ).toBeInTheDocument();
+    expect(screen.getByText("This datasource needs reconfiguring")).toBeInTheDocument();
     expect(
       screen.getByText(
         "Its connection details are missing or invalid. Sign in again or remove the datasource and add it back.",
       ),
     ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: /reconnect/i }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: /remove datasource/i }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /reconnect/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /remove datasource/i })).toBeInTheDocument();
   });
 
   it("uses role='alert', aria-live='polite', and the documented data-testid", () => {
@@ -150,9 +130,7 @@ describe("InvalidDatasourceState — useAuthSession lifecycle", () => {
     );
 
     fireEvent.click(screen.getByRole("button", { name: /^reconnect$/i }));
-    await waitFor(() =>
-      expect(authenticateStartMock).toHaveBeenCalledTimes(1),
-    );
+    await waitFor(() => expect(authenticateStartMock).toHaveBeenCalledTimes(1));
 
     rerender(
       <InvalidDatasourceState
@@ -172,17 +150,11 @@ describe("InvalidDatasourceState — useAuthSession lifecycle", () => {
     expect(cancelBtn).not.toBeDisabled();
 
     // No disabled / greyed primary button on screen during pending.
-    expect(
-      screen.queryByRole("button", { name: /connecting/i }),
-    ).not.toBeInTheDocument();
-    expect(
-      screen.queryByRole("button", { name: /^reconnect$/i }),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /connecting/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^reconnect$/i })).not.toBeInTheDocument();
 
     // Remove stays enabled during pending (design.md D6).
-    expect(
-      screen.getByRole("button", { name: /remove datasource/i }),
-    ).not.toBeDisabled();
+    expect(screen.getByRole("button", { name: /remove datasource/i })).not.toBeDisabled();
   });
 
   it("live Cancel during pending calls authenticateCancel and resets to 'Try Again'", async () => {
@@ -199,9 +171,7 @@ describe("InvalidDatasourceState — useAuthSession lifecycle", () => {
     );
 
     fireEvent.click(screen.getByRole("button", { name: /^reconnect$/i }));
-    await waitFor(() =>
-      expect(authenticateStartMock).toHaveBeenCalledTimes(1),
-    );
+    await waitFor(() => expect(authenticateStartMock).toHaveBeenCalledTimes(1));
 
     rerender(
       <InvalidDatasourceState
@@ -224,9 +194,7 @@ describe("InvalidDatasourceState — useAuthSession lifecycle", () => {
     // navigation; onReconnectSucceeded NOT called.
     const tryAgain = screen.getByRole("button", { name: /try again/i });
     expect(tryAgain).not.toBeDisabled();
-    expect(
-      screen.getByRole("button", { name: /remove datasource/i }),
-    ).not.toBeDisabled();
+    expect(screen.getByRole("button", { name: /remove datasource/i })).not.toBeDisabled();
     expect(onReconnectSucceeded).not.toHaveBeenCalled();
   });
 
@@ -243,9 +211,7 @@ describe("InvalidDatasourceState — useAuthSession lifecycle", () => {
     );
 
     fireEvent.click(screen.getByRole("button", { name: /^reconnect$/i }));
-    await waitFor(() =>
-      expect(authenticateStartMock).toHaveBeenCalledTimes(1),
-    );
+    await waitFor(() => expect(authenticateStartMock).toHaveBeenCalledTimes(1));
 
     unmount();
 
@@ -268,9 +234,7 @@ describe("InvalidDatasourceState — useAuthSession lifecycle", () => {
     );
 
     fireEvent.click(screen.getByRole("button", { name: /reconnect/i }));
-    await waitFor(() =>
-      expect(authenticateStartMock).toHaveBeenCalledTimes(1),
-    );
+    await waitFor(() => expect(authenticateStartMock).toHaveBeenCalledTimes(1));
     expect(authenticateStartMock.mock.calls[0]![0]).toEqual({
       providerId: "google-drive",
       datasourceId: "ds-42",
@@ -291,9 +255,7 @@ describe("InvalidDatasourceState — useAuthSession lifecycle", () => {
     );
 
     fireEvent.click(screen.getByRole("button", { name: /reconnect/i }));
-    await waitFor(() =>
-      expect(authenticateStartMock).toHaveBeenCalledTimes(1),
-    );
+    await waitFor(() => expect(authenticateStartMock).toHaveBeenCalledTimes(1));
 
     mockSessionState = { status: "completed", datasourceId: "ds-1" };
     rerender(
@@ -344,9 +306,7 @@ describe("InvalidDatasourceState — useAuthSession lifecycle", () => {
       );
 
       fireEvent.click(screen.getByRole("button", { name: /^reconnect$/i }));
-      await waitFor(() =>
-        expect(authenticateStartMock).toHaveBeenCalledTimes(1),
-      );
+      await waitFor(() => expect(authenticateStartMock).toHaveBeenCalledTimes(1));
 
       mockSessionState = terminalState;
       rerender(
@@ -361,14 +321,10 @@ describe("InvalidDatasourceState — useAuthSession lifecycle", () => {
       // Primary is "Try Again" (NOT "Reconnect"), enabled.
       const tryAgain = screen.getByRole("button", { name: /try again/i });
       expect(tryAgain).not.toBeDisabled();
-      expect(
-        screen.queryByRole("button", { name: /^reconnect$/i }),
-      ).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: /^reconnect$/i })).not.toBeInTheDocument();
 
       // Remove re-enabled.
-      expect(
-        screen.getByRole("button", { name: /remove datasource/i }),
-      ).not.toBeDisabled();
+      expect(screen.getByRole("button", { name: /remove datasource/i })).not.toBeDisabled();
 
       // Honest dead-end copy replaces the blanket "missing or invalid" body;
       // the old generic "Reconnect failed" line is gone.
@@ -377,9 +333,7 @@ describe("InvalidDatasourceState — useAuthSession lifecycle", () => {
           "Sign-in didn't complete. Try again with the account this datasource is connected to.",
         ),
       ).toBeInTheDocument();
-      expect(
-        screen.queryByText("Reconnect failed — please try again."),
-      ).not.toBeInTheDocument();
+      expect(screen.queryByText("Reconnect failed — please try again.")).not.toBeInTheDocument();
       expect(
         screen.queryByText(
           "Its connection details are missing or invalid. Sign in again or remove the datasource and add it back.",
@@ -423,9 +377,7 @@ describe("InvalidDatasourceState — Remove button", () => {
       />,
     );
 
-    fireEvent.click(
-      screen.getByRole("button", { name: /remove datasource/i }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: /remove datasource/i }));
     expect(onRequestRemove).toHaveBeenCalledTimes(1);
     expect(authenticateStartMock).not.toHaveBeenCalled();
   });
@@ -468,9 +420,7 @@ describe("InvalidDatasourceState — credentials-form inline reconnect (amazon-s
 
     fireEvent.click(screen.getByRole("button", { name: /^back$/i }));
 
-    expect(
-      screen.getByRole("button", { name: /^reconnect$/i }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^reconnect$/i })).toBeInTheDocument();
     expect(screen.queryByLabelText(/access key id/i)).not.toBeInTheDocument();
   });
 
@@ -521,17 +471,13 @@ describe("InvalidDatasourceState — credentials-form inline reconnect (amazon-s
     });
     fireEvent.click(screen.getByRole("button", { name: /^connect/i }));
 
-    await waitFor(() =>
-      expect(authenticateStartMock).toHaveBeenCalledTimes(1),
-    );
+    await waitFor(() => expect(authenticateStartMock).toHaveBeenCalledTimes(1));
     // The EXISTING datasourceId is threaded — not a freshly minted id.
     expect(authenticateStartMock.mock.calls[0]![0]).toEqual({
       providerId: "amazon-s3",
       datasourceId: "ds-9",
     });
-    await waitFor(() =>
-      expect(onReconnectSucceeded).toHaveBeenCalledTimes(1),
-    );
+    await waitFor(() => expect(onReconnectSucceeded).toHaveBeenCalledTimes(1));
   });
 });
 
@@ -557,18 +503,12 @@ describe("InvalidDatasourceState — unknown providerId does not trap the user",
     fireEvent.click(screen.getByRole("button", { name: /^reconnect$/i }));
 
     // Falls through to authenticateStart (mirrors the pre-change behaviour).
-    await waitFor(() =>
-      expect(authenticateStartMock).toHaveBeenCalledTimes(1),
-    );
+    await waitFor(() => expect(authenticateStartMock).toHaveBeenCalledTimes(1));
     // No trapped empty form: the access-key field is NOT shown…
     expect(screen.queryByLabelText(/access key id/i)).not.toBeInTheDocument();
     // …and both prompt actions remain reachable.
-    expect(
-      screen.getByRole("button", { name: /^reconnect$/i }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: /remove datasource/i }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^reconnect$/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /remove datasource/i })).toBeInTheDocument();
   });
 });
 
@@ -578,9 +518,7 @@ describe("InvalidDatasourceState — Wrong-account callout (enforce-oauth-reconn
   // the amber "Wrong account" callout assembled from the STRUCTURED fields
   // (expectedEmail/actualEmail) — never parsed from `message` — per design.md
   // D5 + `## Visual direction`. Reconnect stays live (not disabled).
-  async function renderThenFail(
-    terminalState: AuthSessionState,
-  ): Promise<void> {
+  async function renderThenFail(terminalState: AuthSessionState): Promise<void> {
     mockSessionState = { status: "pending" };
     const { rerender } = render(
       <InvalidDatasourceState
@@ -591,9 +529,7 @@ describe("InvalidDatasourceState — Wrong-account callout (enforce-oauth-reconn
       />,
     );
     fireEvent.click(screen.getByRole("button", { name: /^reconnect$/i }));
-    await waitFor(() =>
-      expect(authenticateStartMock).toHaveBeenCalledTimes(1),
-    );
+    await waitFor(() => expect(authenticateStartMock).toHaveBeenCalledTimes(1));
     mockSessionState = terminalState;
     rerender(
       <InvalidDatasourceState
@@ -623,9 +559,7 @@ describe("InvalidDatasourceState — Wrong-account callout (enforce-oauth-reconn
       "This datasource is connected to acme@gmail.com. You signed in as other@gmail.com. Reconnect using acme@gmail.com to continue.",
     );
     // The generic line MUST NOT also render for this tag (mutual exclusion).
-    expect(
-      screen.queryByText("Reconnect failed — please try again."),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByText("Reconnect failed — please try again.")).not.toBeInTheDocument();
   });
 
   it("keeps Reconnect LIVE (not disabled) on an account-mismatch block", async () => {
@@ -704,13 +638,9 @@ describe("InvalidDatasourceState — Wrong-account callout (enforce-oauth-reconn
         "Sign-in didn't complete. Try again with the account this datasource is connected to.",
       ),
     ).toBeInTheDocument();
-    expect(
-      screen.queryByText("Reconnect failed — please try again."),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByText("Reconnect failed — please try again.")).not.toBeInTheDocument();
     expect(screen.queryByText("Wrong account")).not.toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: /try again/i }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /try again/i })).toBeInTheDocument();
   });
 });
 
@@ -736,12 +666,8 @@ describe("InvalidDatasourceState — failed authenticateStart feedback (Decision
 
     fireEvent.click(screen.getByRole("button", { name: /^reconnect$/i }));
 
-    await waitFor(() =>
-      expect(authenticateStartMock).toHaveBeenCalledTimes(1),
-    );
-    expect(
-      await screen.findByText(/service-config-missing/i),
-    ).toBeInTheDocument();
+    await waitFor(() => expect(authenticateStartMock).toHaveBeenCalledTimes(1));
+    expect(await screen.findByText(/service-config-missing/i)).toBeInTheDocument();
   });
 });
 
@@ -757,22 +683,14 @@ describe("InvalidDatasourceState — scope-insufficient auth-error callout (fix-
         authErrorMessage="request had insufficient authentication scopes"
       />,
     );
+    expect(screen.getByText("Google Drive needs full-access permission")).toBeInTheDocument();
     expect(
-      screen.getByText("Google Drive needs full-access permission"),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        "Authentication error: request had insufficient authentication scopes",
-      ),
+      screen.getByText("Authentication error: request had insufficient authentication scopes"),
     ).toBeInTheDocument();
     // The routing tag is the initial auth-revoked (not a terminal session), so
     // the primary keeps the "Reconnect" label and Remove stays present.
-    expect(
-      screen.getByRole("button", { name: /^reconnect$/i }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: /remove datasource/i }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^reconnect$/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /remove datasource/i })).toBeInTheDocument();
   });
 
   it("suppresses the misleading generic 'missing or invalid' body when the callout shows", () => {
@@ -804,12 +722,8 @@ describe("InvalidDatasourceState — scope-insufficient auth-error callout (fix-
         authErrorMessage="insufficient scope"
       />,
     );
-    expect(
-      screen.getByText("OneDrive needs full-access permission"),
-    ).toBeInTheDocument();
-    expect(
-      screen.queryByText("Google Drive needs full-access permission"),
-    ).not.toBeInTheDocument();
+    expect(screen.getByText("OneDrive needs full-access permission")).toBeInTheDocument();
+    expect(screen.queryByText("Google Drive needs full-access permission")).not.toBeInTheDocument();
   });
 
   it("does NOT render the callout when authErrorKind is absent (generic copy unchanged)", () => {
@@ -821,9 +735,7 @@ describe("InvalidDatasourceState — scope-insufficient auth-error callout (fix-
         onRequestRemove={() => {}}
       />,
     );
-    expect(
-      screen.queryByText(/needs full-access permission/i),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByText(/needs full-access permission/i)).not.toBeInTheDocument();
     expect(
       screen.getByText(
         "Its connection details are missing or invalid. Sign in again or remove the datasource and add it back.",
@@ -846,15 +758,9 @@ describe("InvalidDatasourceState — scope-insufficient auth-error callout (fix-
     // Start a reconnect → correlationId recorded → isWaiting true → the
     // "Connecting…" status line takes precedence over the auth-error callout.
     fireEvent.click(screen.getByRole("button", { name: /^reconnect$/i }));
-    await waitFor(() =>
-      expect(authenticateStartMock).toHaveBeenCalledTimes(1),
-    );
-    expect(
-      await screen.findByRole("status"),
-    ).toBeInTheDocument();
-    expect(
-      screen.queryByText("Google Drive needs full-access permission"),
-    ).not.toBeInTheDocument();
+    await waitFor(() => expect(authenticateStartMock).toHaveBeenCalledTimes(1));
+    expect(await screen.findByRole("status")).toBeInTheDocument();
+    expect(screen.queryByText("Google Drive needs full-access permission")).not.toBeInTheDocument();
   });
 
   it("does NOT render the callout when the session failed account-mismatch (precedence: amber wins, one callout at a time)", () => {
@@ -880,9 +786,7 @@ describe("InvalidDatasourceState — scope-insufficient auth-error callout (fix-
       />,
     );
     expect(screen.getByText("Wrong account")).toBeInTheDocument();
-    expect(
-      screen.queryByText("Google Drive needs full-access permission"),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByText("Google Drive needs full-access permission")).not.toBeInTheDocument();
   });
 
   it("falls back to a generic detail when authErrorMessage is absent", () => {
@@ -896,9 +800,7 @@ describe("InvalidDatasourceState — scope-insufficient auth-error callout (fix-
       />,
     );
     expect(
-      screen.getByText(
-        "Authentication error: insufficient permissions for this datasource",
-      ),
+      screen.getByText("Authentication error: insufficient permissions for this datasource"),
     ).toBeInTheDocument();
   });
 
@@ -919,25 +821,17 @@ describe("InvalidDatasourceState — scope-insufficient auth-error callout (fix-
     mockSessionState = { status: "pending" };
     const { rerender } = render(<InvalidDatasourceState {...props} />);
     fireEvent.click(screen.getByRole("button", { name: /^reconnect$/i }));
-    await waitFor(() =>
-      expect(authenticateStartMock).toHaveBeenCalledTimes(1),
-    );
+    await waitFor(() => expect(authenticateStartMock).toHaveBeenCalledTimes(1));
     // Reconnect dead-ends (timeout, no account-mismatch) → showDeadEnd true,
     // but the files-error callout is still armed.
     mockSessionState = { status: "timeout" } as AuthSessionState;
     rerender(<InvalidDatasourceState {...props} />);
 
     // The scope callout persists (single root-cause explanation)...
-    expect(
-      screen.getByText("Google Drive needs full-access permission"),
-    ).toBeInTheDocument();
+    expect(screen.getByText("Google Drive needs full-access permission")).toBeInTheDocument();
     // ...and the dead-end body line is NOT also shown (no double explanation).
-    expect(
-      screen.queryByText(/Sign-in didn.t complete/i),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByText(/Sign-in didn.t complete/i)).not.toBeInTheDocument();
     // The primary action is the retry affordance.
-    expect(
-      screen.getByRole("button", { name: /try again/i }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /try again/i })).toBeInTheDocument();
   });
 });

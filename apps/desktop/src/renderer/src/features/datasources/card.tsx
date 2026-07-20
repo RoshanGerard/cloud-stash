@@ -90,17 +90,11 @@ function deriveDisplayStatus(
   summary: DatasourceSummary,
   jobs: ReadonlyArray<{ readonly kind: string; readonly status: string }>,
 ): CardDisplayStatus {
-  const hasRunningSync = jobs.some(
-    (j) => j.kind === "sync" && j.status === "running",
-  );
+  const hasRunningSync = jobs.some((j) => j.kind === "sync" && j.status === "running");
   if (hasRunningSync) return "syncing";
-  const hasWaitingNetwork = jobs.some(
-    (j) => j.kind === "sync" && j.status === "waiting-network",
-  );
+  const hasWaitingNetwork = jobs.some((j) => j.kind === "sync" && j.status === "waiting-network");
   if (hasWaitingNetwork) return "waiting-network";
-  const hasQueuedSync = jobs.some(
-    (j) => j.kind === "sync" && j.status === "queued",
-  );
+  const hasQueuedSync = jobs.some((j) => j.kind === "sync" && j.status === "queued");
   if (hasQueuedSync) return "syncing";
   return summary.status;
 }
@@ -126,10 +120,7 @@ export function DatasourceCard({ summary }: DatasourceCardProps) {
   }, [actions, summary.id]);
 
   const onPauseOrResume = useCallback(() => {
-    const next =
-      summary.status === "paused" || summary.status === "error"
-        ? "resume"
-        : "pause";
+    const next = summary.status === "paused" || summary.status === "error" ? "resume" : "pause";
     void actions.action({ datasourceId: summary.id, action: next });
   }, [actions, summary.id, summary.status]);
 
@@ -160,17 +151,10 @@ export function DatasourceCard({ summary }: DatasourceCardProps) {
     void actions.remove({ datasourceId: summary.id });
   }, [actions, summary.id]);
 
-  const pauseLabel =
-    summary.status === "paused" || summary.status === "error"
-      ? "Resume"
-      : "Pause";
+  const pauseLabel = summary.status === "paused" || summary.status === "error" ? "Resume" : "Pause";
 
   return (
-    <Card
-      data-testid="datasource-card"
-      data-datasource-id={summary.id}
-      className="gap-3 p-4"
-    >
+    <Card data-testid="datasource-card" data-datasource-id={summary.id} className="gap-3 p-4">
       <header className="flex items-start gap-3">
         {providerIconName ? (
           <Icon
@@ -182,15 +166,10 @@ export function DatasourceCard({ summary }: DatasourceCardProps) {
           />
         ) : null}
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-          <h3 className="truncate text-sm font-semibold">
-            {summary.displayName}
-          </h3>
+          <h3 className="truncate text-sm font-semibold">{summary.displayName}</h3>
           <p className="text-muted-foreground text-xs">{providerDisplayName}</p>
         </div>
-        <StatusBadge
-          status={displayStatus}
-          errorReason={summary.errorReason}
-        />
+        <StatusBadge status={displayStatus} errorReason={summary.errorReason} />
         <QuickActionsMenu
           pauseLabel={pauseLabel}
           onExplore={onExplore}
@@ -233,23 +212,12 @@ export function DatasourceCard({ summary }: DatasourceCardProps) {
       ) : null}
 
       {summary.status === "error" &&
-        (summary.errorKind === "auth-revoked" ||
-          summary.errorKind === "auth-expired") ? (
-        <AuthErrorBanner
-          providerId={summary.providerId}
-          datasourceId={summary.id}
-        />
-      ) : summary.status === "error" &&
-        summary.errorKind === "invalid-datasource" ? (
-        <InvalidDatasourceBanner
-          providerId={summary.providerId}
-          datasourceId={summary.id}
-        />
+      (summary.errorKind === "auth-revoked" || summary.errorKind === "auth-expired") ? (
+        <AuthErrorBanner providerId={summary.providerId} datasourceId={summary.id} />
+      ) : summary.status === "error" && summary.errorKind === "invalid-datasource" ? (
+        <InvalidDatasourceBanner providerId={summary.providerId} datasourceId={summary.id} />
       ) : summary.status === "error" && summary.errorReason ? (
-        <p
-          data-testid="error-reason-text"
-          className="text-destructive text-xs"
-        >
+        <p data-testid="error-reason-text" className="text-destructive text-xs">
           {summary.errorReason}
         </p>
       ) : null}
@@ -311,8 +279,7 @@ function AuthErrorBanner({
     // Decision 10.
   }, [providerId, datasourceId]);
 
-  const isWaiting =
-    correlationId !== null && sessionState.status === "pending";
+  const isWaiting = correlationId !== null && sessionState.status === "pending";
   const isFailed =
     correlationId !== null &&
     (sessionState.status === "cancelled" ||
@@ -330,9 +297,7 @@ function AuthErrorBanner({
     sessionState.status === "failed" &&
     // eslint-disable-next-line cloudstash/no-raw-error-tag-literal -- AuthFailedTag vocabulary (no const object) — out of scope
     sessionState.tag === "account-mismatch";
-  const expectedEmail = isAccountMismatch
-    ? sessionState.expectedEmail
-    : undefined;
+  const expectedEmail = isAccountMismatch ? sessionState.expectedEmail : undefined;
 
   const reconnectButton = (
     <Button
@@ -374,9 +339,7 @@ function AuthErrorBanner({
             >
               {expectedEmail ? (
                 <>
-                  Connect as{" "}
-                  <strong className="font-semibold">{expectedEmail}</strong> to
-                  continue.
+                  Connect as <strong className="font-semibold">{expectedEmail}</strong> to continue.
                 </>
               ) : (
                 // Email-less account: block still fires on `sub`; no email to
@@ -451,8 +414,7 @@ function InvalidDatasourceBanner({
     void actions.remove({ datasourceId });
   }, [actions, datasourceId]);
 
-  const isWaiting =
-    correlationId !== null && sessionState.status === "pending";
+  const isWaiting = correlationId !== null && sessionState.status === "pending";
   const isFailed =
     correlationId !== null &&
     (sessionState.status === "cancelled" ||
@@ -515,20 +477,12 @@ function getDescriptor(providerId: string): ProviderDescriptor | undefined {
 // (review-round-1) flagged the previous hardcoded allowlist as drift-prone
 // once the adapter grew new names for Decision 15's primary-CTA glyphs.
 // Unknown strings resolve to `null` and the card skips rendering the icon.
-function iconNameFromDescriptor(
-  descriptor: ProviderDescriptor | undefined,
-): IconName | null {
+function iconNameFromDescriptor(descriptor: ProviderDescriptor | undefined): IconName | null {
   if (!descriptor) return null;
   return isIconName(descriptor.icon) ? descriptor.icon : null;
 }
 
-function StatusBadge({
-  status,
-  errorReason,
-}: {
-  status: CardDisplayStatus;
-  errorReason?: string;
-}) {
+function StatusBadge({ status, errorReason }: { status: CardDisplayStatus; errorReason?: string }) {
   const variant = statusBadgeVariant(status);
   const accessibleName = useMemo(() => {
     if (status === "error" && errorReason) {
@@ -563,10 +517,7 @@ function StatusBadge({
       variant={variant}
       aria-label={accessibleName}
       aria-live="polite"
-      className={cn(
-        "shrink-0 gap-1.5",
-        isWaitingNetwork && "text-zinc-400",
-      )}
+      className={cn("shrink-0 gap-1.5", isWaitingNetwork && "text-zinc-400")}
     >
       {isSyncingFamily ? <SyncingDot /> : null}
       {isWaitingNetwork ? (
@@ -689,12 +640,7 @@ function QuickActionsMenu({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          aria-label="Quick actions"
-          className="size-7 shrink-0"
-        >
+        <Button variant="ghost" size="icon" aria-label="Quick actions" className="size-7 shrink-0">
           <span aria-hidden className="text-base leading-none">
             ⋯
           </span>
@@ -738,10 +684,7 @@ function QuickActionsMenu({
 function UsageBar({ used, quota }: { used: number; quota: number }) {
   const pct = quota > 0 ? Math.min(100, Math.round((used / quota) * 100)) : 0;
   return (
-    <div
-      data-testid="datasource-usage"
-      className="flex flex-col gap-1 tabular-nums"
-    >
+    <div data-testid="datasource-usage" className="flex flex-col gap-1 tabular-nums">
       <Progress value={pct} aria-label={`Storage used: ${pct}%`} />
       <div className="text-muted-foreground flex items-center justify-between text-xs">
         <span>{formatBytes(used)}</span>

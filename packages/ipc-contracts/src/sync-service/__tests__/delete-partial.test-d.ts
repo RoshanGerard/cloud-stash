@@ -27,9 +27,7 @@ import type {
 
 describe("DownloadFailedPayload.partialKept optional field", () => {
   it("partialKept is boolean | undefined (optional)", () => {
-    expectTypeOf<DownloadFailedPayload["partialKept"]>().toEqualTypeOf<
-      boolean | undefined
-    >();
+    expectTypeOf<DownloadFailedPayload["partialKept"]>().toEqualTypeOf<boolean | undefined>();
   });
 
   it("a payload that omits partialKept is still a valid DownloadFailedPayload", () => {

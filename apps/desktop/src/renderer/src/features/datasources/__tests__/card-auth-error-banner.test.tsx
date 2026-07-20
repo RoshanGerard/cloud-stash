@@ -7,24 +7,8 @@
 // disabled / "Connecting…" state. auth-completed event arrival flips the
 // card's status back to connected via the existing event stream.
 
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-  type Mock,
-} from "vitest";
-import {
-  act,
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-  within,
-} from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from "vitest";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import type { DatasourceSummary } from "@cloudstash/ipc-contracts";
 import type { SyncEvent } from "@cloudstash/ipc-contracts/sync-service-desktop";
@@ -85,16 +69,12 @@ function installApiMock() {
       }),
       authenticateStart: authenticateStartMock,
       authenticateComplete: vi.fn(),
-      authenticateCancel: vi
-        .fn()
-        .mockResolvedValue({ ok: true, result: { cancelled: true } }),
+      authenticateCancel: vi.fn().mockResolvedValue({ ok: true, result: { cancelled: true } }),
     },
   };
 }
 
-function buildErrorSummary(
-  overrides: Partial<DatasourceSummary> = {},
-): DatasourceSummary {
+function buildErrorSummary(overrides: Partial<DatasourceSummary> = {}): DatasourceSummary {
   return {
     id: "ds-gd-err",
     displayName: "Personal Drive",
@@ -119,12 +99,11 @@ function renderCard(summary: DatasourceSummary): ReturnType<typeof render> {
 
 beforeEach(() => {
   if (!("ResizeObserver" in window)) {
-    (window as unknown as { ResizeObserver: unknown }).ResizeObserver =
-      class MockResizeObserver {
-        observe() {}
-        unobserve() {}
-        disconnect() {}
-      };
+    (window as unknown as { ResizeObserver: unknown }).ResizeObserver = class MockResizeObserver {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    };
   }
   installApiMock();
 });
@@ -148,9 +127,7 @@ describe("AuthErrorBanner — renders iff errorKind is auth-class", () => {
   it("banner contains an accessible Reconnect button", () => {
     renderCard(buildErrorSummary({ errorKind: "auth-revoked" }));
     const banner = screen.getByTestId("auth-error-banner");
-    expect(
-      within(banner).getByRole("button", { name: /reconnect/i }),
-    ).toBeInTheDocument();
+    expect(within(banner).getByRole("button", { name: /reconnect/i })).toBeInTheDocument();
   });
 
   it("bare <p className='text-destructive text-xs'> is NOT present when banner is shown", () => {
@@ -178,9 +155,7 @@ describe("AuthErrorBanner — non-auth errors use bare paragraph", () => {
       }),
     );
     expect(screen.getByTestId("error-reason-text")).toBeInTheDocument();
-    expect(screen.getByTestId("error-reason-text").textContent).toContain(
-      "Network unreachable",
-    );
+    expect(screen.getByTestId("error-reason-text").textContent).toContain("Network unreachable");
   });
 
   it("does NOT render auth-error-banner when errorKind is null (non-error status)", () => {
@@ -259,9 +234,7 @@ describe("AuthErrorBanner — Reconnect calls sync.authenticateStart", () => {
 
     const banner = screen.getByTestId("auth-error-banner");
     fireEvent.click(within(banner).getByRole("button", { name: /reconnect/i }));
-    await waitFor(() =>
-      expect(authenticateStartMock).toHaveBeenCalledTimes(1),
-    );
+    await waitFor(() => expect(authenticateStartMock).toHaveBeenCalledTimes(1));
 
     act(() => {
       emitSyncEvent({
@@ -313,24 +286,16 @@ describe("AuthErrorBanner — Wrong-account mini-callout (enforce-oauth-reconnec
     // pending state) BEFORE emitting the terminal event, otherwise the event
     // for "corr-reconnect" lands while the banner is still keyed on the
     // "__none__" sentinel and is dropped.
-    await waitFor(() =>
-      expect(authenticateStartMock).toHaveBeenCalledTimes(1),
-    );
+    await waitFor(() => expect(authenticateStartMock).toHaveBeenCalledTimes(1));
     act(() => {
       emitSyncEvent({
         kind: "auth-failed",
         payload: {
           correlationId: "corr-reconnect",
           tag: failure.tag,
-          ...(failure.message !== undefined
-            ? { message: failure.message }
-            : {}),
-          ...(failure.expectedEmail !== undefined
-            ? { expectedEmail: failure.expectedEmail }
-            : {}),
-          ...(failure.actualEmail !== undefined
-            ? { actualEmail: failure.actualEmail }
-            : {}),
+          ...(failure.message !== undefined ? { message: failure.message } : {}),
+          ...(failure.expectedEmail !== undefined ? { expectedEmail: failure.expectedEmail } : {}),
+          ...(failure.actualEmail !== undefined ? { actualEmail: failure.actualEmail } : {}),
         },
       } as SyncEvent);
     });
@@ -338,16 +303,13 @@ describe("AuthErrorBanner — Wrong-account mini-callout (enforce-oauth-reconnec
   }
 
   it("renders the condensed 'Wrong account' mini-callout naming only the expected account", async () => {
-    const callout = await reconnectThenEmit(
-      buildErrorSummary({ errorKind: "auth-revoked" }),
-      {
-        // eslint-disable-next-line cloudstash/no-raw-error-tag-literal -- AuthFailedTag vocabulary (no const object) — out of scope
-        tag: "account-mismatch",
-        expectedEmail: "acme@gmail.com",
-        actualEmail: "other@gmail.com",
-        message: "Wrong account.",
-      },
-    );
+    const callout = await reconnectThenEmit(buildErrorSummary({ errorKind: "auth-revoked" }), {
+      // eslint-disable-next-line cloudstash/no-raw-error-tag-literal -- AuthFailedTag vocabulary (no const object) — out of scope
+      tag: "account-mismatch",
+      expectedEmail: "acme@gmail.com",
+      actualEmail: "other@gmail.com",
+      message: "Wrong account.",
+    });
 
     expect(within(callout).getByText("Wrong account")).toBeInTheDocument();
     const body = within(callout).getByTestId("wrong-account-callout-body");
@@ -399,18 +361,13 @@ describe("AuthErrorBanner — Wrong-account mini-callout (enforce-oauth-reconnec
   });
 
   it("falls back to a generic phrase (never a blank email) when expectedEmail is empty — email-less account", async () => {
-    const callout = await reconnectThenEmit(
-      buildErrorSummary({ errorKind: "auth-revoked" }),
-      {
-        // eslint-disable-next-line cloudstash/no-raw-error-tag-literal -- AuthFailedTag vocabulary (no const object) — out of scope
-        tag: "account-mismatch",
-        expectedEmail: "",
-      },
-    );
+    const callout = await reconnectThenEmit(buildErrorSummary({ errorKind: "auth-revoked" }), {
+      // eslint-disable-next-line cloudstash/no-raw-error-tag-literal -- AuthFailedTag vocabulary (no const object) — out of scope
+      tag: "account-mismatch",
+      expectedEmail: "",
+    });
     const body = within(callout).getByTestId("wrong-account-callout-body");
-    expect(body).toHaveTextContent(
-      "Reconnect with the originally-connected account to continue.",
-    );
+    expect(body).toHaveTextContent("Reconnect with the originally-connected account to continue.");
     expect(body.textContent).not.toContain("Connect as ");
   });
 
@@ -421,12 +378,8 @@ describe("AuthErrorBanner — Wrong-account mini-callout (enforce-oauth-reconnec
       { tag: "provider-error", message: "boom" },
     );
 
-    expect(
-      within(banner).getByText("Reconnect failed — please try again."),
-    ).toBeInTheDocument();
-    expect(
-      within(banner).queryByText("Wrong account"),
-    ).not.toBeInTheDocument();
+    expect(within(banner).getByText("Reconnect failed — please try again.")).toBeInTheDocument();
+    expect(within(banner).queryByText("Wrong account")).not.toBeInTheDocument();
     expect(banner.className).not.toMatch(/amber/);
   });
 });
@@ -436,8 +389,7 @@ describe("AuthErrorBanner — accessible name and Tab order", () => {
     renderCard(buildErrorSummary({ errorKind: "auth-revoked" }));
     const banner = screen.getByTestId("auth-error-banner");
     const hasAccessibleName =
-      banner.hasAttribute("aria-label") ||
-      banner.hasAttribute("aria-labelledby");
+      banner.hasAttribute("aria-label") || banner.hasAttribute("aria-labelledby");
     expect(hasAccessibleName).toBe(true);
   });
 

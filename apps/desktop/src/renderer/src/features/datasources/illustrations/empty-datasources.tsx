@@ -24,8 +24,7 @@
 //   a complete colour value already — the extra `hsl()` wrapper is both
 //   unnecessary and would break the guardrail.
 
-export interface EmptyDatasourcesIllustrationProps
-  extends React.SVGProps<SVGSVGElement> {
+export interface EmptyDatasourcesIllustrationProps extends React.SVGProps<SVGSVGElement> {
   /**
    * Override the accessible name rendered in the nested <title>. Defaults to
    * "No cloud datasources connected yet".
@@ -80,33 +79,9 @@ export function EmptyDatasourcesIllustration({
           rounded-sm-ish to echo the dashboard radii ceiling. The middle
           tile is offset slightly to suggest "lattice" rather than a rigid
           stack. */}
-      <rect
-        x="82"
-        y="118"
-        width="22"
-        height="14"
-        rx="2"
-        fill="var(--primary)"
-        opacity="0.9"
-      />
-      <rect
-        x="109"
-        y="118"
-        width="22"
-        height="14"
-        rx="2"
-        fill="var(--primary)"
-        opacity="0.6"
-      />
-      <rect
-        x="136"
-        y="118"
-        width="22"
-        height="14"
-        rx="2"
-        fill="var(--primary)"
-        opacity="0.35"
-      />
+      <rect x="82" y="118" width="22" height="14" rx="2" fill="var(--primary)" opacity="0.9" />
+      <rect x="109" y="118" width="22" height="14" rx="2" fill="var(--primary)" opacity="0.6" />
+      <rect x="136" y="118" width="22" height="14" rx="2" fill="var(--primary)" opacity="0.35" />
 
       {/* Dotted connector lines from cloud down to the tile baseline,
           suggesting a pending / not-yet-established sync. */}

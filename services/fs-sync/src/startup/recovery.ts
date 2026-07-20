@@ -15,13 +15,12 @@ export interface RecoveredJob {
   readonly newAttempt: number;
 }
 
-export function recoverRunningJobs(
-  db: Database.Database,
-): ReadonlyArray<RecoveredJob> {
+export function recoverRunningJobs(db: Database.Database): ReadonlyArray<RecoveredJob> {
   const now = Date.now();
-  const rows = db
-    .prepare(`SELECT id, attempt FROM jobs WHERE status = 'running'`)
-    .all() as Array<{ id: string; attempt: number }>;
+  const rows = db.prepare(`SELECT id, attempt FROM jobs WHERE status = 'running'`).all() as Array<{
+    id: string;
+    attempt: number;
+  }>;
   if (rows.length === 0) return [];
 
   const update = db.prepare(

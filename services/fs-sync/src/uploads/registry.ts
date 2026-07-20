@@ -60,9 +60,7 @@ export interface UploadJobEntry {
  * fields and the abort controller are unrepresentable in this type so
  * the compiler rejects an attempt to reassign them.
  */
-export type UploadJobUpdate = Partial<
-  Pick<UploadJobEntry, "bytesUploaded" | "contentLength">
->;
+export type UploadJobUpdate = Partial<Pick<UploadJobEntry, "bytesUploaded" | "contentLength">>;
 
 export interface UploadRegistry {
   /**
@@ -165,10 +163,7 @@ export function createUploadRegistry(): UploadRegistry {
       }
     }
     entries.set(entry.uploadJobId, entry);
-    byTarget.set(
-      keyOf(entry.datasourceId, entry.targetPath),
-      entry.uploadJobId,
-    );
+    byTarget.set(keyOf(entry.datasourceId, entry.targetPath), entry.uploadJobId);
   }
 
   function get(uploadJobId: string): UploadJobEntry | undefined {
@@ -200,15 +195,10 @@ export function createUploadRegistry(): UploadRegistry {
   }
 
   function snapshot(): UploadJobEntry[] {
-    return Array.from(entries.values()).sort(
-      (a, b) => a.startedAt - b.startedAt,
-    );
+    return Array.from(entries.values()).sort((a, b) => a.startedAt - b.startedAt);
   }
 
-  function findByTarget(
-    datasourceId: string,
-    targetPath: string,
-  ): string | undefined {
+  function findByTarget(datasourceId: string, targetPath: string): string | undefined {
     return byTarget.get(keyOf(datasourceId, targetPath));
   }
 

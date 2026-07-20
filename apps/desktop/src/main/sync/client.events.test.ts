@@ -16,10 +16,7 @@ import * as net from "node:net";
 import * as os from "node:os";
 import * as path from "node:path";
 
-import type {
-  EventFrame,
-  RequestFrame,
-} from "@cloudstash/ipc-contracts/sync-service";
+import type { EventFrame, RequestFrame } from "@cloudstash/ipc-contracts/sync-service";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { FramingDecoder, encodeFrame } from "./framing.js";
@@ -165,16 +162,8 @@ describe("SyncClient event dispatch", () => {
 
       expect(seenA).toHaveLength(3);
       expect(seenB).toHaveLength(3);
-      expect(seenA.map((f) => f.name)).toEqual([
-        "job-started",
-        "job-progress",
-        "job-completed",
-      ]);
-      expect(seenB.map((f) => f.name)).toEqual([
-        "job-started",
-        "job-progress",
-        "job-completed",
-      ]);
+      expect(seenA.map((f) => f.name)).toEqual(["job-started", "job-progress", "job-completed"]);
+      expect(seenB.map((f) => f.name)).toEqual(["job-started", "job-progress", "job-completed"]);
       // Payload passthrough: verify the progress frame round-trips intact.
       expect(seenA[1]?.payload).toEqual({
         jobId: "j-1",

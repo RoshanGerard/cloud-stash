@@ -78,8 +78,7 @@ describe("DatasourceError — construction + shape", () => {
         datasourceType: "amazon-s3",
         datasourceId: "ds-x",
         retryable:
-          tag === DatasourceErrorTag.RateLimited ||
-          tag === DatasourceErrorTag.NetworkError,
+          tag === DatasourceErrorTag.RateLimited || tag === DatasourceErrorTag.NetworkError,
       });
       expect(err.tag).toBe(tag);
     }

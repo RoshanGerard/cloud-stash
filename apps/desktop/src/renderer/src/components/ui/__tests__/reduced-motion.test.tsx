@@ -25,11 +25,7 @@ import { afterEach, beforeAll, describe, expect, it } from "vitest";
 import { cleanup, render } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -75,10 +71,7 @@ function assertMotionGated(className: string, label: string): void {
     // to features/datasources components, not shadcn primitives, but if a
     // future primitive added one it should not require motion-safe since
     // the keyframes themselves are gated in globals.css.
-    if (
-      motionCore[0] === "animate-skeleton-shimmer" ||
-      motionCore[0] === "animate-sync-pulse"
-    ) {
+    if (motionCore[0] === "animate-skeleton-shimmer" || motionCore[0] === "animate-sync-pulse") {
       continue;
     }
 
@@ -154,31 +147,25 @@ describe("reduced-motion — shadcn primitive gates", () => {
         </DropdownMenuContent>
       </DropdownMenu>,
     );
-    const content = document.querySelector(
-      '[data-slot="dropdown-menu-content"]',
-    );
+    const content = document.querySelector('[data-slot="dropdown-menu-content"]');
     expect(content).not.toBeNull();
     assertMotionGated(content!.className, "DropdownMenuContent");
   });
 
   it("extractVariants splits colon-delimited variants correctly", () => {
-    expect(extractVariants("motion-safe:data-[state=open]:animate-in")).toEqual(
-      ["motion-safe", "data-[state=open]"],
-    );
-    expect(extractVariants("animate-in")).toEqual([]);
-    expect(extractVariants("data-[state=open]:animate-in")).toEqual([
+    expect(extractVariants("motion-safe:data-[state=open]:animate-in")).toEqual([
+      "motion-safe",
       "data-[state=open]",
     ]);
+    expect(extractVariants("animate-in")).toEqual([]);
+    expect(extractVariants("data-[state=open]:animate-in")).toEqual(["data-[state=open]"]);
   });
 
   it("assertMotionGated flags an ungated animate-in (regression control)", () => {
     // Prove the assertion actually has teeth: a class string containing a
     // bare animate-in should fail.
     expect(() =>
-      assertMotionGated(
-        "fixed inset-0 animate-in data-[state=open]:fade-in-0",
-        "synthetic",
-      ),
+      assertMotionGated("fixed inset-0 animate-in data-[state=open]:fade-in-0", "synthetic"),
     ).toThrow(/motion-safe/);
   });
 

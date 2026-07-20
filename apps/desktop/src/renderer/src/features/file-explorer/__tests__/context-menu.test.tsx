@@ -1,12 +1,6 @@
 /** @vitest-environment jsdom */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  act,
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-} from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import type { FileEntry } from "@cloudstash/ipc-contracts";
 
@@ -104,9 +98,7 @@ describe("FileContextMenu", () => {
 
     const items = screen.getAllByRole("menuitem");
     expect(items).toHaveLength(MENU_ITEMS_IN_ORDER.length);
-    expect(items.map((n) => n.textContent?.trim())).toEqual([
-      ...MENU_ITEMS_IN_ORDER,
-    ]);
+    expect(items.map((n) => n.textContent?.trim())).toEqual([...MENU_ITEMS_IN_ORDER]);
   });
 
   it("each menu item has an accessible name matching its visible label", async () => {
@@ -242,21 +234,15 @@ describe("FileContextMenu", () => {
     expect(bag.ref.current!.focusedId).toBe("b");
 
     act(() => {
-      bag.ref.current!.onKeyDown(
-        kdEvent({ key: "F10", shiftKey: true }),
-      );
+      bag.ref.current!.onKeyDown(kdEvent({ key: "F10", shiftKey: true }));
     });
 
     expect(onContextMenuRequested).toHaveBeenCalledTimes(1);
-    expect(onContextMenuRequested).toHaveBeenCalledWith(
-      expect.objectContaining({ id: "b" }),
-    );
+    expect(onContextMenuRequested).toHaveBeenCalledWith(expect.objectContaining({ id: "b" }));
   });
 
   it("useKeyboardNav fires onContextMenuRequested on the ContextMenu key as well", () => {
-    const entries: FileEntry[] = [
-      seedEntry({ id: "a", name: "a.txt", path: "/a.txt" }),
-    ];
+    const entries: FileEntry[] = [seedEntry({ id: "a", name: "a.txt", path: "/a.txt" })];
     const store = createExplorerStore("ds-ctx-menu-2");
     act(() => {
       store.setEntries(entries);
@@ -275,15 +261,11 @@ describe("FileContextMenu", () => {
     });
 
     expect(onContextMenuRequested).toHaveBeenCalledTimes(1);
-    expect(onContextMenuRequested).toHaveBeenCalledWith(
-      expect.objectContaining({ id: "a" }),
-    );
+    expect(onContextMenuRequested).toHaveBeenCalledWith(expect.objectContaining({ id: "a" }));
   });
 
   it("useKeyboardNav does NOT fire onContextMenuRequested when no entry is focused", () => {
-    const entries: FileEntry[] = [
-      seedEntry({ id: "a", name: "a.txt", path: "/a.txt" }),
-    ];
+    const entries: FileEntry[] = [seedEntry({ id: "a", name: "a.txt", path: "/a.txt" })];
     const store = createExplorerStore("ds-ctx-menu-3");
     act(() => {
       store.setEntries(entries);
@@ -310,10 +292,7 @@ describe("FileContextMenu", () => {
 import { useRef } from "react";
 import type { KeyboardEvent as ReactKeyboardEvent } from "react";
 import type { ExplorerStore } from "../store.js";
-import type {
-  KeyboardNavOptions,
-  UseKeyboardNavResult,
-} from "../use-keyboard-nav.js";
+import type { KeyboardNavOptions, UseKeyboardNavResult } from "../use-keyboard-nav.js";
 
 interface BagRef {
   ref: { current: UseKeyboardNavResult | null };

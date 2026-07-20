@@ -70,8 +70,7 @@ export const fieldCatalog: readonly FieldDef[] = [
   {
     id: "created",
     label: "Created",
-    selector: (entry) =>
-      entry.createdAt === null ? null : formatDate(entry.createdAt),
+    selector: (entry) => (entry.createdAt === null ? null : formatDate(entry.createdAt)),
     rawSelector: (entry) => entry.createdAt,
     numeric: true,
   },
@@ -80,13 +79,7 @@ export const fieldCatalog: readonly FieldDef[] = [
 // Curated subsets — arrays of field ids drawn from `fieldCatalog`.
 // Spec scenario "Details pane reflects selection changes" lists the pane
 // fields (name, type, size, modified, path). Modal is the full dossier.
-export const paneFields: readonly string[] = [
-  "name",
-  "type",
-  "size",
-  "modified",
-  "path",
-];
+export const paneFields: readonly string[] = ["name", "type", "size", "modified", "path"];
 
 export const modalFields: readonly string[] = [
   "name",

@@ -55,10 +55,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   // var(--font-geist-sans) / var(--font-geist-mono) via the @theme block in
   // globals.css. Fonts are bundled at build time (zero runtime fetch).
   return (
-    <html
-      lang="en"
-      className={`${GeistSans.variable} ${GeistMono.variable} ${bricolage.variable}`}
-    >
+    <html lang="en" className={`${GeistSans.variable} ${GeistMono.variable} ${bricolage.variable}`}>
       <head>
         {/* Pre-paint theme bootstrap — runs synchronously before React
             mounts so the `.dark` class is already set on first paint and

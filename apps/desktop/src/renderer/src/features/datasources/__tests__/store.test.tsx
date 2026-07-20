@@ -8,15 +8,7 @@
 // React 19 surfaces the classic "setState on unmounted component" warning and
 // strict-mode double-mounts can race two in-flight `list()` resolutions.
 
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-  type Mock,
-} from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from "vitest";
 import { cleanup, render } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import type { DatasourceSummary } from "@cloudstash/ipc-contracts";

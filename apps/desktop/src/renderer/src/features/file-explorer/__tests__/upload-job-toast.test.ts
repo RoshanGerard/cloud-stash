@@ -73,16 +73,13 @@ interface MockToast extends ToastApi {
 function makeToast(): MockToast {
   let next = 1;
   const loading = vi.fn(
-    (_msg: string, opts?: { id?: string | number }) =>
-      opts?.id ?? `toast-${next++}`,
+    (_msg: string, opts?: { id?: string | number }) => opts?.id ?? `toast-${next++}`,
   );
   const success = vi.fn(
-    (_msg: string, opts?: { id?: string | number }) =>
-      opts?.id ?? `toast-${next++}`,
+    (_msg: string, opts?: { id?: string | number }) => opts?.id ?? `toast-${next++}`,
   );
   const error = vi.fn(
-    (_msg: string, opts?: { id?: string | number }) =>
-      opts?.id ?? `toast-${next++}`,
+    (_msg: string, opts?: { id?: string | number }) => opts?.id ?? `toast-${next++}`,
   );
   const dismiss = vi.fn();
   return { loading, success, error, dismiss };
@@ -150,10 +147,7 @@ describe("createUploadJobToaster — sync:event-stream subscription", () => {
     // ONE event subscription, not one per dispatch.
     expect(eventApi.onUploadEvent).toHaveBeenCalledTimes(1);
     expect(toast.loading).toHaveBeenCalledTimes(2);
-    const firstCall = toast.loading.mock.calls[0] as [
-      string,
-      { id?: string | number } | undefined,
-    ];
+    const firstCall = toast.loading.mock.calls[0] as [string, { id?: string | number } | undefined];
     expect(firstCall[0]).toContain("report.pdf");
     expect(firstCall[1]?.id).toBeDefined();
 
@@ -183,10 +177,7 @@ describe("createUploadJobToaster — sync:event-stream subscription", () => {
     });
 
     expect(toast.loading).toHaveBeenCalledTimes(2);
-    const update = toast.loading.mock.calls[1] as [
-      string,
-      { id?: string | number } | undefined,
-    ];
+    const update = toast.loading.mock.calls[1] as [string, { id?: string | number } | undefined];
     expect(update[1]?.id).toBe("toast-A");
     expect(update[0]).toMatch(/50\s*%/);
 
@@ -255,11 +246,14 @@ describe("createUploadJobToaster — sync:event-stream subscription", () => {
     expect(toast.error).toHaveBeenCalledTimes(1);
     const errorCall = toast.error.mock.calls[0] as [
       string,
-      {
-        id?: string | number;
-        duration?: number;
-        action?: { label: string; onClick: () => void };
-      } | undefined,
+      (
+        | {
+            id?: string | number;
+            duration?: number;
+            action?: { label: string; onClick: () => void };
+          }
+        | undefined
+      ),
     ];
     expect(errorCall[1]?.id).toBe("toast-A");
     expect(errorCall[1]?.duration).toBe(Number.POSITIVE_INFINITY);
@@ -293,9 +287,12 @@ describe("createUploadJobToaster — sync:event-stream subscription", () => {
 
     const errorCall = toast.error.mock.calls[0] as [
       string,
-      {
-        action?: { label: string; onClick: () => void };
-      } | undefined,
+      (
+        | {
+            action?: { label: string; onClick: () => void };
+          }
+        | undefined
+      ),
     ];
     const onClick = errorCall[1]?.action?.onClick;
     expect(onClick).toBeDefined();
@@ -324,9 +321,10 @@ describe("createUploadJobToaster — sync:event-stream subscription", () => {
         bytesTotal: 100,
       },
     });
-    const lastUpdate = toast.loading.mock.calls[
-      toast.loading.mock.calls.length - 1
-    ] as [string, { id?: string | number } | undefined];
+    const lastUpdate = toast.loading.mock.calls[toast.loading.mock.calls.length - 1] as [
+      string,
+      { id?: string | number } | undefined,
+    ];
     expect(lastUpdate[1]?.id).toBe("toast-B");
     expect(lastUpdate[1]?.id).not.toBe("toast-A");
 
@@ -423,10 +421,7 @@ describe("createUploadJobToaster — sync:event-stream subscription", () => {
     toaster.hydrateActiveUploads(hydrated);
 
     expect(toast.loading).toHaveBeenCalledTimes(1);
-    const seedCall = toast.loading.mock.calls[0] as [
-      string,
-      { id?: string | number } | undefined,
-    ];
+    const seedCall = toast.loading.mock.calls[0] as [string, { id?: string | number } | undefined];
     expect(seedCall[0]).toContain("report.pdf");
 
     // Live event for the seeded id targets the SAME toast id, no new
@@ -494,10 +489,13 @@ describe("createUploadJobToaster — sync:event-stream subscription", () => {
 
     const initialCall = toast.loading.mock.calls[0] as [
       string,
-      {
-        id?: string | number;
-        action?: { label: string; onClick: () => void };
-      } | undefined,
+      (
+        | {
+            id?: string | number;
+            action?: { label: string; onClick: () => void };
+          }
+        | undefined
+      ),
     ];
     const cancelAction = initialCall[1]?.action;
     expect(cancelAction).toBeDefined();

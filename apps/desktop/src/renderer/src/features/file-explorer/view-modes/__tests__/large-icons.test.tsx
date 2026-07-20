@@ -1,13 +1,6 @@
 /** @vitest-environment jsdom */
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import {
-  act,
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-  within,
-} from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 
 import { createExplorerStore } from "../../store.js";
@@ -29,9 +22,7 @@ function makeStore(id = "large-test"): ExplorerStore {
 }
 
 function getCells(): HTMLElement[] {
-  return Array.from(
-    document.querySelectorAll<HTMLElement>('[data-testid="explorer-cell"]'),
-  );
+  return Array.from(document.querySelectorAll<HTMLElement>('[data-testid="explorer-cell"]'));
 }
 
 describe("LargeIconsView", () => {
@@ -83,10 +74,7 @@ describe("LargeIconsView", () => {
     const icon = cell.querySelector("svg");
     const nameEl = within(cell).getByText("hero.png");
     expect(icon).not.toBeNull();
-    expect(
-      icon!.compareDocumentPosition(nameEl) &
-        Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy();
+    expect(icon!.compareDocumentPosition(nameEl) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
 
     expect(within(cell).queryByText(/image/i)).toBeNull();
     expect(within(cell).queryByText(/12(\.0)?\s*KB/i)).toBeNull();
@@ -95,9 +83,7 @@ describe("LargeIconsView", () => {
   it("renders the icon at 96 px (size-24)", () => {
     const store = makeStore();
     act(() => {
-      store.setEntries([
-        seedEntry({ id: "e1", name: "hero.png", path: "/hero.png" }),
-      ]);
+      store.setEntries([seedEntry({ id: "e1", name: "hero.png", path: "/hero.png" })]);
     });
     render(<LargeIconsView store={store} />);
 
@@ -109,9 +95,7 @@ describe("LargeIconsView", () => {
   it("outer container uses an auto-fill wrapping grid with a wider cell minimum than Medium", () => {
     const store = makeStore();
     act(() => {
-      store.setEntries([
-        seedEntry({ id: "e1", name: "a.png", path: "/a.png" }),
-      ]);
+      store.setEntries([seedEntry({ id: "e1", name: "a.png", path: "/a.png" })]);
     });
     render(<LargeIconsView store={store} />);
     const grid = screen.getByRole("grid");

@@ -32,9 +32,7 @@ describe("EmptyDatasourcesIllustration — task 4b.8", () => {
     const { container } = render(<EmptyDatasourcesIllustration />);
     const svgs = container.querySelectorAll("svg");
     expect(svgs.length).toBe(1);
-    expect(svgs[0]!.getAttribute("data-illustration")).toBe(
-      "empty-datasources",
-    );
+    expect(svgs[0]!.getAttribute("data-illustration")).toBe("empty-datasources");
   });
 
   it("has a numeric viewBox at 240 x 160 aspect", () => {
@@ -67,8 +65,7 @@ describe("EmptyDatasourcesIllustration — task 4b.8", () => {
     const all = svg.querySelectorAll("*");
     const hasCurrentColor = Array.from(all).some((el) => {
       return (
-        el.getAttribute("stroke") === "currentColor" ||
-        el.getAttribute("fill") === "currentColor"
+        el.getAttribute("stroke") === "currentColor" || el.getAttribute("fill") === "currentColor"
       );
     });
     expect(hasCurrentColor).toBe(true);
@@ -81,9 +78,7 @@ describe("EmptyDatasourcesIllustration — task 4b.8", () => {
     const hasPrimaryAccent = Array.from(all).some((el) => {
       const fill = el.getAttribute("fill") ?? "";
       const stroke = el.getAttribute("stroke") ?? "";
-      return (
-        fill.includes("var(--primary)") || stroke.includes("var(--primary)")
-      );
+      return fill.includes("var(--primary)") || stroke.includes("var(--primary)");
     });
     expect(hasPrimaryAccent).toBe(true);
   });

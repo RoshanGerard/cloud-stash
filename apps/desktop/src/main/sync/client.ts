@@ -32,12 +32,7 @@ import type {
   RequestFrame,
 } from "@cloudstash/ipc-contracts/sync-service";
 
-import {
-  FrameParseError,
-  FrameTooLargeError,
-  FramingDecoder,
-  encodeFrame,
-} from "./framing.js";
+import { FrameParseError, FrameTooLargeError, FramingDecoder, encodeFrame } from "./framing.js";
 
 export interface SyncClientOptions {
   /** Applied when a per-request `timeoutMs` is not supplied. */
@@ -46,9 +41,7 @@ export interface SyncClientOptions {
   readonly generateId?: () => string;
 }
 
-export class SyncCommandError<
-  N extends CommandName = CommandName,
-> extends Error {
+export class SyncCommandError<N extends CommandName = CommandName> extends Error {
   readonly command: N;
   readonly tag: string;
   readonly details?: unknown;
@@ -209,8 +202,7 @@ export class SyncClient {
     };
 
     return new Promise<CommandResult<N>>((resolve, reject) => {
-      const timeoutMs =
-        opts.timeoutMs !== undefined ? opts.timeoutMs : this.defaultTimeoutMs;
+      const timeoutMs = opts.timeoutMs !== undefined ? opts.timeoutMs : this.defaultTimeoutMs;
 
       let timer: NodeJS.Timeout | undefined;
       if (timeoutMs !== undefined) {
@@ -487,9 +479,7 @@ export class SyncClient {
       // "kind":"event" object with a wrong-typed `name`. Drop silently
       // — listeners must not see garbage payloads.
       if (typeof frame.name !== "string") {
-        console.warn(
-          "[sync-client] dropped malformed event frame (name is not a string)",
-        );
+        console.warn("[sync-client] dropped malformed event frame (name is not a string)");
         return;
       }
       // Snapshot the listener set so a callback that subscribes or

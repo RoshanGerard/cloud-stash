@@ -11,15 +11,7 @@
 // that PRESERVES `nextCursor` (the standard composite mock strips it), then
 // assert structural placement, view-mode coverage, and the visibility gate.
 
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-  type Mock,
-} from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from "vitest";
 import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { FilesErrorTag } from "@cloudstash/ipc-contracts";
@@ -69,23 +61,18 @@ function installApiMock(opts: {
   } else {
     const byPath = opts.byPath ?? new Map();
     const byCursor = opts.byCursor ?? new Map();
-    filesListMock.mockImplementation(
-      async (req: { path: string; cursor?: string }) => {
-        const inner =
-          req.cursor !== undefined
-            ? byCursor.get(req.cursor)
-            : byPath.get(req.path);
-        const resolved = inner ?? { entries: [] };
-        return {
-          ok: true as const,
-          value: {
-            entries: resolved.entries,
-            truncated: resolved.nextCursor != null,
-            nextCursor: resolved.nextCursor ?? null,
-          },
-        };
-      },
-    );
+    filesListMock.mockImplementation(async (req: { path: string; cursor?: string }) => {
+      const inner = req.cursor !== undefined ? byCursor.get(req.cursor) : byPath.get(req.path);
+      const resolved = inner ?? { entries: [] };
+      return {
+        ok: true as const,
+        value: {
+          entries: resolved.entries,
+          truncated: resolved.nextCursor != null,
+          nextCursor: resolved.nextCursor ?? null,
+        },
+      };
+    });
   }
 
   (window as unknown as { api: unknown }).api = {
@@ -117,18 +104,15 @@ function installApiMock(opts: {
   };
 }
 
-const ALL_VIEW_MODES: ViewMode[] = [
-  "list",
-  "details",
-  "small",
-  "tiles",
-  "medium",
-  "large",
-];
+const ALL_VIEW_MODES: ViewMode[] = ["list", "details", "small", "tiles", "medium", "large"];
 
 function pageOf(count: number, prefix = "e"): FileEntry[] {
   return Array.from({ length: count }, (_, i) =>
-    seedEntry({ id: `${prefix}-${i}`, name: `${prefix}-${i}.txt`, path: `/big/${prefix}-${i}.txt` }),
+    seedEntry({
+      id: `${prefix}-${i}`,
+      name: `${prefix}-${i}.txt`,
+      path: `/big/${prefix}-${i}.txt`,
+    }),
   );
 }
 
@@ -163,9 +147,7 @@ describe("LoadMoreRegion placement in the composite (V-1)", () => {
     //    order: scroll container precedes the button; the button precedes
     //    the status row.
     const status = screen.getByRole("status");
-    const positionScrollVsButton = scrollContainer!.compareDocumentPosition(
-      button,
-    );
+    const positionScrollVsButton = scrollContainer!.compareDocumentPosition(button);
     const positionButtonVsStatus = button.compareDocumentPosition(status);
     // DOCUMENT_POSITION_FOLLOWING (4) — the argument node comes AFTER.
     expect(positionScrollVsButton & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
@@ -188,9 +170,7 @@ describe("LoadMoreRegion placement in the composite (V-1)", () => {
       expect(button).toHaveAttribute("data-variant", "ghost");
       expect(button).toHaveClass("w-full");
       // Exactly one shared placement — not duplicated per mode.
-      expect(screen.getAllByRole("button", { name: "Load more" })).toHaveLength(
-        1,
-      );
+      expect(screen.getAllByRole("button", { name: "Load more" })).toHaveLength(1);
     },
   );
 
@@ -233,9 +213,7 @@ describe("LoadMoreRegion visibility gate in the composite", () => {
     await waitFor(() => {
       expect(filesListMock).toHaveBeenCalled();
     });
-    expect(
-      screen.queryByRole("button", { name: "Load more" }),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Load more" })).not.toBeInTheDocument();
   });
 
   it("is NOT rendered when a search is active even if a cursor lingers", async () => {
@@ -250,9 +228,7 @@ describe("LoadMoreRegion visibility gate in the composite", () => {
     act(() => {
       store.startSearch();
     });
-    expect(
-      screen.queryByRole("button", { name: "Load more" }),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Load more" })).not.toBeInTheDocument();
   });
 
   it("is NOT rendered when the list errors out (full-replace state) even if entries exist", async () => {
@@ -270,9 +246,7 @@ describe("LoadMoreRegion visibility gate in the composite", () => {
       store.setErrorTag("disconnected");
       store.setError("offline");
     });
-    expect(
-      screen.queryByRole("button", { name: "Load more" }),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Load more" })).not.toBeInTheDocument();
   });
 
   it("is NOT rendered when the folder is empty (no cursor, no entries)", async () => {
@@ -282,13 +256,10 @@ describe("LoadMoreRegion visibility gate in the composite", () => {
     render(<FileExplorer datasourceId="ds-page" />);
     await waitFor(() => {
       expect(
-        screen.getByTestId("file-explorer-state-empty") ??
-          screen.queryByText(/empty/i),
+        screen.getByTestId("file-explorer-state-empty") ?? screen.queryByText(/empty/i),
       ).toBeTruthy();
     });
-    expect(
-      screen.queryByRole("button", { name: "Load more" }),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Load more" })).not.toBeInTheDocument();
   });
 });
 
@@ -320,37 +291,31 @@ describe("LoadMoreRegion behavior through the composite (spec scenarios)", () =>
     // Entries appended (3 + 2 = 5); cursor exhausted → button gone, status
     // collapses to plain "5 items".
     await waitFor(() => {
-      expect(
-        screen.queryByRole("button", { name: "Load more" }),
-      ).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Load more" })).not.toBeInTheDocument();
     });
-    expect(getOrCreateExplorerStore("ds-page").getSnapshot().entries.length).toBe(
-      5,
-    );
+    expect(getOrCreateExplorerStore("ds-page").getSnapshot().entries.length).toBe(5);
     expect(screen.getByRole("status")).toHaveTextContent(/^5 items$/);
   });
 
   it("Load-more failure surfaces the inline retry row + updates the status row to 'couldn't load more' (spec lines 48-51)", async () => {
     // First page OK with a cursor; the load-more call (cursor: tokA) rejects
     // at the envelope level (fs-sync's auto-retry already exhausted).
-    filesListMock = vi
-      .fn()
-      .mockImplementation(async (req: { path: string; cursor?: string }) => {
-        if (req.cursor === "tokA") {
-          return {
-            ok: false as const,
-            error: {
-              tag: FilesErrorTag.Other as const,
-              message: "connection timed out",
-              retryable: true,
-            },
-          };
-        }
+    filesListMock = vi.fn().mockImplementation(async (req: { path: string; cursor?: string }) => {
+      if (req.cursor === "tokA") {
         return {
-          ok: true as const,
-          value: { entries: pageOf(3), truncated: true, nextCursor: "tokA" },
+          ok: false as const,
+          error: {
+            tag: FilesErrorTag.Other as const,
+            message: "connection timed out",
+            retryable: true,
+          },
         };
-      });
+      }
+      return {
+        ok: true as const,
+        value: { entries: pageOf(3), truncated: true, nextCursor: "tokA" },
+      };
+    });
     (window as unknown as { api: unknown }).api = {
       ping: vi.fn(),
       datasources: {
@@ -373,16 +338,10 @@ describe("LoadMoreRegion behavior through the composite (spec scenarios)", () =>
     await waitFor(() => {
       expect(screen.getByTestId("load-more-failed")).toBeInTheDocument();
     });
-    expect(
-      screen.queryByRole("button", { name: "Load more" }),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Load more" })).not.toBeInTheDocument();
     expect(screen.getByText("Couldn't load more entries")).toBeInTheDocument();
-    expect(getOrCreateExplorerStore("ds-page").getSnapshot().entries.length).toBe(
-      3,
-    );
-    expect(screen.getByRole("status")).toHaveTextContent(
-      /^3 items · couldn't load more$/,
-    );
+    expect(getOrCreateExplorerStore("ds-page").getSnapshot().entries.length).toBe(3);
+    expect(screen.getByRole("status")).toHaveTextContent(/^3 items · couldn't load more$/);
     // Retry button present and wired (re-issues the same cursor).
     expect(screen.getByRole("button", { name: "Retry" })).toBeInTheDocument();
   });
@@ -422,9 +381,7 @@ describe("LoadMoreRegion behavior through the composite (spec scenarios)", () =>
     // --- Page 1: 500 entries, affordance visible, "500+ items · 500 loaded".
     const firstButton = await screen.findByRole("button", { name: "Load more" });
     expect(store.getSnapshot().entries.length).toBe(500);
-    expect(screen.getByRole("status")).toHaveTextContent(
-      /^500\+ items · 500 loaded$/,
-    );
+    expect(screen.getByRole("status")).toHaveTextContent(/^500\+ items · 500 loaded$/);
 
     // --- Click 1 → page 2 appends: 1000 total, STILL more available. The
     //     intermediate `await waitFor` proves the first load-more settled
@@ -441,9 +398,7 @@ describe("LoadMoreRegion behavior through the composite (spec scenarios)", () =>
     const secondButton = screen.getByRole("button", { name: "Load more" });
     expect(secondButton).toBeInTheDocument();
     expect(store.getSnapshot().nextCursor).toBe("tokB");
-    expect(screen.getByRole("status")).toHaveTextContent(
-      /^1000\+ items · 1000 loaded$/,
-    );
+    expect(screen.getByRole("status")).toHaveTextContent(/^1000\+ items · 1000 loaded$/);
 
     // --- Click 2 → page 3 appends: 1200 total, cursor exhausted → affordance
     //     HIDDEN, status collapses to the plain "1200 items".
@@ -451,9 +406,7 @@ describe("LoadMoreRegion behavior through the composite (spec scenarios)", () =>
       secondButton.click();
     });
     await waitFor(() => {
-      expect(
-        screen.queryByRole("button", { name: "Load more" }),
-      ).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Load more" })).not.toBeInTheDocument();
     });
     expect(store.getSnapshot().entries.length).toBe(1200);
     expect(store.getSnapshot().nextCursor).toBeNull();
@@ -467,45 +420,37 @@ describe("LoadMoreRegion behavior through the composite (spec scenarios)", () =>
       1,
       expect.objectContaining({ datasourceId: "ds-page", path: "/" }),
     );
-    expect(filesListMock).toHaveBeenNthCalledWith(
-      2,
-      expect.objectContaining({ cursor: "tokA" }),
-    );
-    expect(filesListMock).toHaveBeenNthCalledWith(
-      3,
-      expect.objectContaining({ cursor: "tokB" }),
-    );
+    expect(filesListMock).toHaveBeenNthCalledWith(2, expect.objectContaining({ cursor: "tokA" }));
+    expect(filesListMock).toHaveBeenNthCalledWith(3, expect.objectContaining({ cursor: "tokB" }));
   });
 
   it("Retry on the failed row swaps to the busy button, then appends + hides on success (spec lines 53-56)", async () => {
     // Stateful mock: the FIRST load-more (cursor: tokA) fails; the retry of
     // the SAME cursor succeeds with a final page (nextCursor: null).
     let tokAAttempts = 0;
-    filesListMock = vi
-      .fn()
-      .mockImplementation(async (req: { path: string; cursor?: string }) => {
-        if (req.cursor === "tokA") {
-          tokAAttempts += 1;
-          if (tokAAttempts === 1) {
-            return {
-              ok: false as const,
-              error: {
-                tag: FilesErrorTag.Other as const,
-                message: "connection timed out",
-                retryable: true,
-              },
-            };
-          }
+    filesListMock = vi.fn().mockImplementation(async (req: { path: string; cursor?: string }) => {
+      if (req.cursor === "tokA") {
+        tokAAttempts += 1;
+        if (tokAAttempts === 1) {
           return {
-            ok: true as const,
-            value: { entries: pageOf(2, "p2"), truncated: false, nextCursor: null },
+            ok: false as const,
+            error: {
+              tag: FilesErrorTag.Other as const,
+              message: "connection timed out",
+              retryable: true,
+            },
           };
         }
         return {
           ok: true as const,
-          value: { entries: pageOf(3, "p1"), truncated: true, nextCursor: "tokA" },
+          value: { entries: pageOf(2, "p2"), truncated: false, nextCursor: null },
         };
-      });
+      }
+      return {
+        ok: true as const,
+        value: { entries: pageOf(3, "p1"), truncated: true, nextCursor: "tokA" },
+      };
+    });
     (window as unknown as { api: unknown }).api = {
       ping: vi.fn(),
       datasources: {
@@ -536,12 +481,8 @@ describe("LoadMoreRegion behavior through the composite (spec scenarios)", () =>
     await waitFor(() => {
       expect(screen.queryByTestId("load-more-failed")).not.toBeInTheDocument();
     });
-    expect(
-      screen.queryByRole("button", { name: "Load more" }),
-    ).not.toBeInTheDocument();
-    expect(getOrCreateExplorerStore("ds-page").getSnapshot().entries.length).toBe(
-      5,
-    );
+    expect(screen.queryByRole("button", { name: "Load more" })).not.toBeInTheDocument();
+    expect(getOrCreateExplorerStore("ds-page").getSnapshot().entries.length).toBe(5);
     expect(screen.getByRole("status")).toHaveTextContent(/^5 items$/);
     // The retry re-issued the SAME cursor (tokA) — two attempts total.
     expect(tokAAttempts).toBe(2);

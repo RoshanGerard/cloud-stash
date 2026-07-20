@@ -22,12 +22,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { applyMigrations } from "../db/migrations.js";
 
-import {
-  AlreadyRunningError,
-  bootstrap,
-  type BootstrapStage,
-  type Runtime,
-} from "./bootstrap.js";
+import { AlreadyRunningError, bootstrap, type BootstrapStage, type Runtime } from "./bootstrap.js";
 
 let scratchDir: string;
 let runtime: Runtime | null = null;
@@ -243,9 +238,7 @@ describe("bootstrap interrupted-download sweep", () => {
     const db = new Database(dbPath);
     try {
       const row = db
-        .prepare(
-          `SELECT status, ended_at FROM downloads WHERE download_job_id = ?`,
-        )
+        .prepare(`SELECT status, ended_at FROM downloads WHERE download_job_id = ?`)
         .get("orphan-1") as { status: string; ended_at: number | null };
       expect(row.status).toBe("in-flight");
       expect(row.ended_at).toBeNull();
@@ -289,11 +282,7 @@ describe("bootstrap download-history auto-prune (add-download-history-ui §3.4)"
   ): Promise<void> {
     await fsp.writeFile(
       configPath,
-      JSON.stringify(
-        { schemaVersion: 1, providers: {}, downloadHistory },
-        null,
-        2,
-      ),
+      JSON.stringify({ schemaVersion: 1, providers: {}, downloadHistory }, null, 2),
       "utf8",
     );
   }
@@ -301,11 +290,9 @@ describe("bootstrap download-history auto-prune (add-download-history-ui §3.4)"
   function exists(db: Database.Database, id: string): boolean {
     return (
       (
-        db
-          .prepare(
-            `SELECT COUNT(*) AS c FROM downloads WHERE download_job_id = ?`,
-          )
-          .get(id) as { c: number }
+        db.prepare(`SELECT COUNT(*) AS c FROM downloads WHERE download_job_id = ?`).get(id) as {
+          c: number;
+        }
       ).c > 0
     );
   }
@@ -344,9 +331,7 @@ describe("bootstrap download-history auto-prune (add-download-history-ui §3.4)"
     // service boot.
     const dbPath = path.join(scratchDir, "sync.db");
     const configPath = path.join(scratchDir, "config.json");
-    seedDownloads(dbPath, [
-      { id: "x", status: "completed", endedAt: Date.now() - 1 * DAY },
-    ]);
+    seedDownloads(dbPath, [{ id: "x", status: "completed", endedAt: Date.now() - 1 * DAY }]);
     await fsp.writeFile(configPath, "{ this is not valid json", "utf8");
 
     runtime = await bootstrap({
@@ -369,9 +354,7 @@ describe("bootstrap download-history auto-prune (add-download-history-ui §3.4)"
     const dbPath = path.join(scratchDir, "sync.db");
     const configPath = path.join(scratchDir, "config.json");
     const now = Date.now();
-    seedDownloads(dbPath, [
-      { id: "ancient", status: "completed", endedAt: now - 999 * DAY },
-    ]);
+    seedDownloads(dbPath, [{ id: "ancient", status: "completed", endedAt: now - 999 * DAY }]);
     await writeConfig(configPath, { autoPrune: false, retentionDays: 30 });
 
     runtime = await bootstrap({

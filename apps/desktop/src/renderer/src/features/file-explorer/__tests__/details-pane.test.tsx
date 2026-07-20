@@ -1,13 +1,6 @@
 /** @vitest-environment jsdom */
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import {
-  act,
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-  within,
-} from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 
 import type { FileEntry } from "@cloudstash/ipc-contracts";
@@ -319,12 +312,11 @@ describe("DetailsPane — multi selection", () => {
 describe("DetailsPane — toolbar toggle + persistence wiring", () => {
   beforeEach(() => {
     if (!("ResizeObserver" in window)) {
-      (window as unknown as { ResizeObserver: unknown }).ResizeObserver =
-        class MockResizeObserver {
-          observe() {}
-          unobserve() {}
-          disconnect() {}
-        };
+      (window as unknown as { ResizeObserver: unknown }).ResizeObserver = class MockResizeObserver {
+        observe() {}
+        unobserve() {}
+        disconnect() {}
+      };
     }
     window.localStorage.clear();
     __resetExplorerStoreCacheForTests();

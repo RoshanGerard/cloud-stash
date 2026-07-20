@@ -8,15 +8,7 @@
 // useAuthSession(correlationId) hook reads from that store slice and returns
 // the current authenticate session state.
 
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-  type Mock,
-} from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from "vitest";
 import { act, cleanup, render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import type { SyncEvent } from "@cloudstash/ipc-contracts/sync-service-desktop";
@@ -32,14 +24,12 @@ let syncOnEventMock: Mock;
 let listMock: Mock;
 
 function installApiMock() {
-  syncOnEventMock = vi
-    .fn()
-    .mockImplementation((cb: (e: SyncEvent) => void) => {
-      syncOnEventCapture = cb;
-      return () => {
-        syncOnEventCapture = null;
-      };
-    });
+  syncOnEventMock = vi.fn().mockImplementation((cb: (e: SyncEvent) => void) => {
+    syncOnEventCapture = cb;
+    return () => {
+      syncOnEventCapture = null;
+    };
+  });
   listMock = vi.fn().mockResolvedValue({ datasources: [] });
 
   (window as unknown as { api: unknown }).api = {
@@ -181,9 +171,7 @@ describe("useAuthSession — auth-* event plumbing", () => {
 
     expect(screen.getByTestId("status").textContent).toBe("failed");
     expect(screen.getByTestId("tag").textContent).toBe("auth-revoked");
-    expect(screen.getByTestId("message").textContent).toBe(
-      "Token was revoked by the user",
-    );
+    expect(screen.getByTestId("message").textContent).toBe("Token was revoked by the user");
   });
 
   it("transitions to status='timeout' on auth-timeout", async () => {
@@ -274,8 +262,6 @@ describe("useAuthSession — auth-* event plumbing", () => {
 
     expect(screen.getByTestId("status").textContent).toBe("failed");
     expect(screen.getByTestId("tag").textContent).toBe("engine-error");
-    expect(screen.getByTestId("message").textContent).toContain(
-      "config.json",
-    );
+    expect(screen.getByTestId("message").textContent).toContain("config.json");
   });
 });

@@ -52,8 +52,6 @@ describe("handleDeletePartial", () => {
       throw err;
     });
 
-    await expect(
-      handleDeletePartial({ downloadJobId: "live" }, client),
-    ).rejects.toBe(err);
+    await expect(handleDeletePartial({ downloadJobId: "live" }, client)).rejects.toBe(err);
   });
 });

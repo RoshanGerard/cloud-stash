@@ -95,15 +95,8 @@ import type {
   Target,
 } from "@cloudstash/fs-datasource-engine";
 import { withAuthRefresh } from "@cloudstash/fs-datasource-engine";
-import type {
-  DatasourceFileEntry,
-  DatasourceType,
-} from "@cloudstash/ipc-contracts";
-import {
-  DatasourceError,
-  DatasourceErrorTag,
-  FilesErrorTag,
-} from "@cloudstash/ipc-contracts";
+import type { DatasourceFileEntry, DatasourceType } from "@cloudstash/ipc-contracts";
+import { DatasourceError, DatasourceErrorTag, FilesErrorTag } from "@cloudstash/ipc-contracts";
 
 import type { CommandHandler } from "../ipc/server.js";
 import type { EventBus } from "../events/event-bus.js";
@@ -114,10 +107,7 @@ import type {
 } from "../downloads/registry.js";
 
 import { normalizeFilesError } from "./files-error-mapping.js";
-import {
-  validateToPath,
-  type PathValidatorDeps,
-} from "../util/path-validator.js";
+import { validateToPath, type PathValidatorDeps } from "../util/path-validator.js";
 import { resolveKeepBothSuffix } from "../util/keep-both-suffix.js";
 import { isEnvironmentallyRetryable } from "../util/retry-classification.js";
 
@@ -145,9 +135,7 @@ export interface FsBoundary {
    * distinguish "no file" from "empty file"; null-vs-zero on the size
    * field makes that distinction explicit.
    */
-  stat(
-    path: string,
-  ): Promise<{ size: number; mtime: Date } | null>;
+  stat(path: string): Promise<{ size: number; mtime: Date } | null>;
   /** Open a write stream for the pipe. The handler picks `flags`
    * ("w" for fresh, "r+" for resume) per Decision 3 step 5. */
   createWriteStream(
@@ -157,11 +145,7 @@ export interface FsBoundary {
   /** Run a Node `pipeline` from the engine's Readable into the write
    * stream, with the AbortSignal threaded through. Returns when the
    * pipeline drains; rejects with AbortError if the signal fires. */
-  pipeline(
-    source: Readable,
-    sink: NodeJS.WritableStream,
-    signal: AbortSignal,
-  ): Promise<void>;
+  pipeline(source: Readable, sink: NodeJS.WritableStream, signal: AbortSignal): Promise<void>;
   /** Remove the file at `path`. Used by the handler's outer terminal
    * catch (per add-download-resilience §4.6) to enforce the "Delete"
    * disposition for `DELETE_ON_TERMINAL` errors (range-not-honored,
@@ -181,10 +165,7 @@ export interface FsBoundary {
    * already exists; other errors (EACCES, EIO, ENOSPC, ...) propagate
    * to the handler's outer catch.
    */
-  open(
-    path: string,
-    flags: "wx",
-  ): Promise<{ close: () => Promise<void> }>;
+  open(path: string, flags: "wx"): Promise<{ close: () => Promise<void> }>;
 }
 
 // ---------------------------------------------------------------------------
@@ -320,10 +301,7 @@ export function transformDownloadingEvent(
   const total = enginePayload.total ?? ctx.prefetchedSize ?? null;
   const progress =
     total !== null && total > 0
-      ? Math.min(
-          100,
-          Math.max(0, Math.floor((enginePayload.loaded / total) * 100)),
-        )
+      ? Math.min(100, Math.max(0, Math.floor((enginePayload.loaded / total) * 100)))
       : 0;
   // §12.3 (Decision 14) + §12.7 (Decision 17e): bytesLoaded passes
   // through verbatim from the engine payload. bytesTotal is the
@@ -386,9 +364,7 @@ export function transformDownloadCancelledEvent(
 // ---------------------------------------------------------------------------
 
 export interface FilesDownloadDeps {
-  readonly resolveClient: (
-    datasourceId: string,
-  ) => Promise<DatasourceClient<DatasourceType>>;
+  readonly resolveClient: (datasourceId: string) => Promise<DatasourceClient<DatasourceType>>;
   readonly registry: DownloadRegistry;
   readonly fsSyncBus: EventBus;
   readonly fs: FsBoundary;
@@ -448,10 +424,7 @@ export function expBackoff(attempt: number): number {
  * sleep — `sync:cancel-download` aborts the controller, this resolves,
  * the inner loop exits with `CancelledError`. See design.md Decision 5.
  */
-export function sleepCancellable(
-  ms: number,
-  signal: AbortSignal,
-): Promise<void> {
+export function sleepCancellable(ms: number, signal: AbortSignal): Promise<void> {
   return new Promise<void>((resolve) => {
     if (signal.aborted) {
       // Resolve on next microtask — no timer to schedule, nothing to clear.
@@ -504,8 +477,7 @@ export function createDefaultFilesDownloadDeps(deps: {
         throw err;
       }
     },
-    createWriteStream: (path, options) =>
-      nodeFs.createWriteStream(path, options),
+    createWriteStream: (path, options) => nodeFs.createWriteStream(path, options),
     pipeline: (source, sink, signal) => nodePipeline(source, sink, { signal }),
     unlink: (path) => nodeFsPromises.unlink(path),
     open: async (path, flags) => {
@@ -560,10 +532,7 @@ export function makeFilesDownloadHandler(
     // 1. toPath validation — synchronous + one async access probe; on
     // failure, short-circuit with the exact-message tag-other envelope
     // that the spec scenarios assert on (lines 117 / 122 / 127 / 132).
-    const validation = await validateToPath(
-      params.toPath,
-      makeValidatorDeps(deps),
-    );
+    const validation = await validateToPath(params.toPath, makeValidatorDeps(deps));
     if (!validation.ok) {
       return {
         ok: false,
@@ -595,16 +564,10 @@ export function makeFilesDownloadHandler(
     // before the gate sees the dispatch — the carve-out becomes
     // load-bearing then. Forward-compat now keeps the contract honest
     // when the storage layer flips.
-    const policy: "fail" | "overwrite" | "keep-both" =
-      params.conflictPolicy ?? "fail";
-    const existingJobId = deps.registry.findByKey(
-      params.datasourceId,
-      params.path,
-    );
+    const policy: "fail" | "overwrite" | "keep-both" = params.conflictPolicy ?? "fail";
+    const existingJobId = deps.registry.findByKey(params.datasourceId, params.path);
     const existingEntry =
-      existingJobId !== undefined
-        ? deps.registry.get(existingJobId)
-        : undefined;
+      existingJobId !== undefined ? deps.registry.get(existingJobId) : undefined;
     const isResumeOfSelf =
       existingEntry !== undefined &&
       existingEntry.targetPath === params.toPath &&
@@ -660,10 +623,9 @@ export function makeFilesDownloadHandler(
           // — wrap so they map through normalizeFilesError just like
           // the gate's stat probe above.
           try {
-            effectiveTargetPath = await resolveKeepBothSuffix(
-              params.toPath,
-              { open: deps.fs.open },
-            );
+            effectiveTargetPath = await resolveKeepBothSuffix(params.toPath, {
+              open: deps.fs.open,
+            });
           } catch (err) {
             return { ok: false, error: normalizeFilesError(err) };
           }
@@ -683,9 +645,7 @@ export function makeFilesDownloadHandler(
     // request for an in-flight `(datasourceId, sourcePath)` BEFORE
     // resolving the engine client / minting a job id / opening any
     // provider request.
-    if (
-      deps.registry.findByKey(params.datasourceId, params.path) !== undefined
-    ) {
+    if (deps.registry.findByKey(params.datasourceId, params.path) !== undefined) {
       return {
         ok: false,
         error: {
@@ -781,10 +741,7 @@ export function makeFilesDownloadHandler(
     };
     const emitDownloading = (loaded: number, total: number | null): void => {
       // Re-claim guard: only emit for THIS in-flight job.
-      if (
-        deps.registry.findByKey(params.datasourceId, params.path) !==
-        inflightId.current
-      ) {
+      if (deps.registry.findByKey(params.datasourceId, params.path) !== inflightId.current) {
         return;
       }
       deps.fsSyncBus.emit(
@@ -895,50 +852,41 @@ export function makeFilesDownloadHandler(
       // settled Promise but the timer cost is real).
       let prefetchTimer: ReturnType<typeof setTimeout> | null = null;
       try {
-        const prefetched = await new Promise<FileMetadata<DatasourceType>>(
-          (resolve, reject) => {
-            // 1. The prefetch itself. migrate-engine-retry-policy-to-consumer
-            //    §4.8 — wrapped in `withAuthRefresh`: the engine no longer
-            //    auto-refreshes on `auth-expired` (its `withRefresh` is
-            //    removed by Decision 1), so the consumer owns the refresh.
-            //    On a FIRST `auth-expired` it calls `refreshCredentials()`
-            //    once and retries the metadata fetch; the resolved size
-            //    seeds `prefetchedSize` as usual. The prefetch stays
-            //    best-effort: a SECOND auth-expired, a dead-token throw from
-            //    `refreshCredentials()`, or any other rejection flows to
-            //    `reject` and is swallowed by the outer try/catch below
-            //    (warn + continue with `prefetchedSize: null`).
-            withAuthRefresh(client, () => client.getMetadata(target)).then(
-              resolve,
-              reject,
-            );
-            // 2. Timeout — abort if no resolution in 10s. Captured into
-            //    `prefetchTimer` so the `finally` below clears it on
-            //    successful resolution / non-timeout rejection.
-            prefetchTimer = setTimeout(() => {
-              reject(
-                new Error(`prefetch timeout (${PREFETCH_TIMEOUT_MS}ms)`),
-              );
-            }, PREFETCH_TIMEOUT_MS);
-            // 3. User cancel — translates to CancelledError so the
-            //    outer catch routes through the existing terminal-cancel
-            //    branch (emits download-cancelled, returns cancel
-            //    envelope, no engine.downloadFile call). The `{ once: true }`
-            //    self-cleans on first fire; on resolve/timeout it stays
-            //    registered until the AbortSignal is GC'd (handler-local
-            //    lifetime — same controller used for the download GET,
-            //    so it would be reused across cycle attempts anyway).
-            if (abortController.signal.aborted) {
-              reject(new CancelledError());
-              return;
-            }
-            abortController.signal.addEventListener(
-              "abort",
-              () => reject(new CancelledError()),
-              { once: true },
-            );
-          },
-        );
+        const prefetched = await new Promise<FileMetadata<DatasourceType>>((resolve, reject) => {
+          // 1. The prefetch itself. migrate-engine-retry-policy-to-consumer
+          //    §4.8 — wrapped in `withAuthRefresh`: the engine no longer
+          //    auto-refreshes on `auth-expired` (its `withRefresh` is
+          //    removed by Decision 1), so the consumer owns the refresh.
+          //    On a FIRST `auth-expired` it calls `refreshCredentials()`
+          //    once and retries the metadata fetch; the resolved size
+          //    seeds `prefetchedSize` as usual. The prefetch stays
+          //    best-effort: a SECOND auth-expired, a dead-token throw from
+          //    `refreshCredentials()`, or any other rejection flows to
+          //    `reject` and is swallowed by the outer try/catch below
+          //    (warn + continue with `prefetchedSize: null`).
+          withAuthRefresh(client, () => client.getMetadata(target)).then(resolve, reject);
+          // 2. Timeout — abort if no resolution in 10s. Captured into
+          //    `prefetchTimer` so the `finally` below clears it on
+          //    successful resolution / non-timeout rejection.
+          prefetchTimer = setTimeout(() => {
+            reject(new Error(`prefetch timeout (${PREFETCH_TIMEOUT_MS}ms)`));
+          }, PREFETCH_TIMEOUT_MS);
+          // 3. User cancel — translates to CancelledError so the
+          //    outer catch routes through the existing terminal-cancel
+          //    branch (emits download-cancelled, returns cancel
+          //    envelope, no engine.downloadFile call). The `{ once: true }`
+          //    self-cleans on first fire; on resolve/timeout it stays
+          //    registered until the AbortSignal is GC'd (handler-local
+          //    lifetime — same controller used for the download GET,
+          //    so it would be reused across cycle attempts anyway).
+          if (abortController.signal.aborted) {
+            reject(new CancelledError());
+            return;
+          }
+          abortController.signal.addEventListener("abort", () => reject(new CancelledError()), {
+            once: true,
+          });
+        });
         if (typeof prefetched.size === "number") {
           prefetchedSize = prefetched.size;
           deps.registry.update(downloadJobId, {
@@ -954,10 +902,7 @@ export function makeFilesDownloadHandler(
         }
         // Non-cancel failure (timeout, transient provider error,
         // size: undefined): log + continue with prefetchedSize: null.
-        console.warn(
-          `[files-download] metadata prefetch for ${params.path} failed:`,
-          err,
-        );
+        console.warn(`[files-download] metadata prefetch for ${params.path} failed:`, err);
       } finally {
         if (prefetchTimer !== null) clearTimeout(prefetchTimer);
       }
@@ -993,10 +938,7 @@ export function makeFilesDownloadHandler(
             () => attemptCtrl.abort(),
             PER_ATTEMPT_TIMEOUT_MS,
           );
-          const composedSignal = AbortSignal.any([
-            abortController.signal,
-            attemptCtrl.signal,
-          ]);
+          const composedSignal = AbortSignal.any([abortController.signal, attemptCtrl.signal]);
           // §12.4 (Decision 3 rewrite) — gate `rangeStart` against the
           // sticky `rangeUnsupported` flag. Once a range-not-honored
           // event triggers rewrite-from-0, every subsequent attempt
@@ -1023,10 +965,7 @@ export function makeFilesDownloadHandler(
               const existing = deps.registry.get(downloadJobId);
               deps.registry.update(downloadJobId, {
                 bytesDownloaded: absoluteLoaded,
-                contentLength:
-                  total !== null
-                    ? total
-                    : (existing?.contentLength ?? null),
+                contentLength: total !== null ? total : (existing?.contentLength ?? null),
               });
               // Throttled `downloading` IPC emit (1s OR 10% delta) — the
               // handler-local coalescer governs the renderer-facing stream
@@ -1076,16 +1015,12 @@ export function makeFilesDownloadHandler(
             //      normalizeFilesError).
             if (
               abortController.signal.aborted ||
-              (err instanceof DatasourceError &&
-                err.tag === DatasourceErrorTag.Cancelled)
+              (err instanceof DatasourceError && err.tag === DatasourceErrorTag.Cancelled)
             ) {
               throw new CancelledError();
             }
             let routedErr: unknown = err;
-            if (
-              attemptCtrl.signal.aborted ||
-              (err instanceof Error && err.name === "AbortError")
-            ) {
+            if (attemptCtrl.signal.aborted || (err instanceof Error && err.name === "AbortError")) {
               // Timeout (or an AbortError when neither user-cancel nor
               // attempt-timeout is the cause — defensive: treat as
               // timeout since something the handler owns aborted the
@@ -1105,9 +1040,9 @@ export function makeFilesDownloadHandler(
             // download-failed { tag: "network-error" } instead of
             // download-retrying — defeating the fix.
             if (isEnvironmentallyRetryable(routedErr)) {
-              const bytesWrittenAfter = await deps.fs.statSize(
-                effectiveTargetPath,
-              ).catch(() => bytesWrittenBefore);
+              const bytesWrittenAfter = await deps.fs
+                .statSize(effectiveTargetPath)
+                .catch(() => bytesWrittenBefore);
               if (bytesWrittenAfter > bytesWrittenBefore) {
                 consecutiveFailureCount = 0;
               }
@@ -1121,10 +1056,7 @@ export function makeFilesDownloadHandler(
                 throw new WalltimeExceededError(engineCause);
               }
               const retryAfter = routedErr.retryAfterMs ?? 0;
-              const wait = Math.max(
-                retryAfter,
-                expBackoff(consecutiveFailureCount),
-              );
+              const wait = Math.max(retryAfter, expBackoff(consecutiveFailureCount));
               if (wait > WALLTIME_CEILING_MS - elapsed) {
                 throw new WalltimeExceededError(engineCause);
               }
@@ -1140,9 +1072,7 @@ export function makeFilesDownloadHandler(
               if (abortController.signal.aborted) {
                 throw new CancelledError();
               }
-              bytesWritten = await deps.fs
-                .statSize(effectiveTargetPath)
-                .catch(() => bytesWritten);
+              bytesWritten = await deps.fs.statSize(effectiveTargetPath).catch(() => bytesWritten);
               continue;
             }
             // PRE-stream auth-expired (Decision 5 — handler-owned refresh).
@@ -1167,9 +1097,7 @@ export function makeFilesDownloadHandler(
               // propagates to the outer terminal catch, which
               // `normalizeFilesError` maps to wire `auth-revoked`.
               await client.refreshCredentials();
-              bytesWritten = await deps.fs
-                .statSize(effectiveTargetPath)
-                .catch(() => 0);
+              bytesWritten = await deps.fs.statSize(effectiveTargetPath).catch(() => 0);
               continue;
             }
             // Anything else (auth-revoked / a second auth-expired after a
@@ -1264,11 +1192,7 @@ export function makeFilesDownloadHandler(
             start: effectiveRangeStart,
           });
           try {
-            await deps.fs.pipeline(
-              result.stream,
-              sink,
-              abortController.signal,
-            );
+            await deps.fs.pipeline(result.stream, sink, abortController.signal);
           } catch (err) {
             if (abortController.signal.aborted) {
               throw new CancelledError();
@@ -1302,9 +1226,7 @@ export function makeFilesDownloadHandler(
             if (isEnvironmentallyRetryable(err)) {
               // Re-stat the disk so byte-progress check sees current
               // state (a mid-stream partial write counts as progress).
-              const bytesWrittenAfter = await deps.fs.statSize(
-                effectiveTargetPath,
-              );
+              const bytesWrittenAfter = await deps.fs.statSize(effectiveTargetPath);
               // Decision 10: reset env count ONLY on byte progress
               // strictly greater than the iteration's start.
               if (bytesWrittenAfter > bytesWrittenBefore) {
@@ -1323,10 +1245,7 @@ export function makeFilesDownloadHandler(
               }
               // (d) Wait formula: max(retryAfterMs, expBackoff(n)).
               const retryAfter = err.retryAfterMs ?? 0;
-              const wait = Math.max(
-                retryAfter,
-                expBackoff(consecutiveFailureCount),
-              );
+              const wait = Math.max(retryAfter, expBackoff(consecutiveFailureCount));
               // (e) The chosen sleep would overshoot the ceiling.
               if (wait > WALLTIME_CEILING_MS - elapsed) {
                 throw new WalltimeExceededError(engineCause);
@@ -1363,10 +1282,7 @@ export function makeFilesDownloadHandler(
           // Pipe drained cleanly. Re-stat so the byte-count assertion
           // sees on-disk reality (not the in-memory counter).
           bytesWritten = await deps.fs.statSize(effectiveTargetPath);
-          if (
-            finalContentLength !== null &&
-            bytesWritten !== finalContentLength
-          ) {
+          if (finalContentLength !== null && bytesWritten !== finalContentLength) {
             // Provider promised N bytes; we wrote M ≠ N. Terminal
             // failure (spec line 178). Don't retry — fresh re-pipe
             // would not change the outcome.
@@ -1385,10 +1301,7 @@ export function makeFilesDownloadHandler(
         // Cycle done. Either we have all bytes (success) or this was a
         // cycle with no contentLength advertised — in that case we
         // trust the stream-end signal and exit.
-        if (
-          finalContentLength === null ||
-          bytesWritten === finalContentLength
-        ) {
+        if (finalContentLength === null || bytesWritten === finalContentLength) {
           break;
         }
         // Partial — start a fresh cycle. (Should not happen with the
@@ -1410,9 +1323,7 @@ export function makeFilesDownloadHandler(
       // from `refreshCredentials()`) falls into the existing catch →
       // `providerHash = null` → check skipped, same as today's failure path.
       try {
-        finalEntryForHash = await withAuthRefresh(client, () =>
-          client.getMetadata(target),
-        );
+        finalEntryForHash = await withAuthRefresh(client, () => client.getMetadata(target));
         providerHash = readProviderHash(finalEntryForHash.providerMetadata);
       } catch {
         // Metadata fetch failure post-pipe is treated as integrity-
@@ -1421,10 +1332,7 @@ export function makeFilesDownloadHandler(
         providerHash = null;
       }
       if (providerHash !== null) {
-        const localDigest = await deps.hash.hashFile(
-          effectiveTargetPath,
-          providerHash.algo,
-        );
+        const localDigest = await deps.hash.hashFile(effectiveTargetPath, providerHash.algo);
         if (localDigest.toLowerCase() !== providerHash.digest) {
           throw new IntegrityFailedError();
         }
@@ -1442,8 +1350,7 @@ export function makeFilesDownloadHandler(
       // Authoritative final byte count for the terminal `downloads` row: the
       // registry's last-known bytes (onProgress is more accurate than the
       // engine bus's throttled value), falling back to `bytesWritten`.
-      const finalBytes =
-        deps.registry.get(downloadJobId)?.bytesDownloaded ?? bytesWritten;
+      const finalBytes = deps.registry.get(downloadJobId)?.bytesDownloaded ?? bytesWritten;
       // Defensive default — overwritten by EACH terminal branch below before
       // its `return`. The `finally` finalizes EXACTLY ONCE with whatever value
       // is set here (every branch sets one; this default only fires if a future
@@ -1490,9 +1397,7 @@ export function makeFilesDownloadHandler(
         const isDeleteDisposition =
           err !== null &&
           typeof err === "object" &&
-          DELETE_ON_TERMINAL.has(
-            (err as { constructor: ErrorConstructor }).constructor,
-          );
+          DELETE_ON_TERMINAL.has((err as { constructor: ErrorConstructor }).constructor);
         if (isDeleteDisposition) {
           await deps.fs.unlink(effectiveTargetPath).catch((unlinkErr) => {
             console.warn(
@@ -1671,8 +1576,7 @@ export function makeFilesDownloadHandler(
           downloadJobId,
           datasourceId,
           tag:
-            norm.tag === FilesErrorTag.Conflict ||
-            norm.tag === FilesErrorTag.Cancelled
+            norm.tag === FilesErrorTag.Conflict || norm.tag === FilesErrorTag.Cancelled
               ? "other"
               : norm.tag,
           message: norm.message,
@@ -1844,8 +1748,7 @@ export class WalltimeExceededError extends Error {
 
 type ErrorConstructor = new (...args: never[]) => Error;
 
-export const DELETE_ON_TERMINAL: ReadonlySet<ErrorConstructor> =
-  new Set<ErrorConstructor>([
-    RangeMismatchError,
-    IntegrityFailedError,
-  ]);
+export const DELETE_ON_TERMINAL: ReadonlySet<ErrorConstructor> = new Set<ErrorConstructor>([
+  RangeMismatchError,
+  IntegrityFailedError,
+]);

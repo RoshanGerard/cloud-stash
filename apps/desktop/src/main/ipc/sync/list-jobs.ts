@@ -17,10 +17,7 @@
 // `ipc/` (see `files/upload.ts`'s `FilesUploadDeps`). Registration
 // in `ipc/index.ts` is deferred to task 5.14.
 
-import type {
-  CommandParams,
-  JobSummary,
-} from "@cloudstash/ipc-contracts/sync-service";
+import type { CommandParams, JobSummary } from "@cloudstash/ipc-contracts/sync-service";
 import type {
   SyncListJobsRequest,
   SyncListJobsResponse,
@@ -46,9 +43,7 @@ export async function handleSyncListJobs(
 
 type WireFilter = NonNullable<CommandParams<"sync:list-jobs">["filter"]>;
 
-function translateFilter(
-  rendererFilter: NonNullable<SyncListJobsRequest["filter"]>,
-): WireFilter {
+function translateFilter(rendererFilter: NonNullable<SyncListJobsRequest["filter"]>): WireFilter {
   const out: { -readonly [K in keyof WireFilter]: WireFilter[K] } = {};
   if (rendererFilter.statuses !== undefined) {
     out.status = rendererFilter.statuses;
@@ -59,17 +54,11 @@ function translateFilter(
   return out;
 }
 
-function computeSyncingSet(
-  jobs: ReadonlyArray<JobSummary>,
-): ReadonlyArray<string> {
+function computeSyncingSet(jobs: ReadonlyArray<JobSummary>): ReadonlyArray<string> {
   const set = new Set<string>();
   for (const job of jobs) {
     if (job.kind !== "sync") continue;
-    if (
-      job.status !== "running" &&
-      job.status !== "queued" &&
-      job.status !== "waiting-network"
-    ) {
+    if (job.status !== "running" && job.status !== "queued" && job.status !== "waiting-network") {
       continue;
     }
     set.add(job.datasourceId);

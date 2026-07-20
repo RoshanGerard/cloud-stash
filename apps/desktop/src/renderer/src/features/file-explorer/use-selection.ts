@@ -27,18 +27,10 @@ export interface UseSelectionResult {
 }
 
 export function useSelection(store: ExplorerStore): UseSelectionResult {
-  const state = useSyncExternalStore(
-    store.subscribe,
-    store.getSnapshot,
-    store.getSnapshot,
-  );
+  const state = useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
 
   function onEntryClick(entryId: string, event: ReactMouseEvent): void {
-    const mode = event.shiftKey
-      ? "range"
-      : event.ctrlKey || event.metaKey
-        ? "toggle"
-        : "replace";
+    const mode = event.shiftKey ? "range" : event.ctrlKey || event.metaKey ? "toggle" : "replace";
     store.select(entryId, mode);
   }
 

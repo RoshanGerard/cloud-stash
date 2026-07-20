@@ -204,9 +204,7 @@ interface ThrottleState {
   lastFlushedAtMs: number;
 }
 
-export function createDownloadRegistry(
-  db?: import("better-sqlite3").Database,
-): DownloadRegistry {
+export function createDownloadRegistry(db?: import("better-sqlite3").Database): DownloadRegistry {
   const entries = new Map<string, DownloadJobEntry>();
   // Reverse index keyed `${datasourceId}::${sourcePath}` → downloadJobId.
   // Updated in lockstep with `set` / `finalize`. NOT touched by `update`
@@ -310,8 +308,7 @@ export function createDownloadRegistry(
     const now = Date.now();
     const bytesDelta = next.bytesDownloaded - tracker.lastFlushedBytes;
     const shouldFlush =
-      bytesDelta >= FLUSH_BYTES_THRESHOLD ||
-      now - tracker.lastFlushedAtMs >= FLUSH_INTERVAL_MS;
+      bytesDelta >= FLUSH_BYTES_THRESHOLD || now - tracker.lastFlushedAtMs >= FLUSH_INTERVAL_MS;
     if (!shouldFlush) return;
     // Write both columns from the POST-merge entry (`next`), not from
     // `partial` — a contentLength-only update must not clobber bytes.
@@ -325,10 +322,7 @@ export function createDownloadRegistry(
     tracker.lastFlushedAtMs = now;
   }
 
-  function finalize(
-    downloadJobId: string,
-    outcome: DownloadFinalizeOutcome,
-  ): void {
+  function finalize(downloadJobId: string, outcome: DownloadFinalizeOutcome): void {
     const prev = entries.get(downloadJobId);
     if (prev === undefined) return; // unknown id — 0 rows, no memory change
 
@@ -355,15 +349,10 @@ export function createDownloadRegistry(
   }
 
   function snapshot(): DownloadJobEntry[] {
-    return Array.from(entries.values()).sort(
-      (a, b) => a.startedAt - b.startedAt,
-    );
+    return Array.from(entries.values()).sort((a, b) => a.startedAt - b.startedAt);
   }
 
-  function findByKey(
-    datasourceId: string,
-    sourcePath: string,
-  ): string | undefined {
+  function findByKey(datasourceId: string, sourcePath: string): string | undefined {
     return byKey.get(keyOf(datasourceId, sourcePath));
   }
 

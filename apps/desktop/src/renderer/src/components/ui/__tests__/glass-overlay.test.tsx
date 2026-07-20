@@ -25,23 +25,14 @@ beforeAll(() => {
   }
 });
 
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Card } from "@/components/ui/card";
 
 afterEach(() => cleanup());
@@ -85,9 +76,7 @@ describe("glass overlays — task 4b.6", () => {
         </DropdownMenuContent>
       </DropdownMenu>,
     );
-    const content = document.querySelector(
-      '[data-slot="dropdown-menu-content"]',
-    );
+    const content = document.querySelector('[data-slot="dropdown-menu-content"]');
     expect(content).not.toBeNull();
     expect(content!.className).toMatch(/\bbackdrop-blur-md\b/);
   });
@@ -101,9 +90,7 @@ describe("glass overlays — task 4b.6", () => {
         </DropdownMenuContent>
       </DropdownMenu>,
     );
-    const content = document.querySelector(
-      '[data-slot="dropdown-menu-content"]',
-    );
+    const content = document.querySelector('[data-slot="dropdown-menu-content"]');
     expect(content).not.toBeNull();
     // Expect the semi-transparent popover form (lighter: 80%, darker: 70%)
     expect(content!.className).toMatch(/\bbg-popover\/80\b/);

@@ -25,13 +25,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-  within,
-} from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 
 vi.mock("@cloudstash/ipc-contracts", async () => {
@@ -59,12 +53,11 @@ const FEATURE_ROOT = path.resolve(__dirname, "..");
 
 beforeEach(() => {
   if (!("ResizeObserver" in window)) {
-    (window as unknown as { ResizeObserver: unknown }).ResizeObserver =
-      class MockResizeObserver {
-        observe() {}
-        unobserve() {}
-        disconnect() {}
-      };
+    (window as unknown as { ResizeObserver: unknown }).ResizeObserver = class MockResizeObserver {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    };
   }
   (window as unknown as { api: unknown }).api = {
     ping: vi.fn().mockResolvedValue({ ok: true, ts: 1 }),
@@ -108,9 +101,7 @@ describe("AddDatasourceDialog — extensibility (task 6.2)", () => {
     const allOptions = within(dialog).getAllByTestId(/^provider-option-/);
     expect(allOptions.length).toBe(4);
 
-    expect(
-      within(dialog).getByTestId("provider-option-dropbox"),
-    ).toBeInTheDocument();
+    expect(within(dialog).getByTestId("provider-option-dropbox")).toBeInTheDocument();
   });
 
   it("selecting the fixture provider mounts the custom credential form (dispatched on credentialsSchema)", async () => {
@@ -135,13 +126,11 @@ describe("AddDatasourceDialog — extensibility (task 6.2)", () => {
 
     // The custom form carries a stable testid so the assertion doesn't depend
     // on placeholder copy.
-    const customForm = await within(dialog).findByTestId(
-      "credential-form-custom",
-    );
+    const customForm = await within(dialog).findByTestId("credential-form-custom");
     expect(customForm).toBeInTheDocument();
   });
 
-  it("dialog and picker source contain NO `providerId === \"...\"` branches", () => {
+  it('dialog and picker source contain NO `providerId === "..."` branches', () => {
     // File-scan guardrail: if someone adds a hardcoded provider-id branch,
     // the extensibility contract breaks silently. This test catches it.
     //

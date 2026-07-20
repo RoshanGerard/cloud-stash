@@ -28,12 +28,9 @@ export function SyncingState({ progressLabel }: SyncingStateProps) {
         strokeWidth={1.5}
         aria-hidden="true"
       />
-      <div className="text-[15px] font-semibold text-foreground">
-        Indexing your files…
-      </div>
+      <div className="text-[15px] font-semibold text-foreground">Indexing your files…</div>
       <div className="max-w-[320px] text-center text-[13px] text-muted-foreground">
-        This happens once on first connect. Files will appear as they&apos;re
-        discovered.
+        This happens once on first connect. Files will appear as they&apos;re discovered.
       </div>
       {progressLabel !== undefined && progressLabel.length > 0 ? (
         <div className="mt-1 text-[12px] text-blue-600">{progressLabel}</div>

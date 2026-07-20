@@ -41,10 +41,7 @@ const exePath = path.resolve(__dirname, "..", rel);
 // this idempotent across runs: the first run creates __screenshots__/ ,
 // subsequent runs overwrite the PNG without touching the directory.
 const SCREENSHOT_DIR = path.resolve(__dirname, "__screenshots__");
-const SCREENSHOT_PATH = path.resolve(
-  SCREENSHOT_DIR,
-  "file-explorer-details-mode.png",
-);
+const SCREENSHOT_PATH = path.resolve(SCREENSHOT_DIR, "file-explorer-details-mode.png");
 
 test("keyboard-only explorer workflow: navigate, multi-select, delete, rename, Details pane, view mode", async () => {
   // The full workflow launches Electron, waits for two page loads, walks a
@@ -66,9 +63,7 @@ test("keyboard-only explorer workflow: navigate, multi-select, delete, rename, D
     // ---------------------------------------------------------------
     await window.goto("app://local/");
     await window.waitForLoadState("domcontentloaded");
-    const firstCard = window
-      .locator("[data-testid='datasource-card']")
-      .first();
+    const firstCard = window.locator("[data-testid='datasource-card']").first();
     await expect(firstCard).toBeVisible();
 
     // ---------------------------------------------------------------
@@ -81,9 +76,7 @@ test("keyboard-only explorer workflow: navigate, multi-select, delete, rename, D
     //    actions") holds focus. We avoid Shift+F10 here because it targets
     //    context menus, not the card's own DropdownMenu.
     // ---------------------------------------------------------------
-    const quickActions = firstCard.locator(
-      "button[aria-label='Quick actions']",
-    );
+    const quickActions = firstCard.locator("button[aria-label='Quick actions']");
     await quickActions.focus();
     await expect(quickActions).toBeFocused();
     await window.keyboard.press("Enter");
@@ -106,9 +99,7 @@ test("keyboard-only explorer workflow: navigate, multi-select, delete, rename, D
     // Grab the view-mode container — we assert its data-mode flips after the
     // View menu switch at step 5.6. The switcher stamps
     // `data-testid="view-mode-keyboard-container"` regardless of mode.
-    const viewContainer = root.locator(
-      "[data-testid='view-mode-keyboard-container']",
-    );
+    const viewContainer = root.locator("[data-testid='view-mode-keyboard-container']");
     await expect(viewContainer).toBeVisible();
 
     // ---------------------------------------------------------------
@@ -189,13 +180,10 @@ test("keyboard-only explorer workflow: navigate, multi-select, delete, rename, D
     // press Enter to flip it open. Using `Locator.press("Enter")` (not
     // `window.keyboard.press("Space")`) avoids the keydown/keyup quirk
     // against the packaged Electron binary.
-    const detailsToggle = root.locator(
-      "[data-testid='file-explorer-details-toggle']",
-    );
+    const detailsToggle = root.locator("[data-testid='file-explorer-details-toggle']");
     await detailsToggle.focus();
     await expect(detailsToggle).toBeFocused();
-    const alreadyOpen =
-      (await detailsToggle.getAttribute("aria-pressed")) === "true";
+    const alreadyOpen = (await detailsToggle.getAttribute("aria-pressed")) === "true";
     if (!alreadyOpen) {
       await detailsToggle.press("Enter");
     }
@@ -216,17 +204,13 @@ test("keyboard-only explorer workflow: navigate, multi-select, delete, rename, D
     // packaged binary was unreliable (pressing "m" + Enter selected the
     // wrong item), and this locator-scoped press is keyboard-only and
     // deterministic across menu reorderings.
-    const viewTrigger = root.locator(
-      "[data-testid='file-explorer-view-trigger']",
-    );
+    const viewTrigger = root.locator("[data-testid='file-explorer-view-trigger']");
     await viewTrigger.focus();
     await expect(viewTrigger).toBeFocused();
     await viewTrigger.press("Enter");
     const viewMenu = window.locator("[role='menu']");
     await expect(viewMenu).toBeVisible();
-    await viewMenu
-      .getByRole("menuitemradio", { name: /medium icons/i })
-      .press("Enter");
+    await viewMenu.getByRole("menuitemradio", { name: /medium icons/i }).press("Enter");
     await expect(viewMenu).toBeHidden();
     // The view-mode switcher re-renders with a different sub-tree when the
     // mode flips from Details to Medium Icons. The keyboard-nav container's
@@ -236,12 +220,8 @@ test("keyboard-only explorer workflow: navigate, multi-select, delete, rename, D
     // assertion that explorer rows are no longer rendered as tabular
     // `explorer-row` elements (those belong to Details mode only) — Medium
     // Icons renders `explorer-cell` grid cells instead.
-    await expect(
-      root.locator("[data-testid='explorer-row']"),
-    ).toHaveCount(0, { timeout: 5_000 });
-    await expect(
-      root.locator("[data-testid='explorer-cell']").first(),
-    ).toBeVisible();
+    await expect(root.locator("[data-testid='explorer-row']")).toHaveCount(0, { timeout: 5_000 });
+    await expect(root.locator("[data-testid='explorer-cell']").first()).toBeVisible();
   } finally {
     // 5. Close the app regardless of assertion outcomes.
     await app.close();

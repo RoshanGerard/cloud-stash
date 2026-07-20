@@ -32,7 +32,10 @@ import { vi } from "vitest";
 import { providers, type StoredCredentials } from "@cloudstash/ipc-contracts";
 
 import type { BaseClientContext } from "../base-client.js";
-import { runStrategyContractSuite, type StrategyContractFixture } from "../__tests__/strategy-contract.js";
+import {
+  runStrategyContractSuite,
+  type StrategyContractFixture,
+} from "../__tests__/strategy-contract.js";
 import { createS3Client } from "./s3-client.js";
 
 const s3Mock = mockClient(AwsS3Client);
@@ -149,9 +152,7 @@ const fixture: StrategyContractFixture = {
           opts.controller.signal.addEventListener(
             "abort",
             () => {
-              reject(
-                Object.assign(new Error("aborted"), { name: "AbortError" }),
-              );
+              reject(Object.assign(new Error("aborted"), { name: "AbortError" }));
             },
             { once: true },
           );
@@ -164,9 +165,7 @@ const fixture: StrategyContractFixture = {
           opts.controller.signal.addEventListener(
             "abort",
             () => {
-              reject(
-                Object.assign(new Error("aborted"), { name: "AbortError" }),
-              );
+              reject(Object.assign(new Error("aborted"), { name: "AbortError" }));
             },
             { once: true },
           );
@@ -198,13 +197,11 @@ const fixture: StrategyContractFixture = {
       ? `${oldKey.slice(0, oldKey.lastIndexOf("/") + 1)}${opts.newName}`
       : opts.newName;
     // introspectKey(oldKey) → HeadObject 200 → "file"
-    s3Mock
-      .on(HeadObjectCommand, { Key: oldKey })
-      .resolves({
-        ContentLength: 12,
-        LastModified: new Date("2024-06-01"),
-        ETag: '"contract-old-etag"',
-      });
+    s3Mock.on(HeadObjectCommand, { Key: oldKey }).resolves({
+      ContentLength: 12,
+      LastModified: new Date("2024-06-01"),
+      ETag: '"contract-old-etag"',
+    });
     // sibling pre-check on `fail` → HeadObject(newKey) → 404
     const notFoundErr = Object.assign(new Error("NotFound"), {
       name: "NotFound",
@@ -229,12 +226,10 @@ const fixture: StrategyContractFixture = {
       $metadata: { httpStatusCode: 404 },
     });
     s3Mock.on(HeadObjectCommand).rejects(notFoundErr);
-    s3Mock
-      .on(ListObjectsV2Command, { Prefix: `${folderKey}/` })
-      .resolves({
-        Contents: [{ Key: `${folderKey}/inner.txt` }],
-        IsTruncated: false,
-      });
+    s3Mock.on(ListObjectsV2Command, { Prefix: `${folderKey}/` }).resolves({
+      Contents: [{ Key: `${folderKey}/inner.txt` }],
+      IsTruncated: false,
+    });
   },
 
   supportsFolderRename: false,
@@ -261,9 +256,7 @@ const fixture: StrategyContractFixture = {
     opts.controller.signal.addEventListener(
       "abort",
       () => {
-        body.destroy(
-          Object.assign(new Error("aborted"), { name: "AbortError" }),
-        );
+        body.destroy(Object.assign(new Error("aborted"), { name: "AbortError" }));
       },
       { once: true },
     );

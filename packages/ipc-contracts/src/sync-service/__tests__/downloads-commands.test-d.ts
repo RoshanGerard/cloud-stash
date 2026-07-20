@@ -45,9 +45,7 @@ describe("sync-service downloads:list-active command contract", () => {
   });
 
   it("downloads:list-active params are an empty object", () => {
-    expectTypeOf<
-      CommandParams<"downloads:list-active">
-    >().toEqualTypeOf<Record<string, never>>();
+    expectTypeOf<CommandParams<"downloads:list-active">>().toEqualTypeOf<Record<string, never>>();
   });
 
   it("DownloadJob carries the documented fields", () => {
@@ -69,16 +67,12 @@ describe("sync-service downloads:list-active command contract", () => {
   });
 
   it("downloads:list-active error carries the FilesCommandErrorShape", () => {
-    expectTypeOf<
-      CommandError<"downloads:list-active">
-    >().toEqualTypeOf<FilesCommandErrorShape>();
+    expectTypeOf<CommandError<"downloads:list-active">>().toEqualTypeOf<FilesCommandErrorShape>();
   });
 
   it("DownloadsListActiveRequest and DownloadsListActiveResponse alias the envelope shape", () => {
     // Request alias is the params shape (empty object on the wire).
-    expectTypeOf<DownloadsListActiveRequest>().toEqualTypeOf<
-      Record<string, never>
-    >();
+    expectTypeOf<DownloadsListActiveRequest>().toEqualTypeOf<Record<string, never>>();
 
     // Response alias is the standard tagged envelope used across the
     // sync-service surface — `{ ok: true, value }` on success,

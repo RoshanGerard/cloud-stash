@@ -108,12 +108,7 @@ describe("sync-service command contract", () => {
 
   it("JobStatus covers every row lifecycle value", () => {
     expectTypeOf<JobStatus>().toEqualTypeOf<
-      | "queued"
-      | "running"
-      | "waiting-network"
-      | "completed"
-      | "failed"
-      | "cancelled"
+      "queued" | "running" | "waiting-network" | "completed" | "failed" | "cancelled"
     >();
   });
 

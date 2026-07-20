@@ -34,12 +34,7 @@ const CLOCK_SKEW_MS = 60_000;
  * structural decode failure (wrong segment count, bad base64url, non-JSON
  * payload, or a payload that is not a JSON object).
  */
-export type IdTokenErrorReason =
-  | "malformed"
-  | "bad-aud"
-  | "bad-iss"
-  | "expired"
-  | "missing-sub";
+export type IdTokenErrorReason = "malformed" | "bad-aud" | "bad-iss" | "expired" | "missing-sub";
 
 /**
  * Thrown by `parseIdToken` on any decode or claim-validation failure.
@@ -98,10 +93,7 @@ interface IdTokenClaims {
  *
  * @throws IdTokenError on any failure (carries an enumerated `reason`).
  */
-export function parseIdToken(
-  idToken: string,
-  opts: ParseIdTokenOptions,
-): AccountIdentity {
+export function parseIdToken(idToken: string, opts: ParseIdTokenOptions): AccountIdentity {
   const segments = idToken.split(".");
   // Bind the payload segment explicitly. The `!== 3` length guard alone does
   // not refine tuple-index access under `noUncheckedIndexedAccess`, so the
@@ -125,17 +117,13 @@ export function parseIdToken(
   } catch (err) {
     throw new IdTokenError(
       "malformed",
-      `id_token payload could not be decoded: ${
-        err instanceof Error ? err.message : String(err)
-      }`,
+      `id_token payload could not be decoded: ${err instanceof Error ? err.message : String(err)}`,
     );
   }
 
   // aud — string-equal OR array-includes.
   const { aud } = claims;
-  const audMatches =
-    aud === opts.clientId ||
-    (Array.isArray(aud) && aud.includes(opts.clientId));
+  const audMatches = aud === opts.clientId || (Array.isArray(aud) && aud.includes(opts.clientId));
   if (!audMatches) {
     throw new IdTokenError(
       "bad-aud",
@@ -146,20 +134,14 @@ export function parseIdToken(
   // iss — must be one of the accepted issuers.
   const { iss } = claims;
   if (typeof iss !== "string" || !opts.issuers.includes(iss)) {
-    throw new IdTokenError(
-      "bad-iss",
-      `id_token iss '${String(iss)}' is not an accepted issuer`,
-    );
+    throw new IdTokenError("bad-iss", `id_token iss '${String(iss)}' is not an accepted issuer`);
   }
 
   // exp — NumericDate in SECONDS; compare against `now` in MILLISECONDS with a
   // lenient clock-skew grace (valid while exp*1000 + skew is still future).
   const { exp } = claims;
   if (typeof exp !== "number" || !Number.isFinite(exp)) {
-    throw new IdTokenError(
-      "expired",
-      "id_token is missing a numeric exp claim",
-    );
+    throw new IdTokenError("expired", "id_token is missing a numeric exp claim");
   }
   const nowMs = opts.now ?? Date.now();
   if (exp * 1000 + CLOCK_SKEW_MS <= nowMs) {
@@ -169,10 +151,7 @@ export function parseIdToken(
   // sub — durable identity key; MUST be a non-empty string.
   const { sub } = claims;
   if (typeof sub !== "string" || sub.length === 0) {
-    throw new IdTokenError(
-      "missing-sub",
-      "id_token is missing a non-empty sub claim",
-    );
+    throw new IdTokenError("missing-sub", "id_token is missing a non-empty sub claim");
   }
 
   // email — display-only; default to "" when absent or non-string.

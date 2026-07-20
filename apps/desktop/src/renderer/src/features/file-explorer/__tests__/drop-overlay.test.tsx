@@ -49,26 +49,18 @@ describe("DropOverlay — blocked variant", () => {
     expect(overlay).toHaveAttribute("role", "status");
     expect(overlay).toHaveAttribute("data-blocked-reason", "disconnected");
     expect(screen.getByText("Can't upload right now")).toBeInTheDocument();
-    expect(
-      screen.getByText("This datasource is disconnected"),
-    ).toBeInTheDocument();
+    expect(screen.getByText("This datasource is disconnected")).toBeInTheDocument();
   });
 
   it("renders the auth-revoked copy", () => {
     render(<DropOverlay kind="blocked" blockedReason="auth-revoked" />);
-    expect(
-      screen.getByText("This datasource needs you to sign in again"),
-    ).toBeInTheDocument();
+    expect(screen.getByText("This datasource needs you to sign in again")).toBeInTheDocument();
   });
 
   it("renders the syncing copy and uses animate-sync-pulse on the icon (NOT animate-spin)", () => {
-    const { container } = render(
-      <DropOverlay kind="blocked" blockedReason="syncing" />,
-    );
+    const { container } = render(<DropOverlay kind="blocked" blockedReason="syncing" />);
     expect(
-      screen.getByText(
-        "This datasource is still indexing — try again in a moment",
-      ),
+      screen.getByText("This datasource is still indexing — try again in a moment"),
     ).toBeInTheDocument();
     // The icon must carry `animate-sync-pulse`, not `animate-spin`, per the
     // project's motion budget rule.

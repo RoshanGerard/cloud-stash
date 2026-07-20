@@ -36,9 +36,7 @@ describe("downloads-store", () => {
 
   describe("storage keys", () => {
     it("defaultFolder key is 'cloudstash.downloads.defaultFolder'", () => {
-      expect(DOWNLOADS_DEFAULT_FOLDER_KEY).toBe(
-        "cloudstash.downloads.defaultFolder",
-      );
+      expect(DOWNLOADS_DEFAULT_FOLDER_KEY).toBe("cloudstash.downloads.defaultFolder");
     });
 
     it("alwaysAsk key is 'cloudstash.downloads.alwaysAsk'", () => {
@@ -52,10 +50,7 @@ describe("downloads-store", () => {
     });
 
     it("returns the stored path string when the key is set", () => {
-      localStorage.setItem(
-        DOWNLOADS_DEFAULT_FOLDER_KEY,
-        "/Users/alice/Downloads/CloudStash",
-      );
+      localStorage.setItem(DOWNLOADS_DEFAULT_FOLDER_KEY, "/Users/alice/Downloads/CloudStash");
       expect(getDefaultFolder()).toBe("/Users/alice/Downloads/CloudStash");
     });
   });
@@ -63,9 +58,7 @@ describe("downloads-store", () => {
   describe("setDefaultFolder", () => {
     it("writes the path to localStorage under the canonical key", () => {
       setDefaultFolder("/Users/alice/cloud-files");
-      expect(localStorage.getItem(DOWNLOADS_DEFAULT_FOLDER_KEY)).toBe(
-        "/Users/alice/cloud-files",
-      );
+      expect(localStorage.getItem(DOWNLOADS_DEFAULT_FOLDER_KEY)).toBe("/Users/alice/cloud-files");
     });
 
     it("notifies subscribers when the value changes", () => {
@@ -108,9 +101,7 @@ describe("downloads-store", () => {
       // preload bridge isn't loaded under vitest. Storage must still
       // be written; the bridge call simply skips.
       expect(() => setDefaultFolder("/tmp/x")).not.toThrow();
-      expect(localStorage.getItem(DOWNLOADS_DEFAULT_FOLDER_KEY)).toBe(
-        "/tmp/x",
-      );
+      expect(localStorage.getItem(DOWNLOADS_DEFAULT_FOLDER_KEY)).toBe("/tmp/x");
     });
   });
 
@@ -152,10 +143,7 @@ describe("downloads-store", () => {
     });
 
     it("returns the stored value when set on first render", () => {
-      localStorage.setItem(
-        DOWNLOADS_DEFAULT_FOLDER_KEY,
-        "/Users/alice/Downloads/CloudStash",
-      );
+      localStorage.setItem(DOWNLOADS_DEFAULT_FOLDER_KEY, "/Users/alice/Downloads/CloudStash");
       const { result } = renderHook(() => useDefaultFolder());
       expect(result.current).toBe("/Users/alice/Downloads/CloudStash");
     });

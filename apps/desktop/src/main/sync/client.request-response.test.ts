@@ -15,10 +15,7 @@ import * as net from "node:net";
 import * as os from "node:os";
 import * as path from "node:path";
 
-import type {
-  RequestFrame,
-  ResponseFrame,
-} from "@cloudstash/ipc-contracts/sync-service";
+import type { RequestFrame, ResponseFrame } from "@cloudstash/ipc-contracts/sync-service";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { FramingDecoder, encodeFrame } from "./framing.js";
@@ -190,9 +187,9 @@ describe("SyncClient request/response", () => {
     });
 
     const start = Date.now();
-    await expect(
-      client.request("sync:get-status", {}, { timeoutMs: 100 }),
-    ).rejects.toMatchObject({ tag: "request-timeout" });
+    await expect(client.request("sync:get-status", {}, { timeoutMs: 100 })).rejects.toMatchObject({
+      tag: "request-timeout",
+    });
     const elapsed = Date.now() - start;
     expect(elapsed).toBeGreaterThanOrEqual(90); // allow small timer slack
     expect(seenIds).toEqual(["t-1"]);
@@ -280,7 +277,7 @@ describe("SyncClient request/response", () => {
     const client = new SyncClient(socket, { generateId: () => "e-1" });
     await expect(
       client.request("sync:get-job", { jobId: "missing" }),
-    // eslint-disable-next-line cloudstash/no-raw-error-tag-literal -- ServiceErrorTag vocabulary (no const object) — out of scope
+      // eslint-disable-next-line cloudstash/no-raw-error-tag-literal -- ServiceErrorTag vocabulary (no const object) — out of scope
     ).rejects.toMatchObject({ tag: "not-found", command: "sync:get-job" });
   });
 });

@@ -84,9 +84,7 @@ export function setDefaultFolder(folder: string): void {
 export function getAlwaysAsk(): boolean {
   if (!isBrowser()) return false;
   try {
-    return (
-      window.localStorage.getItem(DOWNLOADS_ALWAYS_ASK_KEY) === "yes"
-    );
+    return window.localStorage.getItem(DOWNLOADS_ALWAYS_ASK_KEY) === "yes";
   } catch {
     return false;
   }
@@ -108,10 +106,7 @@ export function setAlwaysAsk(value: boolean): void {
   notify();
 }
 
-function subscribeForKey(
-  watchKey: string,
-  listener: () => void,
-): () => void {
+function subscribeForKey(watchKey: string, listener: () => void): () => void {
   listeners.add(listener);
 
   const storageHandler = (e: StorageEvent) => {

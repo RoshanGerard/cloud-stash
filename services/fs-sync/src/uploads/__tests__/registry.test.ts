@@ -30,15 +30,9 @@
 
 import { describe, expect, it } from "vitest";
 
-import {
-  createUploadRegistry,
-  type UploadJobEntry,
-  type UploadJobUpdate,
-} from "../registry.js";
+import { createUploadRegistry, type UploadJobEntry, type UploadJobUpdate } from "../registry.js";
 
-function makeEntry(
-  overrides: Partial<UploadJobEntry> = {},
-): UploadJobEntry {
+function makeEntry(overrides: Partial<UploadJobEntry> = {}): UploadJobEntry {
   return {
     uploadJobId: "job-A",
     datasourceId: "ds-1",
@@ -141,9 +135,7 @@ describe("UploadRegistry", () => {
     it("update on a missing uploadJobId is a silent no-op (no throw, registry unchanged)", () => {
       const registry = createUploadRegistry();
       registry.set(makeEntry());
-      expect(() =>
-        registry.update("does-not-exist", { bytesUploaded: 1 }),
-      ).not.toThrow();
+      expect(() => registry.update("does-not-exist", { bytesUploaded: 1 })).not.toThrow();
       expect(registry.get("job-A")?.bytesUploaded).toBe(0);
       expect(registry.size()).toBe(1);
     });
@@ -333,9 +325,7 @@ describe("UploadRegistry", () => {
 
     it("returns undefined for an unknown (datasourceId, targetPath) pair", () => {
       const registry = createUploadRegistry();
-      expect(
-        registry.findByTarget("ds-ghost", "/unknown.jpg"),
-      ).toBeUndefined();
+      expect(registry.findByTarget("ds-ghost", "/unknown.jpg")).toBeUndefined();
     });
 
     it("clears the mapping after delete so a fresh upload can re-claim the target", () => {
@@ -343,9 +333,7 @@ describe("UploadRegistry", () => {
       registry.set(makeEntry({ uploadJobId: "job-A" }));
       registry.delete("job-A");
       expect(registry.findByTarget("ds-1", "/photos/x.jpg")).toBeUndefined();
-      registry.set(
-        makeEntry({ uploadJobId: "job-B", startedAt: 2_000 }),
-      );
+      registry.set(makeEntry({ uploadJobId: "job-B", startedAt: 2_000 }));
       expect(registry.findByTarget("ds-1", "/photos/x.jpg")).toBe("job-B");
     });
 

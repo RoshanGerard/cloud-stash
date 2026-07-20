@@ -48,15 +48,8 @@
 
 import { randomUUID } from "node:crypto";
 
-import {
-  DatasourceError,
-  DatasourceErrorTag,
-  type ProviderId,
-} from "@cloudstash/ipc-contracts";
-import type {
-  ClientFactory,
-  EngineContext,
-} from "@cloudstash/fs-datasource-engine";
+import { DatasourceError, DatasourceErrorTag, type ProviderId } from "@cloudstash/ipc-contracts";
+import type { ClientFactory, EngineContext } from "@cloudstash/fs-datasource-engine";
 
 import type { CommandHandler } from "../ipc/server.js";
 import type { EventBus } from "../events/event-bus.js";
@@ -153,10 +146,7 @@ export function makeAuthenticateStartHandler(
             },
           };
         }
-        if (
-          err instanceof DatasourceError &&
-          err.tag === DatasourceErrorTag.InvalidDatasource
-        ) {
+        if (err instanceof DatasourceError && err.tag === DatasourceErrorTag.InvalidDatasource) {
           return {
             ok: false,
             error: {
@@ -186,18 +176,10 @@ export function makeAuthenticateStartHandler(
     // sync:authenticate-complete with `kind: "credentials-form"`.
     let intent;
     try {
-      const client = deps.factory.createForAuth(
-        providerId,
-        null,
-        deps.engineContext,
-        datasourceId,
-      );
+      const client = deps.factory.createForAuth(providerId, null, deps.engineContext, datasourceId);
       intent = await client.authenticate();
     } catch (err) {
-      if (
-        err instanceof DatasourceError &&
-        err.tag === DatasourceErrorTag.InvalidDatasource
-      ) {
+      if (err instanceof DatasourceError && err.tag === DatasourceErrorTag.InvalidDatasource) {
         return {
           ok: false,
           error: {
@@ -241,9 +223,7 @@ export function makeAuthenticateStartHandler(
     deps.bus.emit("auth-initiated", {
       correlationId,
       providerId,
-      ...(params.datasourceId !== undefined
-        ? { datasourceId: params.datasourceId }
-        : {}),
+      ...(params.datasourceId !== undefined ? { datasourceId: params.datasourceId } : {}),
     });
 
     return {

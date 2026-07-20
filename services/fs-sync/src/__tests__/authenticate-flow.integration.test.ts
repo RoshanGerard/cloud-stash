@@ -90,8 +90,7 @@ interface EventFrame {
 }
 
 function pipeFor(tag: string): string {
-  const suffix =
-    `${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  const suffix = `${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
   if (process.platform === "win32") {
     return `\\\\.\\pipe\\cloudstash-sync-int-auth-${tag}-${suffix}`;
   }
@@ -108,12 +107,7 @@ async function connect(pipePath: string): Promise<net.Socket> {
 
 interface Client {
   readonly socket: net.Socket;
-  send(frame: {
-    id: string;
-    kind: "request";
-    command: string;
-    params: unknown;
-  }): void;
+  send(frame: { id: string; kind: "request"; command: string; params: unknown }): void;
   waitForResponse(id: string, timeoutMs?: number): Promise<ResponseFrame>;
   waitForEvent(name: string, timeoutMs?: number): Promise<EventFrame>;
   countEvents(name: string): number;
@@ -185,11 +179,7 @@ async function bootScratchRuntime(opts: {
 }): Promise<Runtime> {
   const configPath = path.join(scratchDir, "config.json");
   if (opts.serviceConfig !== undefined) {
-    await fsp.writeFile(
-      configPath,
-      JSON.stringify(opts.serviceConfig),
-      { mode: 0o600 },
-    );
+    await fsp.writeFile(configPath, JSON.stringify(opts.serviceConfig), { mode: 0o600 });
   }
   return bootstrap({
     dev: true,
@@ -203,9 +193,7 @@ async function bootScratchRuntime(opts: {
 }
 
 beforeEach(async () => {
-  scratchDir = await fsp.mkdtemp(
-    path.join(os.tmpdir(), "cloudstash-sync-int-auth-"),
-  );
+  scratchDir = await fsp.mkdtemp(path.join(os.tmpdir(), "cloudstash-sync-int-auth-"));
   runtime = null;
 });
 
@@ -233,146 +221,131 @@ afterEach(async () => {
 // ---------------------------------------------------------------------------
 
 describe("authenticate flow integration — OAuth (google-drive) start+cancel", () => {
-  it(
-    "start returns kind=oauth, bus emits auth-initiated + oauth-open-url, cancel returns cancelled=true and emits auth-cancelled",
-    async () => {
-      const pipePath = pipeFor("oauth");
-      runtime = await bootScratchRuntime({
-        socketPath: pipePath,
-        serviceConfig: {
-          schemaVersion: 1,
-          providers: {
-            "google-drive": {
-              clientId: "synthetic-client-id",
-              clientSecret: "synthetic-client-secret",
-            },
+  it("start returns kind=oauth, bus emits auth-initiated + oauth-open-url, cancel returns cancelled=true and emits auth-cancelled", async () => {
+    const pipePath = pipeFor("oauth");
+    runtime = await bootScratchRuntime({
+      socketPath: pipePath,
+      serviceConfig: {
+        schemaVersion: 1,
+        providers: {
+          "google-drive": {
+            clientId: "synthetic-client-id",
+            clientSecret: "synthetic-client-secret",
           },
         },
+      },
+    });
+
+    const sock = await connect(pipePath);
+    const cli = makeClient(sock);
+
+    try {
+      // 1. Subscribe to the event stream BEFORE issuing the start so we
+      //    see auth-initiated + oauth-open-url.
+      cli.send({
+        id: "sub",
+        kind: "request",
+        command: "sync:subscribe-events",
+        params: {},
       });
+      const subRes = await cli.waitForResponse("sub");
+      expect(subRes.ok).toBe(true);
 
-      const sock = await connect(pipePath);
-      const cli = makeClient(sock);
+      // 2. Start the OAuth authenticate flow.
+      cli.send({
+        id: "start",
+        kind: "request",
+        command: "sync:authenticate-start",
+        params: { providerId: "google-drive" },
+      });
+      const startRes = await cli.waitForResponse("start");
+      expect(startRes.ok).toBe(true);
+      if (!startRes.ok) return;
+      const result = startRes.result as {
+        correlationId: string;
+        kind: "oauth";
+      };
+      expect(result.kind).toBe("oauth");
+      expect(typeof result.correlationId).toBe("string");
+      expect(result.correlationId.length).toBeGreaterThan(0);
+      const correlationId = result.correlationId;
 
-      try {
-        // 1. Subscribe to the event stream BEFORE issuing the start so we
-        //    see auth-initiated + oauth-open-url.
-        cli.send({
-          id: "sub",
-          kind: "request",
-          command: "sync:subscribe-events",
-          params: {},
-        });
-        const subRes = await cli.waitForResponse("sub");
-        expect(subRes.ok).toBe(true);
+      // 3. The bus emits auth-initiated then oauth-open-url, both keyed
+      //    on the same correlationId. Wait for both.
+      const initiated = await cli.waitForEvent("auth-initiated");
+      const openUrl = await cli.waitForEvent("oauth-open-url");
+      expect((initiated.payload as { correlationId: string }).correlationId).toBe(correlationId);
+      expect((initiated.payload as { providerId: string }).providerId).toBe("google-drive");
+      expect((openUrl.payload as { correlationId: string }).correlationId).toBe(correlationId);
+      const authorizeUrl = (openUrl.payload as { authorizeUrl: string }).authorizeUrl;
+      expect(typeof authorizeUrl).toBe("string");
+      expect(authorizeUrl).toMatch(/^https:\/\//);
+      // The redirect_uri in the URL must point at our loopback port.
+      const parsed = new URL(authorizeUrl);
+      const redirectUri = parsed.searchParams.get("redirect_uri");
+      expect(redirectUri).toMatch(/^http:\/\/127\.0\.0\.1:\d+\/callback$/);
 
-        // 2. Start the OAuth authenticate flow.
-        cli.send({
-          id: "start",
-          kind: "request",
-          command: "sync:authenticate-start",
-          params: { providerId: "google-drive" },
-        });
-        const startRes = await cli.waitForResponse("start");
-        expect(startRes.ok).toBe(true);
-        if (!startRes.ok) return;
-        const result = startRes.result as {
-          correlationId: string;
-          kind: "oauth";
-        };
-        expect(result.kind).toBe("oauth");
-        expect(typeof result.correlationId).toBe("string");
-        expect(result.correlationId.length).toBeGreaterThan(0);
-        const correlationId = result.correlationId;
+      // 4. Cancel — broker.cancel runs, broker emits auth-cancelled,
+      //    handler returns cancelled=true.
+      cli.send({
+        id: "cancel",
+        kind: "request",
+        command: "sync:authenticate-cancel",
+        params: { correlationId },
+      });
+      const cancelRes = await cli.waitForResponse("cancel");
+      expect(cancelRes.ok).toBe(true);
+      if (!cancelRes.ok) return;
+      expect((cancelRes.result as { cancelled: boolean }).cancelled).toBe(true);
 
-        // 3. The bus emits auth-initiated then oauth-open-url, both keyed
-        //    on the same correlationId. Wait for both.
-        const initiated = await cli.waitForEvent("auth-initiated");
-        const openUrl = await cli.waitForEvent("oauth-open-url");
-        expect((initiated.payload as { correlationId: string }).correlationId)
-          .toBe(correlationId);
-        expect((initiated.payload as { providerId: string }).providerId)
-          .toBe("google-drive");
-        expect((openUrl.payload as { correlationId: string }).correlationId)
-          .toBe(correlationId);
-        const authorizeUrl =
-          (openUrl.payload as { authorizeUrl: string }).authorizeUrl;
-        expect(typeof authorizeUrl).toBe("string");
-        expect(authorizeUrl).toMatch(/^https:\/\//);
-        // The redirect_uri in the URL must point at our loopback port.
-        const parsed = new URL(authorizeUrl);
-        const redirectUri = parsed.searchParams.get("redirect_uri");
-        expect(redirectUri).toMatch(/^http:\/\/127\.0\.0\.1:\d+\/callback$/);
+      // 5. auth-cancelled fires once.
+      const cancelled = await cli.waitForEvent("auth-cancelled");
+      expect((cancelled.payload as { correlationId: string }).correlationId).toBe(correlationId);
+      expect(cli.countEvents("auth-cancelled")).toBe(1);
+    } finally {
+      cli.close();
+    }
+  }, 15_000);
 
-        // 4. Cancel — broker.cancel runs, broker emits auth-cancelled,
-        //    handler returns cancelled=true.
-        cli.send({
-          id: "cancel",
-          kind: "request",
-          command: "sync:authenticate-cancel",
-          params: { correlationId },
-        });
-        const cancelRes = await cli.waitForResponse("cancel");
-        expect(cancelRes.ok).toBe(true);
-        if (!cancelRes.ok) return;
-        expect((cancelRes.result as { cancelled: boolean }).cancelled).toBe(
-          true,
-        );
+  it("start with absent service config returns service-config-missing; emits no event", async () => {
+    const pipePath = pipeFor("oauth-missing");
+    // Do NOT seed config.json — this exercises the spec scenario
+    // "Service-config-missing on OAuth start: no event is emitted, no
+    // loopback server is bound".
+    runtime = await bootScratchRuntime({ socketPath: pipePath });
 
-        // 5. auth-cancelled fires once.
-        const cancelled = await cli.waitForEvent("auth-cancelled");
-        expect((cancelled.payload as { correlationId: string }).correlationId)
-          .toBe(correlationId);
-        expect(cli.countEvents("auth-cancelled")).toBe(1);
-      } finally {
-        cli.close();
-      }
-    },
-    15_000,
-  );
+    const sock = await connect(pipePath);
+    const cli = makeClient(sock);
 
-  it(
-    "start with absent service config returns service-config-missing; emits no event",
-    async () => {
-      const pipePath = pipeFor("oauth-missing");
-      // Do NOT seed config.json — this exercises the spec scenario
-      // "Service-config-missing on OAuth start: no event is emitted, no
-      // loopback server is bound".
-      runtime = await bootScratchRuntime({ socketPath: pipePath });
+    try {
+      cli.send({
+        id: "sub",
+        kind: "request",
+        command: "sync:subscribe-events",
+        params: {},
+      });
+      await cli.waitForResponse("sub");
 
-      const sock = await connect(pipePath);
-      const cli = makeClient(sock);
+      cli.send({
+        id: "start",
+        kind: "request",
+        command: "sync:authenticate-start",
+        params: { providerId: "google-drive" },
+      });
+      const res = await cli.waitForResponse("start");
+      expect(res.ok).toBe(false);
+      if (res.ok) return;
+      expect(res.error.tag).toBe("service-config-missing");
 
-      try {
-        cli.send({
-          id: "sub",
-          kind: "request",
-          command: "sync:subscribe-events",
-          params: {},
-        });
-        await cli.waitForResponse("sub");
-
-        cli.send({
-          id: "start",
-          kind: "request",
-          command: "sync:authenticate-start",
-          params: { providerId: "google-drive" },
-        });
-        const res = await cli.waitForResponse("start");
-        expect(res.ok).toBe(false);
-        if (res.ok) return;
-        expect(res.error.tag).toBe("service-config-missing");
-
-        // No event should fire — wait briefly to be sure none arrives.
-        await new Promise((r) => setTimeout(r, 100));
-        expect(cli.countEvents("auth-initiated")).toBe(0);
-        expect(cli.countEvents("oauth-open-url")).toBe(0);
-        expect(cli.countEvents("auth-failed")).toBe(0);
-      } finally {
-        cli.close();
-      }
-    },
-    10_000,
-  );
+      // No event should fire — wait briefly to be sure none arrives.
+      await new Promise((r) => setTimeout(r, 100));
+      expect(cli.countEvents("auth-initiated")).toBe(0);
+      expect(cli.countEvents("oauth-open-url")).toBe(0);
+      expect(cli.countEvents("auth-failed")).toBe(0);
+    } finally {
+      cli.close();
+    }
+  }, 10_000);
 });
 
 // ---------------------------------------------------------------------------
@@ -380,137 +353,130 @@ describe("authenticate flow integration — OAuth (google-drive) start+cancel", 
 // ---------------------------------------------------------------------------
 
 describe("authenticate flow integration — credentials-form (amazon-s3) start+complete", () => {
-  it(
-    "start returns kind=credentials-form with formSchema; complete writes credentials and emits credential-persisted + auth-completed",
-    async () => {
-      const pipePath = pipeFor("creds-form");
-      // S3 does not consult the OAuth app config — but bootstrapping with
-      // an empty config dir is still fine (the configStore is constructed
-      // lazily-readable). We do NOT seed config.json here.
-      runtime = await bootScratchRuntime({ socketPath: pipePath });
+  it("start returns kind=credentials-form with formSchema; complete writes credentials and emits credential-persisted + auth-completed", async () => {
+    const pipePath = pipeFor("creds-form");
+    // S3 does not consult the OAuth app config — but bootstrapping with
+    // an empty config dir is still fine (the configStore is constructed
+    // lazily-readable). We do NOT seed config.json here.
+    runtime = await bootScratchRuntime({ socketPath: pipePath });
 
-      const sock = await connect(pipePath);
-      const cli = makeClient(sock);
+    const sock = await connect(pipePath);
+    const cli = makeClient(sock);
 
-      try {
-        cli.send({
-          id: "sub",
-          kind: "request",
-          command: "sync:subscribe-events",
-          params: {},
-        });
-        await cli.waitForResponse("sub");
+    try {
+      cli.send({
+        id: "sub",
+        kind: "request",
+        command: "sync:subscribe-events",
+        params: {},
+      });
+      await cli.waitForResponse("sub");
 
-        // 1. Start.
-        cli.send({
-          id: "start",
-          kind: "request",
-          command: "sync:authenticate-start",
-          params: { providerId: "amazon-s3" },
-        });
-        const startRes = await cli.waitForResponse("start");
-        expect(startRes.ok).toBe(true);
-        if (!startRes.ok) return;
-        const startResult = startRes.result as {
-          correlationId: string;
-          kind: "credentials-form";
-          formSchema: string;
-        };
-        expect(startResult.kind).toBe("credentials-form");
-        expect(typeof startResult.correlationId).toBe("string");
-        expect(startResult.formSchema).toBe("aws-access-key");
-        const correlationId = startResult.correlationId;
+      // 1. Start.
+      cli.send({
+        id: "start",
+        kind: "request",
+        command: "sync:authenticate-start",
+        params: { providerId: "amazon-s3" },
+      });
+      const startRes = await cli.waitForResponse("start");
+      expect(startRes.ok).toBe(true);
+      if (!startRes.ok) return;
+      const startResult = startRes.result as {
+        correlationId: string;
+        kind: "credentials-form";
+        formSchema: string;
+      };
+      expect(startResult.kind).toBe("credentials-form");
+      expect(typeof startResult.correlationId).toBe("string");
+      expect(startResult.formSchema).toBe("aws-access-key");
+      const correlationId = startResult.correlationId;
 
-        // auth-initiated emits on credentials-form path (handler-driven).
-        const initiated = await cli.waitForEvent("auth-initiated");
-        expect((initiated.payload as { correlationId: string }).correlationId)
-          .toBe(correlationId);
+      // auth-initiated emits on credentials-form path (handler-driven).
+      const initiated = await cli.waitForEvent("auth-initiated");
+      expect((initiated.payload as { correlationId: string }).correlationId).toBe(correlationId);
 
-        // 2. Complete with synthetic AWS values. The mocked
-        //    `@aws-sdk/client-s3` makes the strategy's HeadBucket
-        //    verification a no-op resolve.
-        cli.send({
-          id: "complete",
-          kind: "request",
-          command: "sync:authenticate-complete",
-          params: {
-            correlationId,
-            completion: {
-              kind: "credentials-form",
-              values: {
-                accessKeyId: "AKIATESTFAKEFAKE",
-                secretAccessKey: "fake-secret-fake-secret-fake-secret",
-                region: "us-east-1",
-                bucket: "test-bucket-int",
-              },
+      // 2. Complete with synthetic AWS values. The mocked
+      //    `@aws-sdk/client-s3` makes the strategy's HeadBucket
+      //    verification a no-op resolve.
+      cli.send({
+        id: "complete",
+        kind: "request",
+        command: "sync:authenticate-complete",
+        params: {
+          correlationId,
+          completion: {
+            kind: "credentials-form",
+            values: {
+              accessKeyId: "AKIATESTFAKEFAKE",
+              secretAccessKey: "fake-secret-fake-secret-fake-secret",
+              region: "us-east-1",
+              bucket: "test-bucket-int",
             },
           },
-        });
-        const completeRes = await cli.waitForResponse("complete");
-        if (!completeRes.ok) {
-          // Surface the wire error so a test failure is diagnosable —
-          // the assertion below would otherwise just print "expected
-          // false to be true".
-          //
-          // Mock-drift tripwire: a `provider-error` here almost always means
-          // the `vi.mock("@aws-sdk/client-s3")` above did NOT apply — the real
-          // AWS SDK ran a live `HeadBucket` against the synthetic bucket and
-          // failed. That happens when this checkout's
-          // `services/fs-sync/node_modules/@aws-sdk/client-s3` symlink is
-          // missing (node_modules drift: the devDep is in pnpm-lock.yaml but
-          // not materialized, so `vi.mock` can't resolve the specifier from
-          // this test's location and silently no-ops). Fix: run `pnpm install`.
-          const wire = JSON.stringify(completeRes.error);
-          const hint = wire.includes("provider-error")
-            ? " — provider-error on the S3 credentials arm usually means " +
-              "vi.mock('@aws-sdk/client-s3') did not apply (missing " +
-              "services/fs-sync/node_modules/@aws-sdk/client-s3 symlink — " +
-              "run `pnpm install`)"
-            : "";
-          throw new Error(`complete failed: ${wire}${hint}`);
-        }
-        expect(completeRes.ok).toBe(true);
-        const completeResult = completeRes.result as {
-          datasourceId: string;
-          summary: { id: string; providerId: string; status: string };
-        };
-        expect(typeof completeResult.datasourceId).toBe("string");
-        expect(completeResult.datasourceId.length).toBeGreaterThan(0);
-        const datasourceId = completeResult.datasourceId;
-        expect(completeResult.summary.id).toBe(datasourceId);
-        expect(completeResult.summary.providerId).toBe("amazon-s3");
-        expect(completeResult.summary.status).toBe("connected");
-
-        // 3. credential-persisted + auth-completed pair.
-        const persisted = await cli.waitForEvent("credential-persisted");
-        const completed = await cli.waitForEvent("auth-completed");
-        expect((persisted.payload as { datasourceId: string }).datasourceId)
-          .toBe(datasourceId);
-        expect((completed.payload as { datasourceId: string }).datasourceId)
-          .toBe(datasourceId);
-
-        // 4. credentials.json on disk has an entry for the new datasource.
-        const credPath = path.join(scratchDir, "credentials.json");
-        // The store may write asynchronously; poll briefly.
-        let raw = "";
-        for (let i = 0; i < 30; i += 1) {
-          if (fs.existsSync(credPath)) {
-            raw = await fsp.readFile(credPath, "utf-8");
-            if (raw.includes(datasourceId)) break;
-          }
-          await new Promise((r) => setTimeout(r, 50));
-        }
-        expect(raw).not.toBe("");
-        const parsed = JSON.parse(raw) as {
-          schemaVersion: 1;
-          credentials: Record<string, unknown>;
-        };
-        expect(parsed.schemaVersion).toBe(1);
-        expect(parsed.credentials[datasourceId]).toBeDefined();
-      } finally {
-        cli.close();
+        },
+      });
+      const completeRes = await cli.waitForResponse("complete");
+      if (!completeRes.ok) {
+        // Surface the wire error so a test failure is diagnosable —
+        // the assertion below would otherwise just print "expected
+        // false to be true".
+        //
+        // Mock-drift tripwire: a `provider-error` here almost always means
+        // the `vi.mock("@aws-sdk/client-s3")` above did NOT apply — the real
+        // AWS SDK ran a live `HeadBucket` against the synthetic bucket and
+        // failed. That happens when this checkout's
+        // `services/fs-sync/node_modules/@aws-sdk/client-s3` symlink is
+        // missing (node_modules drift: the devDep is in pnpm-lock.yaml but
+        // not materialized, so `vi.mock` can't resolve the specifier from
+        // this test's location and silently no-ops). Fix: run `pnpm install`.
+        const wire = JSON.stringify(completeRes.error);
+        const hint = wire.includes("provider-error")
+          ? " — provider-error on the S3 credentials arm usually means " +
+            "vi.mock('@aws-sdk/client-s3') did not apply (missing " +
+            "services/fs-sync/node_modules/@aws-sdk/client-s3 symlink — " +
+            "run `pnpm install`)"
+          : "";
+        throw new Error(`complete failed: ${wire}${hint}`);
       }
-    },
-    15_000,
-  );
+      expect(completeRes.ok).toBe(true);
+      const completeResult = completeRes.result as {
+        datasourceId: string;
+        summary: { id: string; providerId: string; status: string };
+      };
+      expect(typeof completeResult.datasourceId).toBe("string");
+      expect(completeResult.datasourceId.length).toBeGreaterThan(0);
+      const datasourceId = completeResult.datasourceId;
+      expect(completeResult.summary.id).toBe(datasourceId);
+      expect(completeResult.summary.providerId).toBe("amazon-s3");
+      expect(completeResult.summary.status).toBe("connected");
+
+      // 3. credential-persisted + auth-completed pair.
+      const persisted = await cli.waitForEvent("credential-persisted");
+      const completed = await cli.waitForEvent("auth-completed");
+      expect((persisted.payload as { datasourceId: string }).datasourceId).toBe(datasourceId);
+      expect((completed.payload as { datasourceId: string }).datasourceId).toBe(datasourceId);
+
+      // 4. credentials.json on disk has an entry for the new datasource.
+      const credPath = path.join(scratchDir, "credentials.json");
+      // The store may write asynchronously; poll briefly.
+      let raw = "";
+      for (let i = 0; i < 30; i += 1) {
+        if (fs.existsSync(credPath)) {
+          raw = await fsp.readFile(credPath, "utf-8");
+          if (raw.includes(datasourceId)) break;
+        }
+        await new Promise((r) => setTimeout(r, 50));
+      }
+      expect(raw).not.toBe("");
+      const parsed = JSON.parse(raw) as {
+        schemaVersion: 1;
+        credentials: Record<string, unknown>;
+      };
+      expect(parsed.schemaVersion).toBe(1);
+      expect(parsed.credentials[datasourceId]).toBeDefined();
+    } finally {
+      cli.close();
+    }
+  }, 15_000);
 });

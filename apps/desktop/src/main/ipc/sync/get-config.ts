@@ -10,9 +10,7 @@
 // handler carries the request through and wraps the reply without persisting,
 // caching, or inspecting any of its content.
 
-import type {
-  SyncGetConfigResponse,
-} from "@cloudstash/ipc-contracts/sync-service-desktop";
+import type { SyncGetConfigResponse } from "@cloudstash/ipc-contracts/sync-service-desktop";
 import type { SyncGetConfigError } from "@cloudstash/ipc-contracts/sync-service";
 
 import { SyncClient, SyncCommandError } from "../../sync/client.js";

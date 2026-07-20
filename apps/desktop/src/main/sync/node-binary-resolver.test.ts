@@ -40,9 +40,7 @@ describe("resolveServiceNodeBinary", () => {
       platform: "win32",
       arch: "x64",
     });
-    expect(result).toBe(
-      path.join(FAKE_APP_PATH, "..", "node", "win-x64", "node.exe"),
-    );
+    expect(result).toBe(path.join(FAKE_APP_PATH, "..", "node", "win-x64", "node.exe"));
   });
 
   it("returns win-arm64 path on packaged Windows arm64", () => {
@@ -52,9 +50,7 @@ describe("resolveServiceNodeBinary", () => {
       platform: "win32",
       arch: "arm64",
     });
-    expect(result).toBe(
-      path.join(FAKE_APP_PATH, "..", "node", "win-arm64", "node.exe"),
-    );
+    expect(result).toBe(path.join(FAKE_APP_PATH, "..", "node", "win-arm64", "node.exe"));
   });
 
   it("returns darwin-x64 path on packaged macOS x64", () => {
@@ -64,9 +60,7 @@ describe("resolveServiceNodeBinary", () => {
       platform: "darwin",
       arch: "x64",
     });
-    expect(result).toBe(
-      path.join(FAKE_APP_PATH, "..", "node", "darwin-x64", "bin", "node"),
-    );
+    expect(result).toBe(path.join(FAKE_APP_PATH, "..", "node", "darwin-x64", "bin", "node"));
   });
 
   it("returns darwin-arm64 path on packaged macOS arm64", () => {
@@ -76,9 +70,7 @@ describe("resolveServiceNodeBinary", () => {
       platform: "darwin",
       arch: "arm64",
     });
-    expect(result).toBe(
-      path.join(FAKE_APP_PATH, "..", "node", "darwin-arm64", "bin", "node"),
-    );
+    expect(result).toBe(path.join(FAKE_APP_PATH, "..", "node", "darwin-arm64", "bin", "node"));
   });
 
   it("returns linux-x64 path on packaged Linux x64", () => {
@@ -88,9 +80,7 @@ describe("resolveServiceNodeBinary", () => {
       platform: "linux",
       arch: "x64",
     });
-    expect(result).toBe(
-      path.join(FAKE_APP_PATH, "..", "node", "linux-x64", "bin", "node"),
-    );
+    expect(result).toBe(path.join(FAKE_APP_PATH, "..", "node", "linux-x64", "bin", "node"));
   });
 
   it("returns linux-arm64 path on packaged Linux arm64", () => {
@@ -100,9 +90,7 @@ describe("resolveServiceNodeBinary", () => {
       platform: "linux",
       arch: "arm64",
     });
-    expect(result).toBe(
-      path.join(FAKE_APP_PATH, "..", "node", "linux-arm64", "bin", "node"),
-    );
+    expect(result).toBe(path.join(FAKE_APP_PATH, "..", "node", "linux-arm64", "bin", "node"));
   });
 
   it("throws on unsupported arch, naming the arch", () => {

@@ -112,9 +112,7 @@ export const migration_0003_drop_datasource_credentials: Migration = {
 export const migration_0004_datasource_error_kind: Migration = {
   id: "0004_datasource_error_kind",
   up: (db) => {
-    db.exec(
-      "ALTER TABLE datasources ADD COLUMN error_kind TEXT DEFAULT NULL",
-    );
+    db.exec("ALTER TABLE datasources ADD COLUMN error_kind TEXT DEFAULT NULL");
   },
 };
 

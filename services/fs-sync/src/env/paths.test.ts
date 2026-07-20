@@ -39,9 +39,7 @@ describe("resolveDataDir", () => {
 
 describe("file-path helpers", () => {
   it("resolveCredentialsPath joins credentials.json onto the data dir", () => {
-    expect(resolveCredentialsPath(PROD, {})).toBe(
-      path.join(ROOT, "credentials.json"),
-    );
+    expect(resolveCredentialsPath(PROD, {})).toBe(path.join(ROOT, "credentials.json"));
   });
 
   it("resolveDbPath joins sync.db", () => {
@@ -54,25 +52,19 @@ describe("file-path helpers", () => {
 
   it("resolvePidPath picks service.pid vs service-dev.pid by mode", () => {
     expect(resolvePidPath(PROD, {})).toBe(path.join(ROOT, "service.pid"));
-    expect(resolvePidPath(DEV, {})).toBe(
-      path.join(ROOT, "dev", "service-dev.pid"),
-    );
+    expect(resolvePidPath(DEV, {})).toBe(path.join(ROOT, "dev", "service-dev.pid"));
   });
 
   it("resolveServiceConfigPath joins config.json onto the data dir (prod + dev)", () => {
-    expect(resolveServiceConfigPath(PROD, {})).toBe(
-      path.join(ROOT, "config.json"),
-    );
-    expect(resolveServiceConfigPath(DEV, {})).toBe(
-      path.join(ROOT, "dev", "config.json"),
-    );
+    expect(resolveServiceConfigPath(PROD, {})).toBe(path.join(ROOT, "config.json"));
+    expect(resolveServiceConfigPath(DEV, {})).toBe(path.join(ROOT, "dev", "config.json"));
   });
 
   it("resolveServiceConfigPath honours CLOUDSTASH_SYNC_DATA_DIR override", () => {
     const override = path.join(os.tmpdir(), "cloudstash-cfg-test");
-    expect(
-      resolveServiceConfigPath(PROD, { CLOUDSTASH_SYNC_DATA_DIR: override }),
-    ).toBe(path.join(override, "config.json"));
+    expect(resolveServiceConfigPath(PROD, { CLOUDSTASH_SYNC_DATA_DIR: override })).toBe(
+      path.join(override, "config.json"),
+    );
   });
 });
 
@@ -86,8 +78,6 @@ describe("resolveSocketPath", () => {
   it("uses $HOME/cloudstash/sync_app/sync.sock on Unix prod", () => {
     if (process.platform === "win32") return;
     expect(resolveSocketPath(PROD, {})).toBe(path.join(ROOT, "sync.sock"));
-    expect(resolveSocketPath(DEV, {})).toBe(
-      path.join(ROOT, "dev", "sync-dev.sock"),
-    );
+    expect(resolveSocketPath(DEV, {})).toBe(path.join(ROOT, "dev", "sync-dev.sock"));
   });
 });

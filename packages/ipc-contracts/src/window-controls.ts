@@ -9,8 +9,7 @@ export const WINDOW_CHANNELS = {
   maximizeChange: "window:maximize-change",
 } as const;
 
-export type WindowChannelName =
-  (typeof WINDOW_CHANNELS)[keyof typeof WINDOW_CHANNELS];
+export type WindowChannelName = (typeof WINDOW_CHANNELS)[keyof typeof WINDOW_CHANNELS];
 
 // Payload of the main→renderer `window:maximize-change` push: the window's new
 // maximized state, emitted on the BrowserWindow 'maximize'/'unmaximize' events

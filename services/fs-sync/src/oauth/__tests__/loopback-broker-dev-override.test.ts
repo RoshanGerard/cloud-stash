@@ -24,11 +24,7 @@ import * as path from "node:path";
 
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import type {
-  AuthResult,
-  ProviderId,
-  StoredCredentials,
-} from "@cloudstash/ipc-contracts";
+import type { AuthResult, ProviderId, StoredCredentials } from "@cloudstash/ipc-contracts";
 import type {
   ClientFactory,
   CredentialStore,
@@ -39,10 +35,7 @@ import type {
 import type { EventName, EventPayloadMap } from "@cloudstash/ipc-contracts/sync-service";
 
 import { createEventBus, type EventBus } from "../../events/event-bus.js";
-import {
-  createOAuthLoopbackBroker,
-  type OAuthLoopbackBroker,
-} from "../loopback-broker.js";
+import { createOAuthLoopbackBroker, type OAuthLoopbackBroker } from "../loopback-broker.js";
 
 // ---------------------------------------------------------------------------
 // Test helpers
@@ -91,14 +84,14 @@ function makeFakeFactory(): {
       _ctx: EngineContext,
       _datasourceId?: string,
     ) => {
-      const redirectUri =
-        oauthAppConfig?.redirectUri ?? "http://127.0.0.1:0/callback";
+      const redirectUri = oauthAppConfig?.redirectUri ?? "http://127.0.0.1:0/callback";
       const intent: OAuthIntent = {
         kind: "oauth",
         authorizeUrl:
-          "https://accounts.google.com/o/oauth2/v2/auth"
-          + "?client_id=test-id"
-          + "&redirect_uri=" + encodeURIComponent(redirectUri),
+          "https://accounts.google.com/o/oauth2/v2/auth" +
+          "?client_id=test-id" +
+          "&redirect_uri=" +
+          encodeURIComponent(redirectUri),
         completeWith: async (_code: string): Promise<AuthResult> => ({
           accessToken: "tok",
         }),
@@ -199,10 +192,8 @@ describe("OAuthLoopbackBroker — dev override: short-circuit", () => {
     expect(persisted).toHaveLength(1);
     expect(completed).toHaveLength(1);
 
-    const persistedPayload =
-      persisted[0]!.payload as EventPayloadMap["credential-persisted"];
-    const completedPayload =
-      completed[0]!.payload as EventPayloadMap["auth-completed"];
+    const persistedPayload = persisted[0]!.payload as EventPayloadMap["credential-persisted"];
+    const completedPayload = completed[0]!.payload as EventPayloadMap["auth-completed"];
     expect(persistedPayload.correlationId).toBe(correlationId);
     expect(completedPayload.correlationId).toBe(correlationId);
     expect(persistedPayload.datasourceId).toBe("ds-dev-42");
@@ -240,8 +231,7 @@ describe("OAuthLoopbackBroker — dev override: short-circuit", () => {
     expect(mintDatasourceId).not.toHaveBeenCalled();
     const completed = events.find((e) => e.name === "auth-completed");
     expect(completed).toBeDefined();
-    const summary =
-      (completed!.payload as EventPayloadMap["auth-completed"]).summary;
+    const summary = (completed!.payload as EventPayloadMap["auth-completed"]).summary;
     expect(summary.id).toBe("ds-existing-123");
   });
 
@@ -310,10 +300,7 @@ describe("OAuthLoopbackBroker — dev override: warning", () => {
     const engineContext: EngineContext = { credentialStore };
     const { factory } = makeFakeFactory();
     const warnOnce = vi.fn();
-    const mintDatasourceId = vi
-      .fn()
-      .mockReturnValueOnce("ds-dev-w1")
-      .mockReturnValue("ds-dev-w2");
+    const mintDatasourceId = vi.fn().mockReturnValueOnce("ds-dev-w1").mockReturnValue("ds-dev-w2");
 
     broker = createOAuthLoopbackBroker({
       bus,

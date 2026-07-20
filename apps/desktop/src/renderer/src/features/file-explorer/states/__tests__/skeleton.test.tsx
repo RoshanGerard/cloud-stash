@@ -9,14 +9,7 @@ import type { ViewMode } from "../../store";
 describe("Skeleton", () => {
   afterEach(cleanup);
 
-  const MODES: ViewMode[] = [
-    "list",
-    "details",
-    "small",
-    "tiles",
-    "medium",
-    "large",
-  ];
+  const MODES: ViewMode[] = ["list", "details", "small", "tiles", "medium", "large"];
 
   for (const mode of MODES) {
     it(`[${mode}] renders 6 rows/cells, no spinner, aria-hidden root, data-mode`, () => {

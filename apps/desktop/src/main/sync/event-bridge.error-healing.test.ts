@@ -19,10 +19,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import type { EventFrame } from "@cloudstash/ipc-contracts/sync-service";
 
 import type { SyncClient } from "./client.js";
-import {
-  createSyncEventBridge,
-  __resetSyncEventBridgeForTesting,
-} from "./event-bridge.js";
+import { createSyncEventBridge, __resetSyncEventBridgeForTesting } from "./event-bridge.js";
 import type { SupervisorHandle } from "./supervisor.js";
 
 interface Harness {

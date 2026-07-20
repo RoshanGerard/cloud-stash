@@ -98,9 +98,7 @@ describe("DatasourceRegistry — idempotent add (§17)", () => {
     });
 
     const initial = db
-      .prepare(
-        "SELECT created_at, updated_at FROM datasources WHERE id = ?",
-      )
+      .prepare("SELECT created_at, updated_at FROM datasources WHERE id = ?")
       .get("ds-1") as { created_at: number; updated_at: number };
 
     // Wait a few milliseconds so Date.now() advances past the initial stamp.
@@ -119,9 +117,7 @@ describe("DatasourceRegistry — idempotent add (§17)", () => {
     });
 
     const after = db
-      .prepare(
-        "SELECT created_at, updated_at FROM datasources WHERE id = ?",
-      )
+      .prepare("SELECT created_at, updated_at FROM datasources WHERE id = ?")
       .get("ds-1") as { created_at: number; updated_at: number };
 
     expect(after.created_at).toBe(initial.created_at);

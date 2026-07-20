@@ -86,8 +86,7 @@ export function InvalidDatasourceState({
       ? (providers as Record<string, ProviderDescriptor>)[providerId]
       : undefined;
   const credentialsSchema = descriptor?.credentialsSchema;
-  const providerDisplayName =
-    descriptor?.displayName ?? providerId ?? "this datasource";
+  const providerDisplayName = descriptor?.displayName ?? providerId ?? "this datasource";
 
   const [correlationId, setCorrelationId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
@@ -120,8 +119,7 @@ export function InvalidDatasourceState({
     };
   }, []);
 
-  const isWaiting =
-    correlationId !== null && sessionState.status === "pending";
+  const isWaiting = correlationId !== null && sessionState.status === "pending";
   const isFailed =
     correlationId !== null &&
     (sessionState.status === "cancelled" ||
@@ -150,10 +148,7 @@ export function InvalidDatasourceState({
     // registry/version skew where providerId isn't in the frozen registry)
     // falls through to authenticateStart and surfaces inline via Decision 5,
     // rather than trapping the user in an escape-less empty form arm.
-    if (
-      credentialsSchema === "aws-access-key" ||
-      credentialsSchema === "custom"
-    ) {
+    if (credentialsSchema === "aws-access-key" || credentialsSchema === "custom") {
       setShowForm(true);
       return;
     }
@@ -213,9 +208,7 @@ export function InvalidDatasourceState({
     sessionState.status === "failed" &&
     // eslint-disable-next-line cloudstash/no-raw-error-tag-literal -- AuthFailedTag vocabulary (no const object) — out of scope
     sessionState.tag === "account-mismatch";
-  const expectedEmail = isAccountMismatch
-    ? sessionState.expectedEmail
-    : undefined;
+  const expectedEmail = isAccountMismatch ? sessionState.expectedEmail : undefined;
   const actualEmail = isAccountMismatch ? sessionState.actualEmail : undefined;
 
   // account-mismatch is the ONE terminal case that keeps the live "Reconnect"
@@ -232,8 +225,7 @@ export function InvalidDatasourceState({
   // an in-progress reconnect (`isWaiting` → the "Connecting…" status line) and a
   // wrong-account session failure (`isAccountMismatch` → the amber callout) both
   // take priority over the stale initiating error's red callout.
-  const showAuthError =
-    authErrorKind === "scope-insufficient" && !isWaiting && !isAccountMismatch;
+  const showAuthError = authErrorKind === "scope-insufficient" && !isWaiting && !isAccountMismatch;
 
   // ---- Credential-form inline arm (keep header, form below) -------------
   if (
@@ -241,8 +233,7 @@ export function InvalidDatasourceState({
     providerId !== undefined &&
     (credentialsSchema === "aws-access-key" || credentialsSchema === "custom")
   ) {
-    const FormComponent =
-      credentialsSchema === "aws-access-key" ? AwsAccessKeyForm : CustomForm;
+    const FormComponent = credentialsSchema === "aws-access-key" ? AwsAccessKeyForm : CustomForm;
     return (
       <div
         data-testid="file-explorer-state-invalid-datasource"
@@ -308,29 +299,23 @@ export function InvalidDatasourceState({
           aria-live="polite"
           className="max-w-[320px] text-center text-[13px] text-muted-foreground"
         >
-          Connecting… — finish signing in to {providerDisplayName} in your
-          browser.
+          Connecting… — finish signing in to {providerDisplayName} in your browser.
         </p>
       ) : showAuthError ? null : showDeadEnd ? (
         <p className="max-w-[320px] text-center text-[13px] text-destructive">
-          Sign-in didn&apos;t complete. Try again with the account this
-          datasource is connected to.
+          Sign-in didn&apos;t complete. Try again with the account this datasource is connected to.
         </p>
       ) : (
         <div className="max-w-[320px] text-center text-[13px] text-muted-foreground">
-          Its connection details are missing or invalid. Sign in again or remove
-          the datasource and add it back.
+          Its connection details are missing or invalid. Sign in again or remove the datasource and
+          add it back.
         </div>
       )}
       <div className="mt-2 flex gap-2">
         {isWaiting ? (
           // Pending: an actionable Cancel REPLACES the primary — there is never
           // a disabled/greyed "Connecting…" button on screen (D1).
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleCancel}
-          >
+          <Button type="button" variant="outline" onClick={handleCancel}>
             Cancel
           </Button>
         ) : (
@@ -404,8 +389,7 @@ export function InvalidDatasourceState({
               {actualEmail ? (
                 <>
                   {" "}
-                  You signed in as{" "}
-                  <strong className="font-semibold">{actualEmail}</strong>.
+                  You signed in as <strong className="font-semibold">{actualEmail}</strong>.
                 </>
               ) : null}{" "}
               Reconnect using{" "}
@@ -461,9 +445,7 @@ export function InvalidDatasourceState({
           </div>
         </div>
       ) : null}
-      {startError !== null ? (
-        <p className="text-[12px] text-destructive">{startError}</p>
-      ) : null}
+      {startError !== null ? <p className="text-[12px] text-destructive">{startError}</p> : null}
     </div>
   );
 }

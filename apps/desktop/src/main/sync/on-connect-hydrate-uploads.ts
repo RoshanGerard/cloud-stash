@@ -48,8 +48,7 @@ export interface UploadsHydrateClient {
  * `files:hydrate-active-downloads` (no contract-package extension
  * required — channel names for desktop-only IPC are literals).
  */
-export const ACTIVE_UPLOADS_HYDRATE_CHANNEL =
-  "files:hydrate-active-uploads";
+export const ACTIVE_UPLOADS_HYDRATE_CHANNEL = "files:hydrate-active-uploads";
 
 /**
  * Issue ONE `uploads:list-active` query against the supervisor's
@@ -75,9 +74,6 @@ export async function hydrateActiveUploadsOnce(
     // continues to drive in-flight uploads — only the historical
     // snapshot is lost. Logging matches the prior-art idiom in
     // `event-bridge.ts` (`console.warn("[sync-event-bridge] ...", err)`).
-    console.warn(
-      "[on-connect-hydrate-uploads] uploads:list-active failed:",
-      err,
-    );
+    console.warn("[on-connect-hydrate-uploads] uploads:list-active failed:", err);
   }
 }

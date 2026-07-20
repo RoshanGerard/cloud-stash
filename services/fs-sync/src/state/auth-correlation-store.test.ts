@@ -15,10 +15,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { AuthIntent } from "@cloudstash/fs-datasource-engine";
 
-import {
-  createAuthCorrelationStore,
-  type AuthCorrelationStore,
-} from "./auth-correlation-store.js";
+import { createAuthCorrelationStore, type AuthCorrelationStore } from "./auth-correlation-store.js";
 
 const TTL_MS = 300_000; // 5 minutes — matches store default.
 
@@ -117,9 +114,7 @@ describe("AuthCorrelationStore", () => {
       const intent1 = makeFormIntent();
       const intent2 = makeFormIntent();
       store.createWith("corr-dup", intent1);
-      expect(() => store.createWith("corr-dup", intent2)).toThrow(
-        /already in use/,
-      );
+      expect(() => store.createWith("corr-dup", intent2)).toThrow(/already in use/);
       // First entry is unchanged.
       expect(store.peek("corr-dup")).toBe(intent1);
     });

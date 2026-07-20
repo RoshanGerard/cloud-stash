@@ -70,10 +70,7 @@ describe("CloudStashLogo — theme-swapped mark", () => {
     const imgs = Array.from(container.querySelectorAll("img"));
     expect(imgs).toHaveLength(2);
     const srcs = imgs.map((i) => i.getAttribute("src")).sort();
-    expect(srcs).toEqual([
-      "/brand/cloudstash-mark-dark.png",
-      "/brand/cloudstash-mark-light.png",
-    ]);
+    expect(srcs).toEqual(["/brand/cloudstash-mark-dark.png", "/brand/cloudstash-mark-light.png"]);
   });
 
   it("exposes exactly one 'CloudStash' accessible name (no duplicate)", () => {
@@ -94,9 +91,7 @@ describe("CloudStashLogo — theme-swapped mark", () => {
 
   it("keeps the `data-testid='cloudstash-logo'` handle", () => {
     const { container } = render(<CloudStashLogo />);
-    expect(
-      container.querySelector("[data-testid='cloudstash-logo']"),
-    ).not.toBeNull();
+    expect(container.querySelector("[data-testid='cloudstash-logo']")).not.toBeNull();
   });
 
   it("honours the `size` prop on both mark images' width and height", () => {
@@ -146,9 +141,7 @@ describe("CloudStashGlyph — currentColor glyph for 16–32px surfaces", () => 
 describe("cloudstash-logo source — colour-literal ban", () => {
   it("source file contains no hex/rgb/hsl/oklch colour literals", () => {
     const source = readFileSync(LOGO_SRC_PATH, "utf8");
-    const stripped = source
-      .replace(/\/\*[\s\S]*?\*\//g, "")
-      .replace(/\/\/[^\n]*/g, "");
+    const stripped = source.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/[^\n]*/g, "");
     expect(stripped).not.toMatch(/#[0-9a-fA-F]{3}(?![0-9a-fA-F])/);
     expect(stripped).not.toMatch(/#[0-9a-fA-F]{6}(?![0-9a-fA-F])/);
     expect(stripped).not.toMatch(/#[0-9a-fA-F]{8}(?![0-9a-fA-F])/);

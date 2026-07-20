@@ -4,10 +4,7 @@ import * as path from "node:path";
 
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import {
-  AlreadyRunningError,
-  acquirePidGuard,
-} from "./pid-guard.js";
+import { AlreadyRunningError, acquirePidGuard } from "./pid-guard.js";
 
 let cleanup: string[] = [];
 

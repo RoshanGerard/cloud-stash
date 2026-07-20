@@ -34,9 +34,7 @@ export const DEFAULT_RETENTION_SETTINGS: RetentionSettings = {
  * Used both to validate an inbound `set-config` write and to decide whether
  * the resolver can trust a stored value.
  */
-export function isValidDownloadHistory(
-  value: unknown,
-): value is RetentionSettings {
+export function isValidDownloadHistory(value: unknown): value is RetentionSettings {
   if (value === null || typeof value !== "object" || Array.isArray(value)) {
     return false;
   }
@@ -46,9 +44,7 @@ export function isValidDownloadHistory(
   }
   return (
     typeof candidate.retentionDays === "number" &&
-    (RETENTION_DAYS_PRESETS as readonly number[]).includes(
-      candidate.retentionDays,
-    )
+    (RETENTION_DAYS_PRESETS as readonly number[]).includes(candidate.retentionDays)
   );
 }
 
@@ -57,9 +53,7 @@ export function isValidDownloadHistory(
  * service config, applying {@link DEFAULT_RETENTION_SETTINGS} when
  * `downloadHistory` is absent or fails {@link isValidDownloadHistory}.
  */
-export function resolveRetentionSettings(
-  config: ServiceConfig,
-): RetentionSettings {
+export function resolveRetentionSettings(config: ServiceConfig): RetentionSettings {
   const candidate: unknown = config.downloadHistory;
   if (isValidDownloadHistory(candidate)) {
     return {

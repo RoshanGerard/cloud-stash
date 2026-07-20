@@ -54,8 +54,7 @@ export interface DownloadsHydrateClient {
  * `files:openSavedPath` (no contract-package extension required —
  * channel names for desktop-only IPC are literals).
  */
-export const ACTIVE_DOWNLOADS_HYDRATE_CHANNEL =
-  "files:hydrate-active-downloads";
+export const ACTIVE_DOWNLOADS_HYDRATE_CHANNEL = "files:hydrate-active-downloads";
 
 /**
  * Issue ONE `downloads:list-active` query against the supervisor's
@@ -81,9 +80,6 @@ export async function hydrateActiveDownloadsOnce(
     // continues to drive in-flight downloads — only the historical
     // snapshot is lost. Logging matches the prior-art idiom in
     // `event-bridge.ts` (`console.warn("[sync-event-bridge] ...", err)`).
-    console.warn(
-      "[on-connect-hydrate-downloads] downloads:list-active failed:",
-      err,
-    );
+    console.warn("[on-connect-hydrate-downloads] downloads:list-active failed:", err);
   }
 }

@@ -1,10 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  DatasourceError,
-  DatasourceErrorTag,
-  FilesErrorTag,
-} from "@cloudstash/ipc-contracts";
+import { DatasourceError, DatasourceErrorTag, FilesErrorTag } from "@cloudstash/ipc-contracts";
 
 import { normalizeFilesError } from "./files-error-mapping.js";
 
@@ -66,12 +62,7 @@ describe("normalizeFilesError", () => {
   });
 
   it("collapses not-found, unsupported, provider-error, cancelled into 'other' (conflict has its own tag — see test below)", () => {
-    const tags = [
-      "not-found",
-      "unsupported",
-      "provider-error",
-      "cancelled",
-    ] as const;
+    const tags = ["not-found", "unsupported", "provider-error", "cancelled"] as const;
     for (const tag of tags) {
       const err = new DatasourceError({
         tag,
@@ -211,9 +202,7 @@ describe("normalizeFilesError", () => {
     });
     const result = normalizeFilesError(err);
     expect(result.tag).toBe("other");
-    expect(result.message).toBe(
-      "Google Drive documents download not supported",
-    );
+    expect(result.message).toBe("Google Drive documents download not supported");
     // The raw JSON noise should not leak through to the renderer.
     expect(result.message).not.toContain("fileNotDownloadable");
   });
@@ -228,9 +217,7 @@ describe("normalizeFilesError", () => {
         "Drive said: Only files with binary content can be downloaded. Use Export with Docs Editors files.",
     });
     const result = normalizeFilesError(err);
-    expect(result.message).toBe(
-      "Google Drive documents download not supported",
-    );
+    expect(result.message).toBe("Google Drive documents download not supported");
   });
 
   it("substitutes friendly message even for plain Error throws that embed the Drive Docs-Editors signature (non-DatasourceError fallback)", () => {
@@ -241,9 +228,7 @@ describe("normalizeFilesError", () => {
     const err = new Error('{"reason":"fileNotDownloadable"}');
     const result = normalizeFilesError(err);
     expect(result.tag).toBe("other");
-    expect(result.message).toBe(
-      "Google Drive documents download not supported",
-    );
+    expect(result.message).toBe("Google Drive documents download not supported");
   });
 
   it("does NOT substitute when the message is a benign DatasourceError message (regression guard for the substitution)", () => {
@@ -279,9 +264,7 @@ describe("normalizeFilesError", () => {
     });
     const result = normalizeFilesError(err);
     expect(result.tag).toBe("auth-revoked");
-    expect(result.message).toBe(
-      "request had insufficient authentication scopes",
-    );
+    expect(result.message).toBe("request had insufficient authentication scopes");
     expect(result.authErrorKind).toBe("scope-insufficient");
   });
 

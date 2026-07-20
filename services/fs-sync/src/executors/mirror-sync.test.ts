@@ -57,7 +57,10 @@ afterEach(async () => {
   cleanup = [];
 });
 
-function ctxFor(sourcePath: string, conflictPolicy: "overwrite" | "skip" = "overwrite"): ExecutorCtx {
+function ctxFor(
+  sourcePath: string,
+  conflictPolicy: "overwrite" | "skip" = "overwrite",
+): ExecutorCtx {
   return {
     job: {
       id: "j-1",
@@ -93,9 +96,7 @@ function fakeClient() {
   // `auth-expired`. The `as never` cast below bypasses the compile check, so
   // a missing impl would only fail at RUNTIME on the auth-expired path —
   // hence it is stubbed here for every fake.
-  const refreshCredentials = vi
-    .fn()
-    .mockResolvedValue({ accessToken: "new", refreshToken: "r" });
+  const refreshCredentials = vi.fn().mockResolvedValue({ accessToken: "new", refreshToken: "r" });
   return {
     client: { uploadFile, delete: deleteSpy, refreshCredentials },
     uploadFile,
@@ -159,9 +160,7 @@ describe("MirrorSyncJobExecutor — end-to-end", () => {
     expect(parent).toMatchObject({ kind: "path" });
     expect(file).toMatchObject({ path: expect.stringContaining("a.txt") });
     expect(options).toBeDefined();
-    expect((options as { signal?: AbortSignal }).signal).toBeInstanceOf(
-      AbortSignal,
-    );
+    expect((options as { signal?: AbortSignal }).signal).toBeInstanceOf(AbortSignal);
     const completed = emitted.find((e) => e.name === "sync-completed");
     expect(completed).toBeTruthy();
     expect(completed?.payload).toMatchObject({
@@ -197,19 +196,14 @@ describe("MirrorSyncJobExecutor — end-to-end", () => {
     expect(deleteSpy).toHaveBeenCalledTimes(1);
     // mirror-sync calls client.delete({ kind:"handle", ... }, "file") on the
     // delete-remote path (EntryKind.File === "file").
-    expect(deleteSpy).toHaveBeenCalledWith(
-      { kind: "handle", handle: "r-ghost" },
-      "file",
-    );
+    expect(deleteSpy).toHaveBeenCalledWith({ kind: "handle", handle: "r-ghost" }, "file");
     expect(uploadFile).toHaveBeenCalledTimes(1);
     const completed = emitted.find((e) => e.name === "sync-completed");
     expect(completed?.payload).toMatchObject({
       uploaded: 1,
       deleted: 1,
     });
-    expect(snaps.listForDatasource("ds-1").map((s) => s.relPath)).toEqual([
-      "still-here.txt",
-    ]);
+    expect(snaps.listForDatasource("ds-1").map((s) => s.relPath)).toEqual(["still-here.txt"]);
   });
 
   it("classifies (size,mtime) match as skipped without calling uploadFile or hashing", async () => {
@@ -276,9 +270,7 @@ describe("MirrorSyncJobExecutor — auth-expired via withAuthRefresh (§3.7)", (
         size: 0,
         kind: "file" as const,
       });
-    const refreshCredentials = vi
-      .fn()
-      .mockResolvedValue({ accessToken: "new", refreshToken: "r" });
+    const refreshCredentials = vi.fn().mockResolvedValue({ accessToken: "new", refreshToken: "r" });
     const client = { uploadFile, delete: vi.fn(async () => void 0), refreshCredentials };
     const exec = buildMirrorSyncExecutor({
       db,
@@ -309,9 +301,7 @@ describe("MirrorSyncJobExecutor — auth-expired via withAuthRefresh (§3.7)", (
     // even without the wrap, so they prove refresh-once + retry-once happened.
     await seed("a.txt", "hello");
     const uploadFile = vi.fn().mockRejectedValue(authExpired());
-    const refreshCredentials = vi
-      .fn()
-      .mockResolvedValue({ accessToken: "new", refreshToken: "r" });
+    const refreshCredentials = vi.fn().mockResolvedValue({ accessToken: "new", refreshToken: "r" });
     const client = { uploadFile, delete: vi.fn(async () => void 0), refreshCredentials };
     const exec = buildMirrorSyncExecutor({
       db,

@@ -23,9 +23,7 @@ function makeFakeClient(
     cancelUpload: vi.fn(),
     delete: vi.fn(),
     getQuota: vi.fn(),
-    refreshCredentials: vi
-      .fn()
-      .mockResolvedValue({ accessToken: "new", refreshToken: "r" }),
+    refreshCredentials: vi.fn().mockResolvedValue({ accessToken: "new", refreshToken: "r" }),
     ...overrides,
   } as DatasourceClient<DatasourceType>;
 }
@@ -52,10 +50,7 @@ describe("files:stat handler", () => {
       resolveClient: async () => makeFakeClient({ getMetadata }),
     });
 
-    const result = await handler(
-      { datasourceId: "ds-1", path: "/reports/report.pdf" },
-      ctx,
-    );
+    const result = await handler({ datasourceId: "ds-1", path: "/reports/report.pdf" }, ctx);
 
     expect(result.ok).toBe(true);
     if (result.ok) {
@@ -86,18 +81,12 @@ describe("files:stat handler", () => {
         }),
       )
       .mockResolvedValueOnce(engineEntry);
-    const refreshCredentials = vi
-      .fn()
-      .mockResolvedValue({ accessToken: "new", refreshToken: "r" });
+    const refreshCredentials = vi.fn().mockResolvedValue({ accessToken: "new", refreshToken: "r" });
     const handler = makeFilesStatHandler({
-      resolveClient: async () =>
-        makeFakeClient({ getMetadata, refreshCredentials }),
+      resolveClient: async () => makeFakeClient({ getMetadata, refreshCredentials }),
     });
 
-    const result = await handler(
-      { datasourceId: "ds-1", path: "/reports/report.pdf" },
-      ctx,
-    );
+    const result = await handler({ datasourceId: "ds-1", path: "/reports/report.pdf" }, ctx);
 
     expect(result.ok).toBe(true);
     if (result.ok) {
@@ -123,10 +112,7 @@ describe("files:stat handler", () => {
         }),
     });
 
-    const result = await handler(
-      { datasourceId: "ds-1", path: "/missing.pdf" },
-      ctx,
-    );
+    const result = await handler({ datasourceId: "ds-1", path: "/missing.pdf" }, ctx);
 
     expect(result.ok).toBe(false);
     if (!result.ok) {

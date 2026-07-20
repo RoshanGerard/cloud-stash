@@ -10,9 +10,7 @@ describe("diffLocalAgainstSnapshot", () => {
       [],
       hash,
     );
-    expect(ops).toEqual([
-      { kind: "upload-new", relPath: "a.txt", size: 5, mtimeMs: 100 },
-    ]);
+    expect(ops).toEqual([{ kind: "upload-new", relPath: "a.txt", size: 5, mtimeMs: 100 }]);
     expect(hash).not.toHaveBeenCalled();
   });
 
@@ -48,9 +46,7 @@ describe("diffLocalAgainstSnapshot", () => {
       [snap],
       hash,
     );
-    expect(ops).toEqual([
-      { kind: "skip-refresh-mtime", relPath: "a.txt", newMtimeMs: 200 },
-    ]);
+    expect(ops).toEqual([{ kind: "skip-refresh-mtime", relPath: "a.txt", newMtimeMs: 200 }]);
     expect(hash).toHaveBeenCalledTimes(1);
   });
 
@@ -89,9 +85,7 @@ describe("diffLocalAgainstSnapshot", () => {
       remoteHandle: "r-gone",
     };
     const ops = await diffLocalAgainstSnapshot([], [snap], vi.fn());
-    expect(ops).toEqual([
-      { kind: "delete-remote", relPath: "gone.txt", remoteHandle: "r-gone" },
-    ]);
+    expect(ops).toEqual([{ kind: "delete-remote", relPath: "gone.txt", remoteHandle: "r-gone" }]);
   });
 
   it("orders local ops before delete-remote ops", async () => {

@@ -23,13 +23,10 @@ describe("classifySystemRetry", () => {
     expect(r.branch).toBe("terminal");
   });
 
-  it.each([
-    "provider-error",
-    "auth-revoked",
-    "not-found",
-    "conflict",
-    "unsupported",
-  ])("%s → terminal", (tag) => {
-    expect(classifySystemRetry(tag).branch).toBe("terminal");
-  });
+  it.each(["provider-error", "auth-revoked", "not-found", "conflict", "unsupported"])(
+    "%s → terminal",
+    (tag) => {
+      expect(classifySystemRetry(tag).branch).toBe("terminal");
+    },
+  );
 });

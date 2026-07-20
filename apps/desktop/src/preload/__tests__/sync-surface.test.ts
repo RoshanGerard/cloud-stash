@@ -15,9 +15,7 @@ vi.mock("electron", () => ({
 
 import { contextBridge, ipcRenderer } from "electron";
 
-import {
-  SYNC_CHANNELS,
-} from "@cloudstash/ipc-contracts/sync-service-desktop";
+import { SYNC_CHANNELS } from "@cloudstash/ipc-contracts/sync-service-desktop";
 import type {
   SyncEvent,
   SyncListJobsRequest,
@@ -53,18 +51,18 @@ type ExposedSync = {
   // was deleted in chunk F; the renderer's upload path is `window.api.files.upload`.
   enqueueMirror: (req: SyncEnqueueMirrorRequest) => Promise<SyncEnqueueMirrorResponse>;
   cancelJob: (req: SyncCancelJobRequest) => Promise<SyncCancelJobResponse>;
-  cancelDownload: (
-    req: SyncCancelDownloadRequest,
-  ) => Promise<SyncCancelDownloadResponse>;
+  cancelDownload: (req: SyncCancelDownloadRequest) => Promise<SyncCancelDownloadResponse>;
   authenticateStart: (req: SyncAuthenticateStartRequest) => Promise<SyncAuthenticateStartResponse>;
-  authenticateComplete: (req: SyncAuthenticateCompleteRequest) => Promise<SyncAuthenticateCompleteResponse>;
-  authenticateCancel: (req: SyncAuthenticateCancelRequest) => Promise<SyncAuthenticateCancelResponse>;
+  authenticateComplete: (
+    req: SyncAuthenticateCompleteRequest,
+  ) => Promise<SyncAuthenticateCompleteResponse>;
+  authenticateCancel: (
+    req: SyncAuthenticateCancelRequest,
+  ) => Promise<SyncAuthenticateCancelResponse>;
   getStatus: () => Promise<SyncGetStatusResponse>;
   getRetryPolicy: (req: SyncGetRetryPolicyRequest) => Promise<SyncGetRetryPolicyResponse>;
   setRetryPolicy: (req: SyncSetRetryPolicyRequest) => Promise<SyncSetRetryPolicyResponse>;
-  deletePartial: (
-    req: SyncDeletePartialRequest,
-  ) => Promise<SyncDeletePartialResponse>;
+  deletePartial: (req: SyncDeletePartialRequest) => Promise<SyncDeletePartialResponse>;
   listLeftover: () => Promise<SyncListLeftoverResponse>;
   onEvent: (callback: (event: SyncEvent) => void) => () => void;
 };
@@ -76,9 +74,7 @@ type ExposedApi = {
 
 async function loadExposed(): Promise<ExposedApi> {
   await import("../index");
-  const exposeMock = contextBridge.exposeInMainWorld as unknown as ReturnType<
-    typeof vi.fn
-  >;
+  const exposeMock = contextBridge.exposeInMainWorld as unknown as ReturnType<typeof vi.fn>;
   return exposeMock.mock.calls[0]![1] as ExposedApi;
 }
 
@@ -215,10 +211,7 @@ describe("preload sync surface", () => {
       const result = await exposed.sync.cancelDownload(req);
 
       expect(invokeMock).toHaveBeenCalledTimes(1);
-      expect(invokeMock.mock.calls[0]).toEqual([
-        SYNC_CHANNELS.cancelDownload,
-        req,
-      ]);
+      expect(invokeMock.mock.calls[0]).toEqual([SYNC_CHANNELS.cancelDownload, req]);
       // Crucially the call did NOT route to SYNC_CHANNELS.cancelJob —
       // pin the separation so a future refactor cannot collapse the two.
       expect(invokeMock.mock.calls[0]?.[0]).not.toBe(SYNC_CHANNELS.cancelJob);
@@ -293,10 +286,7 @@ describe("preload sync surface", () => {
       const result = await exposed.sync.authenticateCancel(req);
 
       expect(invokeMock).toHaveBeenCalledTimes(1);
-      expect(invokeMock.mock.calls[0]).toEqual([
-        SYNC_CHANNELS.authenticateCancel,
-        req,
-      ]);
+      expect(invokeMock.mock.calls[0]).toEqual([SYNC_CHANNELS.authenticateCancel, req]);
       expect(result).toBe(response);
     });
 
@@ -377,10 +367,7 @@ describe("preload sync surface", () => {
       const result = await exposed.sync.deletePartial(req);
 
       expect(invokeMock).toHaveBeenCalledTimes(1);
-      expect(invokeMock.mock.calls[0]).toEqual([
-        SYNC_CHANNELS.deletePartial,
-        req,
-      ]);
+      expect(invokeMock.mock.calls[0]).toEqual([SYNC_CHANNELS.deletePartial, req]);
       expect(result).toBe(response);
     });
 
@@ -405,8 +392,7 @@ describe("preload sync surface", () => {
   describe("onEvent subscription", () => {
     it("onEvent registers a listener on SYNC_CHANNELS.event and delivers the payload to the callback", async () => {
       const onMock = ipcRenderer.on as unknown as ReturnType<typeof vi.fn>;
-      const removeListenerMock =
-        ipcRenderer.removeListener as unknown as ReturnType<typeof vi.fn>;
+      const removeListenerMock = ipcRenderer.removeListener as unknown as ReturnType<typeof vi.fn>;
 
       const exposed = await loadExposed();
       const callback = vi.fn();
@@ -440,16 +426,12 @@ describe("preload sync surface", () => {
       expect(typeof unsubscribe).toBe("function");
       unsubscribe();
       expect(removeListenerMock).toHaveBeenCalledTimes(1);
-      expect(removeListenerMock.mock.calls[0]).toEqual([
-        SYNC_CHANNELS.event,
-        listener,
-      ]);
+      expect(removeListenerMock.mock.calls[0]).toEqual([SYNC_CHANNELS.event, listener]);
     });
 
     it("onEvent supports multiple independent subscribers, each with its own listener registration", async () => {
       const onMock = ipcRenderer.on as unknown as ReturnType<typeof vi.fn>;
-      const removeListenerMock =
-        ipcRenderer.removeListener as unknown as ReturnType<typeof vi.fn>;
+      const removeListenerMock = ipcRenderer.removeListener as unknown as ReturnType<typeof vi.fn>;
 
       const exposed = await loadExposed();
       const cb1 = vi.fn();
@@ -459,26 +441,14 @@ describe("preload sync surface", () => {
       const unsub2 = exposed.sync.onEvent(cb2);
 
       expect(onMock).toHaveBeenCalledTimes(2);
-      const listener1 = onMock.mock.calls[0]![1] as (
-        ev: unknown,
-        payload: SyncEvent,
-      ) => void;
-      const listener2 = onMock.mock.calls[1]![1] as (
-        ev: unknown,
-        payload: SyncEvent,
-      ) => void;
+      const listener1 = onMock.mock.calls[0]![1] as (ev: unknown, payload: SyncEvent) => void;
+      const listener2 = onMock.mock.calls[1]![1] as (ev: unknown, payload: SyncEvent) => void;
       expect(listener1).not.toBe(listener2);
 
       unsub1();
-      expect(removeListenerMock).toHaveBeenCalledWith(
-        SYNC_CHANNELS.event,
-        listener1,
-      );
+      expect(removeListenerMock).toHaveBeenCalledWith(SYNC_CHANNELS.event, listener1);
       unsub2();
-      expect(removeListenerMock).toHaveBeenCalledWith(
-        SYNC_CHANNELS.event,
-        listener2,
-      );
+      expect(removeListenerMock).toHaveBeenCalledWith(SYNC_CHANNELS.event, listener2);
     });
   });
 });

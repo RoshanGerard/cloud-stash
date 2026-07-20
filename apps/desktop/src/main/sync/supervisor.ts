@@ -143,9 +143,7 @@ export function nextBackoff(attempt: number): number {
  * that retries `net.connect(pipePath)` on disconnect with the same schedule,
  * then indefinite geometric backoff capped at 30 s.
  */
-export async function startSupervisor(
-  opts: StartSupervisorOptions,
-): Promise<SupervisorHandle> {
+export async function startSupervisor(opts: StartSupervisorOptions): Promise<SupervisorHandle> {
   const timeoutMs = opts.connectTimeoutMs ?? DEFAULT_CONNECT_TIMEOUT_MS;
 
   try {
@@ -258,9 +256,7 @@ function createHandle(
       } catch {
         // connect failed — continue backoff loop
         attempt++;
-        console.warn(
-          `supervisor: reconnect attempt ${attempt} to ${opts.pipePath} failed`,
-        );
+        console.warn(`supervisor: reconnect attempt ${attempt} to ${opts.pipePath} failed`);
       }
     }
   }
@@ -272,7 +268,10 @@ function createHandle(
     getClient(): SyncClient {
       return current;
     },
-    on(event: "reconnect" | "disconnect", cb: ((newClient: SyncClient) => void) | (() => void)): () => void {
+    on(
+      event: "reconnect" | "disconnect",
+      cb: ((newClient: SyncClient) => void) | (() => void),
+    ): () => void {
       if (event === "reconnect") {
         reconnectListeners.add(cb as ReconnectListener);
         return () => {
@@ -312,10 +311,7 @@ function createHandle(
  * the first successful connect; rejects after the final failure with an
  * error naming the pipe path and attempt count.
  */
-async function retryConnect(
-  pipePath: string,
-  timeoutMs: number,
-): Promise<net.Socket> {
+async function retryConnect(pipePath: string, timeoutMs: number): Promise<net.Socket> {
   let lastError: unknown;
   for (let i = 0; i < RETRY_DELAYS_MS.length; i++) {
     const delay = RETRY_DELAYS_MS[i]!;
@@ -364,10 +360,7 @@ function isNoListenerError(err: unknown): boolean {
   return code === "ENOENT" || code === "ECONNREFUSED" || code === "EPIPE";
 }
 
-function connectWithTimeout(
-  pipePath: string,
-  timeoutMs: number,
-): Promise<net.Socket> {
+function connectWithTimeout(pipePath: string, timeoutMs: number): Promise<net.Socket> {
   return new Promise((resolve, reject) => {
     const socket = net.connect(pipePath);
     let settled = false;
@@ -376,11 +369,7 @@ function connectWithTimeout(
       if (settled) return;
       settled = true;
       socket.destroy();
-      reject(
-        new Error(
-          `supervisor: connect to ${pipePath} timed out after ${timeoutMs} ms`,
-        ),
-      );
+      reject(new Error(`supervisor: connect to ${pipePath} timed out after ${timeoutMs} ms`));
     }, timeoutMs);
     timer.unref?.();
 

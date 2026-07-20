@@ -69,9 +69,7 @@ interface DownloadRow {
 }
 
 function readRow(db: Database.Database, id: string): DownloadRow {
-  return db
-    .prepare(`SELECT * FROM downloads WHERE download_job_id = ?`)
-    .get(id) as DownloadRow;
+  return db.prepare(`SELECT * FROM downloads WHERE download_job_id = ?`).get(id) as DownloadRow;
 }
 
 describe("sweepInterruptedDownloads", () => {

@@ -61,22 +61,10 @@ import { Icon } from "@/components/icon";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 
-import {
-  EXPLORER_PAGE_SIZE_KEY,
-  readExplorerPageSize,
-} from "../file-explorer/store";
+import { EXPLORER_PAGE_SIZE_KEY, readExplorerPageSize } from "../file-explorer/store";
 
-import {
-  setAlwaysAsk,
-  setDefaultFolder,
-  useAlwaysAsk,
-  useDefaultFolder,
-} from "./downloads-store";
-import {
-  setPreference,
-  useMotionPreference,
-  type MotionPreference,
-} from "./motion-store";
+import { setAlwaysAsk, setDefaultFolder, useAlwaysAsk, useDefaultFolder } from "./downloads-store";
+import { setPreference, useMotionPreference, type MotionPreference } from "./motion-store";
 import { ClearHistoryDialog } from "./clear-history-dialog";
 import { LeftoverFilesDialog } from "./leftover-files-dialog";
 import {
@@ -101,11 +89,13 @@ function readLeftoverCount(): Promise<number> {
       };
     }
   ).api?.sync?.listLeftover;
-  return Promise.resolve(typeof fn === "function" ? fn() : undefined)
-    .then((res) => res?.entries.length ?? 0)
-    // A transport-level failure means we simply can't show a count — degrade
-    // to 0 (button hidden) rather than surface an unhandled rejection.
-    .catch(() => 0);
+  return (
+    Promise.resolve(typeof fn === "function" ? fn() : undefined)
+      .then((res) => res?.entries.length ?? 0)
+      // A transport-level failure means we simply can't show a count — degrade
+      // to 0 (button hidden) rather than surface an unhandled rejection.
+      .catch(() => 0)
+  );
 }
 
 export interface SettingsDialogProps {
@@ -161,11 +151,7 @@ function writeExplorerPageSize(value: string): void {
   }
 }
 
-export function SettingsDialog({
-  open,
-  onOpenChange,
-  returnFocusTo,
-}: SettingsDialogProps) {
+export function SettingsDialog({ open, onOpenChange, returnFocusTo }: SettingsDialogProps) {
   const preference = useMotionPreference();
   const motionSafeOn = preference === "safe";
   const defaultFolder = useDefaultFolder();
@@ -177,9 +163,7 @@ export function SettingsDialog({
   // of the key; the file-explorer store re-reads localStorage directly on
   // each list call rather than subscribing. `String(...)` keys the radio
   // group on the un-formatted integer string the options use.
-  const [pageSize, setPageSize] = useState<string>(() =>
-    String(readExplorerPageSize()),
-  );
+  const [pageSize, setPageSize] = useState<string>(() => String(readExplorerPageSize()));
 
   const handlePageSizeChange = useCallback((next: string) => {
     setPageSize(next);
@@ -251,9 +235,8 @@ export function SettingsDialog({
   // service prunes autonomously while the app is closed (design.md Decision 1).
   // Loaded from `sync:get-config` when the dialog opens; writes go through the
   // read-modify-write helper that preserves the OAuth `providers` (Decision 7).
-  const [historySettings, setHistorySettings] = useState<DownloadHistorySettings>(
-    DOWNLOAD_HISTORY_DEFAULT,
-  );
+  const [historySettings, setHistorySettings] =
+    useState<DownloadHistorySettings>(DOWNLOAD_HISTORY_DEFAULT);
   const [clearOpen, setClearOpen] = useState(false);
   const clearButtonRef = useRef<HTMLButtonElement>(null);
 
@@ -293,15 +276,12 @@ export function SettingsDialog({
   // Optimistically reflect the change, then persist; surface a toast if the
   // write fails so the setting doesn't silently snap back on reopen (the
   // read-modify-write aborts rather than wiping providers on a read error).
-  const persistHistory = useCallback(
-    async (patch: Partial<DownloadHistorySettings>) => {
-      const res = await writeDownloadHistorySettings(patch);
-      if (!res.ok) {
-        toast.error("Couldn't save the download-history setting");
-      }
-    },
-    [],
-  );
+  const persistHistory = useCallback(async (patch: Partial<DownloadHistorySettings>) => {
+    const res = await writeDownloadHistorySettings(patch);
+    if (!res.ok) {
+      toast.error("Couldn't save the download-history setting");
+    }
+  }, []);
 
   const handleToggleAutoPrune = useCallback(
     (checked: boolean) => {
@@ -322,56 +302,50 @@ export function SettingsDialog({
 
   return (
     <>
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent
-        aria-describedby="settings-dialog-description"
-        onCloseAutoFocus={(event) => {
-          if (returnFocusTo && returnFocusTo.isConnected) {
-            event.preventDefault();
-            returnFocusTo.focus();
-          }
-        }}
-      >
-        <DialogHeader>
-          <DialogTitle>Settings</DialogTitle>
-          <DialogDescription id="settings-dialog-description">
-            Manage app-level preferences.
-          </DialogDescription>
-        </DialogHeader>
-
-        <section
-          aria-labelledby="settings-motion-heading"
-          className="flex flex-col gap-3"
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent
+          aria-describedby="settings-dialog-description"
+          onCloseAutoFocus={(event) => {
+            if (returnFocusTo && returnFocusTo.isConnected) {
+              event.preventDefault();
+              returnFocusTo.focus();
+            }
+          }}
         >
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex flex-col gap-1">
-              <h3
-                id="settings-motion-heading"
-                className="text-sm font-semibold"
-              >
-                Motion
-              </h3>
-              <Label
-                htmlFor="motion-safe-toggle"
-                className="text-muted-foreground text-xs font-normal"
-              >
-                Motion Safe
-              </Label>
-            </div>
-            <Switch
-              id="motion-safe-toggle"
-              aria-label="Motion Safe"
-              checked={motionSafeOn}
-              onCheckedChange={handleToggleMotionSafe}
-            />
-          </div>
-          <p className="text-muted-foreground text-xs">
-            When on, custom animations respect your system&rsquo;s reduce-motion
-            setting. When off (default), animations always run.
-          </p>
-        </section>
+          <DialogHeader>
+            <DialogTitle>Settings</DialogTitle>
+            <DialogDescription id="settings-dialog-description">
+              Manage app-level preferences.
+            </DialogDescription>
+          </DialogHeader>
 
-        {/*
+          <section aria-labelledby="settings-motion-heading" className="flex flex-col gap-3">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex flex-col gap-1">
+                <h3 id="settings-motion-heading" className="text-sm font-semibold">
+                  Motion
+                </h3>
+                <Label
+                  htmlFor="motion-safe-toggle"
+                  className="text-muted-foreground text-xs font-normal"
+                >
+                  Motion Safe
+                </Label>
+              </div>
+              <Switch
+                id="motion-safe-toggle"
+                aria-label="Motion Safe"
+                checked={motionSafeOn}
+                onCheckedChange={handleToggleMotionSafe}
+              />
+            </div>
+            <p className="text-muted-foreground text-xs">
+              When on, custom animations respect your system&rsquo;s reduce-motion setting. When off
+              (default), animations always run.
+            </p>
+          </section>
+
+          {/*
           Explorer section (add-engine-listdirectory-pagination §12 / Visual
           direction V-4). Sits between Motion and Downloads. One row mirroring
           Downloads' "Default folder" flex layout: a left text stack
@@ -385,176 +359,16 @@ export function SettingsDialog({
           keyboard-reachable / active-value scenarios are satisfied without
           hand-rolled ARIA.
         */}
-        <section
-          aria-labelledby="settings-explorer-heading"
-          className="flex flex-col gap-3"
-        >
-          <h3
-            id="settings-explorer-heading"
-            className="text-sm font-semibold"
-          >
-            Explorer
-          </h3>
+          <section aria-labelledby="settings-explorer-heading" className="flex flex-col gap-3">
+            <h3 id="settings-explorer-heading" className="text-sm font-semibold">
+              Explorer
+            </h3>
 
-          <div className="flex items-center gap-3">
-            <div className="flex min-w-0 flex-1 flex-col gap-1">
-              <span className="text-xs font-medium">Items loaded per page</span>
-              <span className="text-muted-foreground text-xs">
-                Larger values fetch more per click; smaller values paint faster
-                on first load.
-              </span>
-            </div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  aria-label="Items loaded per page"
-                  className="shrink-0"
-                >
-                  <span className="tabular-nums">
-                    {pageSizeLabel(Number(pageSize))}
-                  </span>
-                  <Icon name="chevron-down" className="size-3" aria-hidden="true" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuLabel className="text-muted-foreground text-xs uppercase tracking-wider">
-                  Page size
-                </DropdownMenuLabel>
-                <DropdownMenuRadioGroup
-                  value={pageSize}
-                  onValueChange={handlePageSizeChange}
-                >
-                  {PAGE_SIZE_OPTIONS.map((opt) => (
-                    <DropdownMenuRadioItem
-                      key={opt.value}
-                      value={opt.value}
-                      className="tabular-nums"
-                    >
-                      {opt.label}
-                    </DropdownMenuRadioItem>
-                  ))}
-                </DropdownMenuRadioGroup>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </section>
-
-        <section
-          aria-labelledby="settings-downloads-heading"
-          className="flex flex-col gap-3"
-        >
-          <h3
-            id="settings-downloads-heading"
-            className="text-sm font-semibold"
-          >
-            Downloads
-          </h3>
-
-          {/*
-            Default folder row. Path display truncates with ellipsis on
-            long paths (the inner span uses `truncate`); the outer flex
-            row keeps Open + Change buttons right-aligned. Open is
-            disabled when no path is stored — there's nothing to reveal,
-            and `shell.showItemInFolder("")` would either no-op or throw
-            depending on platform.
-          */}
-          <div className="flex items-center gap-3">
-            <div className="flex min-w-0 flex-1 flex-col gap-1">
-              <span className="text-xs font-medium">Default folder</span>
-              <span
-                className="text-muted-foreground truncate text-xs"
-                title={defaultFolder ?? undefined}
-              >
-                {defaultFolder ?? "Not set"}
-              </span>
-            </div>
-            <div className="flex shrink-0 items-center gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={handleOpenFolder}
-                disabled={defaultFolder === null}
-              >
-                Open
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={handleChangeFolder}
-              >
-                Change&hellip;
-              </Button>
-            </div>
-          </div>
-
-          {/* Always-ask Switch row. Label wraps the entire row's text
-              copy via htmlFor so the label-click activation matches the
-              Motion section's pattern. */}
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex flex-col gap-1">
-              <Label
-                htmlFor="downloads-always-ask-toggle"
-                className="text-xs font-medium"
-              >
-                Always ask where to save
-              </Label>
-              <p className="text-muted-foreground text-xs">
-                Show the Save-as dialog for every download.
-              </p>
-            </div>
-            <Switch
-              id="downloads-always-ask-toggle"
-              aria-label="Always ask where to save"
-              checked={alwaysAsk}
-              onCheckedChange={handleToggleAlwaysAsk}
-            />
-          </div>
-
-          {/* Download-history retention group (add-download-history-ui §7).
-              Unlike the rows above (localStorage), these live in the SERVICE
-              config so the service can prune autonomously while the app is
-              closed (design.md Decision 1). */}
-          <div className="border-border/60 flex flex-col gap-3 border-t pt-3">
-            <h4 className="text-xs font-semibold">Download history</h4>
-
-            {/* Auto-delete Switch row — mirrors Always-ask. */}
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex flex-col gap-1">
-                <Label
-                  htmlFor="downloads-auto-prune-toggle"
-                  className="text-xs font-medium"
-                >
-                  Auto-delete old history
-                </Label>
-                <p className="text-muted-foreground text-xs">
-                  History <strong>records</strong> older than{" "}
-                  {historySettings.retentionDays} days are removed
-                  automatically. This never deletes files on disk &mdash;
-                  leftover files are handled under &ldquo;Review leftover
-                  files.&rdquo;
-                </p>
-              </div>
-              <Switch
-                id="downloads-auto-prune-toggle"
-                aria-label="Auto-delete old history"
-                checked={historySettings.autoPrune}
-                onCheckedChange={handleToggleAutoPrune}
-              />
-            </div>
-
-            {/* Retention window — mirrors the Explorer page-size dropdown.
-                Dimmed + non-interactive (native `disabled`) when auto-prune
-                is off; the disabled state is not conveyed by color alone. */}
             <div className="flex items-center gap-3">
               <div className="flex min-w-0 flex-1 flex-col gap-1">
-                <span className="text-xs font-medium">Keep history for</span>
+                <span className="text-xs font-medium">Items loaded per page</span>
                 <span className="text-muted-foreground text-xs">
-                  How long completed and failed downloads stay in the list.
+                  Larger values fetch more per click; smaller values paint faster on first load.
                 </span>
               </div>
               <DropdownMenu>
@@ -563,95 +377,213 @@ export function SettingsDialog({
                     type="button"
                     variant="outline"
                     size="sm"
-                    aria-label="Keep history for"
-                    disabled={!historySettings.autoPrune}
+                    aria-label="Items loaded per page"
                     className="shrink-0"
                   >
-                    <span className="tabular-nums">
-                      {historySettings.retentionDays} days
-                    </span>
-                    <Icon
-                      name="chevron-down"
-                      className="size-3"
-                      aria-hidden="true"
-                    />
+                    <span className="tabular-nums">{pageSizeLabel(Number(pageSize))}</span>
+                    <Icon name="chevron-down" className="size-3" aria-hidden="true" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuLabel className="text-muted-foreground text-xs uppercase tracking-wider">
-                    Retention window
+                    Page size
                   </DropdownMenuLabel>
-                  <DropdownMenuRadioGroup
-                    value={String(historySettings.retentionDays)}
-                    onValueChange={handleRetentionChange}
-                  >
-                    {RETENTION_DAY_OPTIONS.map((days) => (
+                  <DropdownMenuRadioGroup value={pageSize} onValueChange={handlePageSizeChange}>
+                    {PAGE_SIZE_OPTIONS.map((opt) => (
                       <DropdownMenuRadioItem
-                        key={days}
-                        value={String(days)}
+                        key={opt.value}
+                        value={opt.value}
                         className="tabular-nums"
                       >
-                        {days} days
+                        {opt.label}
                       </DropdownMenuRadioItem>
                     ))}
                   </DropdownMenuRadioGroup>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
+          </section>
 
-            {/* Review leftover files — opens the leftover-cleanup dialog
-                (add-leftover-download-cleanup §6.2 / VD1). Sits directly above
-                the Clear row (the two cleanup actions read together) and is
-                hidden entirely when there is nothing to review (count 0). */}
-            {leftoverCount > 0 && (
-              <div className="flex items-center gap-3">
-                <div className="flex min-w-0 flex-1 flex-col gap-1">
-                  <span className="text-xs font-medium">
-                    Review leftover files
-                  </span>
-                  <span className="text-muted-foreground text-xs">
-                    Incomplete files left on disk by past failed downloads.
-                  </span>
-                </div>
+          <section aria-labelledby="settings-downloads-heading" className="flex flex-col gap-3">
+            <h3 id="settings-downloads-heading" className="text-sm font-semibold">
+              Downloads
+            </h3>
+
+            {/*
+            Default folder row. Path display truncates with ellipsis on
+            long paths (the inner span uses `truncate`); the outer flex
+            row keeps Open + Change buttons right-aligned. Open is
+            disabled when no path is stored — there's nothing to reveal,
+            and `shell.showItemInFolder("")` would either no-op or throw
+            depending on platform.
+          */}
+            <div className="flex items-center gap-3">
+              <div className="flex min-w-0 flex-1 flex-col gap-1">
+                <span className="text-xs font-medium">Default folder</span>
+                <span
+                  className="text-muted-foreground truncate text-xs"
+                  title={defaultFolder ?? undefined}
+                >
+                  {defaultFolder ?? "Not set"}
+                </span>
+              </div>
+              <div className="flex shrink-0 items-center gap-2">
                 <Button
-                  ref={reviewButtonRef}
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => setLeftoverOpen(true)}
-                  className="shrink-0"
+                  onClick={handleOpenFolder}
+                  disabled={defaultFolder === null}
                 >
-                  Review leftover files ({leftoverCount})
+                  Open
+                </Button>
+                <Button type="button" variant="outline" size="sm" onClick={handleChangeFolder}>
+                  Change&hellip;
                 </Button>
               </div>
-            )}
-
-            {/* Clear download history — opens the filtered destructive dialog. */}
-            <div className="flex items-center gap-3">
-              <div className="flex min-w-0 flex-1 flex-col gap-1">
-                <span className="text-xs font-medium">
-                  Clear download history
-                </span>
-                <span className="text-muted-foreground text-xs">
-                  Remove past download records. Files already saved are not
-                  deleted.
-                </span>
-              </div>
-              <Button
-                ref={clearButtonRef}
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => setClearOpen(true)}
-                className="text-destructive shrink-0"
-              >
-                Clear&hellip;
-              </Button>
             </div>
-          </div>
-        </section>
-      </DialogContent>
-    </Dialog>
+
+            {/* Always-ask Switch row. Label wraps the entire row's text
+              copy via htmlFor so the label-click activation matches the
+              Motion section's pattern. */}
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex flex-col gap-1">
+                <Label htmlFor="downloads-always-ask-toggle" className="text-xs font-medium">
+                  Always ask where to save
+                </Label>
+                <p className="text-muted-foreground text-xs">
+                  Show the Save-as dialog for every download.
+                </p>
+              </div>
+              <Switch
+                id="downloads-always-ask-toggle"
+                aria-label="Always ask where to save"
+                checked={alwaysAsk}
+                onCheckedChange={handleToggleAlwaysAsk}
+              />
+            </div>
+
+            {/* Download-history retention group (add-download-history-ui §7).
+              Unlike the rows above (localStorage), these live in the SERVICE
+              config so the service can prune autonomously while the app is
+              closed (design.md Decision 1). */}
+            <div className="border-border/60 flex flex-col gap-3 border-t pt-3">
+              <h4 className="text-xs font-semibold">Download history</h4>
+
+              {/* Auto-delete Switch row — mirrors Always-ask. */}
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex flex-col gap-1">
+                  <Label htmlFor="downloads-auto-prune-toggle" className="text-xs font-medium">
+                    Auto-delete old history
+                  </Label>
+                  <p className="text-muted-foreground text-xs">
+                    History <strong>records</strong> older than {historySettings.retentionDays} days
+                    are removed automatically. This never deletes files on disk &mdash; leftover
+                    files are handled under &ldquo;Review leftover files.&rdquo;
+                  </p>
+                </div>
+                <Switch
+                  id="downloads-auto-prune-toggle"
+                  aria-label="Auto-delete old history"
+                  checked={historySettings.autoPrune}
+                  onCheckedChange={handleToggleAutoPrune}
+                />
+              </div>
+
+              {/* Retention window — mirrors the Explorer page-size dropdown.
+                Dimmed + non-interactive (native `disabled`) when auto-prune
+                is off; the disabled state is not conveyed by color alone. */}
+              <div className="flex items-center gap-3">
+                <div className="flex min-w-0 flex-1 flex-col gap-1">
+                  <span className="text-xs font-medium">Keep history for</span>
+                  <span className="text-muted-foreground text-xs">
+                    How long completed and failed downloads stay in the list.
+                  </span>
+                </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      aria-label="Keep history for"
+                      disabled={!historySettings.autoPrune}
+                      className="shrink-0"
+                    >
+                      <span className="tabular-nums">{historySettings.retentionDays} days</span>
+                      <Icon name="chevron-down" className="size-3" aria-hidden="true" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuLabel className="text-muted-foreground text-xs uppercase tracking-wider">
+                      Retention window
+                    </DropdownMenuLabel>
+                    <DropdownMenuRadioGroup
+                      value={String(historySettings.retentionDays)}
+                      onValueChange={handleRetentionChange}
+                    >
+                      {RETENTION_DAY_OPTIONS.map((days) => (
+                        <DropdownMenuRadioItem
+                          key={days}
+                          value={String(days)}
+                          className="tabular-nums"
+                        >
+                          {days} days
+                        </DropdownMenuRadioItem>
+                      ))}
+                    </DropdownMenuRadioGroup>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+
+              {/* Review leftover files — opens the leftover-cleanup dialog
+                (add-leftover-download-cleanup §6.2 / VD1). Sits directly above
+                the Clear row (the two cleanup actions read together) and is
+                hidden entirely when there is nothing to review (count 0). */}
+              {leftoverCount > 0 && (
+                <div className="flex items-center gap-3">
+                  <div className="flex min-w-0 flex-1 flex-col gap-1">
+                    <span className="text-xs font-medium">Review leftover files</span>
+                    <span className="text-muted-foreground text-xs">
+                      Incomplete files left on disk by past failed downloads.
+                    </span>
+                  </div>
+                  <Button
+                    ref={reviewButtonRef}
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setLeftoverOpen(true)}
+                    className="shrink-0"
+                  >
+                    Review leftover files ({leftoverCount})
+                  </Button>
+                </div>
+              )}
+
+              {/* Clear download history — opens the filtered destructive dialog. */}
+              <div className="flex items-center gap-3">
+                <div className="flex min-w-0 flex-1 flex-col gap-1">
+                  <span className="text-xs font-medium">Clear download history</span>
+                  <span className="text-muted-foreground text-xs">
+                    Remove past download records. Files already saved are not deleted.
+                  </span>
+                </div>
+                <Button
+                  ref={clearButtonRef}
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setClearOpen(true)}
+                  className="text-destructive shrink-0"
+                >
+                  Clear&hellip;
+                </Button>
+              </div>
+            </div>
+          </section>
+        </DialogContent>
+      </Dialog>
 
       <ClearHistoryDialog
         open={clearOpen}

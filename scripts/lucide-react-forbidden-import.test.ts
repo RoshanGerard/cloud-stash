@@ -25,19 +25,9 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const repoRoot = path.resolve(__dirname, "..");
 
-const RENDERER_SRC = path.join(
-  repoRoot,
-  "apps",
-  "desktop",
-  "src",
-  "renderer",
-  "src",
-);
+const RENDERER_SRC = path.join(repoRoot, "apps", "desktop", "src", "renderer", "src");
 
-const SCAN_ROOTS = [
-  path.join(RENDERER_SRC, "features"),
-  path.join(RENDERER_SRC, "components"),
-];
+const SCAN_ROOTS = [path.join(RENDERER_SRC, "features"), path.join(RENDERER_SRC, "components")];
 
 const EXEMPT_FILES = [path.join(RENDERER_SRC, "components", "icon.tsx")];
 const EXEMPT_DIRS = [path.join(RENDERER_SRC, "components", "ui")];
@@ -59,10 +49,7 @@ type Violation = {
   match: string;
 };
 
-function findViolationsInText(
-  text: string,
-  file: string,
-): Violation[] {
+function findViolationsInText(text: string, file: string): Violation[] {
   const violations: Violation[] = [];
   LUCIDE_IMPORT_RE.lastIndex = 0;
   let m: RegExpExecArray | null;
@@ -73,10 +60,7 @@ function findViolationsInText(
   return violations;
 }
 
-function offsetToLineCol(
-  text: string,
-  offset: number,
-): { line: number; column: number } {
+function offsetToLineCol(text: string, offset: number): { line: number; column: number } {
   let line = 1;
   let column = 1;
   for (let i = 0; i < offset && i < text.length; i++) {
@@ -92,9 +76,7 @@ function offsetToLineCol(
 
 function isExemptFile(file: string): boolean {
   if (EXEMPT_FILES.includes(file)) return true;
-  return EXEMPT_DIRS.some(
-    (dir) => file === dir || file.startsWith(dir + path.sep),
-  );
+  return EXEMPT_DIRS.some((dir) => file === dir || file.startsWith(dir + path.sep));
 }
 
 function walkTsx(root: string, out: string[]): void {
@@ -117,10 +99,7 @@ function walkTsx(root: string, out: string[]): void {
 
 describe("lucide-react forbidden-import guardrail — detection", () => {
   it("flags a named import from lucide-react", () => {
-    const v = findViolationsInText(
-      'import { Sun } from "lucide-react";\n',
-      "fake.tsx",
-    );
+    const v = findViolationsInText('import { Sun } from "lucide-react";\n', "fake.tsx");
     expect(v.length).toBe(1);
     expect(v[0]!.line).toBe(1);
     expect(v[0]!.column).toBe(1);
@@ -128,45 +107,30 @@ describe("lucide-react forbidden-import guardrail — detection", () => {
   });
 
   it("flags a default import from lucide-react", () => {
-    const v = findViolationsInText(
-      'import Icons from "lucide-react";\n',
-      "fake.tsx",
-    );
+    const v = findViolationsInText('import Icons from "lucide-react";\n', "fake.tsx");
     expect(v.length).toBe(1);
     expect(v[0]!.match).toContain("lucide-react");
   });
 
   it("flags a side-effect import from lucide-react", () => {
-    const v = findViolationsInText(
-      'import "lucide-react";\n',
-      "fake.tsx",
-    );
+    const v = findViolationsInText('import "lucide-react";\n', "fake.tsx");
     expect(v.length).toBe(1);
     expect(v[0]!.match).toContain("lucide-react");
   });
 
   it("flags a single-quoted import from lucide-react", () => {
-    const v = findViolationsInText(
-      "import { Moon } from 'lucide-react';\n",
-      "fake.tsx",
-    );
+    const v = findViolationsInText("import { Moon } from 'lucide-react';\n", "fake.tsx");
     expect(v.length).toBe(1);
     expect(v[0]!.match).toContain("lucide-react");
   });
 
   it("does NOT flag a near-miss like @lucide/react (different specifier)", () => {
-    const v = findViolationsInText(
-      'import { Bar } from "@lucide/react";\n',
-      "fake.tsx",
-    );
+    const v = findViolationsInText('import { Bar } from "@lucide/react";\n', "fake.tsx");
     expect(v).toEqual([]);
   });
 
   it("does NOT flag a near-miss like lucide-react-native", () => {
-    const v = findViolationsInText(
-      'import { Bar } from "lucide-react-native";\n',
-      "fake.tsx",
-    );
+    const v = findViolationsInText('import { Bar } from "lucide-react-native";\n', "fake.tsx");
     expect(v).toEqual([]);
   });
 

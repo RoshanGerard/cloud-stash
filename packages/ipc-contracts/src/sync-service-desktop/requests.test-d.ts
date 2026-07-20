@@ -92,8 +92,7 @@ describe("sync-service-desktop enqueueMirror request/response", () => {
 
   it("enqueueMirror response is typed union { jobId } | { error }", () => {
     expectTypeOf<SyncEnqueueMirrorResponse>().toEqualTypeOf<
-      | { readonly jobId: string }
-      | { readonly error: SyncAlreadyRunningErrorShape }
+      { readonly jobId: string } | { readonly error: SyncAlreadyRunningErrorShape }
     >();
   });
 
@@ -124,8 +123,7 @@ describe("sync-service-desktop cancelJob request/response", () => {
 
   it("cancelJob response is typed union { cancelled } | { error }", () => {
     expectTypeOf<SyncCancelJobResponse>().toEqualTypeOf<
-      | { readonly cancelled: true }
-      | { readonly error: NotCancelableErrorShape }
+      { readonly cancelled: true } | { readonly error: NotCancelableErrorShape }
     >();
   });
 });
@@ -151,10 +149,12 @@ describe("sync-service-desktop cancelDownload request/response (iter-5 §12.6)",
     // absent from the toaster's call. The test below asserts the two
     // request types do not satisfy each other — neither shape is
     // assignable to the other.
-    type DownloadAssignableToJob =
-      SyncCancelDownloadRequest extends SyncCancelJobRequest ? true : false;
-    type JobAssignableToDownload =
-      SyncCancelJobRequest extends SyncCancelDownloadRequest ? true : false;
+    type DownloadAssignableToJob = SyncCancelDownloadRequest extends SyncCancelJobRequest
+      ? true
+      : false;
+    type JobAssignableToDownload = SyncCancelJobRequest extends SyncCancelDownloadRequest
+      ? true
+      : false;
     expectTypeOf<DownloadAssignableToJob>().toEqualTypeOf<false>();
     expectTypeOf<JobAssignableToDownload>().toEqualTypeOf<false>();
   });
@@ -179,10 +179,12 @@ describe("sync-service-desktop cancelUpload request/response (migrate-upload-orc
     // versa) MUST not type-check. The cancel-upload path targets the
     // service-minted business-domain id (`uploadJobId`); the legacy
     // `cancelJob` path targets the queue-based job id (`jobId`).
-    type UploadAssignableToJob =
-      SyncCancelUploadRequest extends SyncCancelJobRequest ? true : false;
-    type JobAssignableToUpload =
-      SyncCancelJobRequest extends SyncCancelUploadRequest ? true : false;
+    type UploadAssignableToJob = SyncCancelUploadRequest extends SyncCancelJobRequest
+      ? true
+      : false;
+    type JobAssignableToUpload = SyncCancelJobRequest extends SyncCancelUploadRequest
+      ? true
+      : false;
     expectTypeOf<UploadAssignableToJob>().toEqualTypeOf<false>();
     expectTypeOf<JobAssignableToUpload>().toEqualTypeOf<false>();
   });
@@ -193,10 +195,12 @@ describe("sync-service-desktop cancelUpload request/response (migrate-upload-orc
     // bridges, and a structural-compatibility loophole would invite the
     // same kind of name-collision bug iter-5 (add-download-resilience
     // §12.6) closed for cancelDownload-vs-cancelJob.
-    type UploadAssignableToDownload =
-      SyncCancelUploadRequest extends SyncCancelDownloadRequest ? true : false;
-    type DownloadAssignableToUpload =
-      SyncCancelDownloadRequest extends SyncCancelUploadRequest ? true : false;
+    type UploadAssignableToDownload = SyncCancelUploadRequest extends SyncCancelDownloadRequest
+      ? true
+      : false;
+    type DownloadAssignableToUpload = SyncCancelDownloadRequest extends SyncCancelUploadRequest
+      ? true
+      : false;
     expectTypeOf<UploadAssignableToDownload>().toEqualTypeOf<false>();
     expectTypeOf<DownloadAssignableToUpload>().toEqualTypeOf<false>();
   });

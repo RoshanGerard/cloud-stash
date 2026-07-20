@@ -1,8 +1,8 @@
-import * as React from "react"
-import { CheckIcon } from "lucide-react"
-import { Checkbox as CheckboxPrimitive } from "radix-ui"
+import * as React from "react";
+import { CheckIcon } from "lucide-react";
+import { Checkbox as CheckboxPrimitive } from "radix-ui";
 
-import { cn } from "@/lib/utils"
+import { cn } from "@/lib/utils";
 
 // shadcn/ui v4 `checkbox` primitive — stock shape, ported to use the
 // `radix-ui` umbrella package already on disk. Mirrors the pattern used by
@@ -11,10 +11,7 @@ import { cn } from "@/lib/utils"
 // First consumer: file-explorer/conflict-resolution-dialog.tsx (the
 // "Apply this choice to the remaining N conflicts" toggle).
 
-function Checkbox({
-  className,
-  ...props
-}: React.ComponentProps<typeof CheckboxPrimitive.Root>) {
+function Checkbox({ className, ...props }: React.ComponentProps<typeof CheckboxPrimitive.Root>) {
   return (
     <CheckboxPrimitive.Root
       data-slot="checkbox"
@@ -31,7 +28,7 @@ function Checkbox({
         <CheckIcon className="size-3.5" />
       </CheckboxPrimitive.Indicator>
     </CheckboxPrimitive.Root>
-  )
+  );
 }
 
-export { Checkbox }
+export { Checkbox };

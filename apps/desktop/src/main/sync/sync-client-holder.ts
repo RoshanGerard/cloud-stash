@@ -32,9 +32,7 @@ export function setSyncClient(client: SyncClient): void {
 
 export function getSyncClient(): SyncClient {
   if (!current) {
-    throw new Error(
-      "sync client not initialized — IPC handler invoked before supervisor started",
-    );
+    throw new Error("sync client not initialized — IPC handler invoked before supervisor started");
   }
   return current;
 }

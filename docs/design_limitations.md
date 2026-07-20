@@ -82,7 +82,7 @@ to `auth-revoked` + `raw.kind: "scope-insufficient"`, which threads
 `FilesErrorEnvelope.authErrorKind` and routes the explorer to the reconnect view
 with a "needs full-access permission" callout. The `authErrorKind` contract
 field, the fs-sync `normalizeFilesError` thread, and the renderer callout are all
-**provider-agnostic and already shipped** — only the engine-side *detection* is
+**provider-agnostic and already shipped** — only the engine-side _detection_ is
 Drive-specific.
 
 OneDrive was investigated (2026-06) and the insufficient-scope recovery was
@@ -106,9 +106,9 @@ OneDrive was investigated (2026-06) and the insufficient-scope recovery was
    design.
 3. **Untestable without a real provider.** With no clean signal and no live
    OneDrive/Graph provider in the test environment, a runtime detection's tests
-   would encode a *guessed* error signature rather than observed behavior.
+   would encode a _guessed_ error signature rather than observed behavior.
 
-**If a real need surfaces,** the honest mechanism is a *proactive* scope check
+**If a real need surfaces,** the honest mechanism is a _proactive_ scope check
 (mirroring Drive's `checkScopeSufficiency`): capture the granted `scope` from the
 OneDrive token response (the `scp` claim is the one clean, testable signal),
 validate it contains `Files.ReadWrite.All`, and throw `auth-revoked` +

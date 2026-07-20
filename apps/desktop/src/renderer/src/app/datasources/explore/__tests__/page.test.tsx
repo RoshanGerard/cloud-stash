@@ -28,23 +28,8 @@
 //     `__resetExplorerStoreCacheForTests` test-only helper so IDs don't leak
 //     across cases.
 
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-  type Mock,
-} from "vitest";
-import {
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-  within,
-} from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from "vitest";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { FilesErrorTag } from "@cloudstash/ipc-contracts";
 import type { DatasourceSummary } from "@cloudstash/ipc-contracts";
@@ -128,9 +113,7 @@ function installApiMock(
       // without needing per-test fixtures here (route tests only assert
       // that the explorer mounts for a known id; per-entry rendering is
       // covered by `file-explorer-composite.test.tsx`).
-      list:
-        filesListOverride ??
-        vi.fn().mockResolvedValue({ entries: [], nextCursor: null }),
+      list: filesListOverride ?? vi.fn().mockResolvedValue({ entries: [], nextCursor: null }),
       stat: vi.fn(),
       search: vi.fn(),
       rename: vi.fn(),
@@ -264,17 +247,13 @@ describe("/datasources/explore route page (task 2.3)", () => {
     // 1. Wait for the Pattern-A state component to render. The
     //    `<InvalidDatasourceArm>` mounts `<InvalidDatasourceState>` once
     //    `useExplorerData` resolves the typed-error envelope.
-    const arm = await screen.findByTestId(
-      "file-explorer-state-invalid-datasource",
-    );
+    const arm = await screen.findByTestId("file-explorer-state-invalid-datasource");
     expect(arm).toBeInTheDocument();
 
     // 2. Click "Remove datasource" inside the state. This opens the
     //    shared `<ConfirmRemoveDatasourceDialog>`; the IPC has not been
     //    called yet.
-    fireEvent.click(
-      within(arm).getByRole("button", { name: /remove datasource/i }),
-    );
+    fireEvent.click(within(arm).getByRole("button", { name: /remove datasource/i }));
     const dialog = await screen.findByRole("dialog");
     expect(dialog).toBeInTheDocument();
     expect(removeMock).not.toHaveBeenCalled();
@@ -283,9 +262,7 @@ describe("/datasources/explore route page (task 2.3)", () => {
     //    `actions.remove({ datasourceId })`; once it resolves, the arm's
     //    `onDatasourceRemoved` callback fires; the route flips to
     //    `phase: "not-found"`; `<DatasourceNotFound>` renders.
-    fireEvent.click(
-      within(dialog).getByRole("button", { name: "Remove" }),
-    );
+    fireEvent.click(within(dialog).getByRole("button", { name: "Remove" }));
 
     await waitFor(() => {
       expect(removeMock).toHaveBeenCalledTimes(1);

@@ -54,10 +54,7 @@ interface FakeConfig {
     newName: string,
     conflictPolicy: "fail" | "overwrite" | "keep-both",
   ) => Promise<DatasourceFileEntry<FakeType>>;
-  doDownloadFile?: (
-    target: Target,
-    options: DownloadOptions,
-  ) => Promise<DownloadResult>;
+  doDownloadFile?: (target: Target, options: DownloadOptions) => Promise<DownloadResult>;
   doGetQuota?: () => Promise<Quota>;
   refreshToken?: () => Promise<AuthResult>;
   normalizeError?: (raw: unknown) => DatasourceError<FakeType>;
@@ -99,18 +96,16 @@ class FakeDatasourceClient extends BaseDatasourceClient<FakeType> {
   readonly doStatus = vi.fn<() => Promise<DatasourceStatus>>();
   readonly doTestConnection = vi.fn<() => Promise<void>>();
   readonly doAuthenticate = vi.fn<() => Promise<AuthIntent>>();
-  readonly doListDirectory = vi.fn<
-    (
-      target: Target,
-      options: { cursor?: string; pageSize?: number },
-    ) => Promise<{ entries: DatasourceFileEntry<FakeType>[]; nextCursor: string | null }>
-  >();
-  readonly doSearch = vi.fn<
-    (query: string, scope?: Target) => Promise<DatasourceFileEntry<FakeType>[]>
-  >();
-  readonly doGetMetadata = vi.fn<
-    (target: Target) => Promise<FileMetadata<FakeType>>
-  >();
+  readonly doListDirectory =
+    vi.fn<
+      (
+        target: Target,
+        options: { cursor?: string; pageSize?: number },
+      ) => Promise<{ entries: DatasourceFileEntry<FakeType>[]; nextCursor: string | null }>
+    >();
+  readonly doSearch =
+    vi.fn<(query: string, scope?: Target) => Promise<DatasourceFileEntry<FakeType>[]>>();
+  readonly doGetMetadata = vi.fn<(target: Target) => Promise<FileMetadata<FakeType>>>();
   readonly doUploadFile = vi.fn<
     (
       parent: Target,
@@ -122,77 +117,63 @@ class FakeDatasourceClient extends BaseDatasourceClient<FakeType> {
     ) => Promise<DatasourceFileEntry<FakeType>>
   >();
   readonly doDeleteFile = vi.fn<(target: Target) => Promise<void>>();
-  readonly doRename = vi.fn<
-    (
-      target: Target,
-      newName: string,
-      conflictPolicy: "fail" | "overwrite" | "keep-both",
-    ) => Promise<DatasourceFileEntry<FakeType>>
-  >();
-  readonly doDownloadFile = vi.fn<
-    (target: Target, options: DownloadOptions) => Promise<DownloadResult>
-  >();
+  readonly doRename =
+    vi.fn<
+      (
+        target: Target,
+        newName: string,
+        conflictPolicy: "fail" | "overwrite" | "keep-both",
+      ) => Promise<DatasourceFileEntry<FakeType>>
+    >();
+  readonly doDownloadFile =
+    vi.fn<(target: Target, options: DownloadOptions) => Promise<DownloadResult>>();
   readonly doGetQuotaSpy = vi.fn<() => Promise<Quota>>();
   readonly refreshTokenSpy = vi.fn<() => Promise<AuthResult>>();
   readonly normalizeErrorSpy = vi.fn<(raw: unknown) => DatasourceError<FakeType>>();
 
-  constructor(
-    init: { datasourceId: string; ctx: BaseClientContext },
-    cfg: FakeConfig = {},
-  ) {
+  constructor(init: { datasourceId: string; ctx: BaseClientContext }, cfg: FakeConfig = {}) {
     super(init);
 
     if (cfg.doStatus) this.doStatus.mockImplementation(cfg.doStatus);
     else this.doStatus.mockResolvedValue("connected");
 
-    if (cfg.doTestConnection)
-      this.doTestConnection.mockImplementation(cfg.doTestConnection);
+    if (cfg.doTestConnection) this.doTestConnection.mockImplementation(cfg.doTestConnection);
     else this.doTestConnection.mockResolvedValue(undefined);
 
-    if (cfg.doAuthenticate)
-      this.doAuthenticate.mockImplementation(cfg.doAuthenticate);
+    if (cfg.doAuthenticate) this.doAuthenticate.mockImplementation(cfg.doAuthenticate);
 
-    if (cfg.doListDirectory)
-      this.doListDirectory.mockImplementation(cfg.doListDirectory);
+    if (cfg.doListDirectory) this.doListDirectory.mockImplementation(cfg.doListDirectory);
     else this.doListDirectory.mockResolvedValue({ entries: [], nextCursor: null });
 
     if (cfg.doSearch) this.doSearch.mockImplementation(cfg.doSearch);
     else this.doSearch.mockResolvedValue([]);
 
-    if (cfg.doGetMetadata)
-      this.doGetMetadata.mockImplementation(cfg.doGetMetadata);
+    if (cfg.doGetMetadata) this.doGetMetadata.mockImplementation(cfg.doGetMetadata);
     else this.doGetMetadata.mockResolvedValue(makeEntry());
 
-    if (cfg.doUploadFile)
-      this.doUploadFile.mockImplementation(cfg.doUploadFile);
+    if (cfg.doUploadFile) this.doUploadFile.mockImplementation(cfg.doUploadFile);
     else this.doUploadFile.mockResolvedValue(makeEntry());
 
-    if (cfg.doDeleteFile)
-      this.doDeleteFile.mockImplementation(cfg.doDeleteFile);
+    if (cfg.doDeleteFile) this.doDeleteFile.mockImplementation(cfg.doDeleteFile);
     else this.doDeleteFile.mockResolvedValue(undefined);
 
     if (cfg.doRename) this.doRename.mockImplementation(cfg.doRename);
     else this.doRename.mockResolvedValue(makeEntry());
 
-    if (cfg.doDownloadFile)
-      this.doDownloadFile.mockImplementation(cfg.doDownloadFile);
+    if (cfg.doDownloadFile) this.doDownloadFile.mockImplementation(cfg.doDownloadFile);
     else
       this.doDownloadFile.mockResolvedValue({
         stream: Readable.from([]),
         contentLength: 0,
       });
 
-    if (cfg.doGetQuota)
-      this.doGetQuotaSpy.mockImplementation(cfg.doGetQuota);
+    if (cfg.doGetQuota) this.doGetQuotaSpy.mockImplementation(cfg.doGetQuota);
     else this.doGetQuotaSpy.mockResolvedValue({ used: 0, quota: 0 });
 
-    if (cfg.refreshToken)
-      this.refreshTokenSpy.mockImplementation(cfg.refreshToken);
-    else
-      this.refreshTokenSpy.mockResolvedValue({ accessToken: "refreshed" });
+    if (cfg.refreshToken) this.refreshTokenSpy.mockImplementation(cfg.refreshToken);
+    else this.refreshTokenSpy.mockResolvedValue({ accessToken: "refreshed" });
 
-    if (cfg.normalizeError)
-      this.normalizeErrorSpy.mockImplementation(cfg.normalizeError);
+    if (cfg.normalizeError) this.normalizeErrorSpy.mockImplementation(cfg.normalizeError);
     else this.normalizeErrorSpy.mockImplementation(defaultNormalize(this));
   }
 
@@ -212,10 +193,7 @@ class FakeDatasourceClient extends BaseDatasourceClient<FakeType> {
   ): Promise<{ entries: DatasourceFileEntry<FakeType>[]; nextCursor: string | null }> {
     return this.doListDirectory(target, options);
   }
-  protected doSearchImpl(
-    query: string,
-    scope?: Target,
-  ): Promise<DatasourceFileEntry<FakeType>[]> {
+  protected doSearchImpl(query: string, scope?: Target): Promise<DatasourceFileEntry<FakeType>[]> {
     return this.doSearch(query, scope);
   }
   protected doGetMetadataImpl(target: Target): Promise<FileMetadata<FakeType>> {
@@ -241,10 +219,7 @@ class FakeDatasourceClient extends BaseDatasourceClient<FakeType> {
   ): Promise<DatasourceFileEntry<FakeType>> {
     return this.doRename(target, newName, conflictPolicy);
   }
-  protected doDownloadFileImpl(
-    target: Target,
-    options: DownloadOptions,
-  ): Promise<DownloadResult> {
+  protected doDownloadFileImpl(target: Target, options: DownloadOptions): Promise<DownloadResult> {
     return this.doDownloadFile(target, options);
   }
   protected doGetQuotaImpl(): Promise<Quota> {
@@ -464,7 +439,6 @@ describe("BaseDatasourceClient — uploadFile options forwarding", () => {
 // into a transactionId-keyed event with percentage. The consumer
 // (fs-sync handler) owns that translation.
 
-
 // ---------------------------------------------------------------------------
 // Failing op: throws normalized error (no bus side effects)
 // ---------------------------------------------------------------------------
@@ -479,10 +453,7 @@ describe("BaseDatasourceClient — failure path normalization", () => {
 
     let caught: unknown;
     try {
-      await client.uploadFile(
-        { kind: "path", path: "/parent" },
-        { path: "C:/tmp/demo.txt" },
-      );
+      await client.uploadFile({ kind: "path", path: "/parent" }, { path: "C:/tmp/demo.txt" });
     } catch (e) {
       caught = e;
     }
@@ -500,14 +471,10 @@ describe("BaseDatasourceClient — failure path normalization", () => {
       },
     });
 
-    await expect(
-      client.delete({ kind: "path", path: "/gone.txt" }, "file"),
-    ).rejects.toSatisfy(
-      (e: unknown) =>
-        e instanceof DatasourceError && e.tag === DatasourceErrorTag.NotFound,
+    await expect(client.delete({ kind: "path", path: "/gone.txt" }, "file")).rejects.toSatisfy(
+      (e: unknown) => e instanceof DatasourceError && e.tag === DatasourceErrorTag.NotFound,
     );
   });
-
 });
 
 // ---------------------------------------------------------------------------
@@ -532,11 +499,8 @@ describe("BaseDatasourceClient — Unsupported errors throw without side effects
       },
     });
 
-    await expect(
-      client.getMetadata({ kind: "path", path: "/x" }),
-    ).rejects.toSatisfy(
-      (e: unknown) =>
-        e instanceof DatasourceError && e.tag === DatasourceErrorTag.Unsupported,
+    await expect(client.getMetadata({ kind: "path", path: "/x" })).rejects.toSatisfy(
+      (e: unknown) => e instanceof DatasourceError && e.tag === DatasourceErrorTag.Unsupported,
     );
   });
 });
@@ -563,9 +527,7 @@ describe("BaseDatasourceClient — public refreshCredentials() single-flight", (
       refreshToken: async () => refreshed,
     });
 
-    const results = await Promise.all(
-      Array.from({ length: 5 }, () => client.refreshCredentials()),
-    );
+    const results = await Promise.all(Array.from({ length: 5 }, () => client.refreshCredentials()));
 
     // refreshTokenImpl was called exactly once across the 5 concurrent callers.
     expect(client.refreshTokenSpy).toHaveBeenCalledTimes(1);
@@ -758,10 +720,7 @@ describe("BaseDatasourceClient — public refreshCredentials() single-flight", (
 describe("BaseDatasourceClient — operations surface auth-expired without auto-retry", () => {
   it("listDirectory: a doListDirectoryImpl auth-expired surfaces raw — refreshTokenImpl NOT called, NO retry", async () => {
     const doListDirectory = vi.fn(
-      async (
-        target: Target,
-        options: { cursor?: string; pageSize?: number },
-      ) => {
+      async (target: Target, options: { cursor?: string; pageSize?: number }) => {
         void target;
         void options;
         throw new DatasourceError<FakeType>({
@@ -813,10 +772,7 @@ describe("BaseDatasourceClient — operations surface auth-expired without auto-
 
     let caught: unknown;
     try {
-      await client.uploadFile(
-        { kind: "path", path: "/parent" },
-        { path: "C:/tmp/x.txt" },
-      );
+      await client.uploadFile({ kind: "path", path: "/parent" }, { path: "C:/tmp/x.txt" });
     } catch (e) {
       caught = e;
     }
@@ -846,10 +802,7 @@ describe("BaseDatasourceClient — operations surface auth-expired without auto-
 describe("BaseDatasourceClient — listDirectory pagination wrapper", () => {
   it("forwards cursor + pageSize to doListDirectoryImpl unchanged", async () => {
     const doListDirectory = vi.fn(
-      async (
-        target: Target,
-        options: { cursor?: string; pageSize?: number },
-      ) => {
+      async (target: Target, options: { cursor?: string; pageSize?: number }) => {
         void target;
         void options;
         return { entries: [], nextCursor: null as string | null };
@@ -871,10 +824,7 @@ describe("BaseDatasourceClient — listDirectory pagination wrapper", () => {
 
   it("hands the primitive an empty options object when options is omitted (no injected default pageSize)", async () => {
     const doListDirectory = vi.fn(
-      async (
-        target: Target,
-        options: { cursor?: string; pageSize?: number },
-      ) => {
+      async (target: Target, options: { cursor?: string; pageSize?: number }) => {
         void target;
         void options;
         return { entries: [], nextCursor: null as string | null };
@@ -893,10 +843,7 @@ describe("BaseDatasourceClient — listDirectory pagination wrapper", () => {
   it("surfaces the strategy's { entries, nextCursor } shape unchanged", async () => {
     const entry = makeEntry("/photos/a.txt");
     const doListDirectory = vi.fn(
-      async (
-        target: Target,
-        options: { cursor?: string; pageSize?: number },
-      ) => {
+      async (target: Target, options: { cursor?: string; pageSize?: number }) => {
         void target;
         void options;
         return {
@@ -915,10 +862,7 @@ describe("BaseDatasourceClient — listDirectory pagination wrapper", () => {
 
   it("leaves the error envelope unchanged on rejection (normalized DatasourceError rethrown)", async () => {
     const doListDirectory = vi.fn(
-      async (
-        target: Target,
-        options: { cursor?: string; pageSize?: number },
-      ) => {
+      async (target: Target, options: { cursor?: string; pageSize?: number }) => {
         void target;
         void options;
         // Raw (un-normalized) provider marker — runReadOp normalizes it.
@@ -965,9 +909,7 @@ describe("BaseDatasourceClient — unified delete(target, entryKind)", () => {
     const doDeleteFile = vi.fn(async () => undefined);
     const { client } = makeHarness({ doDeleteFile });
 
-    await expect(
-      client.delete({ kind: "path", path: "/x.txt" }, "file"),
-    ).resolves.toBeUndefined();
+    await expect(client.delete({ kind: "path", path: "/x.txt" }, "file")).resolves.toBeUndefined();
     expect(doDeleteFile).toHaveBeenCalledOnce();
   });
 
@@ -1163,20 +1105,14 @@ describe("BaseDatasourceClient — authenticate", () => {
 describe("BaseDatasourceClient — dispose()", () => {
   it("exposes a public `dispose()` method as a no-op on the base", () => {
     const { client } = makeHarness();
-    expect(typeof (client as unknown as { dispose: unknown }).dispose).toBe(
-      "function",
-    );
+    expect(typeof (client as unknown as { dispose: unknown }).dispose).toBe("function");
     // No-op: calling it on a subclass that didn't override MUST NOT throw.
-    expect(() =>
-      (client as unknown as { dispose: () => void }).dispose(),
-    ).not.toThrow();
+    expect(() => (client as unknown as { dispose: () => void }).dispose()).not.toThrow();
   });
 
   it("dispose() is idempotent — calling twice does not throw", () => {
     const { client } = makeHarness();
-    const d = (client as unknown as { dispose: () => void }).dispose.bind(
-      client,
-    );
+    const d = (client as unknown as { dispose: () => void }).dispose.bind(client);
     d();
     expect(() => d()).not.toThrow();
   });
@@ -1230,11 +1166,7 @@ describe("BaseDatasourceClient — rename `fail` policy surfaces conflict tag", 
 
     let caught: unknown;
     try {
-      await client.rename(
-        { kind: "path", path: "/parent/foo.pdf" },
-        "bar.pdf",
-        "fail",
-      );
+      await client.rename({ kind: "path", path: "/parent/foo.pdf" }, "bar.pdf", "fail");
     } catch (e) {
       caught = e;
     }
@@ -1273,21 +1205,19 @@ describe("BaseDatasourceClient — rename `overwrite` policy on a file delegates
     const { client } = makeHarness();
     // Override doRename post-construction so the mock can close over
     // `client` and exercise the protected primitive via the public spy.
-    client.doRename.mockImplementation(
-      async (_target, _newName, conflictPolicy) => {
-        // Sanity: the base MUST forward the policy unchanged.
-        expect(conflictPolicy).toBe("overwrite");
-        // Strategy's internal sibling-cleanup. doDeleteFileImpl resolves to
-        // doDeleteFile (the test spy), which is a no-op vi.fn. This mirrors a
-        // real strategy's overwrite path: call the protected primitive, then
-        // perform the rename.
-        await client["doDeleteFileImpl"]({
-          kind: "path",
-          path: "/parent/bar.pdf",
-        });
-        return renamed;
-      },
-    );
+    client.doRename.mockImplementation(async (_target, _newName, conflictPolicy) => {
+      // Sanity: the base MUST forward the policy unchanged.
+      expect(conflictPolicy).toBe("overwrite");
+      // Strategy's internal sibling-cleanup. doDeleteFileImpl resolves to
+      // doDeleteFile (the test spy), which is a no-op vi.fn. This mirrors a
+      // real strategy's overwrite path: call the protected primitive, then
+      // perform the rename.
+      await client["doDeleteFileImpl"]({
+        kind: "path",
+        path: "/parent/bar.pdf",
+      });
+      return renamed;
+    });
 
     const from: Target = { kind: "path", path: "/parent/foo.pdf" };
     const result = await client.rename(from, "bar.pdf", "overwrite");
@@ -1391,11 +1321,7 @@ describe("BaseDatasourceClient — rename `keep-both` policy delegates to the st
 
     let caught: unknown;
     try {
-      await client.rename(
-        { kind: "path", path: "/parent/foo.pdf" },
-        "bar.pdf",
-        "keep-both",
-      );
+      await client.rename({ kind: "path", path: "/parent/foo.pdf" }, "bar.pdf", "keep-both");
     } catch (e) {
       caught = e;
     }
@@ -1507,9 +1433,7 @@ describe("BaseDatasourceClient — downloadFile signal propagation", () => {
         // Mirror a real SDK call: hang waiting for the signal, reject on abort.
         return new Promise<DownloadResult>((_resolve, reject) => {
           options.signal?.addEventListener("abort", () => {
-            reject(
-              Object.assign(new Error("aborted"), { name: "AbortError" }),
-            );
+            reject(Object.assign(new Error("aborted"), { name: "AbortError" }));
           });
         });
       },
@@ -1524,9 +1448,7 @@ describe("BaseDatasourceClient — downloadFile signal propagation", () => {
 describe("BaseDatasourceClient — downloadFile onProgress propagation", () => {
   it("invokes the consumer's `onProgress(loaded, total)` synchronously as the strategy reports progress", async () => {
     const target: Target = { kind: "path", path: "/p.bin" };
-    const onProgress = vi.fn<
-      (loaded: number, total: number | null) => void
-    >();
+    const onProgress = vi.fn<(loaded: number, total: number | null) => void>();
     const stream = new Readable({ read() {} });
     const { client } = makeHarness({
       doDownloadFile: async (_t, options) => {

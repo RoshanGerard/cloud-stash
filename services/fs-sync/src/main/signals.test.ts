@@ -111,9 +111,7 @@ function collectResponses(socket: net.Socket): {
   };
 }
 
-async function tryConnect(
-  pipePath: string,
-): Promise<{ connected: boolean; code?: string }> {
+async function tryConnect(pipePath: string): Promise<{ connected: boolean; code?: string }> {
   return new Promise((resolve) => {
     const s = net.connect(pipePath);
     s.once("connect", () => {
@@ -128,237 +126,218 @@ async function tryConnect(
 }
 
 describe("installSignalHandlers — bounded graceful shutdown", () => {
-  it(
-    "on SIGINT with one active OAuth session: broker.dispose runs before exit; loopback HTTP server is no longer listening; pending session map is empty",
-    async () => {
-      // implement-datasource-onboarding §15.1 — spec scenario "SIGINT
-      // cancels active OAuth sessions before exit". We boot a real
-      // runtime, seed `<dataDir>/config.json` so the broker can resolve
-      // OAuthAppConfig, drive `broker.start(...)` directly to register
-      // ONE pending OAuth session, capture the bound port, then emit
-      // SIGINT through an injected EventEmitter (so the vitest worker
-      // is not the signal target).
-      //
-      // Assertions:
-      //   (A) within the 5s grace budget the shutdown promise resolves 0
-      //   (B) `_getPendingSessionForTests(correlationId)` is undefined
-      //       AFTER shutdown (broker.dispose drained the map)
-      //   (C) a fresh TCP connect to the formerly-bound port is rejected
-      //       with ECONNREFUSED (or similar refusal code)
-      //   (D) PID file removed
-      //
-      // The signal-handler chain is: emitter.emit("SIGINT") → onSignal →
-      // runtime.stop() → runtimeBroker.dispose() (FIRST step in stop;
-      // see bootstrap.ts:380). So this test verifies the chain end-to-end
-      // without any signals.ts edit.
-      const pipePath = pipeFor("oauth-shutdown");
-      const pidPath = path.join(scratchDir, "service-dev.pid");
-      const configPath = path.join(scratchDir, "config.json");
+  it("on SIGINT with one active OAuth session: broker.dispose runs before exit; loopback HTTP server is no longer listening; pending session map is empty", async () => {
+    // implement-datasource-onboarding §15.1 — spec scenario "SIGINT
+    // cancels active OAuth sessions before exit". We boot a real
+    // runtime, seed `<dataDir>/config.json` so the broker can resolve
+    // OAuthAppConfig, drive `broker.start(...)` directly to register
+    // ONE pending OAuth session, capture the bound port, then emit
+    // SIGINT through an injected EventEmitter (so the vitest worker
+    // is not the signal target).
+    //
+    // Assertions:
+    //   (A) within the 5s grace budget the shutdown promise resolves 0
+    //   (B) `_getPendingSessionForTests(correlationId)` is undefined
+    //       AFTER shutdown (broker.dispose drained the map)
+    //   (C) a fresh TCP connect to the formerly-bound port is rejected
+    //       with ECONNREFUSED (or similar refusal code)
+    //   (D) PID file removed
+    //
+    // The signal-handler chain is: emitter.emit("SIGINT") → onSignal →
+    // runtime.stop() → runtimeBroker.dispose() (FIRST step in stop;
+    // see bootstrap.ts:380). So this test verifies the chain end-to-end
+    // without any signals.ts edit.
+    const pipePath = pipeFor("oauth-shutdown");
+    const pidPath = path.join(scratchDir, "service-dev.pid");
+    const configPath = path.join(scratchDir, "config.json");
 
-      // Seed synthetic OAuth app config so broker.start can resolve.
-      // The integration test (`authenticate-flow.integration.test.ts`)
-      // uses the same shape.
-      await fsp.writeFile(
-        configPath,
-        JSON.stringify({
-          schemaVersion: 1,
-          providers: {
-            "google-drive": {
-              clientId: "synthetic-client-id",
-              clientSecret: "synthetic-client-secret",
-            },
+    // Seed synthetic OAuth app config so broker.start can resolve.
+    // The integration test (`authenticate-flow.integration.test.ts`)
+    // uses the same shape.
+    await fsp.writeFile(
+      configPath,
+      JSON.stringify({
+        schemaVersion: 1,
+        providers: {
+          "google-drive": {
+            clientId: "synthetic-client-id",
+            clientSecret: "synthetic-client-secret",
           },
-        }),
-        { mode: 0o600 },
-      );
+        },
+      }),
+      { mode: 0o600 },
+    );
 
-      runtime = await bootstrap({
-        dev: true,
-        dataDir: scratchDir,
-        pidPath,
-        dbPath: path.join(scratchDir, "sync.db"),
-        socketPath: pipePath,
-        credentialsPath: path.join(scratchDir, "credentials.json"),
-        configPath,
+    runtime = await bootstrap({
+      dev: true,
+      dataDir: scratchDir,
+      pidPath,
+      dbPath: path.join(scratchDir, "sync.db"),
+      socketPath: pipePath,
+      credentialsPath: path.join(scratchDir, "credentials.json"),
+      configPath,
+    });
+
+    // Drive the broker DIRECTLY (not through IPC) — fewer moving parts,
+    // deterministic. The broker is exposed on the Runtime handle per
+    // bootstrap.ts (added in §9-§13 for exactly this reason).
+    const { correlationId } = await runtime.loopbackBroker.start({
+      providerId: "google-drive",
+    });
+    const session = runtime.loopbackBroker._getPendingSessionForTests(correlationId);
+    expect(session).toBeDefined();
+    const port = session!.port;
+    expect(port).toBeGreaterThanOrEqual(1024);
+
+    // Sanity: PID file present.
+    expect(fs.existsSync(pidPath)).toBe(true);
+
+    const emitter = new EventEmitter();
+    const installed = installSignalHandlers(runtime, {
+      pidPath,
+      emitter,
+      graceMs: 5000,
+    });
+
+    const t0 = Date.now();
+    emitter.emit("SIGINT");
+
+    // (A) shutdown completes within 5s grace budget.
+    const exitCode = await installed.shutdown;
+    const elapsed = Date.now() - t0;
+    expect(exitCode).toBe(0);
+    expect(elapsed).toBeLessThan(5000);
+
+    // (B) broker pending-session map is empty after dispose.
+    expect(runtime.loopbackBroker._getPendingSessionForTests(correlationId)).toBeUndefined();
+
+    // (C) the loopback port is no longer listening. Retry briefly so
+    //     a too-tight assertion doesn't flake on slow listener-close.
+    let refused = false;
+    const windowEnd = Date.now() + 1000;
+    while (Date.now() < windowEnd) {
+      const probe = await new Promise<{ ok: boolean; code?: string }>((resolve) => {
+        const s = net.connect(port, "127.0.0.1");
+        s.once("connect", () => {
+          s.destroy();
+          resolve({ ok: true });
+        });
+        s.once("error", (err) => {
+          const code = (err as NodeJS.ErrnoException).code;
+          resolve({ ok: false, code });
+        });
       });
-
-      // Drive the broker DIRECTLY (not through IPC) — fewer moving parts,
-      // deterministic. The broker is exposed on the Runtime handle per
-      // bootstrap.ts (added in §9-§13 for exactly this reason).
-      const { correlationId } = await runtime.loopbackBroker.start({
-        providerId: "google-drive",
-      });
-      const session =
-        runtime.loopbackBroker._getPendingSessionForTests(correlationId);
-      expect(session).toBeDefined();
-      const port = session!.port;
-      expect(port).toBeGreaterThanOrEqual(1024);
-
-      // Sanity: PID file present.
-      expect(fs.existsSync(pidPath)).toBe(true);
-
-      const emitter = new EventEmitter();
-      const installed = installSignalHandlers(runtime, {
-        pidPath,
-        emitter,
-        graceMs: 5000,
-      });
-
-      const t0 = Date.now();
-      emitter.emit("SIGINT");
-
-      // (A) shutdown completes within 5s grace budget.
-      const exitCode = await installed.shutdown;
-      const elapsed = Date.now() - t0;
-      expect(exitCode).toBe(0);
-      expect(elapsed).toBeLessThan(5000);
-
-      // (B) broker pending-session map is empty after dispose.
-      expect(
-        runtime.loopbackBroker._getPendingSessionForTests(correlationId),
-      ).toBeUndefined();
-
-      // (C) the loopback port is no longer listening. Retry briefly so
-      //     a too-tight assertion doesn't flake on slow listener-close.
-      let refused = false;
-      const windowEnd = Date.now() + 1000;
-      while (Date.now() < windowEnd) {
-        const probe = await new Promise<{ ok: boolean; code?: string }>(
-          (resolve) => {
-            const s = net.connect(port, "127.0.0.1");
-            s.once("connect", () => {
-              s.destroy();
-              resolve({ ok: true });
-            });
-            s.once("error", (err) => {
-              const code = (err as NodeJS.ErrnoException).code;
-              resolve({ ok: false, code });
-            });
-          },
+      if (!probe.ok) {
+        refused = true;
+        // Acceptable refusal codes; ECONNREFUSED is the primary on
+        // Unix, ECONNRESET / EPIPE possible on Windows during the
+        // tear-down window.
+        expect(["ECONNREFUSED", "ECONNRESET", "EPIPE", "ENOENT"].includes(probe.code ?? "")).toBe(
+          true,
         );
-        if (!probe.ok) {
-          refused = true;
-          // Acceptable refusal codes; ECONNREFUSED is the primary on
-          // Unix, ECONNRESET / EPIPE possible on Windows during the
-          // tear-down window.
-          expect(
-            ["ECONNREFUSED", "ECONNRESET", "EPIPE", "ENOENT"].includes(
-              probe.code ?? "",
-            ),
-          ).toBe(true);
-          break;
-        }
-        await new Promise((r) => setTimeout(r, 25));
+        break;
       }
-      expect(refused).toBe(true);
+      await new Promise((r) => setTimeout(r, 25));
+    }
+    expect(refused).toBe(true);
 
-      // (D) PID file removed.
-      expect(fs.existsSync(pidPath)).toBe(false);
+    // (D) PID file removed.
+    expect(fs.existsSync(pidPath)).toBe(false);
 
-      runtime = null; // stop() already ran inside installed.shutdown.
-    },
-    10_000,
-  );
+    runtime = null; // stop() already ran inside installed.shutdown.
+  }, 10_000);
 
-  it(
-    "on SIGINT: stops accepting connects, finishes in-flight request, removes PID file, exits 0 within 5s",
-    async () => {
-      const pipePath = pipeFor("shutdown");
-      const pidPath = path.join(scratchDir, "service-dev.pid");
+  it("on SIGINT: stops accepting connects, finishes in-flight request, removes PID file, exits 0 within 5s", async () => {
+    const pipePath = pipeFor("shutdown");
+    const pidPath = path.join(scratchDir, "service-dev.pid");
 
-      runtime = await bootstrap({
-        dev: true,
-        dataDir: scratchDir,
-        pidPath,
-        dbPath: path.join(scratchDir, "sync.db"),
-        socketPath: pipePath,
-        credentialsPath: path.join(scratchDir, "credentials.json"),
-      });
+    runtime = await bootstrap({
+      dev: true,
+      dataDir: scratchDir,
+      pidPath,
+      dbPath: path.join(scratchDir, "sync.db"),
+      socketPath: pipePath,
+      credentialsPath: path.join(scratchDir, "credentials.json"),
+    });
 
-      // Sanity: PID file exists after bootstrap.
-      expect(fs.existsSync(pidPath)).toBe(true);
+    // Sanity: PID file exists after bootstrap.
+    expect(fs.existsSync(pidPath)).toBe(true);
 
-      const emitter = new EventEmitter();
-      const installed = installSignalHandlers(runtime, {
-        pidPath,
-        emitter,
-        graceMs: 5000,
-      });
+    const emitter = new EventEmitter();
+    const installed = installSignalHandlers(runtime, {
+      pidPath,
+      emitter,
+      graceMs: 5000,
+    });
 
-      // Open a client BEFORE signalling, send a framed `sync:get-status`
-      // request, then fire SIGINT. The response must still arrive.
-      const sock = await connect(pipePath);
-      const waiter = collectResponses(sock);
-      const requestId = "inflight-1";
-      sock.write(
-        `${JSON.stringify({
-          id: requestId,
-          kind: "request",
-          command: "sync:get-status",
-          params: {},
-        })}\n`,
-      );
+    // Open a client BEFORE signalling, send a framed `sync:get-status`
+    // request, then fire SIGINT. The response must still arrive.
+    const sock = await connect(pipePath);
+    const waiter = collectResponses(sock);
+    const requestId = "inflight-1";
+    sock.write(
+      `${JSON.stringify({
+        id: requestId,
+        kind: "request",
+        command: "sync:get-status",
+        params: {},
+      })}\n`,
+    );
 
-      // Give libuv a chance to deliver the bytes to the server-side read
-      // handler and let the (fully synchronous) sync:get-status handler
-      // write its response frame onto the wire. Without this flush the
-      // shutdown path can call server.close() before the response frame
-      // is ever enqueued, and the assertion below becomes a race. A few
-      // setImmediates + a short timer is enough on every platform we care
-      // about; the assertion still proves the contract ("a request in
-      // flight at SIGINT time completes") because the response has been
-      // emitted but not yet fully drained to the client's decoder.
-      for (let i = 0; i < 5; i += 1) {
-        await new Promise((r) => setImmediate(r));
+    // Give libuv a chance to deliver the bytes to the server-side read
+    // handler and let the (fully synchronous) sync:get-status handler
+    // write its response frame onto the wire. Without this flush the
+    // shutdown path can call server.close() before the response frame
+    // is ever enqueued, and the assertion below becomes a race. A few
+    // setImmediates + a short timer is enough on every platform we care
+    // about; the assertion still proves the contract ("a request in
+    // flight at SIGINT time completes") because the response has been
+    // emitted but not yet fully drained to the client's decoder.
+    for (let i = 0; i < 5; i += 1) {
+      await new Promise((r) => setImmediate(r));
+    }
+    await new Promise((r) => setTimeout(r, 10));
+
+    const t0 = Date.now();
+    emitter.emit("SIGINT");
+
+    // (b) in-flight response still lands.
+    const response = await waiter.waitFor(requestId, 3000);
+    expect(response.ok).toBe(true);
+
+    // (a) after SIGINT, new connects are rejected within 100ms of emit.
+    // We give the listener a brief window to close, then probe. A retry
+    // loop keeps the test stable across quick machines without masking a
+    // genuine "never stops listening" regression.
+    let newConnectResult: { connected: boolean; code?: string } | null = null;
+    const windowEnd = t0 + 100;
+    while (Date.now() < windowEnd) {
+      const res = await tryConnect(pipePath);
+      if (!res.connected) {
+        newConnectResult = res;
+        break;
       }
-      await new Promise((r) => setTimeout(r, 10));
+      await new Promise((r) => setTimeout(r, 5));
+    }
+    if (newConnectResult === null) {
+      // Give it one more chance past the 100ms window so a too-tight
+      // assertion doesn't flake; still record whether the window was met.
+      newConnectResult = await tryConnect(pipePath);
+    }
+    expect(newConnectResult.connected).toBe(false);
+    // Accept any of the refusal codes that mean "listener is gone".
+    expect(["ECONNREFUSED", "ENOENT", "EPIPE"].includes(newConnectResult.code ?? "")).toBe(true);
 
-      const t0 = Date.now();
-      emitter.emit("SIGINT");
+    // (d) shutdown completes within 5s grace budget.
+    const exitCode = await installed.shutdown;
+    const elapsed = Date.now() - t0;
+    expect(exitCode).toBe(0);
+    expect(elapsed).toBeLessThan(5000);
 
-      // (b) in-flight response still lands.
-      const response = await waiter.waitFor(requestId, 3000);
-      expect(response.ok).toBe(true);
+    // (c) PID file removed after shutdown.
+    expect(fs.existsSync(pidPath)).toBe(false);
 
-      // (a) after SIGINT, new connects are rejected within 100ms of emit.
-      // We give the listener a brief window to close, then probe. A retry
-      // loop keeps the test stable across quick machines without masking a
-      // genuine "never stops listening" regression.
-      let newConnectResult: { connected: boolean; code?: string } | null = null;
-      const windowEnd = t0 + 100;
-      while (Date.now() < windowEnd) {
-        const res = await tryConnect(pipePath);
-        if (!res.connected) {
-          newConnectResult = res;
-          break;
-        }
-        await new Promise((r) => setTimeout(r, 5));
-      }
-      if (newConnectResult === null) {
-        // Give it one more chance past the 100ms window so a too-tight
-        // assertion doesn't flake; still record whether the window was met.
-        newConnectResult = await tryConnect(pipePath);
-      }
-      expect(newConnectResult.connected).toBe(false);
-      // Accept any of the refusal codes that mean "listener is gone".
-      expect(
-        ["ECONNREFUSED", "ENOENT", "EPIPE"].includes(
-          newConnectResult.code ?? "",
-        ),
-      ).toBe(true);
-
-      // (d) shutdown completes within 5s grace budget.
-      const exitCode = await installed.shutdown;
-      const elapsed = Date.now() - t0;
-      expect(exitCode).toBe(0);
-      expect(elapsed).toBeLessThan(5000);
-
-      // (c) PID file removed after shutdown.
-      expect(fs.existsSync(pidPath)).toBe(false);
-
-      sock.destroy();
-      runtime = null; // stop() already ran inside installed.shutdown.
-    },
-    10_000,
-  );
+    sock.destroy();
+    runtime = null; // stop() already ran inside installed.shutdown.
+  }, 10_000);
 });

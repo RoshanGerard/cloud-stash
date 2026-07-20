@@ -65,16 +65,13 @@ afterEach(async () => {
 async function call<N extends keyof CommandHandlers>(
   name: N,
   params: CommandParams<N>,
-): Promise<
-  | { ok: true; result: CommandResult<N> }
-  | { ok: false; error: CommandError<N> }
-> {
+): Promise<{ ok: true; result: CommandResult<N> } | { ok: false; error: CommandError<N> }> {
   const handler = handlers[name];
   if (!handler) throw new Error(`no handler for ${String(name)}`);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return (await (handler as any)(params, { connection: { id: 1, closed: false, sendEvent: () => void 0 } })) as
-    | { ok: true; result: CommandResult<N> }
-    | { ok: false; error: CommandError<N> };
+  return (await (handler as any)(params, {
+    connection: { id: 1, closed: false, sendEvent: () => void 0 },
+  })) as { ok: true; result: CommandResult<N> } | { ok: false; error: CommandError<N> };
 }
 
 describe("sync:get-status", () => {

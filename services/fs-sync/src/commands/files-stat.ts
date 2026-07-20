@@ -12,14 +12,10 @@ import { mapEngineEntryToFileEntry } from "./files-entry-mapping.js";
 import { normalizeFilesError } from "./files-error-mapping.js";
 
 export interface FilesStatDeps {
-  readonly resolveClient: (
-    datasourceId: string,
-  ) => Promise<DatasourceClient<DatasourceType>>;
+  readonly resolveClient: (datasourceId: string) => Promise<DatasourceClient<DatasourceType>>;
 }
 
-export function makeFilesStatHandler(
-  deps: FilesStatDeps,
-): CommandHandler<"files:stat"> {
+export function makeFilesStatHandler(deps: FilesStatDeps): CommandHandler<"files:stat"> {
   return async (params) => {
     let client: DatasourceClient<DatasourceType>;
     try {

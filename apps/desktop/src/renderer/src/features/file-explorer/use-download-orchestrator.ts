@@ -37,10 +37,7 @@ import type {
   FilesDownloadResponse,
 } from "@cloudstash/ipc-contracts";
 
-import {
-  getAlwaysAsk,
-  getDefaultFolder,
-} from "../settings/downloads-store";
+import { getAlwaysAsk, getDefaultFolder } from "../settings/downloads-store";
 import type {
   DownloadConflictChoice,
   DownloadConflictPolicy,
@@ -63,12 +60,8 @@ export interface SaveDialogOptions {
 }
 
 export interface DownloadOrchestratorApi {
-  readonly download: (
-    req: FilesDownloadRequest,
-  ) => Promise<FilesDownloadResponse>;
-  readonly showSaveDialog: (
-    opts: SaveDialogOptions,
-  ) => Promise<SaveDialogResult>;
+  readonly download: (req: FilesDownloadRequest) => Promise<FilesDownloadResponse>;
+  readonly showSaveDialog: (opts: SaveDialogOptions) => Promise<SaveDialogResult>;
 }
 
 export interface UseDownloadOrchestratorOptions {
@@ -129,9 +122,7 @@ export interface UseDownloadOrchestratorResult {
 
 // --- Production fallbacks --------------------------------------------
 
-function resolveApi(
-  injected: DownloadOrchestratorApi | undefined,
-): DownloadOrchestratorApi {
+function resolveApi(injected: DownloadOrchestratorApi | undefined): DownloadOrchestratorApi {
   if (injected) return injected;
   // Production fallback — pull from the preload bridge. Lookup is LAZY:
   // we resolve the bridge fields at the moment `download` /
@@ -140,26 +131,18 @@ function resolveApi(
   // call time. Throwing at the call site keeps the failure mode
   // diagnosable while making the hook safe to mount everywhere.
   function resolveBridge(): {
-    download?: (
-      req: FilesDownloadRequest,
-    ) => Promise<FilesDownloadResponse>;
-    showSaveDialog?: (
-      opts: SaveDialogOptions,
-    ) => Promise<SaveDialogResult>;
+    download?: (req: FilesDownloadRequest) => Promise<FilesDownloadResponse>;
+    showSaveDialog?: (opts: SaveDialogOptions) => Promise<SaveDialogResult>;
   } {
     const bridge = (
       globalThis as unknown as {
         window?: {
           api?: {
             files?: {
-              download?: (
-                req: FilesDownloadRequest,
-              ) => Promise<FilesDownloadResponse>;
+              download?: (req: FilesDownloadRequest) => Promise<FilesDownloadResponse>;
             };
             dialog?: {
-              showSaveDialog?: (
-                opts: SaveDialogOptions,
-              ) => Promise<SaveDialogResult>;
+              showSaveDialog?: (opts: SaveDialogOptions) => Promise<SaveDialogResult>;
             };
           };
         };
@@ -174,18 +157,14 @@ function resolveApi(
     download: async (req) => {
       const fn = resolveBridge().download;
       if (typeof fn !== "function") {
-        throw new Error(
-          "useDownloadOrchestrator: window.api.files.download is unavailable",
-        );
+        throw new Error("useDownloadOrchestrator: window.api.files.download is unavailable");
       }
       return fn(req);
     },
     showSaveDialog: async (opts) => {
       const fn = resolveBridge().showSaveDialog;
       if (typeof fn !== "function") {
-        throw new Error(
-          "useDownloadOrchestrator: window.api.dialog.showSaveDialog is unavailable",
-        );
+        throw new Error("useDownloadOrchestrator: window.api.dialog.showSaveDialog is unavailable");
       }
       return fn(opts);
     },
@@ -306,8 +285,7 @@ export function joinFolderAndName(folder: string, filename: string): string {
   // Windows-style absolute paths always contain `\`; POSIX paths never
   // do. If the folder is just a drive letter (`C:`) with no separator
   // yet, fall back to `\` to match Windows convention.
-  const useBackslash =
-    stripped.includes("\\") || /^[A-Za-z]:$/.test(stripped);
+  const useBackslash = stripped.includes("\\") || /^[A-Za-z]:$/.test(stripped);
   const sep = useBackslash ? "\\" : "/";
   return stripped + sep + safeName;
 }
@@ -356,9 +334,7 @@ export function useDownloadOrchestrator(
         typeof rawMime === "string" &&
         Object.prototype.hasOwnProperty.call(GOOGLE_APPS_EXPORT_FORMATS, rawMime)
           ? entry.name +
-            GOOGLE_APPS_EXPORT_FORMATS[
-              rawMime as keyof typeof GOOGLE_APPS_EXPORT_FORMATS
-            ].extension
+            GOOGLE_APPS_EXPORT_FORMATS[rawMime as keyof typeof GOOGLE_APPS_EXPORT_FORMATS].extension
           : entry.name;
 
       let toPath: string;
@@ -444,12 +420,7 @@ export function useDownloadOrchestrator(
         setModalOpen(true);
         return null;
       }
-      return dispatchAgainstFolder(
-        entry,
-        datasourceId,
-        modifierKeys.shiftKey,
-        folder,
-      );
+      return dispatchAgainstFolder(entry, datasourceId, modifierKeys.shiftKey, folder);
     },
     [dispatchAgainstFolder],
   );
@@ -465,12 +436,7 @@ export function useDownloadOrchestrator(
       // the next `getDefaultFolder()` call inside the orchestrator would
       // return `folder` — but we pass `folder` directly to avoid a race
       // where the localStorage notify hasn't flushed yet.
-      void dispatchAgainstFolder(
-        pending.entry,
-        pending.datasourceId,
-        pending.shiftKey,
-        folder,
-      );
+      void dispatchAgainstFolder(pending.entry, pending.datasourceId, pending.shiftKey, folder);
     },
     [dispatchAgainstFolder],
   );

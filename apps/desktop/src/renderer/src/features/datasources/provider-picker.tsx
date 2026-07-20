@@ -26,11 +26,7 @@ export function ProviderPicker({ onSelect }: ProviderPickerProps) {
   const entries = Object.values(providers) as readonly ProviderDescriptor[];
 
   return (
-    <ul
-      data-testid="provider-picker"
-      className="flex flex-col gap-2"
-      role="list"
-    >
+    <ul data-testid="provider-picker" className="flex flex-col gap-2" role="list">
       {entries.map((descriptor) => (
         <li key={descriptor.id}>
           <ProviderOption descriptor={descriptor} onSelect={onSelect} />
@@ -60,32 +56,18 @@ function ProviderOption({ descriptor, onSelect }: ProviderOptionProps) {
       )}
     >
       {iconName ? (
-        <Icon
-          name={iconName}
-          aria-hidden
-          className="text-muted-foreground size-4 shrink-0"
-        />
+        <Icon name={iconName} aria-hidden className="text-muted-foreground size-4 shrink-0" />
       ) : null}
       <span className="flex flex-col">
         <span className="font-medium">{descriptor.displayName}</span>
-        <span className="text-muted-foreground text-xs">
-          {describeCapabilities(descriptor)}
-        </span>
+        <span className="text-muted-foreground text-xs">{describeCapabilities(descriptor)}</span>
       </span>
     </button>
   );
 }
 
 function resolveIconName(icon: string): IconName | null {
-  const known: IconName[] = [
-    "sun",
-    "moon",
-    "monitor",
-    "laptop",
-    "cloud",
-    "database",
-    "hard-drive",
-  ];
+  const known: IconName[] = ["sun", "moon", "monitor", "laptop", "cloud", "database", "hard-drive"];
   return known.includes(icon as IconName) ? (icon as IconName) : null;
 }
 

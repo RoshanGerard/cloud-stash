@@ -117,9 +117,7 @@ describe("sync:authenticate-complete — implement-datasource-onboarding shape",
   });
 
   it("result is { datasourceId, summary }", () => {
-    expectTypeOf<
-      CommandResult<"sync:authenticate-complete">
-    >().toEqualTypeOf<{
+    expectTypeOf<CommandResult<"sync:authenticate-complete">>().toEqualTypeOf<{
       readonly datasourceId: string;
       readonly summary: DatasourceSummary;
     }>();
@@ -136,12 +134,8 @@ describe("sync:authenticate-complete — implement-datasource-onboarding shape",
     type Err = SyncAuthenticateCompleteError;
     type Mismatch = Extract<Err, { tag: "intent-kind-mismatch" }>;
     expectTypeOf<Mismatch>().not.toBeNever();
-    expectTypeOf<Mismatch["expected"]>().toEqualTypeOf<
-      "oauth" | "credentials-form"
-    >();
-    expectTypeOf<Mismatch["actual"]>().toEqualTypeOf<
-      "oauth" | "credentials-form"
-    >();
+    expectTypeOf<Mismatch["expected"]>().toEqualTypeOf<"oauth" | "credentials-form">();
+    expectTypeOf<Mismatch["actual"]>().toEqualTypeOf<"oauth" | "credentials-form">();
   });
 
   it("error union has engine-error with { message }", () => {
@@ -192,12 +186,7 @@ describe("sync:get-config / sync:set-config — config round-trip", () => {
     expectTypeOf<ServiceConfig>().toEqualTypeOf<{
       readonly schemaVersion: 1;
       readonly providers: Readonly<
-        Partial<
-          Record<
-            ProviderId,
-            { readonly clientId: string; readonly clientSecret: string }
-          >
-        >
+        Partial<Record<ProviderId, { readonly clientId: string; readonly clientSecret: string }>>
       >;
       readonly downloadHistory?: {
         readonly autoPrune: boolean;
@@ -207,9 +196,7 @@ describe("sync:get-config / sync:set-config — config round-trip", () => {
   });
 
   it("sync:get-config has empty params", () => {
-    expectTypeOf<CommandParams<"sync:get-config">>().toEqualTypeOf<
-      Record<string, never>
-    >();
+    expectTypeOf<CommandParams<"sync:get-config">>().toEqualTypeOf<Record<string, never>>();
   });
 
   it("sync:get-config result is { config: ServiceConfig }", () => {
@@ -304,9 +291,7 @@ describe("CommandMap exhaustive — new commands present, retired commands gone"
   });
 
   it("the retired single-shot sync:authenticate is absent from CommandMap", () => {
-    type HasOldAuthenticate = "sync:authenticate" extends keyof CommandMap
-      ? true
-      : false;
+    type HasOldAuthenticate = "sync:authenticate" extends keyof CommandMap ? true : false;
     expectTypeOf<HasOldAuthenticate>().toEqualTypeOf<false>();
   });
 

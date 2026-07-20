@@ -6,17 +6,8 @@
 //
 // See design.md D2+D3 and the base spec "IPC command surface" requirement.
 
-import type {
-  CredentialsSchema,
-  DatasourceSummary,
-  ProviderId,
-} from "../datasources.js";
-import type {
-  EntryKind,
-  FileEntry,
-  FilesErrorTag,
-  FilesRemoveEntryResult,
-} from "../files.js";
+import type { CredentialsSchema, DatasourceSummary, ProviderId } from "../datasources.js";
+import type { EntryKind, FileEntry, FilesErrorTag, FilesRemoveEntryResult } from "../files.js";
 import type { ErrorShape } from "./frames.js";
 
 export type ConflictPolicy = "overwrite" | "duplicate" | "skip";
@@ -356,12 +347,7 @@ interface AuthenticateCancelCommand {
 export type ServiceConfig = {
   readonly schemaVersion: 1;
   readonly providers: Readonly<
-    Partial<
-      Record<
-        ProviderId,
-        { readonly clientId: string; readonly clientSecret: string }
-      >
-    >
+    Partial<Record<ProviderId, { readonly clientId: string; readonly clientSecret: string }>>
   >;
   readonly downloadHistory?: {
     readonly autoPrune: boolean;
@@ -762,11 +748,7 @@ interface DownloadsListActiveCommand {
  * `in-flight` is deliberately excluded here — a live download is never
  * clearable.
  */
-export type DownloadTerminalStatus =
-  | "completed"
-  | "failed"
-  | "cancelled"
-  | "interrupted";
+export type DownloadTerminalStatus = "completed" | "failed" | "cancelled" | "interrupted";
 
 /**
  * Wire-shape alias for the `downloads:clear-history` request. The optional

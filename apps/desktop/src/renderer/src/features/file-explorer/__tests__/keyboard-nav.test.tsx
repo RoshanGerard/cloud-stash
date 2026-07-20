@@ -30,7 +30,14 @@ function makeFixture(): {
   const entries: FileEntry[] = [
     seedEntry({ id: "e1", name: "alpha.txt", path: "/alpha.txt" }),
     seedEntry({ id: "e2", name: "beta.txt", path: "/beta.txt" }),
-    seedEntry({ id: "e3", name: "docs", path: "/docs", kind: "directory", size: null, mimeFamily: "unknown" }),
+    seedEntry({
+      id: "e3",
+      name: "docs",
+      path: "/docs",
+      kind: "directory",
+      size: null,
+      mimeFamily: "unknown",
+    }),
     seedEntry({ id: "e4", name: "delta.txt", path: "/delta.txt" }),
     seedEntry({ id: "e5", name: "epsilon.txt", path: "/epsilon.txt" }),
   ];
@@ -48,13 +55,7 @@ interface HostProps {
   onDeleteRequested?: (entries: FileEntry[]) => void;
 }
 
-function Host({
-  store,
-  entries,
-  onActivate,
-  onRenameRequested,
-  onDeleteRequested,
-}: HostProps) {
+function Host({ store, entries, onActivate, onRenameRequested, onDeleteRequested }: HostProps) {
   const kbd = useKeyboardNav(store, {
     entries,
     onActivate,
@@ -63,11 +64,7 @@ function Host({
   });
   return (
     <div onKeyDown={kbd.onKeyDown} data-testid="kbd-host">
-      <DetailsView
-        store={store}
-        focusedId={kbd.focusedId}
-        setFocusedId={kbd.setFocusedId}
-      />
+      <DetailsView store={store} focusedId={kbd.focusedId} setFocusedId={kbd.setFocusedId} />
     </div>
   );
 }
@@ -184,21 +181,13 @@ describe("useKeyboardNav integration", () => {
 
     fireEvent.click(getRow("e1"));
     fireEvent.keyDown(getHost(), { key: "Enter" });
-    expect(onActivate).toHaveBeenCalledWith(
-      expect.objectContaining({ id: "e1", kind: "file" }),
-    );
+    expect(onActivate).toHaveBeenCalledWith(expect.objectContaining({ id: "e1", kind: "file" }));
   });
 
   it("F2 on a file calls onRenameRequested", () => {
     const { store, entries } = makeFixture();
     const onRenameRequested = vi.fn();
-    render(
-      <Host
-        store={store}
-        entries={entries}
-        onRenameRequested={onRenameRequested}
-      />,
-    );
+    render(<Host store={store} entries={entries} onRenameRequested={onRenameRequested} />);
 
     fireEvent.click(getRow("e1"));
     fireEvent.keyDown(getHost(), { key: "F2" });
@@ -210,13 +199,7 @@ describe("useKeyboardNav integration", () => {
   it("F2 on a directory does NOT call onRenameRequested", () => {
     const { store, entries } = makeFixture();
     const onRenameRequested = vi.fn();
-    render(
-      <Host
-        store={store}
-        entries={entries}
-        onRenameRequested={onRenameRequested}
-      />,
-    );
+    render(<Host store={store} entries={entries} onRenameRequested={onRenameRequested} />);
 
     fireEvent.click(getRow("e3")); // directory
     fireEvent.keyDown(getHost(), { key: "F2" });
@@ -226,13 +209,7 @@ describe("useKeyboardNav integration", () => {
   it("Delete with a non-empty selection calls onDeleteRequested with the selected entries", () => {
     const { store, entries } = makeFixture();
     const onDeleteRequested = vi.fn();
-    render(
-      <Host
-        store={store}
-        entries={entries}
-        onDeleteRequested={onDeleteRequested}
-      />,
-    );
+    render(<Host store={store} entries={entries} onDeleteRequested={onDeleteRequested} />);
 
     fireEvent.click(getRow("e1"));
     fireEvent.click(getRow("e2"), { ctrlKey: true });
@@ -247,13 +224,7 @@ describe("useKeyboardNav integration", () => {
   it("Delete with an empty selection is a no-op", () => {
     const { store, entries } = makeFixture();
     const onDeleteRequested = vi.fn();
-    render(
-      <Host
-        store={store}
-        entries={entries}
-        onDeleteRequested={onDeleteRequested}
-      />,
-    );
+    render(<Host store={store} entries={entries} onDeleteRequested={onDeleteRequested} />);
 
     // No click → no selection.
     expect(store.getSnapshot().selection.size).toBe(0);
@@ -313,13 +284,7 @@ describe("useKeyboardNav integration", () => {
  * when no row is focused, then hands the tabindex=0 slot off to the
  * focused row once focus is seeded.
  */
-function SwitcherHost({
-  store,
-  entries,
-}: {
-  store: ExplorerStore;
-  entries: FileEntry[];
-}) {
+function SwitcherHost({ store, entries }: { store: ExplorerStore; entries: FileEntry[] }) {
   const kbd = useKeyboardNav(store, { entries });
   return <ViewModeSwitcher store={store} keyboardNav={kbd} />;
 }

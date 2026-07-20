@@ -1,11 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useSyncExternalStore } from "react";
-import type {
-  ComponentPropsWithoutRef,
-  MouseEvent as ReactMouseEvent,
-  Ref,
-} from "react";
+import type { ComponentPropsWithoutRef, MouseEvent as ReactMouseEvent, Ref } from "react";
 
 import type { FileEntry } from "@cloudstash/ipc-contracts";
 
@@ -61,11 +57,7 @@ export function TilesView({
   onCopyPath,
   onProperties,
 }: TilesViewProps) {
-  const state = useSyncExternalStore(
-    store.subscribe,
-    store.getSnapshot,
-    store.getSnapshot,
-  );
+  const state = useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
   const { selection, onEntryClick } = useSelection(store);
 
   if (state.entries.length === 0) {
@@ -181,17 +173,10 @@ function Tile({
         focused && "ring-ring ring-2 ring-inset",
       )}
     >
-      <Icon
-        name={iconName}
-        aria-hidden
-        className="text-muted-foreground size-16 shrink-0"
-      />
+      <Icon name={iconName} aria-hidden className="text-muted-foreground size-16 shrink-0" />
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
         <div
-          className={cn(
-            "flex items-center gap-1.5",
-            pendingKind === "remove" && "line-through",
-          )}
+          className={cn("flex items-center gap-1.5", pendingKind === "remove" && "line-through")}
         >
           <EntryNameCell
             store={store}
@@ -202,10 +187,7 @@ function Tile({
           {pending ? <PendingOpGlyph /> : null}
           {errorReason !== null ? <ErrorPin reason={errorReason} /> : null}
         </div>
-        <span
-          data-testid="explorer-tile-type"
-          className="text-muted-foreground truncate text-xs"
-        >
+        <span data-testid="explorer-tile-type" className="text-muted-foreground truncate text-xs">
           {formatType(entry)}
         </span>
         <span

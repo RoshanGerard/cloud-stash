@@ -19,29 +19,11 @@
 // (see tasks.md note at line 70). We use `fireEvent` + synthetic events,
 // matching the existing toolbar / composite tests.
 
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-  type Mock,
-} from "vitest";
-import {
-  act,
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-} from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from "vitest";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import type { FileEntry } from "@cloudstash/ipc-contracts";
-import {
-  FILES_PROVIDER_SEARCH_DEFERRED_MESSAGE,
-  FilesErrorTag,
-} from "@cloudstash/ipc-contracts";
+import { FILES_PROVIDER_SEARCH_DEFERRED_MESSAGE, FilesErrorTag } from "@cloudstash/ipc-contracts";
 
 // FileExplorer now calls `useRouter()` for the back-to-dashboard button.
 // Mock `next/navigation` so the App Router invariant doesn't fire under
@@ -59,10 +41,7 @@ vi.mock("next/navigation", () => ({
 }));
 
 import { FileExplorer } from "../file-explorer.js";
-import {
-  __resetExplorerStoreCacheForTests,
-  getOrCreateExplorerStore,
-} from "../store.js";
+import { __resetExplorerStoreCacheForTests, getOrCreateExplorerStore } from "../store.js";
 import { seedEntry } from "./test-utils.js";
 
 // ---------------------------------------------------------------------------
@@ -155,12 +134,11 @@ function installApiMock(options: InstallOptions = {}): void {
 // in jsdom — the toolbar.test.tsx establishes this pattern.
 function installResizeObserverPolyfill(): void {
   if (!("ResizeObserver" in window)) {
-    (window as unknown as { ResizeObserver: unknown }).ResizeObserver =
-      class MockResizeObserver {
-        observe() {}
-        unobserve() {}
-        disconnect() {}
-      };
+    (window as unknown as { ResizeObserver: unknown }).ResizeObserver = class MockResizeObserver {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    };
   }
 }
 
@@ -185,7 +163,13 @@ describe("FileExplorer — search UI (Phase 7.1)", () => {
     // Seed a single entry so the main pane resolves before we click Search.
     installApiMock({
       listResponses: new Map([
-        ["/", { entries: [seedEntry({ id: "a", name: "alpha.png", path: "/alpha.png" })], nextCursor: null }],
+        [
+          "/",
+          {
+            entries: [seedEntry({ id: "a", name: "alpha.png", path: "/alpha.png" })],
+            nextCursor: null,
+          },
+        ],
       ]),
     });
 
@@ -201,8 +185,7 @@ describe("FileExplorer — search UI (Phase 7.1)", () => {
     const trigger = screen.getByTestId("file-explorer-search-trigger");
     expect(trigger).toBeInTheDocument();
     expect(trigger.tagName).toBe("BUTTON");
-    const triggerLabel =
-      trigger.getAttribute("aria-label") ?? trigger.textContent ?? "";
+    const triggerLabel = trigger.getAttribute("aria-label") ?? trigger.textContent ?? "";
     expect(triggerLabel.toLowerCase()).toMatch(/search/);
 
     // Activating it reveals a searchbox and focuses it.
@@ -217,7 +200,13 @@ describe("FileExplorer — search UI (Phase 7.1)", () => {
     const hit = seedEntry({ id: "h1", name: "hit.txt", path: "/folder/hit.txt" });
     installApiMock({
       listResponses: new Map([
-        ["/", { entries: [seedEntry({ id: "a", name: "alpha.png", path: "/alpha.png" })], nextCursor: null }],
+        [
+          "/",
+          {
+            entries: [seedEntry({ id: "a", name: "alpha.png", path: "/alpha.png" })],
+            nextCursor: null,
+          },
+        ],
       ]),
       searchResponse: { entries: [hit], truncated: false },
     });
@@ -249,7 +238,13 @@ describe("FileExplorer — search UI (Phase 7.1)", () => {
     const hit = seedEntry({ id: "h1", name: "hit.txt", path: "/folder/hit.txt" });
     installApiMock({
       listResponses: new Map([
-        ["/", { entries: [seedEntry({ id: "a", name: "alpha.png", path: "/alpha.png" })], nextCursor: null }],
+        [
+          "/",
+          {
+            entries: [seedEntry({ id: "a", name: "alpha.png", path: "/alpha.png" })],
+            nextCursor: null,
+          },
+        ],
       ]),
       searchResponse: { entries: [hit], truncated: false },
     });
@@ -278,7 +273,13 @@ describe("FileExplorer — search UI (Phase 7.1)", () => {
     const hit = seedEntry({ id: "h1", name: "hit.txt", path: "/folder/hit.txt" });
     installApiMock({
       listResponses: new Map([
-        ["/", { entries: [seedEntry({ id: "a", name: "alpha.png", path: "/alpha.png" })], nextCursor: null }],
+        [
+          "/",
+          {
+            entries: [seedEntry({ id: "a", name: "alpha.png", path: "/alpha.png" })],
+            nextCursor: null,
+          },
+        ],
       ]),
       searchResponse: { entries: [hit], truncated: false },
     });
@@ -303,8 +304,7 @@ describe("FileExplorer — search UI (Phase 7.1)", () => {
     const clearBtn = screen.getByTestId("file-explorer-search-clear");
     expect(clearBtn).toBeInTheDocument();
     expect(clearBtn.tagName).toBe("BUTTON");
-    const clearLabel =
-      clearBtn.getAttribute("aria-label") ?? clearBtn.textContent ?? "";
+    const clearLabel = clearBtn.getAttribute("aria-label") ?? clearBtn.textContent ?? "";
     expect(clearLabel.toLowerCase()).toMatch(/clear search/);
 
     fireEvent.click(clearBtn);
@@ -458,9 +458,7 @@ describe("FileExplorer — search UI (Phase 7.1)", () => {
       parentPath: "/folder",
     });
     installApiMock({
-      listResponses: new Map([
-        ["/", { entries: [a, b], nextCursor: null }],
-      ]),
+      listResponses: new Map([["/", { entries: [a, b], nextCursor: null }]]),
       searchResponse: { entries: [hit], truncated: false },
     });
 
@@ -560,10 +558,7 @@ describe("FileExplorer — search UI (Phase 7.1)", () => {
     installApiMock({
       listResponses: new Map([
         ["/", { entries: [rootA], nextCursor: null }],
-        [
-          "/projects/docs",
-          { entries: [sibling, target], nextCursor: null },
-        ],
+        ["/projects/docs", { entries: [sibling, target], nextCursor: null }],
       ]),
       searchResponse: { entries: [target], truncated: false },
     });
@@ -632,9 +627,7 @@ describe("FileExplorer — search UI (Phase 7.1)", () => {
       },
     });
 
-    render(
-      <FileExplorer datasourceId="ds-search-6" providerKind="google-drive" />,
-    );
+    render(<FileExplorer datasourceId="ds-search-6" providerKind="google-drive" />);
 
     // Wait for the initial load so the composite is stable.
     await waitFor(() => {
@@ -649,9 +642,7 @@ describe("FileExplorer — search UI (Phase 7.1)", () => {
     // Deferred surface mounts with the provider-named copy + the Clear
     // button remains reachable.
     await waitFor(() => {
-      expect(
-        screen.getByTestId("file-explorer-search-deferred"),
-      ).toBeInTheDocument();
+      expect(screen.getByTestId("file-explorer-search-deferred")).toBeInTheDocument();
     });
     expect(
       screen.getByText(/Native search for Google Drive is not available yet/i),

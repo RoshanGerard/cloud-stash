@@ -18,13 +18,7 @@
 // is hidden when only one conflict is left in the queue.
 //
 
-import {
-  useCallback,
-  useMemo,
-  useRef,
-  useState,
-  type JSX,
-} from "react";
+import { useCallback, useMemo, useRef, useState, type JSX } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -96,8 +90,7 @@ export function ConflictResolutionDialog({
         <DialogHeader>
           <DialogTitle>File already exists</DialogTitle>
           <DialogDescription>
-            A file at this path already exists. Choose what to do for this
-            upload.
+            A file at this path already exists. Choose what to do for this upload.
           </DialogDescription>
         </DialogHeader>
 
@@ -122,18 +115,10 @@ export function ConflictResolutionDialog({
           >
             Overwrite
           </Button>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => onChoice("duplicate")}
-          >
+          <Button type="button" variant="outline" onClick={() => onChoice("duplicate")}>
             Keep both
           </Button>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => onChoice("skip")}
-          >
+          <Button type="button" variant="outline" onClick={() => onChoice("skip")}>
             Skip this file
           </Button>
         </div>
@@ -221,19 +206,16 @@ export function useConflictResolutionDialog(): UseConflictResolutionDialogResult
     [],
   );
 
-  const onChoice = useCallback(
-    (choice: "overwrite" | "duplicate" | "skip"): void => {
-      const res = askResolveRef.current;
-      if (!res) return;
-      askResolveRef.current = null;
-      res({
-        kind: "choice",
-        choice: { kind: choice } as ConflictChoice,
-        applyToRemaining: applyRef.current,
-      });
-    },
-    [],
-  );
+  const onChoice = useCallback((choice: "overwrite" | "duplicate" | "skip"): void => {
+    const res = askResolveRef.current;
+    if (!res) return;
+    askResolveRef.current = null;
+    res({
+      kind: "choice",
+      choice: { kind: choice } as ConflictChoice,
+      applyToRemaining: applyRef.current,
+    });
+  }, []);
 
   const onCancelAll = useCallback((): void => {
     const res = askResolveRef.current;

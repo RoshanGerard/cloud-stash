@@ -16,8 +16,8 @@ cut. Pre-release entries live under `## [Unreleased]`.
   existing `pnpm dev:sync-service` alias still runs the service alone.
   See `services/fs-sync/README.md` "Dev mode" for the full picture.
 - **Cross-platform dev-orchestration smoke.** `scripts/smoke/
-  dev-orchestration.mjs` drives the full spawn → connect → `sync:get-
-  status` → SIGINT teardown loop and is the acceptance criterion for
+dev-orchestration.mjs` drives the full spawn → connect → `sync:get-
+status` → SIGINT teardown loop and is the acceptance criterion for
   the dev wiring. Verified on Windows; Mac/Linux runtime smoke is a
   documented gap.
 - **Live job state on the datasource card.** The datasource card now
@@ -35,7 +35,7 @@ cut. Pre-release entries live under `## [Unreleased]`.
   and seeds the renderer with in-flight jobs at app open.
 - **Two-step authenticate flow.** `sync:authenticate-start` +
   `sync:authenticate-complete` replace the single-shot `sync:
-  authenticate` to keep callbacks/closures on the service side and the
+authenticate` to keep callbacks/closures on the service side and the
   desktop transport JSON-clean. Service-side handlers ship as stubs in
   this change; the real implementation lands in the follow-up
   `implement-datasource-onboarding` change.

@@ -82,12 +82,8 @@ declare global {
       datasources: {
         list(): Promise<DatasourcesListResponse>;
         add(req: DatasourcesAddRequest): Promise<DatasourcesAddResponse>;
-        remove(
-          req: DatasourcesRemoveRequest,
-        ): Promise<DatasourcesRemoveResponse>;
-        action(
-          req: DatasourcesActionRequest,
-        ): Promise<DatasourcesActionResponse>;
+        remove(req: DatasourcesRemoveRequest): Promise<DatasourcesRemoveResponse>;
+        action(req: DatasourcesActionRequest): Promise<DatasourcesActionResponse>;
         pickFilesToUpload(): Promise<DatasourcesPickFilesResponse>;
       };
       files: {
@@ -107,18 +103,14 @@ declare global {
         // EXACTLY ONCE per app session on the supervisor's first connect
         // with the active-downloads snapshot from `downloads:list-active`.
         // Reconnects mid-session do NOT re-fire.
-        onActiveDownloadsHydrate(
-          callback: (jobs: readonly DownloadJob[]) => void,
-        ): () => void;
+        onActiveDownloadsHydrate(callback: (jobs: readonly DownloadJob[]) => void): () => void;
         // migrate-upload-orchestration-out-of-engine §13.3 / §15 — symmetric
         // upload-side hydrate channel. Fires once per app session on the
         // supervisor's first connect with the active-uploads snapshot
         // from `uploads:list-active`. Reconnects mid-session do NOT
         // re-fire — the live event feed (sync:event-stream filtered to
         // the four upload kinds) drives in-flight progress instead.
-        onActiveUploadsHydrate(
-          callback: (jobs: readonly UploadJob[]) => void,
-        ): () => void;
+        onActiveUploadsHydrate(callback: (jobs: readonly UploadJob[]) => void): () => void;
       };
       clipboard: {
         writeText(text: string): Promise<void>;
@@ -173,9 +165,7 @@ declare global {
         // upload job id). The bridge is a thin pass-through to the
         // service's `sync:cancel-upload` command; idempotent on
         // unknown `uploadJobId`.
-        cancelUpload(
-          req: SyncCancelUploadRequest,
-        ): Promise<SyncCancelUploadResponse>;
+        cancelUpload(req: SyncCancelUploadRequest): Promise<SyncCancelUploadResponse>;
         // add-download-history-ui §5 — Settings → Downloads config +
         // clear-history. get/set-config are the FIRST renderer consumer of the
         // service config (design.md Decision 8); writes route through the
@@ -185,9 +175,7 @@ declare global {
         clearDownloadHistory(
           req: SyncClearDownloadHistoryRequest,
         ): Promise<SyncClearDownloadHistoryResponse>;
-        deletePartial(
-          req: SyncDeletePartialRequest,
-        ): Promise<SyncDeletePartialResponse>;
+        deletePartial(req: SyncDeletePartialRequest): Promise<SyncDeletePartialResponse>;
         // add-leftover-download-cleanup §2.4 — Settings → "Review leftover
         // files" reads this on open (count-bearing button + dialog list).
         // Void request; resolves the flat `{ entries }` snapshot.

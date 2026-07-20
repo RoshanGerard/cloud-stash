@@ -38,10 +38,7 @@ const HANDLER_BY_CHANNEL: Record<string, string> = {
 
 describe("files IPC four-layer consistency", () => {
   it("contract exposes exactly the expected channel set (no drift)", () => {
-    const contractPath = path.join(
-      repoRoot,
-      "packages/ipc-contracts/src/files.ts",
-    );
+    const contractPath = path.join(repoRoot, "packages/ipc-contracts/src/files.ts");
     const contents = readFileSync(contractPath, "utf8");
     for (const channel of EXPECTED_CHANNELS) {
       expect(
@@ -52,16 +49,10 @@ describe("files IPC four-layer consistency", () => {
   });
 
   it("every channel has a handler file on disk", () => {
-    const handlersDir = path.join(
-      repoRoot,
-      "apps/desktop/src/main/ipc/files",
-    );
+    const handlersDir = path.join(repoRoot, "apps/desktop/src/main/ipc/files");
     for (const [channel, handlerFile] of Object.entries(HANDLER_BY_CHANNEL)) {
       const fullPath = path.join(handlersDir, handlerFile);
-      expect(
-        existsSync(fullPath),
-        `channel ${channel} expects handler at ${fullPath}`,
-      ).toBe(true);
+      expect(existsSync(fullPath), `channel ${channel} expects handler at ${fullPath}`).toBe(true);
     }
   });
 
@@ -71,8 +62,7 @@ describe("files IPC four-layer consistency", () => {
     for (const channel of EXPECTED_CHANNELS) {
       const channelConstKey = channel.replace(/^files:/, "");
       expect(
-        contents.includes(`FILES_CHANNELS.${channelConstKey}`) ||
-          contents.includes(`"${channel}"`),
+        contents.includes(`FILES_CHANNELS.${channelConstKey}`) || contents.includes(`"${channel}"`),
         `ipc/index.ts must register handler for ${channel} ` +
           `(via FILES_CHANNELS.${channelConstKey} or literal)`,
       ).toBe(true);
@@ -80,16 +70,12 @@ describe("files IPC four-layer consistency", () => {
   });
 
   it("preload/index.ts exposes every channel via contextBridge", () => {
-    const preloadPath = path.join(
-      repoRoot,
-      "apps/desktop/src/preload/index.ts",
-    );
+    const preloadPath = path.join(repoRoot, "apps/desktop/src/preload/index.ts");
     const contents = readFileSync(preloadPath, "utf8");
     for (const channel of EXPECTED_CHANNELS) {
       const channelConstKey = channel.replace(/^files:/, "");
       expect(
-        contents.includes(`FILES_CHANNELS.${channelConstKey}`) ||
-          contents.includes(`"${channel}"`),
+        contents.includes(`FILES_CHANNELS.${channelConstKey}`) || contents.includes(`"${channel}"`),
         `preload/index.ts must reference channel ${channel} ` +
           `(via FILES_CHANNELS.${channelConstKey} or literal)`,
       ).toBe(true);

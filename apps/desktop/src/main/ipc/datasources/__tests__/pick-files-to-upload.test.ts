@@ -23,9 +23,7 @@ describe("handlePickFilesToUpload — native picker proxy", () => {
       filePaths: [],
     });
 
-    const result: DatasourcesPickFilesResponse = await handlePickFilesToUpload(
-      { showOpenDialog },
-    );
+    const result: DatasourcesPickFilesResponse = await handlePickFilesToUpload({ showOpenDialog });
 
     expect(showOpenDialog).toHaveBeenCalledTimes(1);
     expect(result).toEqual({ canceled: true, filePaths: [] });
@@ -64,8 +62,6 @@ describe("handlePickFilesToUpload — native picker proxy", () => {
     const boom = new Error("picker crashed");
     const showOpenDialog = vi.fn().mockRejectedValue(boom);
 
-    await expect(
-      handlePickFilesToUpload({ showOpenDialog }),
-    ).rejects.toBe(boom);
+    await expect(handlePickFilesToUpload({ showOpenDialog })).rejects.toBe(boom);
   });
 });

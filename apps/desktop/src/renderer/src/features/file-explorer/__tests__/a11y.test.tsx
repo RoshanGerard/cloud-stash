@@ -16,23 +16,8 @@
 // component — this suite characterises a11y state that Phases 1–8 must
 // have already put in place.
 
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-  type Mock,
-} from "vitest";
-import {
-  act,
-  cleanup,
-  render,
-  screen,
-  waitFor,
-  within,
-} from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from "vitest";
+import { act, cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import type { FileEntry } from "@cloudstash/ipc-contracts";
 
@@ -50,10 +35,7 @@ vi.mock("next/navigation", () => ({
 }));
 
 import { FileExplorer } from "../file-explorer.js";
-import {
-  __resetExplorerStoreCacheForTests,
-  getOrCreateExplorerStore,
-} from "../store.js";
+import { __resetExplorerStoreCacheForTests, getOrCreateExplorerStore } from "../store.js";
 import { seedEntry } from "./test-utils.js";
 
 // --- API mock helper (mirrors file-explorer-composite.test.tsx) ----------
@@ -61,10 +43,7 @@ import { seedEntry } from "./test-utils.js";
 let filesListMock: Mock;
 
 function installApiMock(
-  responses: Map<
-    string,
-    { entries: FileEntry[]; truncated?: boolean; nextCursor?: string | null }
-  >,
+  responses: Map<string, { entries: FileEntry[]; truncated?: boolean; nextCursor?: string | null }>,
 ): void {
   filesListMock = vi.fn();
   filesListMock.mockImplementation(async (req: { path: string }) => {
@@ -116,9 +95,7 @@ const ROOT_ENTRIES: FileEntry[] = [
 const DATASOURCE_ID = "ds-a11y-test";
 
 async function mountPopulated(): Promise<void> {
-  installApiMock(
-    new Map([["/", { entries: ROOT_ENTRIES, nextCursor: null }]]),
-  );
+  installApiMock(new Map([["/", { entries: ROOT_ENTRIES, nextCursor: null }]]));
   render(<FileExplorer datasourceId={DATASOURCE_ID} />);
   await waitFor(() => {
     const rows = document.querySelectorAll('[data-testid="explorer-row"]');
@@ -137,12 +114,11 @@ beforeEach(() => {
   __resetExplorerStoreCacheForTests();
   // Radix primitives rely on ResizeObserver at mount.
   if (!("ResizeObserver" in window)) {
-    (window as unknown as { ResizeObserver: unknown }).ResizeObserver =
-      class MockResizeObserver {
-        observe() {}
-        unobserve() {}
-        disconnect() {}
-      };
+    (window as unknown as { ResizeObserver: unknown }).ResizeObserver = class MockResizeObserver {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    };
   }
 });
 
@@ -235,9 +211,9 @@ describe("Breadcrumb a11y (task 9.2)", () => {
     render(<FileExplorer datasourceId={DATASOURCE_ID} />);
     const store = getOrCreateExplorerStore(DATASOURCE_ID);
     await waitFor(() => {
-      expect(
-        document.querySelectorAll('[data-testid="explorer-row"]').length,
-      ).toBe(ROOT_ENTRIES.length);
+      expect(document.querySelectorAll('[data-testid="explorer-row"]').length).toBe(
+        ROOT_ENTRIES.length,
+      );
     });
     act(() => {
       store.navigate("/charlie");
@@ -278,9 +254,9 @@ describe("Breadcrumb a11y (task 9.2)", () => {
     render(<FileExplorer datasourceId={DATASOURCE_ID} />);
     const store = getOrCreateExplorerStore(DATASOURCE_ID);
     await waitFor(() => {
-      expect(
-        document.querySelectorAll('[data-testid="explorer-row"]').length,
-      ).toBe(ROOT_ENTRIES.length);
+      expect(document.querySelectorAll('[data-testid="explorer-row"]').length).toBe(
+        ROOT_ENTRIES.length,
+      );
     });
     act(() => {
       store.navigate("/charlie");
@@ -312,9 +288,7 @@ describe("Main pane a11y — Details view (task 9.2)", () => {
 
   it("every data row carries data-entry-id linking it back to its entry", async () => {
     await mountPopulated();
-    const rows = document.querySelectorAll<HTMLElement>(
-      '[data-testid="explorer-row"]',
-    );
+    const rows = document.querySelectorAll<HTMLElement>('[data-testid="explorer-row"]');
     expect(rows.length).toBe(ROOT_ENTRIES.length);
     for (const row of rows) {
       const id = row.getAttribute("data-entry-id");
@@ -325,9 +299,7 @@ describe("Main pane a11y — Details view (task 9.2)", () => {
 
   it("rows implement the roving-tabindex pattern (exactly one tabIndex=0, rest -1)", async () => {
     await mountPopulated();
-    const rows = Array.from(
-      document.querySelectorAll<HTMLElement>('[data-testid="explorer-row"]'),
-    );
+    const rows = Array.from(document.querySelectorAll<HTMLElement>('[data-testid="explorer-row"]'));
     const tabIndexes = rows.map((r) => r.getAttribute("tabindex"));
     // Every row must declare an explicit tabindex (roving requires -1 on
     // non-focused rows).
@@ -344,9 +316,7 @@ describe("Main pane a11y — Details view (task 9.2)", () => {
 
   it("row icons are marked aria-hidden so the row's name is the sole accessible name source", async () => {
     await mountPopulated();
-    const rows = document.querySelectorAll<HTMLElement>(
-      '[data-testid="explorer-row"]',
-    );
+    const rows = document.querySelectorAll<HTMLElement>('[data-testid="explorer-row"]');
     for (const row of rows) {
       // Every decorative svg inside a row is aria-hidden (set by the Icon
       // adapter). Guard against a regression where a future icon forgets
@@ -383,9 +353,7 @@ describe("Details pane a11y (task 9.2)", () => {
     // `aria-label` on <aside> — use a direct DOM probe so we don't depend
     // on the landmark role (aside + aria-label is a WCAG-compliant name).
     await waitFor(() => {
-      const pane = document.querySelector<HTMLElement>(
-        'aside[aria-label="Details"]',
-      );
+      const pane = document.querySelector<HTMLElement>('aside[aria-label="Details"]');
       expect(pane).not.toBeNull();
       expect(pane!.hasAttribute("hidden")).toBe(false);
     });
@@ -408,9 +376,7 @@ describe("Details pane a11y (task 9.2)", () => {
   it("closed pane is removed from the accessibility tree (hidden + aria-hidden)", async () => {
     await mountPopulated();
     // Default state: closed.
-    const pane = document.querySelector<HTMLElement>(
-      'aside[aria-label="Details"]',
-    );
+    const pane = document.querySelector<HTMLElement>('aside[aria-label="Details"]');
     expect(pane).not.toBeNull();
     expect(pane!.hasAttribute("hidden")).toBe(true);
     expect(pane!.getAttribute("aria-hidden")).toBe("true");
@@ -454,13 +420,7 @@ describe("Keyboard reachability (task 9.2)", () => {
     const forwardBtn = screen.getByRole("button", { name: /go forward/i });
     const upBtn = screen.getByRole("button", { name: /go up one level/i });
 
-    const all = [
-      ...toolbarButtons,
-      ...breadcrumbButtons,
-      backBtn,
-      forwardBtn,
-      upBtn,
-    ];
+    const all = [...toolbarButtons, ...breadcrumbButtons, backBtn, forwardBtn, upBtn];
     for (const el of all) {
       expect(el).toBeInstanceOf(HTMLButtonElement);
       // Default <button> is tab-reachable. An explicit tabindex must be

@@ -24,10 +24,7 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import {
-  DatasourceError,
-  DatasourceErrorTag,
-} from "@cloudstash/ipc-contracts";
+import { DatasourceError, DatasourceErrorTag } from "@cloudstash/ipc-contracts";
 import type {
   AccountIdentity,
   AuthResult,
@@ -45,10 +42,7 @@ import type {
 import { createEventBus, type EventBus } from "../../events/event-bus.js";
 import type { EventName, EventPayloadMap } from "@cloudstash/ipc-contracts/sync-service";
 
-import {
-  createOAuthLoopbackBroker,
-  type OAuthLoopbackBroker,
-} from "../loopback-broker.js";
+import { createOAuthLoopbackBroker, type OAuthLoopbackBroker } from "../loopback-broker.js";
 
 // ---------------------------------------------------------------------------
 // Test helpers
@@ -66,9 +60,10 @@ function makeBusSpy(bus: EventBus): {
 
 /** Credential-store stub whose `get(datasourceId)` resolves to a caller-
  *  supplied row (or null). Used to drive the broker's anchor read. */
-function makeCredentialStore(
-  row: StoredCredentials | null,
-): { store: CredentialStore; getSpy: ReturnType<typeof vi.fn> } {
+function makeCredentialStore(row: StoredCredentials | null): {
+  store: CredentialStore;
+  getSpy: ReturnType<typeof vi.fn>;
+} {
   const getSpy = vi.fn(async () => row);
   const store = {
     get: getSpy,
@@ -95,10 +90,7 @@ function rowWithAccount(account: unknown): StoredCredentials {
 /** Factory whose `createForAuth` records the 5th positional arg
  *  (`expectedAccount`) and whose `completeWith` either resolves with
  *  `authResult` or rejects with `rejectWith`. */
-function makeFakeFactory(opts: {
-  authResult?: AuthResult;
-  rejectWith?: unknown;
-}): {
+function makeFakeFactory(opts: { authResult?: AuthResult; rejectWith?: unknown }): {
   factory: ClientFactory;
   getExpectedAccountArg: () => unknown;
   createForAuthSpy: ReturnType<typeof vi.fn>;
@@ -111,8 +103,7 @@ function makeFakeFactory(opts: {
       _datasourceId?: string,
       _expectedAccount?: AccountIdentity,
     ) => {
-      const redirectUri =
-        oauthAppConfig?.redirectUri ?? "http://127.0.0.1:0/callback";
+      const redirectUri = oauthAppConfig?.redirectUri ?? "http://127.0.0.1:0/callback";
       const completeWith = vi.fn(async (_code: string): Promise<AuthResult> => {
         if (opts.rejectWith !== undefined) {
           throw opts.rejectWith;
@@ -122,9 +113,10 @@ function makeFakeFactory(opts: {
       const intent: OAuthIntent = {
         kind: "oauth",
         authorizeUrl:
-          "https://accounts.google.com/o/oauth2/v2/auth"
-          + "?client_id=test-id"
-          + "&redirect_uri=" + encodeURIComponent(redirectUri),
+          "https://accounts.google.com/o/oauth2/v2/auth" +
+          "?client_id=test-id" +
+          "&redirect_uri=" +
+          encodeURIComponent(redirectUri),
         completeWith,
       };
       return {
@@ -164,16 +156,15 @@ function makeGetOAuthAppConfig(): (
 
 /** Drive a real /callback hit with the broker's own state so the deferred
  *  `completeWith` runs. */
-async function hitCallback(
-  broker: OAuthLoopbackBroker,
-  correlationId: string,
-): Promise<void> {
+async function hitCallback(broker: OAuthLoopbackBroker, correlationId: string): Promise<void> {
   const session = broker._getPendingSessionForTests(correlationId);
   if (!session) throw new Error("no pending session for " + correlationId);
   const { port, state } = session;
   const url =
-    "http://127.0.0.1:" + String(port) +
-    "/callback?code=valid-code&state=" + encodeURIComponent(state);
+    "http://127.0.0.1:" +
+    String(port) +
+    "/callback?code=valid-code&state=" +
+    encodeURIComponent(state);
   await fetch(url, { signal: AbortSignal.timeout(3000) });
 }
 
@@ -283,9 +274,7 @@ describe("OAuthLoopbackBroker — reconnect account anchor (§7)", () => {
 
   it("passes no expectedAccount when meta.account.sub is empty/missing (sub is the sole comparison key)", async () => {
     // No usable comparison key (email alone cannot anchor) → capture only.
-    const { store } = makeCredentialStore(
-      rowWithAccount({ sub: "", email: "owner@example.com" }),
-    );
+    const { store } = makeCredentialStore(rowWithAccount({ sub: "", email: "owner@example.com" }));
     const engineContext: EngineContext = { credentialStore: store };
     const { factory, getExpectedAccountArg } = makeFakeFactory({});
 
@@ -312,9 +301,7 @@ describe("OAuthLoopbackBroker — reconnect account anchor (§7)", () => {
     // reconnect. Gating on a non-empty email would silently disable the hard
     // block for the exact in-scope provider (OneDrive/AAD) whose id_token can
     // omit the `email` claim.
-    const { store } = makeCredentialStore(
-      rowWithAccount({ sub: "bound-sub-no-email" }),
-    );
+    const { store } = makeCredentialStore(rowWithAccount({ sub: "bound-sub-no-email" }));
     const engineContext: EngineContext = { credentialStore: store };
     const { factory, getExpectedAccountArg } = makeFakeFactory({});
 

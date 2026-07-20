@@ -11,9 +11,7 @@ describe("EmptyState", () => {
   it("renders neutral headline, body, and no action button", () => {
     render(<EmptyState />);
     expect(screen.getByText("This folder is empty")).toBeInTheDocument();
-    expect(
-      screen.getByText(/Drop files on your datasource/),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/Drop files on your datasource/)).toBeInTheDocument();
     expect(screen.queryByRole("button")).toBeNull();
   });
 

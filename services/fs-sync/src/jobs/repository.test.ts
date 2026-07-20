@@ -143,9 +143,7 @@ describe("JobRepository.transition", () => {
       sourcePath: "/1",
       conflictPolicy: "overwrite",
     });
-    expect(() => repo.transition("j-2", "completed")).toThrow(
-      IllegalJobTransitionError,
-    );
+    expect(() => repo.transition("j-2", "completed")).toThrow(IllegalJobTransitionError);
     const row = repo.getById("j-2");
     expect(row?.status).toBe("queued");
   });
@@ -183,8 +181,6 @@ describe("JobRepository.transition", () => {
     });
     repo.transition("j-4", "running");
     repo.transition("j-4", "completed");
-    expect(() => repo.transition("j-4", "queued")).toThrow(
-      IllegalJobTransitionError,
-    );
+    expect(() => repo.transition("j-4", "queued")).toThrow(IllegalJobTransitionError);
   });
 });

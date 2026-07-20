@@ -58,21 +58,18 @@ describe("walkLocalTree", () => {
     expect(rels).toEqual(["real.txt"]);
   });
 
-  it.skipIf(process.platform === "win32")(
-    "skips a symlink that escapes the root",
-    async () => {
-      const outside = path.join(
-        os.tmpdir(),
-        `cloudstash-sync-outside-${Date.now()}-${Math.random().toString(36).slice(2)}`,
-      );
-      cleanup.push(outside);
-      await fsp.mkdir(outside, { recursive: true });
-      await fsp.writeFile(path.join(outside, "secret.txt"), "leak");
-      await fsp.symlink(outside, path.join(root, "link-out"));
-      await seed("inside.txt", "ok");
-      const files = await walkLocalTree(root);
-      const rels = files.map((f) => f.relPath);
-      expect(rels).toEqual(["inside.txt"]);
-    },
-  );
+  it.skipIf(process.platform === "win32")("skips a symlink that escapes the root", async () => {
+    const outside = path.join(
+      os.tmpdir(),
+      `cloudstash-sync-outside-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    );
+    cleanup.push(outside);
+    await fsp.mkdir(outside, { recursive: true });
+    await fsp.writeFile(path.join(outside, "secret.txt"), "leak");
+    await fsp.symlink(outside, path.join(root, "link-out"));
+    await seed("inside.txt", "ok");
+    const files = await walkLocalTree(root);
+    const rels = files.map((f) => f.relPath);
+    expect(rels).toEqual(["inside.txt"]);
+  });
 });

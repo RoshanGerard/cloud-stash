@@ -47,11 +47,7 @@ export function CustomForm({
       let parsed: Record<string, unknown>;
       try {
         const candidate = JSON.parse(json) as unknown;
-        if (
-          !candidate ||
-          typeof candidate !== "object" ||
-          Array.isArray(candidate)
-        ) {
+        if (!candidate || typeof candidate !== "object" || Array.isArray(candidate)) {
           setParseError("Credentials must be a JSON object.");
           return;
         }
@@ -79,9 +75,7 @@ export function CustomForm({
           return;
         }
         if (startRes.result.kind !== "credentials-form") {
-          setSubmitError(
-            "Provider configuration mismatch — expected credentials form.",
-          );
+          setSubmitError("Provider configuration mismatch — expected credentials form.");
           return;
         }
         const completeRes = await window.api.sync.authenticateComplete({
@@ -115,9 +109,7 @@ export function CustomForm({
       data-testid="credential-form-custom"
     >
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="custom-credentials-json">
-          Custom credentials (JSON)
-        </Label>
+        <Label htmlFor="custom-credentials-json">Custom credentials (JSON)</Label>
         <textarea
           id="custom-credentials-json"
           name="customCredentials"
@@ -146,13 +138,7 @@ export function CustomForm({
       ) : null}
 
       <div className="mt-2 flex items-center justify-between gap-2">
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={onBack}
-          disabled={submitting}
-        >
+        <Button type="button" variant="outline" size="sm" onClick={onBack} disabled={submitting}>
           Back
         </Button>
         <Button type="submit" size="sm" disabled={submitting}>

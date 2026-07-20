@@ -62,9 +62,7 @@ export function AddDatasourceDialog({
   returnFocusTo,
 }: AddDatasourceDialogProps) {
   const [step, setStep] = useState<Step>("pick");
-  const [selectedProviderId, setSelectedProviderId] = useState<string | null>(
-    null,
-  );
+  const [selectedProviderId, setSelectedProviderId] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const actions = useDatasourceActions();
 
@@ -123,9 +121,7 @@ export function AddDatasourceDialog({
       // authenticate flow per design Decision 3. Falling through here
       // means a form forgot to send the sentinel; surface inline so the
       // user has feedback rather than silently swallowing the submit.
-      setSubmitError(
-        "Form did not signal completion. Please try again or contact support.",
-      );
+      setSubmitError("Form did not signal completion. Please try again or contact support.");
     },
     [actions, selectedProviderId, handleOpenChange],
   );
@@ -178,12 +174,7 @@ interface CredentialStepProps {
   onBack: () => void;
 }
 
-function CredentialStep({
-  descriptor,
-  submitError,
-  onSubmit,
-  onBack,
-}: CredentialStepProps) {
+function CredentialStep({ descriptor, submitError, onSubmit, onBack }: CredentialStepProps) {
   // Dispatch EXCLUSIVELY on `credentialsSchema`. Adding a new schema value to
   // `CredentialsSchema` will surface here as a TypeScript exhaustiveness
   // error — that's the intended "one edit point" for the extensibility story.
@@ -208,9 +199,7 @@ function CredentialStep({
 
 type FormComponent = typeof OAuthForm | typeof AwsAccessKeyForm | typeof CustomForm;
 
-function selectFormComponent(
-  schema: ProviderDescriptor["credentialsSchema"],
-): FormComponent {
+function selectFormComponent(schema: ProviderDescriptor["credentialsSchema"]): FormComponent {
   switch (schema) {
     case "oauth":
       return OAuthForm;
@@ -229,9 +218,7 @@ function selectFormComponent(
   }
 }
 
-function resolveDescriptor(
-  providerId: string | null,
-): ProviderDescriptor | null {
+function resolveDescriptor(providerId: string | null): ProviderDescriptor | null {
   if (providerId === null) return null;
   const registry = providers as Record<string, ProviderDescriptor>;
   return registry[providerId] ?? null;

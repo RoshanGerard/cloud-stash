@@ -30,9 +30,7 @@ export interface ResolveServiceNodeBinaryOptions {
  * platform/arch in packaged builds. Throws in dev, on unsupported
  * arch, or on unsupported platform.
  */
-export function resolveServiceNodeBinary(
-  opts: ResolveServiceNodeBinaryOptions,
-): string {
+export function resolveServiceNodeBinary(opts: ResolveServiceNodeBinaryOptions): string {
   if (!opts.isPackaged) {
     throw new Error(
       "resolveServiceNodeBinary is production-only; in dev the service is started by `pnpm dev`.",

@@ -13,17 +13,12 @@ import * as path from "node:path";
 
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import {
-  ServiceConfigMissingError,
-  ServiceConfigStore,
-} from "../service-config-store.js";
+import { ServiceConfigMissingError, ServiceConfigStore } from "../service-config-store.js";
 
 let cleanupDirs: string[] = [];
 
 async function scratchDir(): Promise<string> {
-  const dir = await fsp.mkdtemp(
-    path.join(os.tmpdir(), "cloudstash-svc-config-"),
-  );
+  const dir = await fsp.mkdtemp(path.join(os.tmpdir(), "cloudstash-svc-config-"));
   cleanupDirs.push(dir);
   return dir;
 }
@@ -92,9 +87,9 @@ describe("ServiceConfigStore — getOAuthAppConfig", () => {
     await fsp.writeFile(file, "{not json", "utf8");
     const store = new ServiceConfigStore({ filePath: file });
 
-    await expect(
-      store.getOAuthAppConfig("google-drive", SAMPLE_REDIRECT),
-    ).rejects.toBeInstanceOf(ServiceConfigMissingError);
+    await expect(store.getOAuthAppConfig("google-drive", SAMPLE_REDIRECT)).rejects.toBeInstanceOf(
+      ServiceConfigMissingError,
+    );
   });
 
   it("throws ServiceConfigMissingError when the provider entry is absent", async () => {
@@ -139,9 +134,9 @@ describe("ServiceConfigStore — getOAuthAppConfig", () => {
     );
     const store = new ServiceConfigStore({ filePath: file });
 
-    await expect(
-      store.getOAuthAppConfig("google-drive", SAMPLE_REDIRECT),
-    ).rejects.toBeInstanceOf(ServiceConfigMissingError);
+    await expect(store.getOAuthAppConfig("google-drive", SAMPLE_REDIRECT)).rejects.toBeInstanceOf(
+      ServiceConfigMissingError,
+    );
   });
 
   it("throws ServiceConfigMissingError when clientSecret is empty", async () => {
@@ -159,9 +154,9 @@ describe("ServiceConfigStore — getOAuthAppConfig", () => {
     );
     const store = new ServiceConfigStore({ filePath: file });
 
-    await expect(
-      store.getOAuthAppConfig("google-drive", SAMPLE_REDIRECT),
-    ).rejects.toBeInstanceOf(ServiceConfigMissingError);
+    await expect(store.getOAuthAppConfig("google-drive", SAMPLE_REDIRECT)).rejects.toBeInstanceOf(
+      ServiceConfigMissingError,
+    );
   });
 });
 
@@ -203,10 +198,7 @@ describe("ServiceConfigStore — getRaw / setRaw", () => {
         "google-drive": { clientId: "x", clientSecret: "y" },
       },
     });
-    const cfg = await store.getOAuthAppConfig(
-      "google-drive",
-      SAMPLE_REDIRECT,
-    );
+    const cfg = await store.getOAuthAppConfig("google-drive", SAMPLE_REDIRECT);
     expect(cfg).toEqual({
       clientId: "x",
       clientSecret: "y",
@@ -215,22 +207,19 @@ describe("ServiceConfigStore — getRaw / setRaw", () => {
   });
 });
 
-describe.skipIf(process.platform === "win32")(
-  "ServiceConfigStore — Unix file mode",
-  () => {
-    it("setRaw writes the file with mode 0o600", async () => {
-      const dir = await scratchDir();
-      const file = path.join(dir, "config.json");
-      const store = new ServiceConfigStore({ filePath: file });
+describe.skipIf(process.platform === "win32")("ServiceConfigStore — Unix file mode", () => {
+  it("setRaw writes the file with mode 0o600", async () => {
+    const dir = await scratchDir();
+    const file = path.join(dir, "config.json");
+    const store = new ServiceConfigStore({ filePath: file });
 
-      await store.setRaw({
-        schemaVersion: 1,
-        providers: {
-          "google-drive": { clientId: "x", clientSecret: "y" },
-        },
-      });
-      const stat = await fsp.stat(file);
-      expect(stat.mode & 0o777).toBe(0o600);
+    await store.setRaw({
+      schemaVersion: 1,
+      providers: {
+        "google-drive": { clientId: "x", clientSecret: "y" },
+      },
     });
-  },
-);
+    const stat = await fsp.stat(file);
+    expect(stat.mode & 0o777).toBe(0o600);
+  });
+});

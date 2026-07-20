@@ -8,24 +8,8 @@
 // `sync:delete-credentials` per §20 — that pairing is asserted at the
 // main-process layer in remove.test.ts, not here).
 
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-  type Mock,
-} from "vitest";
-import {
-  act,
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-  within,
-} from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from "vitest";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import type { DatasourceSummary } from "@cloudstash/ipc-contracts";
 import type { SyncEvent } from "@cloudstash/ipc-contracts/sync-service-desktop";
@@ -88,16 +72,12 @@ function installApiMock() {
       }),
       authenticateStart: authenticateStartMock,
       authenticateComplete: vi.fn(),
-      authenticateCancel: vi
-        .fn()
-        .mockResolvedValue({ ok: true, result: { cancelled: true } }),
+      authenticateCancel: vi.fn().mockResolvedValue({ ok: true, result: { cancelled: true } }),
     },
   };
 }
 
-function buildErrorSummary(
-  overrides: Partial<DatasourceSummary> = {},
-): DatasourceSummary {
+function buildErrorSummary(overrides: Partial<DatasourceSummary> = {}): DatasourceSummary {
   return {
     id: "ds-gd-err",
     displayName: "Personal Drive",
@@ -122,12 +102,11 @@ function renderCard(summary: DatasourceSummary): ReturnType<typeof render> {
 
 beforeEach(() => {
   if (!("ResizeObserver" in window)) {
-    (window as unknown as { ResizeObserver: unknown }).ResizeObserver =
-      class MockResizeObserver {
-        observe() {}
-        unobserve() {}
-        disconnect() {}
-      };
+    (window as unknown as { ResizeObserver: unknown }).ResizeObserver = class MockResizeObserver {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    };
   }
   installApiMock();
 });
@@ -142,12 +121,8 @@ describe("InvalidDatasourceBanner — renders iff errorKind is invalid-datasourc
     renderCard(buildErrorSummary({ errorKind: "invalid-datasource" }));
     const banner = screen.getByTestId("invalid-datasource-banner");
     expect(banner).toBeInTheDocument();
-    expect(
-      within(banner).getByRole("button", { name: /reconnect/i }),
-    ).toBeInTheDocument();
-    expect(
-      within(banner).getByRole("button", { name: /^remove$/i }),
-    ).toBeInTheDocument();
+    expect(within(banner).getByRole("button", { name: /reconnect/i })).toBeInTheDocument();
+    expect(within(banner).getByRole("button", { name: /^remove$/i })).toBeInTheDocument();
   });
 
   it("hides the bare error-reason paragraph when banner is shown", () => {
@@ -225,9 +200,7 @@ describe("InvalidDatasourceBanner — renders iff errorKind is invalid-datasourc
 
     const banner = screen.getByTestId("invalid-datasource-banner");
     fireEvent.click(within(banner).getByRole("button", { name: /reconnect/i }));
-    await waitFor(() =>
-      expect(authenticateStartMock).toHaveBeenCalledTimes(1),
-    );
+    await waitFor(() => expect(authenticateStartMock).toHaveBeenCalledTimes(1));
 
     act(() => {
       emitSyncEvent({
@@ -241,9 +214,7 @@ describe("InvalidDatasourceBanner — renders iff errorKind is invalid-datasourc
     });
 
     await waitFor(() => {
-      expect(
-        screen.queryByTestId("invalid-datasource-banner"),
-      ).not.toBeInTheDocument();
+      expect(screen.queryByTestId("invalid-datasource-banner")).not.toBeInTheDocument();
     });
   });
 });
@@ -257,18 +228,14 @@ describe("InvalidDatasourceBanner — does NOT render for other errorKinds", () 
       }),
     );
     expect(screen.getByTestId("error-reason-text")).toBeInTheDocument();
-    expect(
-      screen.queryByTestId("invalid-datasource-banner"),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByTestId("invalid-datasource-banner")).not.toBeInTheDocument();
     expect(screen.queryByTestId("auth-error-banner")).not.toBeInTheDocument();
   });
 
   it("auth-revoked → <AuthErrorBanner> renders; invalid-datasource banner absent", () => {
     renderCard(buildErrorSummary({ errorKind: "auth-revoked" }));
     expect(screen.getByTestId("auth-error-banner")).toBeInTheDocument();
-    expect(
-      screen.queryByTestId("invalid-datasource-banner"),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByTestId("invalid-datasource-banner")).not.toBeInTheDocument();
   });
 });
 

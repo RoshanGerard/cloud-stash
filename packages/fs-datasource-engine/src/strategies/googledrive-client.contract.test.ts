@@ -24,23 +24,19 @@ import {
   runStrategyContractSuite,
   type StrategyContractFixture,
 } from "../__tests__/strategy-contract.js";
-import {
-  createGoogleDriveClient,
-  type GoogleDriveClientLike,
-} from "./googledrive-client.js";
+import { createGoogleDriveClient, type GoogleDriveClientLike } from "./googledrive-client.js";
 
 // ---------------------------------------------------------------------------
 // Per-test mutable state — the fixture's `resetMock()` rebuilds these.
 // ---------------------------------------------------------------------------
 
-type ListHandler = (
-  params: Record<string, unknown>,
-) => { files?: Array<Record<string, unknown>>; nextPageToken?: string };
+type ListHandler = (params: Record<string, unknown>) => {
+  files?: Array<Record<string, unknown>>;
+  nextPageToken?: string;
+};
 type FileHandler = (params: Record<string, unknown>) => Record<string, unknown>;
 type DeleteHandler = (params: Record<string, unknown>) => unknown;
-type AboutHandler = (
-  params: Record<string, unknown>,
-) => Record<string, unknown>;
+type AboutHandler = (params: Record<string, unknown>) => Record<string, unknown>;
 
 interface ListResponder {
   qMatch: string;
@@ -102,9 +98,7 @@ function buildDrive(): GoogleDriveClientLike {
                 error: {
                   code: 500,
                   message: `no-list-responder q=${q}`,
-                  errors: [
-                    { reason: "internalError", message: "no responder" },
-                  ],
+                  errors: [{ reason: "internalError", message: "no responder" }],
                 },
               },
             },
@@ -121,25 +115,22 @@ function buildDrive(): GoogleDriveClientLike {
         if (params.alt === "media") {
           const streamMatch = getStreams.find((r) => r.fileId === fileId);
           if (!streamMatch) {
-            const err = Object.assign(
-              new Error(`no-get-stream-responder ${fileId}`),
-              {
-                name: "GaxiosError",
-                code: "404",
+            const err = Object.assign(new Error(`no-get-stream-responder ${fileId}`), {
+              name: "GaxiosError",
+              code: "404",
+              status: 404,
+              response: {
                 status: 404,
-                response: {
-                  status: 404,
-                  headers: {},
-                  data: {
-                    error: {
-                      code: 404,
-                      message: `no-get-stream-responder ${fileId}`,
-                      errors: [{ reason: "notFound", message: "not found" }],
-                    },
+                headers: {},
+                data: {
+                  error: {
+                    code: 404,
+                    message: `no-get-stream-responder ${fileId}`,
+                    errors: [{ reason: "notFound", message: "not found" }],
                   },
                 },
               },
-            );
+            });
             throw err;
           }
           const { stream, headers } = streamMatch.handler(
@@ -174,25 +165,22 @@ function buildDrive(): GoogleDriveClientLike {
         const fileId = String(params.fileId ?? "");
         const match = exports.find((r) => r.fileId === fileId);
         if (!match) {
-          const err = Object.assign(
-            new Error(`no-export-responder ${fileId}`),
-            {
-              name: "GaxiosError",
-              code: "404",
+          const err = Object.assign(new Error(`no-export-responder ${fileId}`), {
+            name: "GaxiosError",
+            code: "404",
+            status: 404,
+            response: {
               status: 404,
-              response: {
-                status: 404,
-                headers: {},
-                data: {
-                  error: {
-                    code: 404,
-                    message: `no-export-responder ${fileId}`,
-                    errors: [{ reason: "notFound", message: "not found" }],
-                  },
+              headers: {},
+              data: {
+                error: {
+                  code: 404,
+                  message: `no-export-responder ${fileId}`,
+                  errors: [{ reason: "notFound", message: "not found" }],
                 },
               },
             },
-          );
+          });
           throw err;
         }
         const { stream, headers } = match.handler(
@@ -205,27 +193,22 @@ function buildDrive(): GoogleDriveClientLike {
         const fileId = String(params.fileId ?? "");
         const match = deletes.find((r) => r.fileId === fileId);
         if (!match) {
-          const err = Object.assign(
-            new Error(`no-delete-responder ${fileId}`),
-            {
-              name: "GaxiosError",
-              code: "500",
+          const err = Object.assign(new Error(`no-delete-responder ${fileId}`), {
+            name: "GaxiosError",
+            code: "500",
+            status: 500,
+            response: {
               status: 500,
-              response: {
-                status: 500,
-                headers: {},
-                data: {
-                  error: {
-                    code: 500,
-                    message: `no-delete-responder ${fileId}`,
-                    errors: [
-                      { reason: "internalError", message: "no responder" },
-                    ],
-                  },
+              headers: {},
+              data: {
+                error: {
+                  code: 500,
+                  message: `no-delete-responder ${fileId}`,
+                  errors: [{ reason: "internalError", message: "no responder" }],
                 },
               },
             },
-          );
+          });
           throw err;
         }
         match.handler(params);
@@ -234,31 +217,24 @@ function buildDrive(): GoogleDriveClientLike {
       async create(params) {
         const rb = (params.requestBody ?? {}) as { name?: string };
         const wanted = rb.name ?? "";
-        const match = creates.find(
-          (r) => r.nameMatch === "*" || wanted.includes(r.nameMatch),
-        );
+        const match = creates.find((r) => r.nameMatch === "*" || wanted.includes(r.nameMatch));
         if (!match) {
-          const err = Object.assign(
-            new Error(`no-create-responder ${wanted}`),
-            {
-              name: "GaxiosError",
-              code: "500",
+          const err = Object.assign(new Error(`no-create-responder ${wanted}`), {
+            name: "GaxiosError",
+            code: "500",
+            status: 500,
+            response: {
               status: 500,
-              response: {
-                status: 500,
-                headers: {},
-                data: {
-                  error: {
-                    code: 500,
-                    message: `no-create-responder ${wanted}`,
-                    errors: [
-                      { reason: "internalError", message: "no responder" },
-                    ],
-                  },
+              headers: {},
+              data: {
+                error: {
+                  code: 500,
+                  message: `no-create-responder ${wanted}`,
+                  errors: [{ reason: "internalError", message: "no responder" }],
                 },
               },
             },
-          );
+          });
           throw err;
         }
         return { data: match.handler(params) as never };
@@ -267,27 +243,22 @@ function buildDrive(): GoogleDriveClientLike {
         const fileId = String(params.fileId ?? "");
         const match = updates.find((r) => r.fileId === fileId);
         if (!match) {
-          const err = Object.assign(
-            new Error(`no-update-responder ${fileId}`),
-            {
-              name: "GaxiosError",
-              code: "500",
+          const err = Object.assign(new Error(`no-update-responder ${fileId}`), {
+            name: "GaxiosError",
+            code: "500",
+            status: 500,
+            response: {
               status: 500,
-              response: {
-                status: 500,
-                headers: {},
-                data: {
-                  error: {
-                    code: 500,
-                    message: `no-update-responder ${fileId}`,
-                    errors: [
-                      { reason: "internalError", message: "no responder" },
-                    ],
-                  },
+              headers: {},
+              data: {
+                error: {
+                  code: 500,
+                  message: `no-update-responder ${fileId}`,
+                  errors: [{ reason: "internalError", message: "no responder" }],
                 },
               },
             },
-          );
+          });
           throw err;
         }
         return { data: match.handler(params) as never };
@@ -308,71 +279,69 @@ function buildDrive(): GoogleDriveClientLike {
   };
 }
 
-const fakeFetch = vi.fn(
-  async (url: string | URL | Request, init?: RequestInit) => {
-    const urlStr = String(url);
-    const method = (init?.method ?? "").toUpperCase();
-    // The Drive resumable-session POST is the first fetch in the upload
-    // flow; return a Location-header response so the strategy can proceed
-    // to the chunk PUT. Subsequent PUTs to the session URL return the
-    // file JSON.
-    if (method === "POST" && urlStr.includes("upload/drive/v3/files")) {
-      return new Response("", {
-        status: 200,
-        headers: { Location: "https://googleapis.com/upload/session/CONTRACT" },
-      });
-    }
-    // Cancel-upload contract scenario: chunk PUT hangs until the
-    // user's signal aborts (then rejects with AbortError so the strategy
-    // normalizes to `cancelled`). A separate DELETE on the session URL
-    // is the strategy's cleanup — capture its `init.signal` so the
-    // fixture's `observedFreshCancelCleanup` can verify the cleanup
-    // signal is NOT the user's signal (Decision 3).
-    if (cancelMode && method === "DELETE" && urlStr.includes("/upload/session/CONTRACT")) {
-      cancelDeleteSignal = init?.signal ?? null;
-      // The Response constructor rejects null-body status codes with a
-      // body argument (204 falls into that bucket per the Fetch spec).
-      // Use 200 with an empty body — the strategy's cleanup catch path
-      // does not branch on status, so the choice is purely cosmetic for
-      // the test assertion.
-      return new Response("", { status: 200 });
-    }
-    if (cancelMode && method === "PUT" && urlStr.includes("/upload/session/CONTRACT")) {
-      return new Promise<Response>((_resolve, reject) => {
-        const sig = init?.signal;
-        if (sig?.aborted) {
+const fakeFetch = vi.fn(async (url: string | URL | Request, init?: RequestInit) => {
+  const urlStr = String(url);
+  const method = (init?.method ?? "").toUpperCase();
+  // The Drive resumable-session POST is the first fetch in the upload
+  // flow; return a Location-header response so the strategy can proceed
+  // to the chunk PUT. Subsequent PUTs to the session URL return the
+  // file JSON.
+  if (method === "POST" && urlStr.includes("upload/drive/v3/files")) {
+    return new Response("", {
+      status: 200,
+      headers: { Location: "https://googleapis.com/upload/session/CONTRACT" },
+    });
+  }
+  // Cancel-upload contract scenario: chunk PUT hangs until the
+  // user's signal aborts (then rejects with AbortError so the strategy
+  // normalizes to `cancelled`). A separate DELETE on the session URL
+  // is the strategy's cleanup — capture its `init.signal` so the
+  // fixture's `observedFreshCancelCleanup` can verify the cleanup
+  // signal is NOT the user's signal (Decision 3).
+  if (cancelMode && method === "DELETE" && urlStr.includes("/upload/session/CONTRACT")) {
+    cancelDeleteSignal = init?.signal ?? null;
+    // The Response constructor rejects null-body status codes with a
+    // body argument (204 falls into that bucket per the Fetch spec).
+    // Use 200 with an empty body — the strategy's cleanup catch path
+    // does not branch on status, so the choice is purely cosmetic for
+    // the test assertion.
+    return new Response("", { status: 200 });
+  }
+  if (cancelMode && method === "PUT" && urlStr.includes("/upload/session/CONTRACT")) {
+    return new Promise<Response>((_resolve, reject) => {
+      const sig = init?.signal;
+      if (sig?.aborted) {
+        reject(Object.assign(new Error("aborted"), { name: "AbortError" }));
+        return;
+      }
+      sig?.addEventListener(
+        "abort",
+        () => {
           reject(Object.assign(new Error("aborted"), { name: "AbortError" }));
-          return;
-        }
-        sig?.addEventListener(
-          "abort",
-          () => {
-            reject(Object.assign(new Error("aborted"), { name: "AbortError" }));
-          },
-          { once: true },
-        );
-      });
-    }
-    if (urlStr.includes("/upload/session/CONTRACT")) {
-      return new Response(
-        JSON.stringify({
-          id: "contract-uploaded-id",
-          name: "uploaded.txt",
-          mimeType: "text/plain",
-          parents: ["root"],
-          size: "13",
-          modifiedTime: "2024-06-01T00:00:00Z",
-          createdTime: "2024-01-01T00:00:00Z",
-        }),
-        { status: 200 },
+        },
+        { once: true },
       );
-    }
-    // Token endpoint — per-scenario primed response.
-    const next = fetchResponses.shift();
-    if (next) return next();
-    return new Response("{}", { status: 500 });
-  },
-) as unknown as typeof fetch;
+    });
+  }
+  if (urlStr.includes("/upload/session/CONTRACT")) {
+    return new Response(
+      JSON.stringify({
+        id: "contract-uploaded-id",
+        name: "uploaded.txt",
+        mimeType: "text/plain",
+        parents: ["root"],
+        size: "13",
+        modifiedTime: "2024-06-01T00:00:00Z",
+        createdTime: "2024-01-01T00:00:00Z",
+      }),
+      { status: 200 },
+    );
+  }
+  // Token endpoint — per-scenario primed response.
+  const next = fetchResponses.shift();
+  if (next) return next();
+  return new Response("{}", { status: 500 });
+}) as unknown as typeof fetch;
 
 // ---------------------------------------------------------------------------
 // Credentials
@@ -459,8 +428,7 @@ const fixture: StrategyContractFixture = {
       const segments = rootPath.replace(/^\//, "").split("/");
       let parentId = "root";
       for (const seg of segments) {
-        const childId =
-          seg === "folder-a" ? "contract-folder-id" : `resolved-${seg}`;
+        const childId = seg === "folder-a" ? "contract-folder-id" : `resolved-${seg}`;
         const thisParent = parentId;
         lists.push({
           qMatch: `name='${seg}'`,
@@ -626,9 +594,7 @@ const fixture: StrategyContractFixture = {
     // Drive's cleanup runs against `AbortSignal.timeout(5000)` per
     // Decision 3. The captured signal MUST exist (a DELETE was
     // observed) AND MUST NOT be the user's signal.
-    return (
-      cancelDeleteSignal !== null && cancelDeleteSignal !== opts.userSignal
-    );
+    return cancelDeleteSignal !== null && cancelDeleteSignal !== opts.userSignal;
   },
 
   primeDeleteOk(targetPath) {
@@ -821,9 +787,7 @@ const fixture: StrategyContractFixture = {
         const stream = new Readable({ read() {} });
         if (sig) {
           sig.addEventListener("abort", () => {
-            stream.destroy(
-              Object.assign(new Error("aborted"), { name: "AbortError" }),
-            );
+            stream.destroy(Object.assign(new Error("aborted"), { name: "AbortError" }));
           });
         }
         // Push first chunk on next tick so the consumer's data handler

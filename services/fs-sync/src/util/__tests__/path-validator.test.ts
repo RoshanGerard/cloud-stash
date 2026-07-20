@@ -34,8 +34,19 @@ describe("validateToPath", () => {
     const home = os.homedir();
     const sep = nodePath.sep;
     const traversal =
-      home + sep + "Downloads" + sep + ".." + sep + ".." + sep + ".." + sep +
-      "etc" + sep + "passwd";
+      home +
+      sep +
+      "Downloads" +
+      sep +
+      ".." +
+      sep +
+      ".." +
+      sep +
+      ".." +
+      sep +
+      "etc" +
+      sep +
+      "passwd";
     const result = await validateToPath(traversal, {
       canWrite: async () => true,
       homedir: () => home,

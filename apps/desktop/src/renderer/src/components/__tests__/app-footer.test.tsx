@@ -17,9 +17,7 @@ describe("AppFooter — copyright chrome (Decision 14)", () => {
   it("renders the current year in a copyright line", () => {
     render(<AppFooter />);
     const year = new Date().getFullYear().toString();
-    const text = screen.getByText(
-      new RegExp(`©\\s*${year}\\s*CloudStash`, "i"),
-    );
+    const text = screen.getByText(new RegExp(`©\\s*${year}\\s*CloudStash`, "i"));
     expect(text).toBeInTheDocument();
   });
 
@@ -45,8 +43,6 @@ describe("AppFooter — copyright chrome (Decision 14)", () => {
 
   it("reads 'All rights reserved.'", () => {
     render(<AppFooter />);
-    expect(
-      screen.getByText(/All rights reserved\./i),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/All rights reserved\./i)).toBeInTheDocument();
   });
 });

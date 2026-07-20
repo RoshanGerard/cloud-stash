@@ -45,11 +45,7 @@ function segmentsFor(currentPath: string): Segment[] {
 }
 
 export function Breadcrumb({ store }: BreadcrumbProps) {
-  const state = useSyncExternalStore(
-    store.subscribe,
-    store.getSnapshot,
-    store.getSnapshot,
-  );
+  const state = useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
   const segments = segmentsFor(state.currentPath);
 
   return (
@@ -61,17 +57,10 @@ export function Breadcrumb({ store }: BreadcrumbProps) {
           return (
             <li key={seg.path} className="flex items-center gap-1">
               {i > 0 ? (
-                <Icon
-                  name="chevron-right"
-                  className="size-3 text-muted-foreground"
-                  aria-hidden
-                />
+                <Icon name="chevron-right" className="size-3 text-muted-foreground" aria-hidden />
               ) : null}
               {isLast ? (
-                <span
-                  aria-current="page"
-                  className="text-foreground truncate px-1"
-                >
+                <span aria-current="page" className="text-foreground truncate px-1">
                   {label}
                 </span>
               ) : (

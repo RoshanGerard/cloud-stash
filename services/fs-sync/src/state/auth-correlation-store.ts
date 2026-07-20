@@ -152,9 +152,7 @@ export function createAuthCorrelationStore(
     return entry.intent;
   }
 
-  function consumeEntry(
-    correlationId: string,
-  ): AuthCorrelationEntry | undefined {
+  function consumeEntry(correlationId: string): AuthCorrelationEntry | undefined {
     const entry = entries.get(correlationId);
     if (!entry) return undefined;
     clearTimeout(entry.timer);

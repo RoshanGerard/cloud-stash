@@ -12,15 +12,7 @@ import * as path from "node:path";
 
 import type { RequestFrame } from "@cloudstash/ipc-contracts/sync-service";
 import { SYNC_CHANNELS } from "@cloudstash/ipc-contracts/sync-service-desktop";
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-  type Mock,
-} from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from "vitest";
 
 import { FramingDecoder, encodeFrame } from "./framing.js";
 import { SyncClient } from "./client.js";
@@ -38,7 +30,7 @@ function clientAsHandle(client: SyncClient): SupervisorHandle {
   return {
     getClient: () => client,
     on: ((...args: unknown[]) => {
-      const [event, cb] = args as ["reconnect" | "disconnect", ((c?: SyncClient) => void)];
+      const [event, cb] = args as ["reconnect" | "disconnect", (c?: SyncClient) => void];
       if (event === "reconnect") {
         reconnectListeners.add(cb as (c: SyncClient) => void);
         return () => reconnectListeners.delete(cb as (c: SyncClient) => void);
@@ -46,7 +38,9 @@ function clientAsHandle(client: SyncClient): SupervisorHandle {
       disconnectListeners.add(cb as () => void);
       return () => disconnectListeners.delete(cb as () => void);
     }) as SupervisorHandle["on"],
-    dispose() { /* no-op in tests */ },
+    dispose() {
+      /* no-op in tests */
+    },
   };
 }
 
@@ -186,7 +180,9 @@ afterEach(async () => {
 // ---------------------------------------------------------------------------
 
 /** Connect a real SyncClient to the fake service at pipePath. */
-async function connectClient(pipePath: string): Promise<{ client: SyncClient; socket: net.Socket }> {
+async function connectClient(
+  pipePath: string,
+): Promise<{ client: SyncClient; socket: net.Socket }> {
   const socket = await new Promise<net.Socket>((resolve, reject) => {
     const s = net.connect(pipePath);
     s.once("connect", () => resolve(s));
@@ -210,194 +206,178 @@ function autoAckHandler(command: string, id: string, send: (frame: object) => vo
 // ---------------------------------------------------------------------------
 
 describe("createSyncEventBridge — fan-out", () => {
-  it(
-    "three registered windows each receive the same service event exactly once",
-    async () => {
-      const pipePath = pipeFor("three-windows");
-      const stub = await startFakeService(pipePath, autoAckHandler);
-      stubs.push(stub);
+  it("three registered windows each receive the same service event exactly once", async () => {
+    const pipePath = pipeFor("three-windows");
+    const stub = await startFakeService(pipePath, autoAckHandler);
+    stubs.push(stub);
 
-      const { client, socket } = await connectClient(pipePath);
-      clientSockets.push(socket);
-      const bridge = createSyncEventBridge(clientAsHandle(client));
-      bridges.push(bridge);
+    const { client, socket } = await connectClient(pipePath);
+    clientSockets.push(socket);
+    const bridge = createSyncEventBridge(clientAsHandle(client));
+    bridges.push(bridge);
 
-      const winA = makeFakeWindow();
-      const winB = makeFakeWindow();
-      const winC = makeFakeWindow();
+    const winA = makeFakeWindow();
+    const winB = makeFakeWindow();
+    const winC = makeFakeWindow();
 
-      bridge.registerWindow(winA as unknown as import("electron").BrowserWindow);
-      bridge.registerWindow(winB as unknown as import("electron").BrowserWindow);
-      bridge.registerWindow(winC as unknown as import("electron").BrowserWindow);
+    bridge.registerWindow(winA as unknown as import("electron").BrowserWindow);
+    bridge.registerWindow(winB as unknown as import("electron").BrowserWindow);
+    bridge.registerWindow(winC as unknown as import("electron").BrowserWindow);
 
-      // Wait for handshake to complete (empty seed)
-      await stub.connected;
-      await new Promise<void>((r) => setTimeout(r, 30));
+    // Wait for handshake to complete (empty seed)
+    await stub.connected;
+    await new Promise<void>((r) => setTimeout(r, 30));
 
-      // Clear the seed calls (if any) to isolate the live-event assertion
-      winA.webContents.send.mockClear();
-      winB.webContents.send.mockClear();
-      winC.webContents.send.mockClear();
+    // Clear the seed calls (if any) to isolate the live-event assertion
+    winA.webContents.send.mockClear();
+    winB.webContents.send.mockClear();
+    winC.webContents.send.mockClear();
 
-      // Push a live event from the fake service
-      stub.send({
-        kind: "event",
-        name: "job-enqueued",
-        payload: {
-          jobId: "j-99",
-          kind: "upload",
-          datasourceId: "ds-1",
-          sourcePath: "/file.txt",
-          targetPath: null,
-          conflictPolicy: "overwrite",
-          enqueuedAt: 1000,
-        },
-      });
+    // Push a live event from the fake service
+    stub.send({
+      kind: "event",
+      name: "job-enqueued",
+      payload: {
+        jobId: "j-99",
+        kind: "upload",
+        datasourceId: "ds-1",
+        sourcePath: "/file.txt",
+        targetPath: null,
+        conflictPolicy: "overwrite",
+        enqueuedAt: 1000,
+      },
+    });
 
-      await new Promise<void>((r) => setTimeout(r, 30));
+    await new Promise<void>((r) => setTimeout(r, 30));
 
-      // Each window received the event exactly once on the sync channel
-      for (const win of [winA, winB, winC]) {
-        const syncCalls = win.webContents.send.mock.calls.filter(
-          (c: unknown[]) => c[0] === SYNC_CHANNELS.event,
-        );
-        expect(syncCalls).toHaveLength(1);
-        expect((syncCalls[0]![1] as { kind: string }).kind).toBe("job-enqueued");
-      }
-    },
-    5000,
-  );
-
-  it(
-    "events for an already-closed window are silently dropped without crashing",
-    async () => {
-      const pipePath = pipeFor("closed-window");
-      const stub = await startFakeService(pipePath, autoAckHandler);
-      stubs.push(stub);
-
-      const { client, socket } = await connectClient(pipePath);
-      clientSockets.push(socket);
-      const bridge = createSyncEventBridge(clientAsHandle(client));
-      bridges.push(bridge);
-
-      const liveWin = makeFakeWindow();
-      const deadWin = makeFakeWindow();
-
-      bridge.registerWindow(liveWin as unknown as import("electron").BrowserWindow);
-      bridge.registerWindow(deadWin as unknown as import("electron").BrowserWindow);
-
-      // Mark one window as destroyed before any events arrive
-      deadWin._destroyed = true;
-
-      await stub.connected;
-      await new Promise<void>((r) => setTimeout(r, 30));
-      liveWin.webContents.send.mockClear();
-      deadWin.webContents.send.mockClear();
-
-      // Push a live event — should NOT throw even though deadWin is closed
-      stub.send({
-        kind: "event",
-        name: "job-started",
-        payload: { jobId: "j-1", attempt: 1, startedAt: 1000 },
-      });
-
-      await new Promise<void>((r) => setTimeout(r, 30));
-
-      // Live window receives the event
-      const liveCalls = liveWin.webContents.send.mock.calls.filter(
+    // Each window received the event exactly once on the sync channel
+    for (const win of [winA, winB, winC]) {
+      const syncCalls = win.webContents.send.mock.calls.filter(
         (c: unknown[]) => c[0] === SYNC_CHANNELS.event,
       );
-      expect(liveCalls).toHaveLength(1);
+      expect(syncCalls).toHaveLength(1);
+      expect((syncCalls[0]![1] as { kind: string }).kind).toBe("job-enqueued");
+    }
+  }, 5000);
 
-      // Destroyed window send was never called
-      expect(deadWin.webContents.send).not.toHaveBeenCalled();
-    },
-    5000,
-  );
+  it("events for an already-closed window are silently dropped without crashing", async () => {
+    const pipePath = pipeFor("closed-window");
+    const stub = await startFakeService(pipePath, autoAckHandler);
+    stubs.push(stub);
 
-  it(
-    "a second event after closed-window detection still reaches live windows",
-    async () => {
-      const pipePath = pipeFor("post-close-fanout");
-      const stub = await startFakeService(pipePath, autoAckHandler);
-      stubs.push(stub);
+    const { client, socket } = await connectClient(pipePath);
+    clientSockets.push(socket);
+    const bridge = createSyncEventBridge(clientAsHandle(client));
+    bridges.push(bridge);
 
-      const { client, socket } = await connectClient(pipePath);
-      clientSockets.push(socket);
-      const bridge = createSyncEventBridge(clientAsHandle(client));
-      bridges.push(bridge);
+    const liveWin = makeFakeWindow();
+    const deadWin = makeFakeWindow();
 
-      const winA = makeFakeWindow();
-      const winB = makeFakeWindow();
+    bridge.registerWindow(liveWin as unknown as import("electron").BrowserWindow);
+    bridge.registerWindow(deadWin as unknown as import("electron").BrowserWindow);
 
-      bridge.registerWindow(winA as unknown as import("electron").BrowserWindow);
-      bridge.registerWindow(winB as unknown as import("electron").BrowserWindow);
+    // Mark one window as destroyed before any events arrive
+    deadWin._destroyed = true;
 
-      await stub.connected;
-      await new Promise<void>((r) => setTimeout(r, 30));
-      winA.webContents.send.mockClear();
-      winB.webContents.send.mockClear();
+    await stub.connected;
+    await new Promise<void>((r) => setTimeout(r, 30));
+    liveWin.webContents.send.mockClear();
+    deadWin.webContents.send.mockClear();
 
-      // Close winA mid-stream
-      winA._destroyed = true;
+    // Push a live event — should NOT throw even though deadWin is closed
+    stub.send({
+      kind: "event",
+      name: "job-started",
+      payload: { jobId: "j-1", attempt: 1, startedAt: 1000 },
+    });
 
-      stub.send({
-        kind: "event",
-        name: "job-completed",
-        payload: { jobId: "j-1", completedAt: 1000 },
-      });
-      stub.send({
-        kind: "event",
-        name: "job-completed",
-        payload: { jobId: "j-2", completedAt: 2000 },
-      });
+    await new Promise<void>((r) => setTimeout(r, 30));
 
-      await new Promise<void>((r) => setTimeout(r, 30));
+    // Live window receives the event
+    const liveCalls = liveWin.webContents.send.mock.calls.filter(
+      (c: unknown[]) => c[0] === SYNC_CHANNELS.event,
+    );
+    expect(liveCalls).toHaveLength(1);
 
-      // winB received both events
-      const winBCalls = winB.webContents.send.mock.calls.filter(
-        (c: unknown[]) => c[0] === SYNC_CHANNELS.event,
-      );
-      expect(winBCalls).toHaveLength(2);
+    // Destroyed window send was never called
+    expect(deadWin.webContents.send).not.toHaveBeenCalled();
+  }, 5000);
 
-      // winA was destroyed so nothing was sent
-      expect(winA.webContents.send).not.toHaveBeenCalled();
-    },
-    5000,
-  );
+  it("a second event after closed-window detection still reaches live windows", async () => {
+    const pipePath = pipeFor("post-close-fanout");
+    const stub = await startFakeService(pipePath, autoAckHandler);
+    stubs.push(stub);
 
-  it(
-    "dispose() stops further broadcasts to all windows",
-    async () => {
-      const pipePath = pipeFor("dispose-stops");
-      const stub = await startFakeService(pipePath, autoAckHandler);
-      stubs.push(stub);
+    const { client, socket } = await connectClient(pipePath);
+    clientSockets.push(socket);
+    const bridge = createSyncEventBridge(clientAsHandle(client));
+    bridges.push(bridge);
 
-      const { client, socket } = await connectClient(pipePath);
-      clientSockets.push(socket);
-      const bridge = createSyncEventBridge(clientAsHandle(client));
-      // NOTE: don't push to bridges[] so afterEach doesn't double-dispose
-      // We'll dispose explicitly in the test
+    const winA = makeFakeWindow();
+    const winB = makeFakeWindow();
 
-      const win = makeFakeWindow();
-      bridge.registerWindow(win as unknown as import("electron").BrowserWindow);
+    bridge.registerWindow(winA as unknown as import("electron").BrowserWindow);
+    bridge.registerWindow(winB as unknown as import("electron").BrowserWindow);
 
-      await stub.connected;
-      await new Promise<void>((r) => setTimeout(r, 30));
-      win.webContents.send.mockClear();
+    await stub.connected;
+    await new Promise<void>((r) => setTimeout(r, 30));
+    winA.webContents.send.mockClear();
+    winB.webContents.send.mockClear();
 
-      // Dispose then push an event — should not reach the window
-      bridge.dispose();
+    // Close winA mid-stream
+    winA._destroyed = true;
 
-      stub.send({
-        kind: "event",
-        name: "job-started",
-        payload: { jobId: "j-x", attempt: 1, startedAt: 1000 },
-      });
+    stub.send({
+      kind: "event",
+      name: "job-completed",
+      payload: { jobId: "j-1", completedAt: 1000 },
+    });
+    stub.send({
+      kind: "event",
+      name: "job-completed",
+      payload: { jobId: "j-2", completedAt: 2000 },
+    });
 
-      await new Promise<void>((r) => setTimeout(r, 30));
-      expect(win.webContents.send).not.toHaveBeenCalled();
-    },
-    5000,
-  );
+    await new Promise<void>((r) => setTimeout(r, 30));
+
+    // winB received both events
+    const winBCalls = winB.webContents.send.mock.calls.filter(
+      (c: unknown[]) => c[0] === SYNC_CHANNELS.event,
+    );
+    expect(winBCalls).toHaveLength(2);
+
+    // winA was destroyed so nothing was sent
+    expect(winA.webContents.send).not.toHaveBeenCalled();
+  }, 5000);
+
+  it("dispose() stops further broadcasts to all windows", async () => {
+    const pipePath = pipeFor("dispose-stops");
+    const stub = await startFakeService(pipePath, autoAckHandler);
+    stubs.push(stub);
+
+    const { client, socket } = await connectClient(pipePath);
+    clientSockets.push(socket);
+    const bridge = createSyncEventBridge(clientAsHandle(client));
+    // NOTE: don't push to bridges[] so afterEach doesn't double-dispose
+    // We'll dispose explicitly in the test
+
+    const win = makeFakeWindow();
+    bridge.registerWindow(win as unknown as import("electron").BrowserWindow);
+
+    await stub.connected;
+    await new Promise<void>((r) => setTimeout(r, 30));
+    win.webContents.send.mockClear();
+
+    // Dispose then push an event — should not reach the window
+    bridge.dispose();
+
+    stub.send({
+      kind: "event",
+      name: "job-started",
+      payload: { jobId: "j-x", attempt: 1, startedAt: 1000 },
+    });
+
+    await new Promise<void>((r) => setTimeout(r, 30));
+    expect(win.webContents.send).not.toHaveBeenCalled();
+  }, 5000);
 });

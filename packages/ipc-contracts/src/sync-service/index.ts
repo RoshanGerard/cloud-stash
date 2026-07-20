@@ -3,13 +3,7 @@
 // speak its protocol (including the desktop app, once wired in a follow-up
 // change).
 
-export type {
-  ErrorShape,
-  EventFrame,
-  Frame,
-  RequestFrame,
-  ResponseFrame,
-} from "./frames.js";
+export type { ErrorShape, EventFrame, Frame, RequestFrame, ResponseFrame } from "./frames.js";
 
 export type {
   BackoffStrategy,

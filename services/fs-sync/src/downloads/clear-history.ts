@@ -92,9 +92,7 @@ export async function clearDownloadHistory(
 
   // Best-effort: allSettled tolerates every unlink rejection so a missing /
   // permission-denied partial never blocks the row deletion nor throws.
-  await Promise.allSettled(
-    keepEligible.map((row) => fs.unlink(row.target_path)),
-  );
+  await Promise.allSettled(keepEligible.map((row) => fs.unlink(row.target_path)));
 
   const result = db.prepare(`DELETE FROM downloads WHERE ${where}`).run(...args);
   return result.changes;

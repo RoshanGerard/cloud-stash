@@ -14,9 +14,7 @@ export class AlreadyRunningError extends Error {
   readonly existingPid: number;
   readonly pidFilePath: string;
   constructor(existingPid: number, pidFilePath: string) {
-    super(
-      `fs-sync-service already running (pid ${existingPid}, recorded in ${pidFilePath})`,
-    );
+    super(`fs-sync-service already running (pid ${existingPid}, recorded in ${pidFilePath})`);
     this.name = "AlreadyRunningError";
     this.existingPid = existingPid;
     this.pidFilePath = pidFilePath;
@@ -99,11 +97,10 @@ function isProcessAlive(pid: number): boolean {
 function hasServiceImageName(pid: number): boolean {
   if (process.platform === "win32") {
     try {
-      const out = execFileSync(
-        "tasklist",
-        ["/FI", `PID eq ${pid}`, "/FO", "CSV", "/NH"],
-        { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] },
-      );
+      const out = execFileSync("tasklist", ["/FI", `PID eq ${pid}`, "/FO", "CSV", "/NH"], {
+        encoding: "utf8",
+        stdio: ["ignore", "pipe", "ignore"],
+      });
       // tasklist returns empty output when no match; otherwise a CSV row
       // whose first field is the image name in quotes.
       const first = out.split("\n")[0] ?? "";

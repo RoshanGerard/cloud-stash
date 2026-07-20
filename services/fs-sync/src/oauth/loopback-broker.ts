@@ -147,10 +147,7 @@ export interface OAuthLoopbackBrokerOptions {
    *    const raw = await configStore.getOAuthAppConfig(providerId);
    *    return { ...raw, redirectUri };
    *  }`. Tests stub a synchronous async closure. */
-  getOAuthAppConfig: (
-    providerId: ProviderId,
-    redirectUri: string,
-  ) => Promise<OAuthAppConfig>;
+  getOAuthAppConfig: (providerId: ProviderId, redirectUri: string) => Promise<OAuthAppConfig>;
 
   /** Datasource id minter. Called once per successful authenticate
    *  completion when `start()`'s `datasourceId` was undefined.
@@ -203,9 +200,7 @@ export interface OAuthLoopbackBroker {
 
   /** TEST-ONLY accessor for the pending-session record keyed by
    *  correlationId. Returns undefined when no session exists. */
-  _getPendingSessionForTests(
-    correlationId: string,
-  ): PendingSession | undefined;
+  _getPendingSessionForTests(correlationId: string): PendingSession | undefined;
 }
 
 // ---------------------------------------------------------------------------
@@ -219,10 +214,7 @@ export function createOAuthLoopbackBroker(
   const pending = new Map<string, PendingSession>();
   let hasWarned = false;
 
-  function buildSummary(
-    providerId: ProviderId,
-    datasourceId: string,
-  ): DatasourceSummary {
+  function buildSummary(providerId: ProviderId, datasourceId: string): DatasourceSummary {
     const provider = providers[providerId];
     return {
       id: datasourceId,
@@ -266,12 +258,8 @@ export function createOAuthLoopbackBroker(
    * well-formed is always threaded; we never fall back to capture-only on a
    * legitimate anchor (that would silently disable the hard block).
    */
-  async function readExpectedAccount(
-    datasourceId: string,
-  ): Promise<AccountIdentity | undefined> {
-    const stored = await options.engineContext.credentialStore.get(
-      datasourceId,
-    );
+  async function readExpectedAccount(datasourceId: string): Promise<AccountIdentity | undefined> {
+    const stored = await options.engineContext.credentialStore.get(datasourceId);
     const account = stored?.authResult?.meta?.["account"];
     if (
       account !== null &&
@@ -329,9 +317,7 @@ export function createOAuthLoopbackBroker(
           // otherwise synthesize one for direct-broker callers.
           const correlationId = opts.correlationId ?? randomUUID();
           const datasourceId =
-            opts.datasourceId ??
-            options.mintDatasourceId?.() ??
-            `ds-${randomUUID()}`;
+            opts.datasourceId ?? options.mintDatasourceId?.() ?? `ds-${randomUUID()}`;
           const summary = buildSummary(opts.providerId, datasourceId);
           // credential-persisted + auth-completed pair (Decision 7).
           options.bus.emit("credential-persisted", {
@@ -417,9 +403,7 @@ export function createOAuthLoopbackBroker(
           try {
             await session.intent.completeWith(code);
             const datasourceId =
-              session.datasourceId ??
-              options.mintDatasourceId?.() ??
-              `ds-${randomUUID()}`;
+              session.datasourceId ?? options.mintDatasourceId?.() ?? `ds-${randomUUID()}`;
             const summary = buildSummary(session.providerId, datasourceId);
             // credential-persisted + auth-completed pair (Decision 7).
             options.bus.emit("credential-persisted", {
@@ -441,22 +425,14 @@ export function createOAuthLoopbackBroker(
             // assemble its own copy. Every OTHER rejection — including the
             // fail-closed `auth-expired` (id-token-unreadable) — keeps
             // mapping to `provider-error` unchanged.
-            if (
-              err instanceof DatasourceError &&
-              err.tag === DatasourceErrorTag.AccountMismatch
-            ) {
+            if (err instanceof DatasourceError && err.tag === DatasourceErrorTag.AccountMismatch) {
               const raw = (err.raw ?? {}) as {
                 expectedEmail?: unknown;
                 actualEmail?: unknown;
               };
               const expectedEmail =
-                typeof raw.expectedEmail === "string"
-                  ? raw.expectedEmail
-                  : undefined;
-              const actualEmail =
-                typeof raw.actualEmail === "string"
-                  ? raw.actualEmail
-                  : undefined;
+                typeof raw.expectedEmail === "string" ? raw.expectedEmail : undefined;
+              const actualEmail = typeof raw.actualEmail === "string" ? raw.actualEmail : undefined;
               options.bus.emit("auth-failed", {
                 correlationId,
                 // eslint-disable-next-line cloudstash/no-raw-error-tag-literal -- AuthFailedTag vocabulary (no const object) — out of scope
@@ -510,10 +486,7 @@ export function createOAuthLoopbackBroker(
         // redirectUri). The closure wraps ServiceConfigStore. A
         // ServiceConfigMissingError propagates through the catch below
         // — server is closed, NO event has been emitted yet.
-        const oauthAppConfig = await options.getOAuthAppConfig(
-          opts.providerId,
-          redirectUri,
-        );
+        const oauthAppConfig = await options.getOAuthAppConfig(opts.providerId, redirectUri);
 
         // Config validated — emit `auth-initiated` so the renderer's
         // `useAuthSession` hook knows the session has started. This is
@@ -522,9 +495,7 @@ export function createOAuthLoopbackBroker(
         options.bus.emit("auth-initiated", {
           correlationId,
           providerId: opts.providerId,
-          ...(opts.datasourceId !== undefined
-            ? { datasourceId: opts.datasourceId }
-            : {}),
+          ...(opts.datasourceId !== undefined ? { datasourceId: opts.datasourceId } : {}),
         });
 
         // Construct the engine client + acquire the AuthIntent. On a
@@ -574,9 +545,7 @@ export function createOAuthLoopbackBroker(
       pending.set(correlationId, {
         correlationId,
         providerId: opts.providerId,
-        ...(opts.datasourceId !== undefined
-          ? { datasourceId: opts.datasourceId }
-          : {}),
+        ...(opts.datasourceId !== undefined ? { datasourceId: opts.datasourceId } : {}),
         port,
         state,
         intent,
@@ -595,9 +564,7 @@ export function createOAuthLoopbackBroker(
       return { correlationId };
     },
 
-    async cancel(
-      opts: { correlationId: string },
-    ): Promise<{ wasActive: boolean }> {
+    async cancel(opts: { correlationId: string }): Promise<{ wasActive: boolean }> {
       const session = pending.get(opts.correlationId);
       if (!session) return { wasActive: false }; // Idempotent no-op.
       cleanup(opts.correlationId);
@@ -615,9 +582,7 @@ export function createOAuthLoopbackBroker(
       pending.clear();
     },
 
-    _getPendingSessionForTests(
-      correlationId: string,
-    ): PendingSession | undefined {
+    _getPendingSessionForTests(correlationId: string): PendingSession | undefined {
       return pending.get(correlationId);
     },
   };

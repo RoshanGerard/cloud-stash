@@ -17,48 +17,35 @@ describe("GOOGLE_APPS_EXPORT_FORMATS", () => {
   });
 
   it("maps google-apps.document to docx", () => {
-    expect(
-      GOOGLE_APPS_EXPORT_FORMATS["application/vnd.google-apps.document"],
-    ).toEqual({
-      exportMime:
-        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    expect(GOOGLE_APPS_EXPORT_FORMATS["application/vnd.google-apps.document"]).toEqual({
+      exportMime: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
       extension: ".docx",
     });
   });
 
   it("maps google-apps.spreadsheet to xlsx", () => {
-    expect(
-      GOOGLE_APPS_EXPORT_FORMATS["application/vnd.google-apps.spreadsheet"],
-    ).toEqual({
-      exportMime:
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    expect(GOOGLE_APPS_EXPORT_FORMATS["application/vnd.google-apps.spreadsheet"]).toEqual({
+      exportMime: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       extension: ".xlsx",
     });
   });
 
   it("maps google-apps.presentation to pptx", () => {
-    expect(
-      GOOGLE_APPS_EXPORT_FORMATS["application/vnd.google-apps.presentation"],
-    ).toEqual({
-      exportMime:
-        "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    expect(GOOGLE_APPS_EXPORT_FORMATS["application/vnd.google-apps.presentation"]).toEqual({
+      exportMime: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
       extension: ".pptx",
     });
   });
 
   it("maps google-apps.drawing to png", () => {
-    expect(
-      GOOGLE_APPS_EXPORT_FORMATS["application/vnd.google-apps.drawing"],
-    ).toEqual({
+    expect(GOOGLE_APPS_EXPORT_FORMATS["application/vnd.google-apps.drawing"]).toEqual({
       exportMime: "image/png",
       extension: ".png",
     });
   });
 
   it("maps google-apps.script to json", () => {
-    expect(
-      GOOGLE_APPS_EXPORT_FORMATS["application/vnd.google-apps.script"],
-    ).toEqual({
+    expect(GOOGLE_APPS_EXPORT_FORMATS["application/vnd.google-apps.script"]).toEqual({
       exportMime: "application/vnd.google-apps.script+json",
       extension: ".json",
     });

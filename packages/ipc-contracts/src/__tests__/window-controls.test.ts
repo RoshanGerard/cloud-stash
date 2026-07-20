@@ -8,10 +8,7 @@
 
 import { describe, expect, it } from "vitest";
 
-import {
-  WINDOW_CHANNELS,
-  type WindowMaximizeChangePayload,
-} from "../window-controls.js";
+import { WINDOW_CHANNELS, type WindowMaximizeChangePayload } from "../window-controls.js";
 
 describe("WINDOW_CHANNELS", () => {
   it("has exactly 4 keys", () => {

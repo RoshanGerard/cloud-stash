@@ -19,24 +19,9 @@
 //     the factory args without exercising the real stat/upload plumbing.
 //   - window.api stubbed globally (files.list, datasources.pickFilesToUpload).
 
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-  type Mock,
-} from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from "vitest";
 import type { FileEntry } from "@cloudstash/ipc-contracts";
-import {
-  act,
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-} from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 
 vi.mock("sonner", () => ({
@@ -51,15 +36,11 @@ const startMock = vi.fn(async () => {});
 const createUploadOrchestratorMock = vi.fn(() => ({ start: startMock }));
 
 vi.mock("../use-upload-orchestrator.js", () => ({
-  createUploadOrchestrator: (...args: unknown[]) =>
-    createUploadOrchestratorMock(...(args as [])),
+  createUploadOrchestrator: (...args: unknown[]) => createUploadOrchestratorMock(...(args as [])),
 }));
 
 import { UploadDialog } from "../upload-dialog.js";
-import type {
-  ConflictResolver,
-  UploadToaster,
-} from "../use-upload-orchestrator.js";
+import type { ConflictResolver, UploadToaster } from "../use-upload-orchestrator.js";
 
 // Helper — build FileEntry fixtures compact for destination-tree listings.
 interface EntryInit {
@@ -160,12 +141,11 @@ function renderDialog(opts: RenderOpts = {}): {
 
 beforeEach(() => {
   if (!("ResizeObserver" in window)) {
-    (window as unknown as { ResizeObserver: unknown }).ResizeObserver =
-      class MockResizeObserver {
-        observe() {}
-        unobserve() {}
-        disconnect() {}
-      };
+    (window as unknown as { ResizeObserver: unknown }).ResizeObserver = class MockResizeObserver {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    };
   }
   resetApiMocks();
   startMock.mockClear();
@@ -196,12 +176,10 @@ describe("UploadDialog — destination defaults", () => {
       });
     });
     // Footer + primary-button both display the current destination live.
-    expect(
-      screen.getByTestId("upload-dialog-destination-footer"),
-    ).toHaveTextContent("→ /projects/2026");
-    expect(
-      screen.getByTestId("upload-dialog-submit"),
-    ).toHaveTextContent(/\/projects\/2026/);
+    expect(screen.getByTestId("upload-dialog-destination-footer")).toHaveTextContent(
+      "→ /projects/2026",
+    );
+    expect(screen.getByTestId("upload-dialog-submit")).toHaveTextContent(/\/projects\/2026/);
   });
 
   it("(b) opens with destination = '/' when opened from card", async () => {
@@ -216,9 +194,7 @@ describe("UploadDialog — destination defaults", () => {
         path: "/",
       });
     });
-    expect(
-      screen.getByTestId("upload-dialog-destination-footer"),
-    ).toHaveTextContent("→ /");
+    expect(screen.getByTestId("upload-dialog-destination-footer")).toHaveTextContent("→ /");
   });
 });
 
@@ -228,7 +204,9 @@ describe("UploadDialog — files section", () => {
       filePaths: ["C:/tmp/a.pdf", "C:/tmp/b.png"],
       canceled: false,
     }));
-    (window as unknown as { api: { datasources: { pickFilesToUpload: Mock } } }).api.datasources.pickFilesToUpload = pickFilesMock;
+    (
+      window as unknown as { api: { datasources: { pickFilesToUpload: Mock } } }
+    ).api.datasources.pickFilesToUpload = pickFilesMock;
 
     setListing("/", []);
     renderDialog({ initialDestination: "/" });
@@ -278,9 +256,7 @@ describe("UploadDialog — destination tree", () => {
       const rows = screen.getAllByTestId("upload-dialog-dir-row");
       expect(rows).toHaveLength(2);
     });
-    const names = screen
-      .getAllByTestId("upload-dialog-dir-row")
-      .map((r) => r.textContent ?? "");
+    const names = screen.getAllByTestId("upload-dialog-dir-row").map((r) => r.textContent ?? "");
     expect(names.some((n) => n.includes("projects"))).toBe(true);
     expect(names.some((n) => n.includes("docs"))).toBe(true);
     // File entries must not appear anywhere in the destination list.
@@ -315,12 +291,12 @@ describe("UploadDialog — destination tree", () => {
         path: "/projects/2026/drafts",
       });
     });
-    expect(
-      screen.getByTestId("upload-dialog-destination-footer"),
-    ).toHaveTextContent("→ /projects/2026/drafts");
-    expect(
-      screen.getByTestId("upload-dialog-submit"),
-    ).toHaveTextContent(/\/projects\/2026\/drafts/);
+    expect(screen.getByTestId("upload-dialog-destination-footer")).toHaveTextContent(
+      "→ /projects/2026/drafts",
+    );
+    expect(screen.getByTestId("upload-dialog-submit")).toHaveTextContent(
+      /\/projects\/2026\/drafts/,
+    );
     // Breadcrumb shows all four segments for /projects/2026/drafts.
     const breadcrumb = screen.getByTestId("upload-dialog-breadcrumb");
     expect(breadcrumb.textContent ?? "").toMatch(/root/);
@@ -345,9 +321,7 @@ describe("UploadDialog — destination tree", () => {
         path: "/projects",
       });
     });
-    expect(
-      screen.getByTestId("upload-dialog-destination-footer"),
-    ).toHaveTextContent("→ /projects");
+    expect(screen.getByTestId("upload-dialog-destination-footer")).toHaveTextContent("→ /projects");
   });
 
   it("synthesized '.. (parent)' row is NOT shown at root", async () => {
@@ -374,9 +348,9 @@ describe("UploadDialog — destination tree", () => {
 
     // Find the `projects` segment button inside the dialog breadcrumb.
     const breadcrumb = screen.getByTestId("upload-dialog-breadcrumb");
-    const projectsBtn = Array.from(
-      breadcrumb.querySelectorAll<HTMLButtonElement>("button"),
-    ).find((b) => (b.textContent ?? "").trim() === "projects");
+    const projectsBtn = Array.from(breadcrumb.querySelectorAll<HTMLButtonElement>("button")).find(
+      (b) => (b.textContent ?? "").trim() === "projects",
+    );
     expect(projectsBtn).toBeDefined();
     fireEvent.click(projectsBtn!);
 
@@ -386,9 +360,7 @@ describe("UploadDialog — destination tree", () => {
         path: "/projects",
       });
     });
-    expect(
-      screen.getByTestId("upload-dialog-destination-footer"),
-    ).toHaveTextContent("→ /projects");
+    expect(screen.getByTestId("upload-dialog-destination-footer")).toHaveTextContent("→ /projects");
   });
 });
 
@@ -407,7 +379,9 @@ describe("UploadDialog — submit", () => {
       filePaths: ["C:/tmp/a.pdf"],
       canceled: false,
     }));
-    (window as unknown as { api: { datasources: { pickFilesToUpload: Mock } } }).api.datasources.pickFilesToUpload = pickFilesMock;
+    (
+      window as unknown as { api: { datasources: { pickFilesToUpload: Mock } } }
+    ).api.datasources.pickFilesToUpload = pickFilesMock;
 
     setListing("/projects/2026", [
       makeEntry({
@@ -438,9 +412,9 @@ describe("UploadDialog — submit", () => {
     fireEvent.click(draftsRow!);
 
     await waitFor(() => {
-      expect(
-        screen.getByTestId("upload-dialog-destination-footer"),
-      ).toHaveTextContent("→ /projects/2026/drafts");
+      expect(screen.getByTestId("upload-dialog-destination-footer")).toHaveTextContent(
+        "→ /projects/2026/drafts",
+      );
     });
 
     // Submit. Primary button should now be enabled.

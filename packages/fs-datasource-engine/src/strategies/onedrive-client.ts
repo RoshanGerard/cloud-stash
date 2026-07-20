@@ -177,7 +177,10 @@ const OAUTH_SCOPE = "openid email offline_access Files.ReadWrite.All User.Read";
 function pathToGraphSegment(path: string): string {
   if (path === "" || path === "/") return "";
   const raw = path.startsWith("/") ? path.slice(1) : path;
-  const encoded = raw.split("/").map((seg) => encodeURIComponent(seg)).join("/");
+  const encoded = raw
+    .split("/")
+    .map((seg) => encodeURIComponent(seg))
+    .join("/");
   return `/${encoded}`;
 }
 
@@ -195,16 +198,12 @@ function pathUrl(path: string, suffix: string): string {
     return suffix === "" ? GRAPH_ROOT : `${GRAPH_ROOT}${suffix}`;
   }
   // Non-root: /me/drive/root:<path>:<suffix>
-  return suffix === ""
-    ? `${GRAPH_ROOT}:${seg}:`
-    : `${GRAPH_ROOT}:${seg}:${suffix}`;
+  return suffix === "" ? `${GRAPH_ROOT}:${seg}:` : `${GRAPH_ROOT}:${seg}:${suffix}`;
 }
 
 /** Build the Graph URL for a handle (driveItemId) target. */
 function handleUrl(handle: string, suffix: string): string {
-  return suffix === ""
-    ? `${GRAPH_ITEMS}/${handle}`
-    : `${GRAPH_ITEMS}/${handle}${suffix}`;
+  return suffix === "" ? `${GRAPH_ITEMS}/${handle}` : `${GRAPH_ITEMS}/${handle}${suffix}`;
 }
 
 // ---------------------------------------------------------------------------
@@ -300,15 +299,11 @@ function buildFileEntry(item: DriveItem): DatasourceFileEntry<"onedrive"> {
   const mimeFamily: DatasourceMimeFamily = isFolder
     ? "folder"
     : mimeFamilyFromMime(item.file?.mimeType);
-  const modifiedAt = item.lastModifiedDateTime
-    ? new Date(item.lastModifiedDateTime).getTime()
-    : 0;
+  const modifiedAt = item.lastModifiedDateTime ? new Date(item.lastModifiedDateTime).getTime() : 0;
   const providerMetadata: ProviderMetadata<"onedrive"> = {
     driveItemId: id,
     ...(item.file?.mimeType ? { mimeType: item.file.mimeType } : {}),
-    ...(item.parentReference?.driveId
-      ? { driveId: item.parentReference.driveId }
-      : {}),
+    ...(item.parentReference?.driveId ? { driveId: item.parentReference.driveId } : {}),
   };
   const entry: DatasourceFileEntry<"onedrive"> = {
     path: driveItemToPath(item),
@@ -369,9 +364,7 @@ function readIdTokenTid(idToken: string): string | undefined {
 /** Read `meta.account` into an `AccountIdentity` when it is a well-formed
  * `{ sub: string; email: string }`; otherwise `undefined`. Tolerant of legacy
  * credentials that lack the field (D8). */
-function readAccountFromMeta(
-  meta: Record<string, unknown>,
-): AccountIdentity | undefined {
+function readAccountFromMeta(meta: Record<string, unknown>): AccountIdentity | undefined {
   const account = meta.account;
   if (account === null || typeof account !== "object") return undefined;
   const { sub, email } = account as Record<string, unknown>;
@@ -393,8 +386,7 @@ function readCredsFromStored(credentials: StoredCredentials): OneDriveCredsMeta 
       datasourceId: "<init>",
       retryable: false,
       raw: "onedrive-missing-oauth-config",
-      message:
-        "OneDrive credentials must include meta.clientId, meta.tenantId, meta.redirectUri",
+      message: "OneDrive credentials must include meta.clientId, meta.tenantId, meta.redirectUri",
     });
   }
   const account = readAccountFromMeta(meta);
@@ -503,7 +495,8 @@ export class OneDriveClient extends BaseDatasourceClient<"onedrive"> {
     // Reconnect same-account anchor (D4). `undefined` on first connect.
     this.expectedAccount = expectedAccount;
     this.graphFactory = options.graphFactory ?? createDefaultGraphFactory();
-    this.fetchImpl = options.fetchImpl ?? ((globalThis as { fetch: typeof fetch }).fetch).bind(globalThis);
+    this.fetchImpl =
+      options.fetchImpl ?? (globalThis as { fetch: typeof fetch }).fetch.bind(globalThis);
     this.lruCap = options.lruCap ?? 512;
     // No engine-bus subscription: cache eviction is performed inline by the
     // mutating ops (doDeleteFileImpl / doRenameImpl) — see
@@ -769,9 +762,8 @@ export class OneDriveClient extends BaseDatasourceClient<"onedrive"> {
       throw this.normalizeErrorImpl({
         code: typeof parsed.error === "string" ? parsed.error : "provider-error",
         statusCode: resp.status,
-        message: typeof parsed.error_description === "string"
-          ? parsed.error_description
-          : undefined,
+        message:
+          typeof parsed.error_description === "string" ? parsed.error_description : undefined,
       });
     }
     const accessToken = parsed.access_token;
@@ -1011,9 +1003,7 @@ export class OneDriveClient extends BaseDatasourceClient<"onedrive"> {
     scope?: Target,
   ): Promise<DatasourceFileEntry<"onedrive">[]> {
     const suffix = `/search(q='${encodeQueryValue(query)}')`;
-    const url = scope
-      ? this.resolveTargetUrl(scope, suffix)
-      : `${GRAPH_ROOT}${suffix}`;
+    const url = scope ? this.resolveTargetUrl(scope, suffix) : `${GRAPH_ROOT}${suffix}`;
     const resp = (await this.graph().api(url).get()) as { value?: DriveItem[] };
     const out: DatasourceFileEntry<"onedrive">[] = [];
     for (const item of resp.value ?? []) {
@@ -1026,9 +1016,7 @@ export class OneDriveClient extends BaseDatasourceClient<"onedrive"> {
   // getMetadata
   // -------------------------------------------------------------------------
 
-  protected override async doGetMetadataImpl(
-    target: Target,
-  ): Promise<FileMetadata<"onedrive">> {
+  protected override async doGetMetadataImpl(target: Target): Promise<FileMetadata<"onedrive">> {
     const url = this.resolveTargetUrl(target, "");
     const item = (await this.graph().api(url).get()) as DriveItem;
     const entry = buildFileEntry(item);
@@ -1115,12 +1103,14 @@ export class OneDriveClient extends BaseDatasourceClient<"onedrive"> {
   ): Promise<DatasourceFileEntry<"onedrive">> {
     // Step 1: ask Graph for an upload session; get back `uploadUrl`.
     const sessionUrl = childPathUrl(parent, name, "/createUploadSession");
-    const session = (await this.graph().api(sessionUrl).post({
-      item: {
-        "@microsoft.graph.conflictBehavior": "replace",
-        name,
-      },
-    })) as { uploadUrl?: string };
+    const session = (await this.graph()
+      .api(sessionUrl)
+      .post({
+        item: {
+          "@microsoft.graph.conflictBehavior": "replace",
+          name,
+        },
+      })) as { uploadUrl?: string };
     if (!session.uploadUrl || typeof session.uploadUrl !== "string") {
       throw this.normalizeErrorImpl({
         message: "create-upload-session-missing-uploadUrl",
@@ -1139,12 +1129,10 @@ export class OneDriveClient extends BaseDatasourceClient<"onedrive"> {
     options.signal?.addEventListener(
       "abort",
       () => {
-         
         this.fetchImpl(uploadUrl, {
           method: "DELETE",
           signal: AbortSignal.timeout(5000),
         }).catch((err) => {
-           
           console.warn("[onedrive] upload-session cleanup failed:", err);
         });
       },
@@ -1299,9 +1287,7 @@ export class OneDriveClient extends BaseDatasourceClient<"onedrive"> {
       // to refuse BEFORE issuing the PATCH.
       let probe: DriveItem;
       try {
-        probe = (await this.graph()
-          .api(`${GRAPH_ITEMS}/${itemId}`)
-          .get()) as DriveItem;
+        probe = (await this.graph().api(`${GRAPH_ITEMS}/${itemId}`).get()) as DriveItem;
       } catch (err) {
         throw this.normalizeErrorImpl(err);
       }
@@ -1322,9 +1308,9 @@ export class OneDriveClient extends BaseDatasourceClient<"onedrive"> {
       // case for symmetry with Drive's handling.
       let listResp: { value?: DriveItem[] };
       try {
-        listResp = (await this.graph()
-          .api(this.childrenFilterUrl(parentId, newName))
-          .get()) as { value?: DriveItem[] };
+        listResp = (await this.graph().api(this.childrenFilterUrl(parentId, newName)).get()) as {
+          value?: DriveItem[];
+        };
       } catch (err) {
         throw this.normalizeErrorImpl(err);
       }
@@ -1345,17 +1331,15 @@ export class OneDriveClient extends BaseDatasourceClient<"onedrive"> {
       // Sibling pre-check: a single match short-circuits with `conflict`.
       let listResp: { value?: DriveItem[] };
       try {
-        listResp = (await this.graph()
-          .api(this.childrenFilterUrl(parentId, newName))
-          .get()) as { value?: DriveItem[] };
+        listResp = (await this.graph().api(this.childrenFilterUrl(parentId, newName)).get()) as {
+          value?: DriveItem[];
+        };
       } catch (err) {
         throw this.normalizeErrorImpl(err);
       }
       const matches = listResp.value ?? [];
       if (matches.length > 0) {
-        const existingPath = parentPath
-          ? `${parentPath}/${newName}`
-          : `/${newName}`;
+        const existingPath = parentPath ? `${parentPath}/${newName}` : `/${newName}`;
         throw new DatasourceError<"onedrive">({
           tag: DatasourceErrorTag.Conflict,
           datasourceType: "onedrive",
@@ -1378,8 +1362,7 @@ export class OneDriveClient extends BaseDatasourceClient<"onedrive"> {
       const { base, ext } = splitNameForSuffix(newName);
       let chosen: string | null = null;
       for (let attempt = 1; attempt <= 99; attempt++) {
-        const candidate =
-          attempt === 1 ? newName : `${base}-${attempt}${ext}`;
+        const candidate = attempt === 1 ? newName : `${base}-${attempt}${ext}`;
         let listResp: { value?: DriveItem[] };
         try {
           listResp = (await this.graph()
@@ -1432,17 +1415,14 @@ export class OneDriveClient extends BaseDatasourceClient<"onedrive"> {
         .filter((s) => s.length > 0);
       segs.pop();
       const parent = segs.length === 0 ? "" : `/${segs.join("/")}`;
-      entryPath =
-        parent === "" ? `/${effectiveName}` : `${parent}/${effectiveName}`;
+      entryPath = parent === "" ? `/${effectiveName}` : `${parent}/${effectiveName}`;
     } else {
       entryPath = `/${effectiveName}`;
     }
     const providerMetadata: ProviderMetadata<"onedrive"> = {
       driveItemId: updated.id ?? itemId,
       ...(updated.file?.mimeType ? { mimeType: updated.file.mimeType } : {}),
-      ...(updated.parentReference?.driveId
-        ? { driveId: updated.parentReference.driveId }
-        : {}),
+      ...(updated.parentReference?.driveId ? { driveId: updated.parentReference.driveId } : {}),
     };
     const modifiedAt = updated.lastModifiedDateTime
       ? new Date(updated.lastModifiedDateTime).getTime()
@@ -1523,9 +1503,7 @@ export class OneDriveClient extends BaseDatasourceClient<"onedrive"> {
   private childrenFilterUrl(parentId: string, name: string): string {
     const odataEscaped = name.replace(/'/g, "''");
     const filter = `name eq '${odataEscaped}'`;
-    return `${GRAPH_ITEMS}/${parentId}/children?$filter=${encodeURIComponent(
-      filter,
-    )}`;
+    return `${GRAPH_ITEMS}/${parentId}/children?$filter=${encodeURIComponent(filter)}`;
   }
 
   // -------------------------------------------------------------------------
@@ -1595,9 +1573,7 @@ export class OneDriveClient extends BaseDatasourceClient<"onedrive"> {
       throw this.normalizeErrorImpl({
         statusCode: resp.status,
         ...(bodyJson?.error?.code ? { code: bodyJson.error.code } : {}),
-        ...(bodyJson?.error?.message
-          ? { message: bodyJson.error.message }
-          : {}),
+        ...(bodyJson?.error?.message ? { message: bodyJson.error.message } : {}),
         body: bodyJson,
       });
     }
@@ -1675,9 +1651,7 @@ export class OneDriveClient extends BaseDatasourceClient<"onedrive"> {
     }
     let item: DriveItem;
     try {
-      item = (await this.graph()
-        .api(pathUrl(target.path, ""))
-        .get()) as DriveItem;
+      item = (await this.graph().api(pathUrl(target.path, "")).get()) as DriveItem;
     } catch (err) {
       throw this.normalizeErrorImpl(err);
     }
@@ -1781,9 +1755,7 @@ export class OneDriveClient extends BaseDatasourceClient<"onedrive"> {
         datasourceId: this.datasourceId,
         retryable,
         raw,
-        ...(extra.retryAfterMs !== undefined
-          ? { retryAfterMs: extra.retryAfterMs }
-          : {}),
+        ...(extra.retryAfterMs !== undefined ? { retryAfterMs: extra.retryAfterMs } : {}),
         ...(extra.message ? { message: extra.message } : message ? { message } : {}),
       });
 
@@ -1829,9 +1801,7 @@ export class OneDriveClient extends BaseDatasourceClient<"onedrive"> {
         ? Number.parseInt(retryAfterHeader, 10) * 1000
         : undefined;
       return mk("rate-limited", true, {
-        ...(retryAfterMs !== undefined && !Number.isNaN(retryAfterMs)
-          ? { retryAfterMs }
-          : {}),
+        ...(retryAfterMs !== undefined && !Number.isNaN(retryAfterMs) ? { retryAfterMs } : {}),
       });
     }
     // quotaLimitReached — storage quota exhausted. The 8-tag taxonomy does
@@ -1896,11 +1866,8 @@ function childPathUrl(parent: Target, name: string, suffix: string): string {
   // `pathPosix.join` preserves the encoded segments and inserts the
   // separator.
   const parentSeg = pathToGraphSegment(parent.path);
-  const joined =
-    parentSeg === "" ? `/${encodedName}` : pathPosix.join(parentSeg, encodedName);
-  return suffix === ""
-    ? `${GRAPH_ROOT}:${joined}:`
-    : `${GRAPH_ROOT}:${joined}:${suffix}`;
+  const joined = parentSeg === "" ? `/${encodedName}` : pathPosix.join(parentSeg, encodedName);
+  return suffix === "" ? `${GRAPH_ROOT}:${joined}:` : `${GRAPH_ROOT}:${joined}:${suffix}`;
 }
 
 /** Encode a value for the Graph `search(q='...')` expression. The value is
@@ -1969,13 +1936,7 @@ export const createOneDriveClientForAuth: PreAuthFactoryFn<"onedrive"> = (
   // reconnect same-account anchor; threaded to the 5th constructor slot so the
   // exchange can hard-block a different-account reconnect (D4). `undefined` on
   // first connect (capture-only).
-  return new OneDriveClient(
-    { datasourceId, ctx },
-    null,
-    {},
-    preAuth,
-    expectedAccount,
-  );
+  return new OneDriveClient({ datasourceId, ctx }, null, {}, preAuth, expectedAccount);
 };
 
 /**

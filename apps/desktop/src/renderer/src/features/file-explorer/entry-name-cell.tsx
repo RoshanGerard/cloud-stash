@@ -20,17 +20,8 @@ export interface EntryNameCellProps {
   titleAttr?: string;
 }
 
-export function EntryNameCell({
-  store,
-  entry,
-  className,
-  titleAttr,
-}: EntryNameCellProps) {
-  const state = useSyncExternalStore(
-    store.subscribe,
-    store.getSnapshot,
-    store.getSnapshot,
-  );
+export function EntryNameCell({ store, entry, className, titleAttr }: EntryNameCellProps) {
+  const state = useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
   const pendingOp = state.pendingOps[entry.id];
   const isPendingRename = pendingOp?.kind === "rename";
   const isEditing = state.editingId === entry.id && !isPendingRename;
@@ -50,15 +41,10 @@ export function EntryNameCell({
 
   // Optimistic rename: show the requested name while the op is in flight.
   const displayName =
-    isPendingRename && pendingOp?.newName !== undefined
-      ? pendingOp.newName
-      : entry.name;
+    isPendingRename && pendingOp?.newName !== undefined ? pendingOp.newName : entry.name;
 
   return (
-    <span
-      className={cn("truncate", isPendingRename && "opacity-60", className)}
-      title={titleAttr}
-    >
+    <span className={cn("truncate", isPendingRename && "opacity-60", className)} title={titleAttr}>
       {displayName}
     </span>
   );

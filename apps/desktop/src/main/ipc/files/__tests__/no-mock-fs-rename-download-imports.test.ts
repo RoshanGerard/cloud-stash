@@ -30,8 +30,7 @@ const MAIN_ROOT = path.resolve(HERE, "..", "..", "..");
 //   import { download as d } from "../mock-fs";
 // The `[^"']*` segment lets the import path land at any depth above the
 // caller — the named-binding check is what enforces the rule.
-const MOCK_FS_IMPORT_RE =
-  /import\s*\{([^}]+)\}\s*from\s*["'][^"']*\/mock-fs(?:\.js)?["']/g;
+const MOCK_FS_IMPORT_RE = /import\s*\{([^}]+)\}\s*from\s*["'][^"']*\/mock-fs(?:\.js)?["']/g;
 
 interface Offender {
   readonly file: string;

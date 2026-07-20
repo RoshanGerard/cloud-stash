@@ -24,26 +24,12 @@ import * as os from "node:os";
 import * as path from "node:path";
 
 import type { RequestFrame } from "@cloudstash/ipc-contracts/sync-service";
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-  type Mock,
-} from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from "vitest";
 
 import { FramingDecoder, encodeFrame } from "./framing.js";
 import { SyncClient, SyncDisconnectedError } from "./client.js";
-import {
-  startSupervisor,
-  type SupervisorHandle,
-} from "./supervisor.js";
-import {
-  createSyncEventBridge,
-  __resetSyncEventBridgeForTesting,
-} from "./event-bridge.js";
+import { startSupervisor, type SupervisorHandle } from "./supervisor.js";
+import { createSyncEventBridge, __resetSyncEventBridgeForTesting } from "./event-bridge.js";
 
 // ---------------------------------------------------------------------------
 // Helpers — fake BrowserWindow
@@ -103,7 +89,9 @@ async function startFakeListener(
     whenConnected,
     pushEvent(name, payload) {
       if (!clientSocket) return;
-      clientSocket.write(encodeFrame({ kind: "event", name, payload } as Parameters<typeof encodeFrame>[0]));
+      clientSocket.write(
+        encodeFrame({ kind: "event", name, payload } as Parameters<typeof encodeFrame>[0]),
+      );
     },
     close: () => Promise.resolve(),
   };
@@ -121,14 +109,23 @@ async function startFakeListener(
           return;
         }
         if (frame.command === "sync:subscribe-events") {
-          socket.write(encodeFrame({ id: frame.id, kind: "response", ok: true, result: { subscribed: true } } as Parameters<typeof encodeFrame>[0]));
+          socket.write(
+            encodeFrame({
+              id: frame.id,
+              kind: "response",
+              ok: true,
+              result: { subscribed: true },
+            } as Parameters<typeof encodeFrame>[0]),
+          );
         } else if (frame.command === "sync:list-jobs") {
-          socket.write(encodeFrame({
-            id: frame.id,
-            kind: "response",
-            ok: true,
-            result: { jobs: jobsForSeed },
-          } as Parameters<typeof encodeFrame>[0]));
+          socket.write(
+            encodeFrame({
+              id: frame.id,
+              kind: "response",
+              ok: true,
+              result: { jobs: jobsForSeed },
+            } as Parameters<typeof encodeFrame>[0]),
+          );
         }
       },
       onError: () => void 0,
@@ -183,84 +180,99 @@ afterEach(async () => {
 // ---------------------------------------------------------------------------
 
 describe("createSyncEventBridge — reconnect", () => {
-  it(
-    "re-issues subscribe + list-jobs after disconnect and emits a second sync-state-seed",
-    async () => {
-      const pipePath = pipeFor("reconnect-seed");
+  it("re-issues subscribe + list-jobs after disconnect and emits a second sync-state-seed", async () => {
+    const pipePath = pipeFor("reconnect-seed");
 
-      const firstJob = {
-        id: "j-first", kind: "upload", datasourceId: "ds-1", sourcePath: "/a",
-        targetPath: null, conflictPolicy: "overwrite", status: "running",
-        attempt: 1, lastErrorTag: null, lastErrorMessage: null,
-        createdAt: 0, updatedAt: 0,
-      };
-      const secondJob = {
-        id: "j-second", kind: "upload", datasourceId: "ds-2", sourcePath: "/b",
-        targetPath: null, conflictPolicy: "overwrite", status: "queued",
-        attempt: 0, lastErrorTag: null, lastErrorMessage: null,
-        createdAt: 0, updatedAt: 0,
-      };
+    const firstJob = {
+      id: "j-first",
+      kind: "upload",
+      datasourceId: "ds-1",
+      sourcePath: "/a",
+      targetPath: null,
+      conflictPolicy: "overwrite",
+      status: "running",
+      attempt: 1,
+      lastErrorTag: null,
+      lastErrorMessage: null,
+      createdAt: 0,
+      updatedAt: 0,
+    };
+    const secondJob = {
+      id: "j-second",
+      kind: "upload",
+      datasourceId: "ds-2",
+      sourcePath: "/b",
+      targetPath: null,
+      conflictPolicy: "overwrite",
+      status: "queued",
+      attempt: 0,
+      lastErrorTag: null,
+      lastErrorMessage: null,
+      createdAt: 0,
+      updatedAt: 0,
+    };
 
-      // First listener — will serve the first connection
-      const firstListener = await startFakeListener(pipePath, [firstJob]);
-      servers.push(firstListener);
+    // First listener — will serve the first connection
+    const firstListener = await startFakeListener(pipePath, [firstJob]);
+    servers.push(firstListener);
 
-      const handle = await startSupervisor({
-        mode: "dev",
-        pipePath,
-        connectTimeoutMs: 500,
-      });
-      handles.push(handle);
+    const handle = await startSupervisor({
+      mode: "dev",
+      pipePath,
+      connectTimeoutMs: 500,
+    });
+    handles.push(handle);
 
-      const bridge = createSyncEventBridge(handle);
-      const win = makeFakeWindow();
-      bridge.registerWindow(win as unknown as import("electron").BrowserWindow);
+    const bridge = createSyncEventBridge(handle);
+    const win = makeFakeWindow();
+    bridge.registerWindow(win as unknown as import("electron").BrowserWindow);
 
-      // Wait for first handshake
-      await firstListener.whenConnected;
-      await new Promise<void>((r) => setTimeout(r, 50));
+    // Wait for first handshake
+    await firstListener.whenConnected;
+    await new Promise<void>((r) => setTimeout(r, 50));
 
-      const firstSeedCalls = win.webContents.send.mock.calls.filter(
-        (c: unknown[]) => (c[1] as { kind?: string })?.kind === "sync-state-seed",
-      );
-      expect(firstSeedCalls).toHaveLength(1);
-      expect(
-        (firstSeedCalls[0]![1] as { payload: { jobs: Array<{ id: string }> } }).payload.jobs.map((j) => j.id),
-      ).toContain("j-first");
+    const firstSeedCalls = win.webContents.send.mock.calls.filter(
+      (c: unknown[]) => (c[1] as { kind?: string })?.kind === "sync-state-seed",
+    );
+    expect(firstSeedCalls).toHaveLength(1);
+    expect(
+      (firstSeedCalls[0]![1] as { payload: { jobs: Array<{ id: string }> } }).payload.jobs.map(
+        (j) => j.id,
+      ),
+    ).toContain("j-first");
 
-      win.webContents.send.mockClear();
+    win.webContents.send.mockClear();
 
-      // Close first listener to trigger disconnect
-      await firstListener.close();
+    // Close first listener to trigger disconnect
+    await firstListener.close();
 
-      // Wait for disconnect to propagate
-      await new Promise<void>((r) => setTimeout(r, 50));
+    // Wait for disconnect to propagate
+    await new Promise<void>((r) => setTimeout(r, 50));
 
-      // Start second listener — will serve the reconnect
-      const secondListener = await startFakeListener(pipePath, [secondJob]);
-      servers.push(secondListener);
+    // Start second listener — will serve the reconnect
+    const secondListener = await startFakeListener(pipePath, [secondJob]);
+    servers.push(secondListener);
 
-      // Wait for reconnect handshake
-      await secondListener.whenConnected;
-      await new Promise<void>((r) => setTimeout(r, 100));
+    // Wait for reconnect handshake
+    await secondListener.whenConnected;
+    await new Promise<void>((r) => setTimeout(r, 100));
 
-      // Second sync-state-seed must have been emitted with the new job
-      const secondSeedCalls = win.webContents.send.mock.calls.filter(
-        (c: unknown[]) => (c[1] as { kind?: string })?.kind === "sync-state-seed",
-      );
-      expect(secondSeedCalls.length).toBeGreaterThanOrEqual(1);
-      const secondSeedJobs = (secondSeedCalls[0]![1] as { payload: { jobs: Array<{ id: string }> } }).payload.jobs;
-      expect(secondSeedJobs.map((j) => j.id)).toContain("j-second");
+    // Second sync-state-seed must have been emitted with the new job
+    const secondSeedCalls = win.webContents.send.mock.calls.filter(
+      (c: unknown[]) => (c[1] as { kind?: string })?.kind === "sync-state-seed",
+    );
+    expect(secondSeedCalls.length).toBeGreaterThanOrEqual(1);
+    const secondSeedJobs = (secondSeedCalls[0]![1] as { payload: { jobs: Array<{ id: string }> } })
+      .payload.jobs;
+    expect(secondSeedJobs.map((j) => j.id)).toContain("j-second");
 
-      // subscribe-events must have been sent on the new connection too
-      expect(secondListener.receivedCommands).toContain("sync:subscribe-events");
-      expect(secondListener.receivedCommands).toContain("sync:list-jobs");
-      const subIdx = secondListener.receivedCommands.indexOf("sync:subscribe-events");
-      const listIdx = secondListener.receivedCommands.indexOf("sync:list-jobs");
-      expect(subIdx).toBeLessThan(listIdx);
-    },
-    8000,
-  );
+    // subscribe-events must have been sent on the new connection too
+    expect(secondListener.receivedCommands).toContain("sync:subscribe-events");
+    expect(secondListener.receivedCommands).toContain("sync:list-jobs");
+    const subIdx = secondListener.receivedCommands.indexOf("sync:subscribe-events");
+    const listIdx = secondListener.receivedCommands.indexOf("sync:list-jobs");
+    expect(subIdx).toBeLessThan(listIdx);
+  }, 8000);
 
   // ---------------------------------------------------------------------------
   // Code-review I-A: reconnect emit ordering + handshake failure logging.
@@ -276,212 +288,227 @@ describe("createSyncEventBridge — reconnect", () => {
   // first, then "reconnected"); log any handshake failure via console.warn.
   // ---------------------------------------------------------------------------
 
-  it(
-    "emits sync-state-seed BEFORE service-reconnected on a successful reconnect (I-A)",
-    async () => {
-      const pipePath = pipeFor("emit-order");
+  it("emits sync-state-seed BEFORE service-reconnected on a successful reconnect (I-A)", async () => {
+    const pipePath = pipeFor("emit-order");
 
-      const firstJob = {
-        id: "j-first", kind: "upload", datasourceId: "ds-1", sourcePath: "/a",
-        targetPath: null, conflictPolicy: "overwrite", status: "running",
-        attempt: 1, lastErrorTag: null, lastErrorMessage: null,
-        createdAt: 0, updatedAt: 0,
-      };
-      const secondJob = {
-        id: "j-second", kind: "upload", datasourceId: "ds-2", sourcePath: "/b",
-        targetPath: null, conflictPolicy: "overwrite", status: "queued",
-        attempt: 0, lastErrorTag: null, lastErrorMessage: null,
-        createdAt: 0, updatedAt: 0,
-      };
+    const firstJob = {
+      id: "j-first",
+      kind: "upload",
+      datasourceId: "ds-1",
+      sourcePath: "/a",
+      targetPath: null,
+      conflictPolicy: "overwrite",
+      status: "running",
+      attempt: 1,
+      lastErrorTag: null,
+      lastErrorMessage: null,
+      createdAt: 0,
+      updatedAt: 0,
+    };
+    const secondJob = {
+      id: "j-second",
+      kind: "upload",
+      datasourceId: "ds-2",
+      sourcePath: "/b",
+      targetPath: null,
+      conflictPolicy: "overwrite",
+      status: "queued",
+      attempt: 0,
+      lastErrorTag: null,
+      lastErrorMessage: null,
+      createdAt: 0,
+      updatedAt: 0,
+    };
 
-      const firstListener = await startFakeListener(pipePath, [firstJob]);
-      servers.push(firstListener);
+    const firstListener = await startFakeListener(pipePath, [firstJob]);
+    servers.push(firstListener);
 
-      const handle = await startSupervisor({
-        mode: "dev",
-        pipePath,
-        connectTimeoutMs: 500,
+    const handle = await startSupervisor({
+      mode: "dev",
+      pipePath,
+      connectTimeoutMs: 500,
+    });
+    handles.push(handle);
+
+    const bridge = createSyncEventBridge(handle);
+    const win = makeFakeWindow();
+    bridge.registerWindow(win as unknown as import("electron").BrowserWindow);
+
+    await firstListener.whenConnected;
+    await new Promise<void>((r) => setTimeout(r, 50));
+
+    win.webContents.send.mockClear();
+
+    await firstListener.close();
+    await new Promise<void>((r) => setTimeout(r, 50));
+
+    const secondListener = await startFakeListener(pipePath, [secondJob]);
+    servers.push(secondListener);
+
+    await secondListener.whenConnected;
+    await new Promise<void>((r) => setTimeout(r, 100));
+
+    const emittedEvents = win.webContents.send.mock.calls
+      .filter((c: unknown[]) => c[0] === "sync:event")
+      .map((c: unknown[]) => (c[1] as { kind: string }).kind);
+
+    const seedIdx = emittedEvents.indexOf("sync-state-seed");
+    const reconnectedIdx = emittedEvents.indexOf("service-reconnected");
+
+    expect(seedIdx).toBeGreaterThanOrEqual(0);
+    expect(reconnectedIdx).toBeGreaterThanOrEqual(0);
+    expect(seedIdx).toBeLessThan(reconnectedIdx);
+  }, 8000);
+
+  it("does NOT emit service-reconnected and logs a warning when the reconnect handshake fails (I-A)", async () => {
+    const pipePath = pipeFor("handshake-fail");
+
+    const firstJob = {
+      id: "j-first",
+      kind: "upload",
+      datasourceId: "ds-1",
+      sourcePath: "/a",
+      targetPath: null,
+      conflictPolicy: "overwrite",
+      status: "running",
+      attempt: 1,
+      lastErrorTag: null,
+      lastErrorMessage: null,
+      createdAt: 0,
+      updatedAt: 0,
+    };
+
+    const firstListener = await startFakeListener(pipePath, [firstJob]);
+    servers.push(firstListener);
+
+    const handle = await startSupervisor({
+      mode: "dev",
+      pipePath,
+      connectTimeoutMs: 500,
+    });
+    handles.push(handle);
+
+    const bridge = createSyncEventBridge(handle);
+    const win = makeFakeWindow();
+    bridge.registerWindow(win as unknown as import("electron").BrowserWindow);
+
+    await firstListener.whenConnected;
+    await new Promise<void>((r) => setTimeout(r, 50));
+
+    await firstListener.close();
+    await new Promise<void>((r) => setTimeout(r, 50));
+
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    // Custom listener that ACKs sync:subscribe-events with ok:true and
+    // replies to sync:list-jobs with ok:false — simulating a service-side
+    // error response during the reconnect handshake.
+    let customSocket: net.Socket | null = null;
+    const customServer = net.createServer((socket) => {
+      customSocket = socket;
+      const decoder = new FramingDecoder({
+        onFrame: (f) => {
+          const frame = f as RequestFrame;
+          if (frame.kind !== "request") return;
+          if (frame.command === "sync:subscribe-events") {
+            socket.write(
+              encodeFrame({
+                id: frame.id,
+                kind: "response",
+                ok: true,
+                result: { subscribed: true },
+              } as Parameters<typeof encodeFrame>[0]),
+            );
+          } else if (frame.command === "sync:list-jobs") {
+            socket.write(
+              encodeFrame({
+                id: frame.id,
+                kind: "response",
+                ok: false,
+                error: { tag: "internal", message: "simulated handshake failure" },
+              } as Parameters<typeof encodeFrame>[0]),
+            );
+          }
+        },
+        onError: () => void 0,
       });
-      handles.push(handle);
-
-      const bridge = createSyncEventBridge(handle);
-      const win = makeFakeWindow();
-      bridge.registerWindow(win as unknown as import("electron").BrowserWindow);
-
-      await firstListener.whenConnected;
-      await new Promise<void>((r) => setTimeout(r, 50));
-
-      win.webContents.send.mockClear();
-
-      await firstListener.close();
-      await new Promise<void>((r) => setTimeout(r, 50));
-
-      const secondListener = await startFakeListener(pipePath, [secondJob]);
-      servers.push(secondListener);
-
-      await secondListener.whenConnected;
-      await new Promise<void>((r) => setTimeout(r, 100));
-
-      const emittedEvents = win.webContents.send.mock.calls
-        .filter((c: unknown[]) => c[0] === "sync:event")
-        .map((c: unknown[]) => (c[1] as { kind: string }).kind);
-
-      const seedIdx = emittedEvents.indexOf("sync-state-seed");
-      const reconnectedIdx = emittedEvents.indexOf("service-reconnected");
-
-      expect(seedIdx).toBeGreaterThanOrEqual(0);
-      expect(reconnectedIdx).toBeGreaterThanOrEqual(0);
-      expect(seedIdx).toBeLessThan(reconnectedIdx);
-    },
-    8000,
-  );
-
-  it(
-    "does NOT emit service-reconnected and logs a warning when the reconnect handshake fails (I-A)",
-    async () => {
-      const pipePath = pipeFor("handshake-fail");
-
-      const firstJob = {
-        id: "j-first", kind: "upload", datasourceId: "ds-1", sourcePath: "/a",
-        targetPath: null, conflictPolicy: "overwrite", status: "running",
-        attempt: 1, lastErrorTag: null, lastErrorMessage: null,
-        createdAt: 0, updatedAt: 0,
-      };
-
-      const firstListener = await startFakeListener(pipePath, [firstJob]);
-      servers.push(firstListener);
-
-      const handle = await startSupervisor({
-        mode: "dev",
-        pipePath,
-        connectTimeoutMs: 500,
+      socket.on("data", (chunk) => decoder.push(chunk));
+      socket.on("error", () => void 0);
+    });
+    await new Promise<void>((resolve, reject) => {
+      customServer.once("error", reject);
+      customServer.listen(pipePath, () => {
+        customServer.removeListener("error", reject);
+        resolve();
       });
-      handles.push(handle);
+    });
+    servers.push({
+      close: () =>
+        new Promise<void>((resolve) => {
+          if (customSocket) {
+            customSocket.destroy();
+            customSocket = null;
+          }
+          customServer.close(() => resolve());
+        }),
+    });
 
-      const bridge = createSyncEventBridge(handle);
-      const win = makeFakeWindow();
-      bridge.registerWindow(win as unknown as import("electron").BrowserWindow);
+    // Wait for reconnect + handshake attempt
+    await new Promise<void>((r) => setTimeout(r, 300));
 
-      await firstListener.whenConnected;
-      await new Promise<void>((r) => setTimeout(r, 50));
+    // Filter events emitted on sync:event after the first listener closed.
+    // (The initial seed from listener #1 was already delivered before we
+    // started spying on console.warn.)
+    const emittedEventKinds = win.webContents.send.mock.calls
+      .filter((c: unknown[]) => c[0] === "sync:event")
+      .map((c: unknown[]) => (c[1] as { kind: string }).kind);
 
-      await firstListener.close();
-      await new Promise<void>((r) => setTimeout(r, 50));
+    expect(emittedEventKinds).not.toContain("service-reconnected");
+    expect(warnSpy).toHaveBeenCalled();
+    const warnArgs = warnSpy.mock.calls
+      .flat()
+      .map((a) => String(a))
+      .join(" ");
+    expect(warnArgs.toLowerCase()).toMatch(/handshake|sync-event-bridge/);
 
-      const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    warnSpy.mockRestore();
+  }, 10000);
 
-      // Custom listener that ACKs sync:subscribe-events with ok:true and
-      // replies to sync:list-jobs with ok:false — simulating a service-side
-      // error response during the reconnect handshake.
-      let customSocket: net.Socket | null = null;
-      const customServer = net.createServer((socket) => {
-        customSocket = socket;
-        const decoder = new FramingDecoder({
-          onFrame: (f) => {
-            const frame = f as RequestFrame;
-            if (frame.kind !== "request") return;
-            if (frame.command === "sync:subscribe-events") {
-              socket.write(
-                encodeFrame({
-                  id: frame.id,
-                  kind: "response",
-                  ok: true,
-                  result: { subscribed: true },
-                } as Parameters<typeof encodeFrame>[0]),
-              );
-            } else if (frame.command === "sync:list-jobs") {
-              socket.write(
-                encodeFrame({
-                  id: frame.id,
-                  kind: "response",
-                  ok: false,
-                  error: { tag: "internal", message: "simulated handshake failure" },
-                } as Parameters<typeof encodeFrame>[0]),
-              );
-            }
-          },
-          onError: () => void 0,
-        });
-        socket.on("data", (chunk) => decoder.push(chunk));
-        socket.on("error", () => void 0);
-      });
-      await new Promise<void>((resolve, reject) => {
-        customServer.once("error", reject);
-        customServer.listen(pipePath, () => {
-          customServer.removeListener("error", reject);
-          resolve();
-        });
-      });
-      servers.push({
-        close: () =>
-          new Promise<void>((resolve) => {
-            if (customSocket) {
-              customSocket.destroy();
-              customSocket = null;
-            }
-            customServer.close(() => resolve());
-          }),
-      });
+  it("in-flight requests reject with service-disconnected when the socket closes (F-4)", async () => {
+    const pipePath = pipeFor("inflight-reject");
 
-      // Wait for reconnect + handshake attempt
-      await new Promise<void>((r) => setTimeout(r, 300));
+    // A listener that accepts connections but does NOT respond to any requests
+    // (so list-jobs hangs as an in-flight request)
+    const listener = await startFakeListener(pipePath);
+    listener.onRequest = () => {
+      // intentionally do nothing — simulate unresponsive service
+    };
+    servers.push(listener);
 
-      // Filter events emitted on sync:event after the first listener closed.
-      // (The initial seed from listener #1 was already delivered before we
-      // started spying on console.warn.)
-      const emittedEventKinds = win.webContents.send.mock.calls
-        .filter((c: unknown[]) => c[0] === "sync:event")
-        .map((c: unknown[]) => (c[1] as { kind: string }).kind);
+    // Use a real SyncClient connected to the listener to test the rejection
+    const socket = await new Promise<net.Socket>((resolve, reject) => {
+      const s = net.connect(pipePath);
+      s.once("connect", () => resolve(s));
+      s.once("error", reject);
+    });
+    const client = new SyncClient(socket);
 
-      expect(emittedEventKinds).not.toContain("service-reconnected");
-      expect(warnSpy).toHaveBeenCalled();
-      const warnArgs = warnSpy.mock.calls.flat().map((a) => String(a)).join(" ");
-      expect(warnArgs.toLowerCase()).toMatch(/handshake|sync-event-bridge/);
+    // Issue a request that will hang in-flight (no response from server)
+    const inflightPromise = client.listJobs({});
 
-      warnSpy.mockRestore();
-    },
-    10000,
-  );
+    // Wait for the server to receive the connection
+    await listener.whenConnected;
+    await new Promise<void>((r) => setTimeout(r, 20));
 
-  it(
-    "in-flight requests reject with service-disconnected when the socket closes (F-4)",
-    async () => {
-      const pipePath = pipeFor("inflight-reject");
+    // Destroy the connection — simulate service crash
+    socket.destroy();
 
-      // A listener that accepts connections but does NOT respond to any requests
-      // (so list-jobs hangs as an in-flight request)
-      const listener = await startFakeListener(pipePath);
-      listener.onRequest = () => {
-        // intentionally do nothing — simulate unresponsive service
-      };
-      servers.push(listener);
+    // The in-flight request must reject with SyncDisconnectedError (F-4:
+    // inherited from SyncClient.handleDisconnect, not reimplemented here)
+    await expect(inflightPromise).rejects.toBeInstanceOf(SyncDisconnectedError);
 
-      // Use a real SyncClient connected to the listener to test the rejection
-      const socket = await new Promise<net.Socket>((resolve, reject) => {
-        const s = net.connect(pipePath);
-        s.once("connect", () => resolve(s));
-        s.once("error", reject);
-      });
-      const client = new SyncClient(socket);
-
-      // Issue a request that will hang in-flight (no response from server)
-      const inflightPromise = client.listJobs({});
-
-      // Wait for the server to receive the connection
-      await listener.whenConnected;
-      await new Promise<void>((r) => setTimeout(r, 20));
-
-      // Destroy the connection — simulate service crash
-      socket.destroy();
-
-      // The in-flight request must reject with SyncDisconnectedError (F-4:
-      // inherited from SyncClient.handleDisconnect, not reimplemented here)
-      await expect(inflightPromise).rejects.toBeInstanceOf(SyncDisconnectedError);
-
-      // New request after disconnect also rejects immediately
-      await expect(client.listJobs({})).rejects.toBeInstanceOf(SyncDisconnectedError);
-      expect(client.isConnected).toBe(false);
-    },
-    5000,
-  );
+    // New request after disconnect also rejects immediately
+    await expect(client.listJobs({})).rejects.toBeInstanceOf(SyncDisconnectedError);
+    expect(client.isConnected).toBe(false);
+  }, 5000);
 });

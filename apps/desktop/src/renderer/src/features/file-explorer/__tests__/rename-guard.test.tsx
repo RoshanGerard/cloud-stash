@@ -4,30 +4,14 @@
 // file-explorer composite when the datasource is engine-backed, regardless
 // of how the rename is triggered (F2 keyboard, context menu click).
 
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-} from "vitest";
-import {
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-} from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 
 import type { FileEntry } from "@cloudstash/ipc-contracts";
 
 import { FileExplorer } from "../file-explorer";
-import {
-  __resetExplorerStoreCacheForTests,
-  getOrCreateExplorerStore,
-} from "../store";
+import { __resetExplorerStoreCacheForTests, getOrCreateExplorerStore } from "../store";
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({
@@ -69,9 +53,7 @@ function installApi() {
       list: vi.fn().mockResolvedValue({
         ok: true,
         value: {
-          entries: [
-            makeEntry({ id: "e-a", name: "alpha.txt", path: "/alpha.txt" }),
-          ],
+          entries: [makeEntry({ id: "e-a", name: "alpha.txt", path: "/alpha.txt" })],
           truncated: false,
         },
       }),
@@ -83,12 +65,11 @@ function installApi() {
     },
   };
   if (!("ResizeObserver" in window)) {
-    (window as unknown as { ResizeObserver: unknown }).ResizeObserver =
-      class MockResizeObserver {
-        observe() {}
-        unobserve() {}
-        disconnect() {}
-      };
+    (window as unknown as { ResizeObserver: unknown }).ResizeObserver = class MockResizeObserver {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    };
   }
 }
 
@@ -109,15 +90,11 @@ describe("FileExplorer — rename guardrail for engine-backed datasources", () =
     const store = getOrCreateExplorerStore("ds-guard-1");
     const startEditSpy = vi.spyOn(store, "startEdit");
 
-    render(
-      <FileExplorer datasourceId="ds-guard-1" providerKind="google-drive" />,
-    );
+    render(<FileExplorer datasourceId="ds-guard-1" providerKind="google-drive" />);
 
     // Wait for the entry to render.
     const row = await waitFor(() => {
-      const found = document.querySelector<HTMLElement>(
-        '[data-testid="explorer-row"]',
-      );
+      const found = document.querySelector<HTMLElement>('[data-testid="explorer-row"]');
       if (found === null) throw new Error("row not found");
       return found;
     });
@@ -137,9 +114,7 @@ describe("FileExplorer — rename guardrail for engine-backed datasources", () =
     render(<FileExplorer datasourceId="ds-guard-2" providerKind="mock" />);
 
     const row = await waitFor(() => {
-      const found = document.querySelector<HTMLElement>(
-        '[data-testid="explorer-row"]',
-      );
+      const found = document.querySelector<HTMLElement>('[data-testid="explorer-row"]');
       if (found === null) throw new Error("row not found");
       return found;
     });
@@ -155,22 +130,16 @@ describe("FileExplorer — rename guardrail for engine-backed datasources", () =
     const store = getOrCreateExplorerStore("ds-guard-3");
     const startEditSpy = vi.spyOn(store, "startEdit");
 
-    render(
-      <FileExplorer datasourceId="ds-guard-3" providerKind="google-drive" />,
-    );
+    render(<FileExplorer datasourceId="ds-guard-3" providerKind="google-drive" />);
 
     const row = await waitFor(() => {
-      const found = document.querySelector<HTMLElement>(
-        '[data-testid="explorer-row"]',
-      );
+      const found = document.querySelector<HTMLElement>('[data-testid="explorer-row"]');
       if (found === null) throw new Error("row not found");
       return found;
     });
 
     fireEvent.contextMenu(row);
-    const renameItem = await waitFor(() =>
-      screen.getByTestId("file-context-menu-rename"),
-    );
+    const renameItem = await waitFor(() => screen.getByTestId("file-context-menu-rename"));
     fireEvent.click(renameItem);
 
     expect(startEditSpy).not.toHaveBeenCalled();

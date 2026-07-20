@@ -138,9 +138,9 @@ describe("sync:authenticate-cancel handler â€” implement-datasource-onboarding Â
     // nothing for an unknown id).
     const cancelled = d.events.filter((e) => e.name === "auth-cancelled");
     expect(cancelled).toHaveLength(1);
-    expect(
-      (cancelled[0]!.payload as EventPayloadMap["auth-cancelled"]).correlationId,
-    ).toBe("corr-form");
+    expect((cancelled[0]!.payload as EventPayloadMap["auth-cancelled"]).correlationId).toBe(
+      "corr-form",
+    );
   });
 
   it("idempotent: second cancel for the same correlationId returns cancelled=false, emits NO event", async () => {

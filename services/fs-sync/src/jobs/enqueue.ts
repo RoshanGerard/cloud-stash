@@ -40,11 +40,7 @@ export class SyncAlreadyRunningError extends Error {
   }
 }
 
-const ACTIVE_STATUSES: ReadonlyArray<JobStatus> = [
-  "queued",
-  "running",
-  "waiting-network",
-];
+const ACTIVE_STATUSES: ReadonlyArray<JobStatus> = ["queued", "running", "waiting-network"];
 
 export function enqueueMirror(
   db: Database.Database,
@@ -64,16 +60,10 @@ export function enqueueMirror(
            AND status IN (${ACTIVE_STATUSES.map(() => "?").join(",")})
          LIMIT 1`,
       )
-      .get(input.datasourceId, input.sourcePath, ...ACTIVE_STATUSES) as
-      | { id: string }
-      | undefined;
+      .get(input.datasourceId, input.sourcePath, ...ACTIVE_STATUSES) as { id: string } | undefined;
 
     if (existing) {
-      throw new SyncAlreadyRunningError(
-        existing.id,
-        input.datasourceId,
-        input.sourcePath,
-      );
+      throw new SyncAlreadyRunningError(existing.id, input.datasourceId, input.sourcePath);
     }
 
     new JobRepository(db).insert({

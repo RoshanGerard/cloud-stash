@@ -9,23 +9,8 @@
 // UNCHANGED. The bulk aggregate distinguishes deleted vs failed — one EACCES is
 // never reported as "all cleared".
 
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-  type Mock,
-} from "vitest";
-import {
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-  within,
-} from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from "vitest";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 
 const { toastSuccess, toastError } = vi.hoisted(() => ({
@@ -97,9 +82,7 @@ describe("LeftoverFilesDialog", () => {
     expect(
       await screen.findByRole("heading", { name: /leftover download files/i }),
     ).toBeInTheDocument();
-    expect(
-      screen.getByText(/incomplete files left on disk/i),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/incomplete files left on disk/i)).toBeInTheDocument();
 
     const items = await screen.findAllByRole("listitem");
     expect(items).toHaveLength(2);
@@ -118,48 +101,35 @@ describe("LeftoverFilesDialog", () => {
     render(<LeftoverFilesDialog open onOpenChange={() => {}} />);
 
     // Apostrophe-agnostic: the copy renders a typographic ’ (U+2019).
-    expect(
-      await screen.findByText(/all cleaned up/i),
-    ).toBeInTheDocument();
+    expect(await screen.findByText(/all cleaned up/i)).toBeInTheDocument();
     expect(screen.queryAllByRole("listitem")).toHaveLength(0);
   });
 
   it("per-row Delete dispatches delete-partial and removes the row on success", async () => {
-    installApi([
-      entry({ downloadJobId: "report" }),
-      entry({ downloadJobId: "photo" }),
-    ]);
+    installApi([entry({ downloadJobId: "report" }), entry({ downloadJobId: "photo" })]);
     render(<LeftoverFilesDialog open onOpenChange={() => {}} />);
 
     const items = await screen.findAllByRole("listitem");
-    const reportRow = items.find((el) =>
-      within(el).queryByText("report.bin"),
-    )!;
+    const reportRow = items.find((el) => within(el).queryByText("report.bin"))!;
     fireEvent.click(within(reportRow).getByRole("button", { name: "Delete" }));
 
     await waitFor(() =>
       expect(deletePartialMock).toHaveBeenCalledWith({ downloadJobId: "report" }),
     );
-    await waitFor(() =>
-      expect(screen.queryByText("report.bin")).not.toBeInTheDocument(),
-    );
+    await waitFor(() => expect(screen.queryByText("report.bin")).not.toBeInTheDocument());
     // Sibling row survives.
     expect(screen.getByText("photo.bin")).toBeInTheDocument();
   });
 
   it("per-row Delete failure keeps the row with an inline error", async () => {
     installApi([entry({ downloadJobId: "report" })]);
-    deletePartialMock.mockRejectedValueOnce(
-      new Error("EACCES: permission denied"),
-    );
+    deletePartialMock.mockRejectedValueOnce(new Error("EACCES: permission denied"));
     render(<LeftoverFilesDialog open onOpenChange={() => {}} />);
 
     const items = await screen.findAllByRole("listitem");
     fireEvent.click(within(items[0]!).getByRole("button", { name: "Delete" }));
 
-    expect(
-      await screen.findByText(/couldn.t delete:.*EACCES/i),
-    ).toBeInTheDocument();
+    expect(await screen.findByText(/couldn.t delete:.*EACCES/i)).toBeInTheDocument();
     // Row still present; Delete button remains to re-attempt.
     expect(screen.getByText("report.bin")).toBeInTheDocument();
     expect(
@@ -170,16 +140,12 @@ describe("LeftoverFilesDialog", () => {
   });
 
   it("bulk Delete all confirms, then reports a deleted-vs-failed aggregate (one EACCES ≠ all cleared)", async () => {
-    installApi([
-      entry({ downloadJobId: "ok-1" }),
-      entry({ downloadJobId: "bad-2" }),
-    ]);
+    installApi([entry({ downloadJobId: "ok-1" }), entry({ downloadJobId: "bad-2" })]);
     // ok-1 resolves; bad-2 rejects.
-    deletePartialMock.mockImplementation(
-      (req: { downloadJobId: string }) =>
-        req.downloadJobId === "bad-2"
-          ? Promise.reject(new Error("EACCES: permission denied"))
-          : Promise.resolve({ deleted: true }),
+    deletePartialMock.mockImplementation((req: { downloadJobId: string }) =>
+      req.downloadJobId === "bad-2"
+        ? Promise.reject(new Error("EACCES: permission denied"))
+        : Promise.resolve({ deleted: true }),
     );
     render(<LeftoverFilesDialog open onOpenChange={() => {}} />);
 
@@ -197,34 +163,23 @@ describe("LeftoverFilesDialog", () => {
     await waitFor(() => expect(deletePartialMock).toHaveBeenCalledTimes(2));
     // Aggregate toast distinguishes deleted vs failed — never "all cleared".
     await waitFor(() =>
-      expect(toastError).toHaveBeenCalledWith(
-        "Deleted 1 · 1 couldn't be removed",
-      ),
+      expect(toastError).toHaveBeenCalledWith("Deleted 1 · 1 couldn't be removed"),
     );
     // Succeeded row vanished; failed row stays with its inline error.
-    await waitFor(() =>
-      expect(screen.queryByText("ok-1.bin")).not.toBeInTheDocument(),
-    );
+    await waitFor(() => expect(screen.queryByText("ok-1.bin")).not.toBeInTheDocument());
     expect(screen.getByText("bad-2.bin")).toBeInTheDocument();
     expect(screen.getByText(/couldn.t delete:.*EACCES/i)).toBeInTheDocument();
   });
 
   it("bulk Delete all full success toasts the count and shows the empty state", async () => {
-    installApi([
-      entry({ downloadJobId: "a" }),
-      entry({ downloadJobId: "b" }),
-    ]);
+    installApi([entry({ downloadJobId: "a" }), entry({ downloadJobId: "b" })]);
     render(<LeftoverFilesDialog open onOpenChange={() => {}} />);
 
     await screen.findAllByRole("listitem");
     fireEvent.click(screen.getByRole("button", { name: "Delete all" }));
-    fireEvent.click(
-      await screen.findByRole("button", { name: /delete 2 files/i }),
-    );
+    fireEvent.click(await screen.findByRole("button", { name: /delete 2 files/i }));
 
-    await waitFor(() =>
-      expect(toastSuccess).toHaveBeenCalledWith("Deleted 2 files"),
-    );
+    await waitFor(() => expect(toastSuccess).toHaveBeenCalledWith("Deleted 2 files"));
     expect(await screen.findByText(/all cleaned up/i)).toBeInTheDocument();
   });
 

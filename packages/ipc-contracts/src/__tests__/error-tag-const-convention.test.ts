@@ -214,8 +214,7 @@ function findViolations(): string[] {
       const line = stripLineComment(rawLine);
       if (!PATTERNS.some((re) => re.test(line))) return;
       // Skip contract type-position declarations (definitions, not refs).
-      if (TYPE_DECL.test(line) || TAG_UNION.test(line) || TYPE_MEMBER.test(line))
-        return;
+      if (TYPE_DECL.test(line) || TAG_UNION.test(line) || TYPE_MEMBER.test(line)) return;
       const relPosix = rel.replaceAll(path.sep, "/");
       const key = `${relPosix}|||${rawLine.trim()}`;
       if (WIRE_LITERAL_ALLOWLIST.has(key)) return;

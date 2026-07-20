@@ -23,13 +23,7 @@ export interface WalkOptions {
   readonly ignore?: ReadonlyArray<string>;
 }
 
-const DEFAULT_IGNORE = [
-  ".DS_Store",
-  "Thumbs.db",
-  ".git/",
-  "/.git",
-  ".tmp",
-];
+const DEFAULT_IGNORE = [".DS_Store", "Thumbs.db", ".git/", "/.git", ".tmp"];
 
 export async function walkLocalTree(
   root: string,

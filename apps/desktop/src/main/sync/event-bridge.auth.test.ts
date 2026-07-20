@@ -20,15 +20,7 @@ import * as path from "node:path";
 import type { DatasourceSummary } from "@cloudstash/ipc-contracts";
 import type { RequestFrame } from "@cloudstash/ipc-contracts/sync-service";
 import { SYNC_CHANNELS } from "@cloudstash/ipc-contracts/sync-service-desktop";
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-  type Mock,
-} from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from "vitest";
 
 import { FramingDecoder, encodeFrame } from "./framing.js";
 import { SyncClient } from "./client.js";
@@ -50,10 +42,7 @@ function clientAsHandle(client: SyncClient): SupervisorHandle {
   return {
     getClient: () => client,
     on: ((...args: unknown[]) => {
-      const [event, cb] = args as [
-        "reconnect" | "disconnect",
-        (c?: SyncClient) => void,
-      ];
+      const [event, cb] = args as ["reconnect" | "disconnect", (c?: SyncClient) => void];
       if (event === "reconnect") {
         reconnectListeners.add(cb as (c: SyncClient) => void);
         return () => reconnectListeners.delete(cb as (c: SyncClient) => void);
@@ -110,11 +99,7 @@ interface StubState {
 
 async function startFakeService(
   pipePath: string,
-  onRequest?: (
-    command: string,
-    id: string,
-    send: (frame: object) => void,
-  ) => void,
+  onRequest?: (command: string, id: string, send: (frame: object) => void) => void,
 ): Promise<StubState> {
   let clientSocket: net.Socket | null = null;
   let connectedResolve!: () => void;
@@ -125,9 +110,7 @@ async function startFakeService(
   const state: StubState = {
     send: (frame) => {
       if (!clientSocket) throw new Error("no client connected");
-      clientSocket.write(
-        encodeFrame(frame as Parameters<typeof encodeFrame>[0]),
-      );
+      clientSocket.write(encodeFrame(frame as Parameters<typeof encodeFrame>[0]));
     },
     close: () => Promise.resolve(),
     connected,
@@ -169,11 +152,7 @@ async function startFakeService(
   return state;
 }
 
-function autoAckHandler(
-  command: string,
-  id: string,
-  send: (frame: object) => void,
-): void {
+function autoAckHandler(command: string, id: string, send: (frame: object) => void): void {
   if (command === "sync:subscribe-events") {
     send({ id, kind: "response", ok: true, result: { subscribed: true } });
   } else if (command === "sync:list-jobs") {
@@ -237,248 +216,226 @@ afterEach(async () => {
 // ---------------------------------------------------------------------------
 
 describe("createSyncEventBridge — auth-event subscriptions (§16)", () => {
-  it(
-    "calls injected shell.openExternal exactly once on `oauth-open-url`; renderer-window subscriber is NOT called for the bridge-only event",
-    async () => {
-      const pipePath = pipeFor("oauth-open-url");
-      const stub = await startFakeService(pipePath, autoAckHandler);
-      stubs.push(stub);
+  it("calls injected shell.openExternal exactly once on `oauth-open-url`; renderer-window subscriber is NOT called for the bridge-only event", async () => {
+    const pipePath = pipeFor("oauth-open-url");
+    const stub = await startFakeService(pipePath, autoAckHandler);
+    stubs.push(stub);
 
-      const { client, socket } = await connectClient(pipePath);
-      clientSockets.push(socket);
+    const { client, socket } = await connectClient(pipePath);
+    clientSockets.push(socket);
 
-      const openExternal = vi.fn(async (_url: string) => undefined);
-      const registry: BridgeRegistry = {
-        setStatus: vi.fn(),
-        add: vi.fn(),
-      };
-      const bridge = createSyncEventBridge(clientAsHandle(client), {
-        registry,
-        openExternal,
-      });
-      bridges.push(bridge);
+    const openExternal = vi.fn(async (_url: string) => undefined);
+    const registry: BridgeRegistry = {
+      setStatus: vi.fn(),
+      add: vi.fn(),
+    };
+    const bridge = createSyncEventBridge(clientAsHandle(client), {
+      registry,
+      openExternal,
+    });
+    bridges.push(bridge);
 
-      const win = makeFakeWindow();
-      bridge.registerWindow(win as unknown as import("electron").BrowserWindow);
+    const win = makeFakeWindow();
+    bridge.registerWindow(win as unknown as import("electron").BrowserWindow);
 
-      await stub.connected;
-      await new Promise<void>((r) => setTimeout(r, 30));
-      win.webContents.send.mockClear();
+    await stub.connected;
+    await new Promise<void>((r) => setTimeout(r, 30));
+    win.webContents.send.mockClear();
 
-      stub.send({
-        kind: "event",
-        name: "oauth-open-url",
-        payload: {
-          correlationId: "corr-1",
-          authorizeUrl: "https://accounts.google.com/o/oauth2/v2/auth?abc",
-        },
-      });
+    stub.send({
+      kind: "event",
+      name: "oauth-open-url",
+      payload: {
+        correlationId: "corr-1",
+        authorizeUrl: "https://accounts.google.com/o/oauth2/v2/auth?abc",
+      },
+    });
 
-      await new Promise<void>((r) => setTimeout(r, 30));
+    await new Promise<void>((r) => setTimeout(r, 30));
 
-      // shell.openExternal called once with the URL
-      expect(openExternal).toHaveBeenCalledTimes(1);
-      expect(openExternal).toHaveBeenCalledWith(
-        "https://accounts.google.com/o/oauth2/v2/auth?abc",
-      );
+    // shell.openExternal called once with the URL
+    expect(openExternal).toHaveBeenCalledTimes(1);
+    expect(openExternal).toHaveBeenCalledWith("https://accounts.google.com/o/oauth2/v2/auth?abc");
 
-      // The renderer window MUST NOT receive `oauth-open-url`
-      const syncCalls = win.webContents.send.mock.calls.filter(
-        (c: unknown[]) =>
-          c[0] === SYNC_CHANNELS.event &&
-          (c[1] as { kind: string }).kind === "oauth-open-url",
-      );
-      expect(syncCalls).toHaveLength(0);
-    },
-    5000,
-  );
+    // The renderer window MUST NOT receive `oauth-open-url`
+    const syncCalls = win.webContents.send.mock.calls.filter(
+      (c: unknown[]) =>
+        c[0] === SYNC_CHANNELS.event && (c[1] as { kind: string }).kind === "oauth-open-url",
+    );
+    expect(syncCalls).toHaveLength(0);
+  }, 5000);
 
-  it(
-    "calls injected registry.add exactly once on `credential-persisted`; renderer-window subscriber is NOT called for the bridge-only event",
-    async () => {
-      const pipePath = pipeFor("credential-persisted");
-      const stub = await startFakeService(pipePath, autoAckHandler);
-      stubs.push(stub);
+  it("calls injected registry.add exactly once on `credential-persisted`; renderer-window subscriber is NOT called for the bridge-only event", async () => {
+    const pipePath = pipeFor("credential-persisted");
+    const stub = await startFakeService(pipePath, autoAckHandler);
+    stubs.push(stub);
 
-      const { client, socket } = await connectClient(pipePath);
-      clientSockets.push(socket);
+    const { client, socket } = await connectClient(pipePath);
+    clientSockets.push(socket);
 
-      const openExternal = vi.fn(async () => undefined);
-      const registryAdd = vi.fn();
-      const registry: BridgeRegistry = {
-        setStatus: vi.fn(),
-        add: registryAdd,
-      };
-      const bridge = createSyncEventBridge(clientAsHandle(client), {
-        registry,
-        openExternal,
-      });
-      bridges.push(bridge);
+    const openExternal = vi.fn(async () => undefined);
+    const registryAdd = vi.fn();
+    const registry: BridgeRegistry = {
+      setStatus: vi.fn(),
+      add: registryAdd,
+    };
+    const bridge = createSyncEventBridge(clientAsHandle(client), {
+      registry,
+      openExternal,
+    });
+    bridges.push(bridge);
 
-      const win = makeFakeWindow();
-      bridge.registerWindow(win as unknown as import("electron").BrowserWindow);
+    const win = makeFakeWindow();
+    bridge.registerWindow(win as unknown as import("electron").BrowserWindow);
 
-      await stub.connected;
-      await new Promise<void>((r) => setTimeout(r, 30));
-      win.webContents.send.mockClear();
+    await stub.connected;
+    await new Promise<void>((r) => setTimeout(r, 30));
+    win.webContents.send.mockClear();
 
-      stub.send({
-        kind: "event",
-        name: "credential-persisted",
-        payload: {
-          correlationId: "corr-2",
-          datasourceId: FIXTURE_SUMMARY.id,
-          summary: FIXTURE_SUMMARY,
-        },
-      });
+    stub.send({
+      kind: "event",
+      name: "credential-persisted",
+      payload: {
+        correlationId: "corr-2",
+        datasourceId: FIXTURE_SUMMARY.id,
+        summary: FIXTURE_SUMMARY,
+      },
+    });
 
-      await new Promise<void>((r) => setTimeout(r, 30));
+    await new Promise<void>((r) => setTimeout(r, 30));
 
-      // registry.add called once with the supplied summary
-      expect(registryAdd).toHaveBeenCalledTimes(1);
-      expect(registryAdd).toHaveBeenCalledWith(FIXTURE_SUMMARY);
+    // registry.add called once with the supplied summary
+    expect(registryAdd).toHaveBeenCalledTimes(1);
+    expect(registryAdd).toHaveBeenCalledWith(FIXTURE_SUMMARY);
 
-      // The renderer window MUST NOT receive `credential-persisted`
-      const syncCalls = win.webContents.send.mock.calls.filter(
-        (c: unknown[]) =>
-          c[0] === SYNC_CHANNELS.event &&
-          (c[1] as { kind: string }).kind === "credential-persisted",
-      );
-      expect(syncCalls).toHaveLength(0);
-    },
-    5000,
-  );
+    // The renderer window MUST NOT receive `credential-persisted`
+    const syncCalls = win.webContents.send.mock.calls.filter(
+      (c: unknown[]) =>
+        c[0] === SYNC_CHANNELS.event && (c[1] as { kind: string }).kind === "credential-persisted",
+    );
+    expect(syncCalls).toHaveLength(0);
+  }, 5000);
 
-  it(
-    "forwards `auth-completed` to the renderer-window subscriber unchanged AND does NOT call registry.add for it (the paired credential-persisted handles that)",
-    async () => {
-      const pipePath = pipeFor("auth-completed-forward");
-      const stub = await startFakeService(pipePath, autoAckHandler);
-      stubs.push(stub);
+  it("forwards `auth-completed` to the renderer-window subscriber unchanged AND does NOT call registry.add for it (the paired credential-persisted handles that)", async () => {
+    const pipePath = pipeFor("auth-completed-forward");
+    const stub = await startFakeService(pipePath, autoAckHandler);
+    stubs.push(stub);
 
-      const { client, socket } = await connectClient(pipePath);
-      clientSockets.push(socket);
+    const { client, socket } = await connectClient(pipePath);
+    clientSockets.push(socket);
 
-      const openExternal = vi.fn(async () => undefined);
-      const registryAdd = vi.fn();
-      const registry: BridgeRegistry = {
-        setStatus: vi.fn(),
-        add: registryAdd,
-      };
-      const bridge = createSyncEventBridge(clientAsHandle(client), {
-        registry,
-        openExternal,
-      });
-      bridges.push(bridge);
+    const openExternal = vi.fn(async () => undefined);
+    const registryAdd = vi.fn();
+    const registry: BridgeRegistry = {
+      setStatus: vi.fn(),
+      add: registryAdd,
+    };
+    const bridge = createSyncEventBridge(clientAsHandle(client), {
+      registry,
+      openExternal,
+    });
+    bridges.push(bridge);
 
-      const win = makeFakeWindow();
-      bridge.registerWindow(win as unknown as import("electron").BrowserWindow);
+    const win = makeFakeWindow();
+    bridge.registerWindow(win as unknown as import("electron").BrowserWindow);
 
-      await stub.connected;
-      await new Promise<void>((r) => setTimeout(r, 30));
-      win.webContents.send.mockClear();
+    await stub.connected;
+    await new Promise<void>((r) => setTimeout(r, 30));
+    win.webContents.send.mockClear();
 
-      stub.send({
-        kind: "event",
-        name: "auth-completed",
-        payload: {
-          correlationId: "corr-3",
-          datasourceId: FIXTURE_SUMMARY.id,
-          summary: FIXTURE_SUMMARY,
-        },
-      });
+    stub.send({
+      kind: "event",
+      name: "auth-completed",
+      payload: {
+        correlationId: "corr-3",
+        datasourceId: FIXTURE_SUMMARY.id,
+        summary: FIXTURE_SUMMARY,
+      },
+    });
 
-      await new Promise<void>((r) => setTimeout(r, 30));
+    await new Promise<void>((r) => setTimeout(r, 30));
 
-      // Renderer-window subscriber receives `auth-completed` verbatim on SYNC_CHANNELS.event
-      const syncCalls = win.webContents.send.mock.calls.filter(
-        (c: unknown[]) =>
-          c[0] === SYNC_CHANNELS.event &&
-          (c[1] as { kind: string }).kind === "auth-completed",
-      );
-      expect(syncCalls).toHaveLength(1);
-      expect(syncCalls[0]![1]).toEqual({
-        kind: "auth-completed",
-        payload: {
-          correlationId: "corr-3",
-          datasourceId: FIXTURE_SUMMARY.id,
-          summary: FIXTURE_SUMMARY,
-        },
-      });
+    // Renderer-window subscriber receives `auth-completed` verbatim on SYNC_CHANNELS.event
+    const syncCalls = win.webContents.send.mock.calls.filter(
+      (c: unknown[]) =>
+        c[0] === SYNC_CHANNELS.event && (c[1] as { kind: string }).kind === "auth-completed",
+    );
+    expect(syncCalls).toHaveLength(1);
+    expect(syncCalls[0]![1]).toEqual({
+      kind: "auth-completed",
+      payload: {
+        correlationId: "corr-3",
+        datasourceId: FIXTURE_SUMMARY.id,
+        summary: FIXTURE_SUMMARY,
+      },
+    });
 
-      // The bridge MUST NOT call registry.add for `auth-completed` —
-      // the paired `credential-persisted` is the bridge-only event that
-      // does that, per design.md Decision 7 + Decision 8.
-      expect(registryAdd).not.toHaveBeenCalled();
-    },
-    5000,
-  );
+    // The bridge MUST NOT call registry.add for `auth-completed` —
+    // the paired `credential-persisted` is the bridge-only event that
+    // does that, per design.md Decision 7 + Decision 8.
+    expect(registryAdd).not.toHaveBeenCalled();
+  }, 5000);
 
-  it(
-    "forwards an `account-mismatch` auth-failed to the renderer-window subscriber WITH the structured expectedEmail/actualEmail (enforce-oauth-reconnect-account-match D5)",
-    async () => {
-      // The bridge is a generic pass-through for renderer-bound events: it
-      // relays `{ kind: name, payload }` whole (no field cherry-picking).
-      // This regression locks that the new structured email fields ride
-      // through untouched so the renderer can assemble the Wrong-account
-      // callout copy from them.
-      const pipePath = pipeFor("auth-failed-account-mismatch");
-      const stub = await startFakeService(pipePath, autoAckHandler);
-      stubs.push(stub);
+  it("forwards an `account-mismatch` auth-failed to the renderer-window subscriber WITH the structured expectedEmail/actualEmail (enforce-oauth-reconnect-account-match D5)", async () => {
+    // The bridge is a generic pass-through for renderer-bound events: it
+    // relays `{ kind: name, payload }` whole (no field cherry-picking).
+    // This regression locks that the new structured email fields ride
+    // through untouched so the renderer can assemble the Wrong-account
+    // callout copy from them.
+    const pipePath = pipeFor("auth-failed-account-mismatch");
+    const stub = await startFakeService(pipePath, autoAckHandler);
+    stubs.push(stub);
 
-      const { client, socket } = await connectClient(pipePath);
-      clientSockets.push(socket);
+    const { client, socket } = await connectClient(pipePath);
+    clientSockets.push(socket);
 
-      const registry: BridgeRegistry = {
-        setStatus: vi.fn(),
-        add: vi.fn(),
-      };
-      const bridge = createSyncEventBridge(clientAsHandle(client), {
-        registry,
-        openExternal: vi.fn(async () => undefined),
-      });
-      bridges.push(bridge);
+    const registry: BridgeRegistry = {
+      setStatus: vi.fn(),
+      add: vi.fn(),
+    };
+    const bridge = createSyncEventBridge(clientAsHandle(client), {
+      registry,
+      openExternal: vi.fn(async () => undefined),
+    });
+    bridges.push(bridge);
 
-      const win = makeFakeWindow();
-      bridge.registerWindow(win as unknown as import("electron").BrowserWindow);
+    const win = makeFakeWindow();
+    bridge.registerWindow(win as unknown as import("electron").BrowserWindow);
 
-      await stub.connected;
-      await new Promise<void>((r) => setTimeout(r, 30));
-      win.webContents.send.mockClear();
+    await stub.connected;
+    await new Promise<void>((r) => setTimeout(r, 30));
+    win.webContents.send.mockClear();
 
-      stub.send({
-        kind: "event",
-        name: "auth-failed",
-        payload: {
-          correlationId: "corr-mismatch",
-          // eslint-disable-next-line cloudstash/no-raw-error-tag-literal -- AuthFailedTag vocabulary (no const object) — out of scope
-          tag: "account-mismatch",
-          message: "This datasource is connected to owner@example.com.",
-          expectedEmail: "owner@example.com",
-          actualEmail: "intruder@example.com",
-        },
-      });
+    stub.send({
+      kind: "event",
+      name: "auth-failed",
+      payload: {
+        correlationId: "corr-mismatch",
+        // eslint-disable-next-line cloudstash/no-raw-error-tag-literal -- AuthFailedTag vocabulary (no const object) — out of scope
+        tag: "account-mismatch",
+        message: "This datasource is connected to owner@example.com.",
+        expectedEmail: "owner@example.com",
+        actualEmail: "intruder@example.com",
+      },
+    });
 
-      await new Promise<void>((r) => setTimeout(r, 30));
+    await new Promise<void>((r) => setTimeout(r, 30));
 
-      const syncCalls = win.webContents.send.mock.calls.filter(
-        (c: unknown[]) =>
-          c[0] === SYNC_CHANNELS.event &&
-          (c[1] as { kind: string }).kind === "auth-failed",
-      );
-      expect(syncCalls).toHaveLength(1);
-      expect(syncCalls[0]![1]).toEqual({
-        kind: "auth-failed",
-        payload: {
-          correlationId: "corr-mismatch",
-          // eslint-disable-next-line cloudstash/no-raw-error-tag-literal -- AuthFailedTag vocabulary (no const object) — out of scope
-          tag: "account-mismatch",
-          message: "This datasource is connected to owner@example.com.",
-          expectedEmail: "owner@example.com",
-          actualEmail: "intruder@example.com",
-        },
-      });
-    },
-    5000,
-  );
+    const syncCalls = win.webContents.send.mock.calls.filter(
+      (c: unknown[]) =>
+        c[0] === SYNC_CHANNELS.event && (c[1] as { kind: string }).kind === "auth-failed",
+    );
+    expect(syncCalls).toHaveLength(1);
+    expect(syncCalls[0]![1]).toEqual({
+      kind: "auth-failed",
+      payload: {
+        correlationId: "corr-mismatch",
+        // eslint-disable-next-line cloudstash/no-raw-error-tag-literal -- AuthFailedTag vocabulary (no const object) — out of scope
+        tag: "account-mismatch",
+        message: "This datasource is connected to owner@example.com.",
+        expectedEmail: "owner@example.com",
+        actualEmail: "intruder@example.com",
+      },
+    });
+  }, 5000);
 });

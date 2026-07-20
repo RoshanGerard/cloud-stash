@@ -22,10 +22,9 @@ import { SyncCommandError } from "../../../sync/client.js";
 
 import { handleFilesUpload } from "../upload.js";
 
-function makeFakeClient(opts?: {
-  resolve?: unknown;
-  reject?: unknown;
-}): { request: ReturnType<typeof vi.fn> } {
+function makeFakeClient(opts?: { resolve?: unknown; reject?: unknown }): {
+  request: ReturnType<typeof vi.fn>;
+} {
   const fn = vi.fn();
   if (opts?.resolve !== undefined) fn.mockResolvedValue(opts.resolve);
   else if (opts?.reject !== undefined) fn.mockRejectedValue(opts.reject);

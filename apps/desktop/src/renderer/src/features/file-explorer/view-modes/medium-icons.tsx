@@ -44,11 +44,7 @@ export function MediumIconsView({
   onCopyPath,
   onProperties,
 }: MediumIconsViewProps) {
-  const state = useSyncExternalStore(
-    store.subscribe,
-    store.getSnapshot,
-    store.getSnapshot,
-  );
+  const state = useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
   const { selection, onEntryClick } = useSelection(store);
 
   if (state.entries.length === 0) {

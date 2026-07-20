@@ -69,17 +69,13 @@ describe("FieldRowWithCopy", () => {
   });
 
   it("renders the label and value like FieldRow", () => {
-    render(
-      <FieldRowWithCopy label="Path" value="/docs/report.pdf" rawValue="/docs/report.pdf" />,
-    );
+    render(<FieldRowWithCopy label="Path" value="/docs/report.pdf" rawValue="/docs/report.pdf" />);
     expect(screen.getByText("Path")).toBeInTheDocument();
     expect(screen.getByText("/docs/report.pdf")).toBeInTheDocument();
   });
 
   it("exposes a copy button with an accessible name including the label", () => {
-    render(
-      <FieldRowWithCopy label="Path" value="/docs/report.pdf" rawValue="/docs/report.pdf" />,
-    );
+    render(<FieldRowWithCopy label="Path" value="/docs/report.pdf" rawValue="/docs/report.pdf" />);
     const button = screen.getByRole("button", { name: /copy path/i });
     expect(button).toBeInTheDocument();
   });
@@ -88,11 +84,7 @@ describe("FieldRowWithCopy", () => {
     const writeText = installClipboardMock();
 
     render(
-      <FieldRowWithCopy
-        label="Owner"
-        value="alice@example.com"
-        rawValue="alice@example.com"
-      />,
+      <FieldRowWithCopy label="Owner" value="alice@example.com" rawValue="alice@example.com" />,
     );
     fireEvent.click(screen.getByRole("button", { name: /copy owner/i }));
     expect(writeText).toHaveBeenCalledWith("alice@example.com");
@@ -101,9 +93,7 @@ describe("FieldRowWithCopy", () => {
   it("stringifies numeric raw values before writing to clipboard", () => {
     const writeText = installClipboardMock();
 
-    render(
-      <FieldRowWithCopy label="Revisions" value="7" rawValue={7} numeric />,
-    );
+    render(<FieldRowWithCopy label="Revisions" value="7" rawValue={7} numeric />);
     fireEvent.click(screen.getByRole("button", { name: /copy revisions/i }));
     expect(writeText).toHaveBeenCalledWith("7");
   });
@@ -119,9 +109,7 @@ describe("FieldRowWithCopy", () => {
   });
 
   it("applies `tabular-nums` to the value span when numeric=true", () => {
-    render(
-      <FieldRowWithCopy label="Size" value="12 KB" rawValue="12 KB" numeric />,
-    );
+    render(<FieldRowWithCopy label="Size" value="12 KB" rawValue="12 KB" numeric />);
     const valueEl = screen.getByText("12 KB");
     expect(valueEl.className).toMatch(/tabular-nums/);
   });
@@ -132,12 +120,7 @@ describe("FieldRowWithCopy", () => {
     const onCopyError = vi.fn();
 
     render(
-      <FieldRowWithCopy
-        label="Path"
-        value="/p/x"
-        rawValue="/p/x"
-        onCopyError={onCopyError}
-      />,
+      <FieldRowWithCopy label="Path" value="/p/x" rawValue="/p/x" onCopyError={onCopyError} />,
     );
     fireEvent.click(screen.getByRole("button", { name: /copy path/i }));
     // Flush the rejected microtask.
@@ -151,16 +134,9 @@ describe("FieldRowWithCopy", () => {
     removeClipboardMock();
     const onCopyError = vi.fn();
     render(
-      <FieldRowWithCopy
-        label="Path"
-        value="/p/x"
-        rawValue="/p/x"
-        onCopyError={onCopyError}
-      />,
+      <FieldRowWithCopy label="Path" value="/p/x" rawValue="/p/x" onCopyError={onCopyError} />,
     );
-    expect(() =>
-      fireEvent.click(screen.getByRole("button", { name: /copy path/i })),
-    ).not.toThrow();
+    expect(() => fireEvent.click(screen.getByRole("button", { name: /copy path/i }))).not.toThrow();
     // When the clipboard bridge is unavailable we surface that as an
     // explicit error rather than silently swallowing — the user gets a
     // toast (via onCopyError wiring in properties-modal) and we don't

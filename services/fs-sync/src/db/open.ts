@@ -8,9 +8,7 @@ import Database from "better-sqlite3";
 export class DatabaseIntegrityError extends Error {
   readonly observed: string;
   constructor(observed: string) {
-    super(
-      `sync.db integrity-check-failed: PRAGMA integrity_check returned "${observed}"`,
-    );
+    super(`sync.db integrity-check-failed: PRAGMA integrity_check returned "${observed}"`);
     this.name = "DatabaseIntegrityError";
     this.observed = observed;
   }

@@ -16,15 +16,7 @@
 //   - `use-upload-orchestrator` so we can assert which args reach the
 //     orchestrator without exercising the real stat/upload plumbing.
 
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-  type Mock,
-} from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 
@@ -40,16 +32,12 @@ const startMock = vi.fn(async () => {});
 const createUploadOrchestratorMock = vi.fn(() => ({ start: startMock }));
 
 vi.mock("../use-upload-orchestrator.js", () => ({
-  createUploadOrchestrator: (...args: unknown[]) =>
-    createUploadOrchestratorMock(...(args as [])),
+  createUploadOrchestrator: (...args: unknown[]) => createUploadOrchestratorMock(...(args as [])),
 }));
 
 import { toast } from "sonner";
 import { DropZone, type DropZoneStatus } from "../drop-zone.js";
-import type {
-  ConflictResolver,
-  UploadToaster,
-} from "../use-upload-orchestrator.js";
+import type { ConflictResolver, UploadToaster } from "../use-upload-orchestrator.js";
 
 // JSDOM doesn't model DataTransfer with items/webkitGetAsEntry. Build a
 // minimal fake that mirrors the parts `drop-zone.tsx` actually touches.
@@ -83,9 +71,7 @@ function fakeDataTransfer(items: readonly FakeItemInit[]): DataTransfer {
       isDirectory: init.isDirectory,
     }),
   }));
-  const files = items
-    .filter((i) => !i.isDirectory && i.file !== null)
-    .map((i) => i.file as File);
+  const files = items.filter((i) => !i.isDirectory && i.file !== null).map((i) => i.file as File);
   return {
     types: ["Files"],
     items: fakeItems as unknown as DataTransferItemList,
@@ -233,9 +219,7 @@ describe("DropZone — drop dispatching", () => {
   it("drop of a folder only shows the folder-upload toast and dispatches zero uploads", () => {
     renderDropZone();
     const zone = screen.getByTestId("drop-zone");
-    const dt = fakeDataTransfer([
-      { kind: "file", file: null, isDirectory: true },
-    ]);
+    const dt = fakeDataTransfer([{ kind: "file", file: null, isDirectory: true }]);
     fireEvent.drop(zone, { dataTransfer: dt });
 
     expect(toast.info).toHaveBeenCalledTimes(1);

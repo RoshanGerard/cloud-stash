@@ -34,24 +34,14 @@ import { randomUUID as nodeRandomUUID } from "node:crypto";
 import * as nodePosixPath from "node:path/posix";
 import * as nodePath from "node:path";
 
-import type {
-  DatasourceClient,
-  Target,
-} from "@cloudstash/fs-datasource-engine";
+import type { DatasourceClient, Target } from "@cloudstash/fs-datasource-engine";
 import { withAuthRefresh } from "@cloudstash/fs-datasource-engine";
 import type { DatasourceType } from "@cloudstash/ipc-contracts";
-import {
-  DatasourceError,
-  DatasourceErrorTag,
-  FilesErrorTag,
-} from "@cloudstash/ipc-contracts";
+import { DatasourceError, DatasourceErrorTag, FilesErrorTag } from "@cloudstash/ipc-contracts";
 
 import type { CommandHandler } from "../ipc/server.js";
 import type { EventBus } from "../events/event-bus.js";
-import type {
-  UploadRegistry,
-  UploadJobEntry,
-} from "../uploads/registry.js";
+import type { UploadRegistry, UploadJobEntry } from "../uploads/registry.js";
 
 import { normalizeFilesError } from "./files-error-mapping.js";
 
@@ -70,9 +60,7 @@ const THROTTLE_PCT_DELTA = 10;
 // ---------------------------------------------------------------------------
 
 export interface FilesUploadDeps {
-  readonly resolveClient: (
-    datasourceId: string,
-  ) => Promise<DatasourceClient<DatasourceType>>;
+  readonly resolveClient: (datasourceId: string) => Promise<DatasourceClient<DatasourceType>>;
   readonly registry: UploadRegistry;
   readonly fsSyncBus: EventBus;
   readonly randomUUID: () => string;
@@ -126,10 +114,7 @@ interface ValidationSuccess {
 }
 type ValidationResult = ValidationFailure | ValidationSuccess;
 
-function validateUploadPaths(
-  sourcePath: string,
-  targetPath: string,
-): ValidationResult {
+function validateUploadPaths(sourcePath: string, targetPath: string): ValidationResult {
   // Source is a local-OS path — use platform `path.isAbsolute` for the
   // check (so `C:\foo\bar.jpg` passes on Windows and `/foo/bar.jpg`
   // passes on Unix; relative `foo/bar.jpg` fails on both).
@@ -173,9 +158,7 @@ function validateUploadPaths(
 // Handler factory
 // ---------------------------------------------------------------------------
 
-export function makeFilesUploadHandler(
-  deps: FilesUploadDeps,
-): CommandHandler<"files:upload"> {
+export function makeFilesUploadHandler(deps: FilesUploadDeps): CommandHandler<"files:upload"> {
   return async (params) => {
     // 1. Validation — synchronous; on failure short-circuit with
     //    `tag: "other"` per spec.
@@ -198,17 +181,13 @@ export function makeFilesUploadHandler(
     //    `existingUploadJobId` (the in-flight job's id) and
     //    `existingPath` (the disputed targetPath) so the renderer's
     //    Sonner toast can point the user at the existing toast.
-    const existingUploadJobId = deps.registry.findByTarget(
-      params.datasourceId,
-      params.targetPath,
-    );
+    const existingUploadJobId = deps.registry.findByTarget(params.datasourceId, params.targetPath);
     if (existingUploadJobId !== undefined) {
       return {
         ok: false,
         error: {
           tag: FilesErrorTag.Conflict,
-          message:
-            "An upload to this path is already in progress",
+          message: "An upload to this path is already in progress",
           retryable: false,
           existingUploadJobId,
           existingPath: params.targetPath,
@@ -250,11 +229,7 @@ export function makeFilesUploadHandler(
     let lastEmittedAtMs = startedAt;
     let lastEmittedPct = 0;
 
-    function emitUploading(
-      bytesUploaded: number,
-      bytesTotal: number | null,
-      force: boolean,
-    ): void {
+    function emitUploading(bytesUploaded: number, bytesTotal: number | null, force: boolean): void {
       deps.fsSyncBus.emit("uploading", {
         uploadJobId,
         datasourceId: params.datasourceId,
@@ -303,8 +278,7 @@ export function makeFilesUploadHandler(
         // final 100% tick unthrottled.
         const now = deps.now();
         const timeOk = now - lastEmittedAtMs >= THROTTLE_TIME_MS;
-        const pct =
-          total > 0 ? Math.floor((loaded / total) * 100) : 0;
+        const pct = total > 0 ? Math.floor((loaded / total) * 100) : 0;
         const pctOk = Math.abs(pct - lastEmittedPct) >= THROTTLE_PCT_DELTA;
         const isFinal = total > 0 && loaded >= total;
         if (timeOk || pctOk || isFinal) {
@@ -341,8 +315,7 @@ export function makeFilesUploadHandler(
       // synchronously upon abort.
       const isCancel =
         abortController.signal.aborted ||
-        (err instanceof DatasourceError &&
-          err.tag === DatasourceErrorTag.Cancelled) ||
+        (err instanceof DatasourceError && err.tag === DatasourceErrorTag.Cancelled) ||
         err instanceof CancelledError;
       const last = deps.registry.get(uploadJobId);
       const bytesUploaded = last?.bytesUploaded ?? 0;
@@ -379,8 +352,12 @@ export function makeFilesUploadHandler(
       // reply). Collapse those two onto `other` defensively — neither
       // should reach this branch in practice (conflict is rejected
       // BEFORE the engine call; cancelled routes through `isCancel`).
-      const eventTag: "auth-revoked" | "disconnected" | "rate-limited"
-        | "other" | "invalid-datasource" =
+      const eventTag:
+        | "auth-revoked"
+        | "disconnected"
+        | "rate-limited"
+        | "other"
+        | "invalid-datasource" =
         norm.tag === FilesErrorTag.Cancelled ||
         norm.tag === FilesErrorTag.Conflict ||
         norm.tag === FilesErrorTag.ExhaustedRetries

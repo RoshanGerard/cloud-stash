@@ -74,9 +74,7 @@ export class JobRepository {
   }
 
   getById(id: string): JobSummary | null {
-    const row = this.db
-      .prepare("SELECT * FROM jobs WHERE id = ?")
-      .get(id) as JobRow | undefined;
+    const row = this.db.prepare("SELECT * FROM jobs WHERE id = ?").get(id) as JobRow | undefined;
     return row ? toSummary(row) : null;
   }
 
@@ -88,9 +86,7 @@ export class JobRepository {
   }
 
   listAll(): ReadonlyArray<JobSummary> {
-    const rows = this.db
-      .prepare("SELECT * FROM jobs ORDER BY created_at")
-      .all() as JobRow[];
+    const rows = this.db.prepare("SELECT * FROM jobs ORDER BY created_at").all() as JobRow[];
     return rows.map(toSummary);
   }
 

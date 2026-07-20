@@ -30,10 +30,7 @@ import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from "vite
 import { act, cleanup, renderHook } from "@testing-library/react";
 
 import { FilesErrorTag, GOOGLE_APPS_EXPORT_FORMATS } from "@cloudstash/ipc-contracts";
-import type {
-  FileEntry,
-  FilesDownloadResponse,
-} from "@cloudstash/ipc-contracts";
+import type { FileEntry, FilesDownloadResponse } from "@cloudstash/ipc-contracts";
 
 import {
   DOWNLOADS_ALWAYS_ASK_KEY,
@@ -47,16 +44,12 @@ import {
   useDownloadOrchestrator,
   type DownloadOrchestratorApi,
 } from "../use-download-orchestrator.js";
-import type {
-  DownloadConflictChoice,
-  DownloadConflictPrompt,
-} from "../store.js";
+import type { DownloadConflictChoice, DownloadConflictPrompt } from "../store.js";
 
 // --- Helpers ---------------------------------------------------------
 
 function makeFileEntry(name: string, parentPath: string = "/"): FileEntry {
-  const path =
-    parentPath === "/" ? `/${name}` : `${parentPath}/${name}`;
+  const path = parentPath === "/" ? `/${name}` : `${parentPath}/${name}`;
   return {
     id: `entry-${name}`,
     kind: "file",
@@ -81,8 +74,7 @@ function makeGoogleAppsEntry(
   googleMime: string,
   parentPath: string = "/",
 ): FileEntry {
-  const path =
-    parentPath === "/" ? `/${name}` : `${parentPath}/${name}`;
+  const path = parentPath === "/" ? `/${name}` : `${parentPath}/${name}`;
   return {
     id: `entry-${name}`,
     kind: "file",
@@ -141,10 +133,7 @@ afterEach(() => {
 
 describe("useDownloadOrchestrator — toPath resolution (§23.1)", () => {
   it("(a) default-folder click computes <defaultFolder>/<fileName> directly without showSaveDialog", async () => {
-    localStorage.setItem(
-      DOWNLOADS_DEFAULT_FOLDER_KEY,
-      "/Users/alice/Downloads/CloudStash",
-    );
+    localStorage.setItem(DOWNLOADS_DEFAULT_FOLDER_KEY, "/Users/alice/Downloads/CloudStash");
     const api = makeApi();
     const { result } = renderHook(() => useDownloadOrchestrator({ api }));
 
@@ -179,10 +168,7 @@ describe("useDownloadOrchestrator — toPath resolution (§23.1)", () => {
   });
 
   it("(b1) Shift+Click opens showSaveDialog with { defaultPath: <defaultFolder>/<fileName> }; user pick drives dispatch", async () => {
-    localStorage.setItem(
-      DOWNLOADS_DEFAULT_FOLDER_KEY,
-      "/Users/alice/Downloads/CloudStash",
-    );
+    localStorage.setItem(DOWNLOADS_DEFAULT_FOLDER_KEY, "/Users/alice/Downloads/CloudStash");
     const api = makeApi({
       saveDialogResult: { canceled: false, filePath: "/tmp/welcome.pdf" },
     });
@@ -211,10 +197,7 @@ describe("useDownloadOrchestrator — toPath resolution (§23.1)", () => {
   });
 
   it("(b2) Shift+Click with user-cancel from showSaveDialog → NO IPC dispatch", async () => {
-    localStorage.setItem(
-      DOWNLOADS_DEFAULT_FOLDER_KEY,
-      "/Users/alice/Downloads/CloudStash",
-    );
+    localStorage.setItem(DOWNLOADS_DEFAULT_FOLDER_KEY, "/Users/alice/Downloads/CloudStash");
     const api = makeApi({
       saveDialogResult: { canceled: true },
     });
@@ -235,10 +218,7 @@ describe("useDownloadOrchestrator — toPath resolution (§23.1)", () => {
   });
 
   it("(c) Always-ask preference (alwaysAsk='yes') opens showSaveDialog even without Shift", async () => {
-    localStorage.setItem(
-      DOWNLOADS_DEFAULT_FOLDER_KEY,
-      "/Users/alice/Downloads/CloudStash",
-    );
+    localStorage.setItem(DOWNLOADS_DEFAULT_FOLDER_KEY, "/Users/alice/Downloads/CloudStash");
     localStorage.setItem(DOWNLOADS_ALWAYS_ASK_KEY, "yes");
     const api = makeApi({
       saveDialogResult: { canceled: false, filePath: "/tmp/picked.pdf" },
@@ -311,10 +291,7 @@ describe("useDownloadOrchestrator — first-run modal queueing (§23.3)", () => 
     // persists the folder via setDefaultFolder() (so localStorage is set
     // when the callback runs).
     await act(async () => {
-      localStorage.setItem(
-        DOWNLOADS_DEFAULT_FOLDER_KEY,
-        "/Users/alice/Downloads/CloudStash",
-      );
+      localStorage.setItem(DOWNLOADS_DEFAULT_FOLDER_KEY, "/Users/alice/Downloads/CloudStash");
       result.current.onModalCommit("/Users/alice/Downloads/CloudStash");
       // Allow the deferred dispatch to flush.
       await Promise.resolve();
@@ -390,11 +367,8 @@ function conflictEnvelope(opts?: {
       tag: FilesErrorTag.Conflict,
       message: `destination already exists at ${opts?.existingPath ?? "/Users/alice/Downloads/CloudStash/welcome.pdf"}`,
       retryable: false,
-      existingPath:
-        opts?.existingPath ?? "/Users/alice/Downloads/CloudStash/welcome.pdf",
-      ...(opts?.existingSize !== undefined
-        ? { existingSize: opts.existingSize }
-        : {}),
+      existingPath: opts?.existingPath ?? "/Users/alice/Downloads/CloudStash/welcome.pdf",
+      ...(opts?.existingSize !== undefined ? { existingSize: opts.existingSize } : {}),
       ...(opts?.existingModifiedAt !== undefined
         ? { existingModifiedAt: opts.existingModifiedAt }
         : {}),
@@ -404,10 +378,7 @@ function conflictEnvelope(opts?: {
 
 describe("useDownloadOrchestrator — conflict-prompt loop (add-download-overwrite-confirm §5)", () => {
   beforeEach(() => {
-    localStorage.setItem(
-      DOWNLOADS_DEFAULT_FOLDER_KEY,
-      "/Users/alice/Downloads/CloudStash",
-    );
+    localStorage.setItem(DOWNLOADS_DEFAULT_FOLDER_KEY, "/Users/alice/Downloads/CloudStash");
   });
 
   it("(§5.1) on conflict envelope, invokes the prompt with (existingPath, existingSize, existingModifiedAt) and re-dispatches with the user's choice on 'overwrite'", async () => {
@@ -429,9 +400,7 @@ describe("useDownloadOrchestrator — conflict-prompt loop (add-download-overwri
         return "overwrite" as DownloadConflictChoice;
       },
     );
-    const { result } = renderHook(() =>
-      useDownloadOrchestrator({ api, downloadConflictPrompt }),
-    );
+    const { result } = renderHook(() => useDownloadOrchestrator({ api, downloadConflictPrompt }));
 
     let response: FilesDownloadResponse | null = null;
     await act(async () => {
@@ -488,9 +457,7 @@ describe("useDownloadOrchestrator — conflict-prompt loop (add-download-overwri
     const downloadConflictPrompt: DownloadConflictPrompt = vi.fn(
       async () => "keep-both" as DownloadConflictChoice,
     );
-    const { result } = renderHook(() =>
-      useDownloadOrchestrator({ api, downloadConflictPrompt }),
-    );
+    const { result } = renderHook(() => useDownloadOrchestrator({ api, downloadConflictPrompt }));
 
     let response: FilesDownloadResponse | null = null;
     await act(async () => {
@@ -524,9 +491,7 @@ describe("useDownloadOrchestrator — conflict-prompt loop (add-download-overwri
     const downloadConflictPrompt: DownloadConflictPrompt = vi.fn(
       async () => "cancel" as DownloadConflictChoice,
     );
-    const { result } = renderHook(() =>
-      useDownloadOrchestrator({ api, downloadConflictPrompt }),
-    );
+    const { result } = renderHook(() => useDownloadOrchestrator({ api, downloadConflictPrompt }));
 
     let response: FilesDownloadResponse | null = null;
     await act(async () => {
@@ -553,9 +518,7 @@ describe("useDownloadOrchestrator — conflict-prompt loop (add-download-overwri
     const downloadConflictPrompt: DownloadConflictPrompt = vi.fn(
       async () => "overwrite" as DownloadConflictChoice,
     );
-    const { result } = renderHook(() =>
-      useDownloadOrchestrator({ api, downloadConflictPrompt }),
-    );
+    const { result } = renderHook(() => useDownloadOrchestrator({ api, downloadConflictPrompt }));
 
     await act(async () => {
       await result.current.dispatchDownload(
@@ -604,9 +567,7 @@ describe("useDownloadOrchestrator — conflict-prompt loop (add-download-overwri
         return "overwrite" as DownloadConflictChoice;
       },
     );
-    const { result } = renderHook(() =>
-      useDownloadOrchestrator({ api, downloadConflictPrompt }),
-    );
+    const { result } = renderHook(() => useDownloadOrchestrator({ api, downloadConflictPrompt }));
     await act(async () => {
       await result.current.dispatchDownload(
         makeFileEntry("welcome.pdf"),
@@ -614,9 +575,7 @@ describe("useDownloadOrchestrator — conflict-prompt loop (add-download-overwri
         "ds-1",
       );
     });
-    expect(captured.existingPath).toBe(
-      "/Users/alice/Downloads/CloudStash/welcome.pdf",
-    );
+    expect(captured.existingPath).toBe("/Users/alice/Downloads/CloudStash/welcome.pdf");
     expect(captured.existingSize).toBeUndefined();
     expect(captured.existingModifiedAt).toBeUndefined();
   });
@@ -641,9 +600,7 @@ describe("useDownloadOrchestrator — conflict-prompt loop (add-download-overwri
     expect(api.download).toHaveBeenCalledTimes(1);
     expect(response).not.toBeNull();
     expect(response).toMatchObject({ ok: false });
-    expect(
-      (response as Extract<FilesDownloadResponse, { ok: false }>).error.tag,
-    ).toBe("conflict");
+    expect((response as Extract<FilesDownloadResponse, { ok: false }>).error.tag).toBe("conflict");
   });
 });
 
@@ -659,55 +616,49 @@ describe("useDownloadOrchestrator — conflict-prompt loop (add-download-overwri
 // the separator from the folder string itself.
 describe("joinFolderAndName — host-aware separator (post-archive bug fix)", () => {
   it("uses '/' for a POSIX folder", () => {
-    expect(
-      joinFolderAndName("/Users/alice/Downloads/CloudStash", "welcome.pdf"),
-    ).toBe("/Users/alice/Downloads/CloudStash/welcome.pdf");
+    expect(joinFolderAndName("/Users/alice/Downloads/CloudStash", "welcome.pdf")).toBe(
+      "/Users/alice/Downloads/CloudStash/welcome.pdf",
+    );
   });
 
   it("uses '\\' for a Windows folder containing backslashes", () => {
     // Source string at runtime is `C:\Users\dev2\Downloads\CloudStash`.
-    expect(
-      joinFolderAndName(
-        "C:\\Users\\dev2\\Downloads\\CloudStash",
-        "welcome.pdf",
-      ),
-    ).toBe("C:\\Users\\dev2\\Downloads\\CloudStash\\welcome.pdf");
+    expect(joinFolderAndName("C:\\Users\\dev2\\Downloads\\CloudStash", "welcome.pdf")).toBe(
+      "C:\\Users\\dev2\\Downloads\\CloudStash\\welcome.pdf",
+    );
   });
 
   it("strips a trailing '/' on the folder before joining", () => {
-    expect(
-      joinFolderAndName("/Users/alice/Downloads/CloudStash/", "welcome.pdf"),
-    ).toBe("/Users/alice/Downloads/CloudStash/welcome.pdf");
+    expect(joinFolderAndName("/Users/alice/Downloads/CloudStash/", "welcome.pdf")).toBe(
+      "/Users/alice/Downloads/CloudStash/welcome.pdf",
+    );
   });
 
   it("strips a trailing '\\' on the folder before joining", () => {
-    expect(
-      joinFolderAndName(
-        "C:\\Users\\dev2\\Downloads\\CloudStash\\",
-        "welcome.pdf",
-      ),
-    ).toBe("C:\\Users\\dev2\\Downloads\\CloudStash\\welcome.pdf");
+    expect(joinFolderAndName("C:\\Users\\dev2\\Downloads\\CloudStash\\", "welcome.pdf")).toBe(
+      "C:\\Users\\dev2\\Downloads\\CloudStash\\welcome.pdf",
+    );
   });
 
   it("strips a leading separator on the filename before joining", () => {
-    expect(
-      joinFolderAndName("/Users/alice/Downloads/CloudStash", "/welcome.pdf"),
-    ).toBe("/Users/alice/Downloads/CloudStash/welcome.pdf");
+    expect(joinFolderAndName("/Users/alice/Downloads/CloudStash", "/welcome.pdf")).toBe(
+      "/Users/alice/Downloads/CloudStash/welcome.pdf",
+    );
   });
 
   // Post-archive smoke-2 (2026-04-28): sanitization must run BEFORE the
   // join so vendor-side characters that are valid on Drive (`:`, `/`, etc.)
   // but invalid on Windows are scrubbed before the path crosses IPC.
   it("sanitizes Windows-invalid characters in the filename via joinFolderAndName", () => {
-    expect(
-      joinFolderAndName("C:\\Users\\dev2\\Downloads\\CloudStash", "Acme: Test.docx"),
-    ).toBe("C:\\Users\\dev2\\Downloads\\CloudStash\\Acme_ Test.docx");
+    expect(joinFolderAndName("C:\\Users\\dev2\\Downloads\\CloudStash", "Acme: Test.docx")).toBe(
+      "C:\\Users\\dev2\\Downloads\\CloudStash\\Acme_ Test.docx",
+    );
   });
 
   it("sanitizes Windows reserved device names in the filename via joinFolderAndName", () => {
-    expect(
-      joinFolderAndName("C:\\Users\\dev2\\Downloads\\CloudStash", "CON.txt"),
-    ).toBe("C:\\Users\\dev2\\Downloads\\CloudStash\\_CON.txt");
+    expect(joinFolderAndName("C:\\Users\\dev2\\Downloads\\CloudStash", "CON.txt")).toBe(
+      "C:\\Users\\dev2\\Downloads\\CloudStash\\_CON.txt",
+    );
   });
 });
 
@@ -719,15 +670,11 @@ describe("joinFolderAndName — host-aware separator (post-archive bug fix)", ()
 // `joinFolderAndName` boundary so the cleaned-up name is what crosses IPC.
 describe("sanitizeFilenameForOS — Windows-friendly filename scrubbing", () => {
   it("replaces ':' with '_' (colon is invalid on Windows; preserves spacing)", () => {
-    expect(sanitizeFilenameForOS("Acme: Test file.docx")).toBe(
-      "Acme_ Test file.docx",
-    );
+    expect(sanitizeFilenameForOS("Acme: Test file.docx")).toBe("Acme_ Test file.docx");
   });
 
   it("replaces '/' (forward slash) inside a filename with '_' (invalid as filename char on Windows)", () => {
-    expect(sanitizeFilenameForOS("Q1 / Q2 Report.pdf")).toBe(
-      "Q1 _ Q2 Report.pdf",
-    );
+    expect(sanitizeFilenameForOS("Q1 / Q2 Report.pdf")).toBe("Q1 _ Q2 Report.pdf");
   });
 
   it("prefixes Windows reserved device names with '_' (basename-only check; case-insensitive)", () => {
@@ -772,15 +719,11 @@ describe("sanitizeFilenameForOS — Windows-friendly filename scrubbing", () => 
 
   it("leaves a benign filename unchanged", () => {
     expect(sanitizeFilenameForOS("normal.pdf")).toBe("normal.pdf");
-    expect(sanitizeFilenameForOS("Report 2024 (Q1).docx")).toBe(
-      "Report 2024 (Q1).docx",
-    );
+    expect(sanitizeFilenameForOS("Report 2024 (Q1).docx")).toBe("Report 2024 (Q1).docx");
   });
 
   it("replaces every Windows-invalid char in one pass", () => {
-    expect(sanitizeFilenameForOS('a<b>c:d"e/f\\g|h?i*j.txt')).toBe(
-      "a_b_c_d_e_f_g_h_i_j.txt",
-    );
+    expect(sanitizeFilenameForOS('a<b>c:d"e/f\\g|h?i*j.txt')).toBe("a_b_c_d_e_f_g_h_i_j.txt");
   });
 
   it("replaces C0 control chars with '_'", () => {
@@ -805,10 +748,7 @@ describe("sanitizeFilenameForOS — Windows-friendly filename scrubbing", () => 
 
 describe("useDownloadOrchestrator — Google Apps export extension (add-drive-docs-editors-export)", () => {
   beforeEach(() => {
-    localStorage.setItem(
-      DOWNLOADS_DEFAULT_FOLDER_KEY,
-      "/Users/alice/Downloads/CloudStash",
-    );
+    localStorage.setItem(DOWNLOADS_DEFAULT_FOLDER_KEY, "/Users/alice/Downloads/CloudStash");
   });
 
   it("(a) application/vnd.google-apps.document → toPath basename ends in .docx", async () => {
@@ -907,9 +847,7 @@ describe("useDownloadOrchestrator — Google Apps export extension (add-drive-do
     const saveCall = api.showSaveDialog.mock.calls[0]?.[0] as {
       defaultPath?: string;
     };
-    expect(saveCall.defaultPath).toBe(
-      "/Users/alice/Downloads/CloudStash/My Doc.docx",
-    );
+    expect(saveCall.defaultPath).toBe("/Users/alice/Downloads/CloudStash/My Doc.docx");
   });
 
   it("(e) alwaysAsk=yes also uses the extended basename as defaultPath", async () => {
@@ -930,9 +868,7 @@ describe("useDownloadOrchestrator — Google Apps export extension (add-drive-do
     const saveCall = api.showSaveDialog.mock.calls[0]?.[0] as {
       defaultPath?: string;
     };
-    expect(saveCall.defaultPath).toBe(
-      "/Users/alice/Downloads/CloudStash/Budget.xlsx",
-    );
+    expect(saveCall.defaultPath).toBe("/Users/alice/Downloads/CloudStash/Budget.xlsx");
   });
 
   it("(f) non-exportable Google Apps mime (vnd.google-apps.form) → no append, dispatches with entry.name", async () => {

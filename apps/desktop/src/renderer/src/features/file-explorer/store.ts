@@ -60,9 +60,7 @@ export type RenameConflictChoice = "overwrite" | "keep-both" | "cancel";
  * a time, no batch/queue semantics) — the upload `ConflictResolver`
  * shape doesn't fit (see design.md Decision 7).
  */
-export type RenameConflictPrompt = (
-  existingPath: string,
-) => Promise<RenameConflictChoice>;
+export type RenameConflictPrompt = (existingPath: string) => Promise<RenameConflictChoice>;
 
 // ---------------------------------------------------------------------------
 // Download conflict — types + prompt port
@@ -379,8 +377,7 @@ export interface ExplorerStore {
   download(entryId: string): Promise<void>;
 }
 
-export const DIRECTORY_RENAME_REFUSAL =
-  "Folder rename is not supported in this version";
+export const DIRECTORY_RENAME_REFUSAL = "Folder rename is not supported in this version";
 export const EMPTY_NAME_REFUSAL = "Name cannot be empty";
 
 export const EXPLORER_STORAGE_KEY_PREFIX = "cloudstash.file-explorer.";
@@ -447,12 +444,7 @@ const VALID_VIEW_MODES: ReadonlySet<ViewMode> = new Set<ViewMode>([
   "medium",
   "large",
 ]);
-const VALID_SORT_BY: ReadonlySet<SortBy> = new Set<SortBy>([
-  "name",
-  "type",
-  "size",
-  "modified",
-]);
+const VALID_SORT_BY: ReadonlySet<SortBy> = new Set<SortBy>(["name", "type", "size", "modified"]);
 const VALID_SORT_DIR: ReadonlySet<SortDir> = new Set<SortDir>(["asc", "desc"]);
 
 function isBrowser(): boolean {
@@ -466,22 +458,13 @@ function loadPrefs(datasourceId: string): PersistedPrefs {
     if (raw === null) return { ...DEFAULT_PREFS };
     const parsed = JSON.parse(raw) as Record<string, unknown>;
     const prefs: PersistedPrefs = { ...DEFAULT_PREFS };
-    if (
-      typeof parsed.viewMode === "string" &&
-      VALID_VIEW_MODES.has(parsed.viewMode as ViewMode)
-    ) {
+    if (typeof parsed.viewMode === "string" && VALID_VIEW_MODES.has(parsed.viewMode as ViewMode)) {
       prefs.viewMode = parsed.viewMode as ViewMode;
     }
-    if (
-      typeof parsed.sortBy === "string" &&
-      VALID_SORT_BY.has(parsed.sortBy as SortBy)
-    ) {
+    if (typeof parsed.sortBy === "string" && VALID_SORT_BY.has(parsed.sortBy as SortBy)) {
       prefs.sortBy = parsed.sortBy as SortBy;
     }
-    if (
-      typeof parsed.sortDir === "string" &&
-      VALID_SORT_DIR.has(parsed.sortDir as SortDir)
-    ) {
+    if (typeof parsed.sortDir === "string" && VALID_SORT_DIR.has(parsed.sortDir as SortDir)) {
       prefs.sortDir = parsed.sortDir as SortDir;
     }
     if (typeof parsed.detailsPaneOpen === "boolean") {
@@ -721,8 +704,7 @@ export function createExplorerStore(datasourceId: string): ExplorerStore {
       set({ ...state, selection: next, lastSelectedId: id }, false);
       return;
     }
-    const [from, to] =
-      anchorIdx <= targetIdx ? [anchorIdx, targetIdx] : [targetIdx, anchorIdx];
+    const [from, to] = anchorIdx <= targetIdx ? [anchorIdx, targetIdx] : [targetIdx, anchorIdx];
     const next = new Set<string>();
     for (let i = from; i <= to; i += 1) {
       const entryId = ids[i];
@@ -735,7 +717,8 @@ export function createExplorerStore(datasourceId: string): ExplorerStore {
 
   function selectAll(): void {
     const next = new Set<string>(state.entries.map((e) => e.id));
-    const last = state.entries.length > 0 ? (state.entries[state.entries.length - 1]?.id ?? null) : null;
+    const last =
+      state.entries.length > 0 ? (state.entries[state.entries.length - 1]?.id ?? null) : null;
     set({ ...state, selection: next, lastSelectedId: last }, false);
   }
 
@@ -807,8 +790,7 @@ export function createExplorerStore(datasourceId: string): ExplorerStore {
     // current selection untouched (defensive — clearSearch may be called
     // from an already-clean state).
     const snap = state.search.preSearchSelection;
-    const restoredSelection =
-      snap === null ? state.selection : new Set<string>(snap);
+    const restoredSelection = snap === null ? state.selection : new Set<string>(snap);
     set(
       {
         ...state,
@@ -954,10 +936,7 @@ export function createExplorerStore(datasourceId: string): ExplorerStore {
       // fs-sync's env-retry is already exhausted by the time we see
       // ok:false. Record the envelope; leave `nextCursor` untouched so a
       // manual Retry re-issues with the SAME cursor (task 8.4).
-      set(
-        { ...state, loadingMore: false, loadMoreError: response.error },
-        false,
-      );
+      set({ ...state, loadingMore: false, loadMoreError: response.error }, false);
     } catch (err) {
       if (bailIfStale()) return;
       const message = err instanceof Error ? err.message : String(err);
@@ -1001,10 +980,7 @@ export function createExplorerStore(datasourceId: string): ExplorerStore {
 
   function startPendingOp(entryId: string, kind: OpKind): void {
     const op: PendingOp = { kind, startedAt: Date.now() };
-    set(
-      { ...state, pendingOps: { ...state.pendingOps, [entryId]: op } },
-      false,
-    );
+    set({ ...state, pendingOps: { ...state.pendingOps, [entryId]: op } }, false);
   }
 
   function clearPendingOp(entryId: string): void {
@@ -1060,15 +1036,11 @@ export function createExplorerStore(datasourceId: string): ExplorerStore {
     set({ ...state, editingId: null }, false);
   }
 
-  function setRenameConflictPrompt(
-    prompt: RenameConflictPrompt | null,
-  ): void {
+  function setRenameConflictPrompt(prompt: RenameConflictPrompt | null): void {
     renameConflictPrompt = prompt;
   }
 
-  function setDownloadConflictPrompt(
-    prompt: DownloadConflictPrompt | null,
-  ): void {
+  function setDownloadConflictPrompt(prompt: DownloadConflictPrompt | null): void {
     downloadConflictPrompt = prompt;
   }
 
@@ -1114,30 +1086,27 @@ export function createExplorerStore(datasourceId: string): ExplorerStore {
       // the warning pin." Clear the pin scoped to this entry; leave
       // errors on other entries untouched.
       const nextLastError =
-        state.lastError !== null && state.lastError.entryId === entryId
-          ? null
-          : state.lastError;
-      set(
-        clearEditing({ ...state, lastError: nextLastError }),
-        false,
-      );
+        state.lastError !== null && state.lastError.entryId === entryId ? null : state.lastError;
+      set(clearEditing({ ...state, lastError: nextLastError }), false);
       return;
     }
 
-    const api = (globalThis as unknown as {
-      window?: {
-        api?: {
-          files?: {
-            rename?: (req: {
-              datasourceId: string;
-              path: string;
-              newName: string;
-              conflictPolicy: RenameConflictPolicy;
-            }) => Promise<FilesRenameResponse>;
+    const api = (
+      globalThis as unknown as {
+        window?: {
+          api?: {
+            files?: {
+              rename?: (req: {
+                datasourceId: string;
+                path: string;
+                newName: string;
+                conflictPolicy: RenameConflictPolicy;
+              }) => Promise<FilesRenameResponse>;
+            };
           };
         };
-      };
-    }).window?.api?.files?.rename;
+      }
+    ).window?.api?.files?.rename;
 
     // Seed the optimistic pendingOp + close the inline input. The loop
     // below refreshes `pendingOp.startedAt` on each retry so the
@@ -1198,13 +1167,8 @@ export function createExplorerStore(datasourceId: string): ExplorerStore {
           return;
         }
         // Conflict + prompt registered → re-prompt and re-dispatch.
-        if (
-          response.error.tag === FilesErrorTag.Conflict &&
-          renameConflictPrompt !== null
-        ) {
-          const choice = await renameConflictPrompt(
-            response.error.existingPath ?? entry.path,
-          );
+        if (response.error.tag === FilesErrorTag.Conflict && renameConflictPrompt !== null) {
+          const choice = await renameConflictPrompt(response.error.existingPath ?? entry.path);
           if (choice === "cancel") {
             // User aborted the rename. Clear pendingOp; leave the
             // entry as-is. No `lastError` — cancel is a soft outcome,
@@ -1265,18 +1229,20 @@ export function createExplorerStore(datasourceId: string): ExplorerStore {
     set({ ...state, pendingOps: nextOps, lastError: null }, false);
 
     try {
-      const api = (globalThis as unknown as {
-        window?: {
-          api?: {
-            files?: {
-              remove?: (req: {
-                datasourceId: string;
-                targets: FilesRemoveTarget[];
-              }) => Promise<FilesRemoveResponse>;
+      const api = (
+        globalThis as unknown as {
+          window?: {
+            api?: {
+              files?: {
+                remove?: (req: {
+                  datasourceId: string;
+                  targets: FilesRemoveTarget[];
+                }) => Promise<FilesRemoveResponse>;
+              };
             };
           };
-        };
-      }).window?.api?.files?.remove;
+        }
+      ).window?.api?.files?.remove;
       if (api === undefined) {
         throw new Error("window.api.files.remove is unavailable");
       }
@@ -1341,9 +1307,7 @@ export function createExplorerStore(datasourceId: string): ExplorerStore {
       // rename's per-entry lastError model; the toast summarises the rest).
       const first = failedResults[0];
       const lastError: ExplorerLastError | null =
-        first !== undefined
-          ? { entryId: first.handle, reason: first.message }
-          : null;
+        first !== undefined ? { entryId: first.handle, reason: first.message } : null;
 
       set(
         {
@@ -1354,9 +1318,7 @@ export function createExplorerStore(datasourceId: string): ExplorerStore {
         },
         false,
       );
-      toast.success(
-        `Deleted ${removedCount} of ${total} items; ${failedCount} failed`,
-      );
+      toast.success(`Deleted ${removedCount} of ${total} items; ${failedCount} failed`);
     } catch (err) {
       const reason = err instanceof Error ? err.message : String(err);
       const clearedOps: Record<string, PendingOp> = { ...state.pendingOps };
@@ -1385,18 +1347,20 @@ export function createExplorerStore(datasourceId: string): ExplorerStore {
     if (entry.kind === "directory") return;
 
     try {
-      const api = (globalThis as unknown as {
-        window?: {
-          api?: {
-            files?: {
-              download?: (req: {
-                datasourceId: string;
-                path: string;
-              }) => Promise<FilesDownloadResponse>;
+      const api = (
+        globalThis as unknown as {
+          window?: {
+            api?: {
+              files?: {
+                download?: (req: {
+                  datasourceId: string;
+                  path: string;
+                }) => Promise<FilesDownloadResponse>;
+              };
             };
           };
-        };
-      }).window?.api?.files?.download;
+        }
+      ).window?.api?.files?.download;
       if (api === undefined) {
         throw new Error("window.api.files.download is unavailable");
       }
@@ -1481,11 +1445,7 @@ export interface UseExplorerStoreResult {
 
 export function useExplorerStore(datasourceId: string): UseExplorerStoreResult {
   const store = getOrCreateExplorerStore(datasourceId);
-  const state = useSyncExternalStore(
-    store.subscribe,
-    store.getSnapshot,
-    store.getSnapshot,
-  );
+  const state = useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
   return { state, store };
 }
 

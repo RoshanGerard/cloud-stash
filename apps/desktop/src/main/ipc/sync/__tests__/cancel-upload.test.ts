@@ -13,9 +13,10 @@ import type { SyncCancelUploadRequest } from "@cloudstash/ipc-contracts/sync-ser
 import type { SyncClient } from "../../../sync/client.js";
 import { handleSyncCancelUpload } from "../cancel-upload.js";
 
-function makeFakeClient(
-  impl: (params: SyncCancelUploadRequest) => Promise<unknown>,
-): { client: SyncClient; cancelUpload: ReturnType<typeof vi.fn> } {
+function makeFakeClient(impl: (params: SyncCancelUploadRequest) => Promise<unknown>): {
+  client: SyncClient;
+  cancelUpload: ReturnType<typeof vi.fn>;
+} {
   const cancelUpload = vi.fn(impl);
   const client = { cancelUpload } as unknown as SyncClient;
   return { client, cancelUpload };
@@ -44,10 +45,7 @@ describe("handleSyncCancelUpload", () => {
       cancelled: false,
     }));
 
-    const res = await handleSyncCancelUpload(
-      { uploadJobId: "u-missing" },
-      client,
-    );
+    const res = await handleSyncCancelUpload({ uploadJobId: "u-missing" }, client);
 
     expect(cancelUpload).toHaveBeenCalledTimes(1);
     expect(cancelUpload).toHaveBeenCalledWith({
@@ -67,8 +65,6 @@ describe("handleSyncCancelUpload", () => {
       throw err;
     });
 
-    await expect(
-      handleSyncCancelUpload({ uploadJobId: "u-1" }, client),
-    ).rejects.toBe(err);
+    await expect(handleSyncCancelUpload({ uploadJobId: "u-1" }, client)).rejects.toBe(err);
   });
 });

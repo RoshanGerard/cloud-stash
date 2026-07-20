@@ -26,15 +26,12 @@ import { startSupervisor, type SupervisorHandle } from "./supervisor.js";
 // Other exports (`exec`, `execFile`, etc.) pass through unchanged.
 const spawnSpy = vi.fn();
 vi.mock("node:child_process", async (importOriginal) => {
-  const actual =
-    await importOriginal<typeof import("node:child_process")>();
+  const actual = await importOriginal<typeof import("node:child_process")>();
   return {
     ...actual,
     spawn: (...args: unknown[]) => {
       spawnSpy(...args);
-      return (actual.spawn as unknown as (...a: unknown[]) => unknown)(
-        ...args,
-      );
+      return (actual.spawn as unknown as (...a: unknown[]) => unknown)(...args);
     },
   };
 });

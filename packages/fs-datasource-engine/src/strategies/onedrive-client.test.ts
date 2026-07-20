@@ -26,11 +26,7 @@ import { join } from "node:path";
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import type {
-  AuthResult,
-  OAuthIntent,
-  StoredCredentials,
-} from "@cloudstash/ipc-contracts";
+import type { AuthResult, OAuthIntent, StoredCredentials } from "@cloudstash/ipc-contracts";
 import { DatasourceError, DatasourceErrorTag, providers } from "@cloudstash/ipc-contracts";
 
 import type { BaseClientContext, CredentialStore } from "../base-client.js";
@@ -59,9 +55,7 @@ interface VerbResponder {
  * Values are either plain objects (resolved as the response) or callables
  * that may throw to simulate an SDK rejection.
  */
-function makeFakeGraph(
-  responders: Array<{ match: string; verbs: VerbResponder }>,
-): {
+function makeFakeGraph(responders: Array<{ match: string; verbs: VerbResponder }>): {
   client: GraphClientLike;
   apiCalls: string[];
   /**
@@ -73,8 +67,7 @@ function makeFakeGraph(
   queryCalls: Array<{ path: string; values: Record<string, unknown> }>;
 } {
   const apiCalls: string[] = [];
-  const queryCalls: Array<{ path: string; values: Record<string, unknown> }> =
-    [];
+  const queryCalls: Array<{ path: string; values: Record<string, unknown> }> = [];
   const client: GraphClientLike = {
     api(path: string) {
       apiCalls.push(path);
@@ -159,8 +152,7 @@ function makeCreds(
       meta: {
         clientId: overrides.clientId ?? "test-client-id",
         tenantId: overrides.tenantId ?? "common",
-        redirectUri:
-          overrides.redirectUri ?? "http://localhost:3000/oauth/callback",
+        redirectUri: overrides.redirectUri ?? "http://localhost:3000/oauth/callback",
       },
     },
     createdAt: 0,
@@ -190,18 +182,11 @@ function makeHarness(options: {
     providerDescriptor: providers.onedrive,
   };
   const graphFactory =
-    typeof options.graph === "function"
-      ? options.graph
-      : () => options.graph as GraphClientLike;
-  const client = createOneDriveClient(
-    "ds-od-1",
-    makeCreds(options.credsOverrides ?? {}),
-    ctx,
-    {
-      graphFactory,
-      ...(options.fetchImpl ? { fetchImpl: options.fetchImpl } : {}),
-    },
-  ) as OneDriveClient;
+    typeof options.graph === "function" ? options.graph : () => options.graph as GraphClientLike;
+  const client = createOneDriveClient("ds-od-1", makeCreds(options.credsOverrides ?? {}), ctx, {
+    graphFactory,
+    ...(options.fetchImpl ? { fetchImpl: options.fetchImpl } : {}),
+  }) as OneDriveClient;
   createdClients.push(client);
   return { client, store };
 }
@@ -260,9 +245,7 @@ function makeIdToken(payload: Record<string, unknown>): string {
 
 /** A valid Microsoft v2.0 id_token payload. `iss` and `tid` use the SAME
  * GUID (never `common`); override `sub`/`email`/`aud`/`iss`/`tid`/`exp`. */
-function msIdTokenPayload(
-  overrides: Record<string, unknown> = {},
-): Record<string, unknown> {
+function msIdTokenPayload(overrides: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     sub: "ms-sub-1",
     email: "alice@contoso.com",
@@ -276,10 +259,7 @@ function msIdTokenPayload(
 
 /** A 200 token-endpoint Response carrying access/refresh tokens + an
  * id_token. Used to replace bare success mocks once capture is unconditional. */
-function tokenResponseWithIdToken(
-  idToken: string,
-  body: Record<string, unknown> = {},
-): Response {
+function tokenResponseWithIdToken(idToken: string, body: Record<string, unknown> = {}): Response {
   return new Response(
     JSON.stringify({
       access_token: "new-at",
@@ -554,9 +534,7 @@ describe("OneDriveClient — getMetadata", () => {
       },
     ]);
     const h = makeHarness({ graph: client });
-    await expect(
-      h.client.getMetadata({ kind: "path", path: "/nope.txt" }),
-    ).rejects.toSatisfy(
+    await expect(h.client.getMetadata({ kind: "path", path: "/nope.txt" })).rejects.toSatisfy(
       (e: unknown) => e instanceof DatasourceError && e.tag === DatasourceErrorTag.NotFound,
     );
   });
@@ -660,9 +638,7 @@ describe("OneDriveClient — authenticate", () => {
       "https://login.microsoftonline.com/tenant-42/oauth2/v2.0/authorize",
     );
     expect(intent.authorizeUrl).toContain("client_id=app-xyz");
-    expect(intent.authorizeUrl).toContain(
-      "redirect_uri=http%3A%2F%2Flocalhost%2Fcallback",
-    );
+    expect(intent.authorizeUrl).toContain("redirect_uri=http%3A%2F%2Flocalhost%2Fcallback");
     // Microsoft scopes for file read/write/offline access
     expect(intent.authorizeUrl).toContain("scope=");
     expect(intent.authorizeUrl).toContain("offline_access");
@@ -691,15 +667,16 @@ describe("OneDriveClient — authenticate", () => {
 describe("OneDriveClient — refreshToken", () => {
   it("POSTs grant_type=refresh_token to the token endpoint and returns the new AuthResult", async () => {
     const { client } = makeFakeGraph([]);
-    const fetchImpl = vi.fn(async () =>
-      new Response(
-        JSON.stringify({
-          access_token: "refreshed-at",
-          refresh_token: "refreshed-rt",
-          expires_in: 3600,
-        }),
-        { status: 200 },
-      ),
+    const fetchImpl = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            access_token: "refreshed-at",
+            refresh_token: "refreshed-rt",
+            expires_in: 3600,
+          }),
+          { status: 200 },
+        ),
     ) as unknown as typeof fetch;
     const h = makeHarness({ graph: client, fetchImpl });
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -716,18 +693,17 @@ describe("OneDriveClient — refreshToken", () => {
 
   it("token endpoint returning invalid_grant throws DatasourceError tag 'auth-revoked'", async () => {
     const { client } = makeFakeGraph([]);
-    const fetchImpl = vi.fn(async () =>
-      new Response(
-        JSON.stringify({ error: "invalid_grant", error_description: "bad" }),
-        { status: 400 },
-      ),
+    const fetchImpl = vi.fn(
+      async () =>
+        new Response(JSON.stringify({ error: "invalid_grant", error_description: "bad" }), {
+          status: 400,
+        }),
     ) as unknown as typeof fetch;
     const h = makeHarness({ graph: client, fetchImpl });
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const refresh = (h.client as any).refreshTokenImpl.bind(h.client);
     await expect(refresh()).rejects.toSatisfy(
-      (e: unknown) =>
-        e instanceof DatasourceError && e.tag === DatasourceErrorTag.AuthRevoked,
+      (e: unknown) => e instanceof DatasourceError && e.tag === DatasourceErrorTag.AuthRevoked,
     );
   });
 });
@@ -737,10 +713,7 @@ describe("OneDriveClient — refreshToken", () => {
 // ---------------------------------------------------------------------------
 
 describe("OneDriveClient — normalizeError taxonomy", () => {
-  function normalize(
-    client: OneDriveClient,
-    raw: unknown,
-  ): DatasourceError<"onedrive"> {
+  function normalize(client: OneDriveClient, raw: unknown): DatasourceError<"onedrive"> {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return (client as any).normalizeErrorImpl(raw);
   }
@@ -748,22 +721,17 @@ describe("OneDriveClient — normalizeError taxonomy", () => {
   it("InvalidAuthenticationToken / 401 → auth-expired", () => {
     const { client } = makeFakeGraph([]);
     const h = makeHarness({ graph: client });
-    expect(
-      normalize(h.client, { code: "InvalidAuthenticationToken", statusCode: 401 })
-        .tag,
-    ).toBe("auth-expired");
+    expect(normalize(h.client, { code: "InvalidAuthenticationToken", statusCode: 401 }).tag).toBe(
+      "auth-expired",
+    );
     expect(normalize(h.client, { statusCode: 401 }).tag).toBe("auth-expired");
   });
 
   it("unauthorized_client / invalid_grant → auth-revoked", () => {
     const { client } = makeFakeGraph([]);
     const h = makeHarness({ graph: client });
-    expect(normalize(h.client, { code: "unauthorized_client" }).tag).toBe(
-      "auth-revoked",
-    );
-    expect(normalize(h.client, { code: "invalid_grant" }).tag).toBe(
-      "auth-revoked",
-    );
+    expect(normalize(h.client, { code: "unauthorized_client" }).tag).toBe("auth-revoked");
+    expect(normalize(h.client, { code: "invalid_grant" }).tag).toBe("auth-revoked");
   });
 
   it("itemNotFound / 404 → not-found", () => {
@@ -776,9 +744,7 @@ describe("OneDriveClient — normalizeError taxonomy", () => {
   it("nameAlreadyExists / 409 → conflict", () => {
     const { client } = makeFakeGraph([]);
     const h = makeHarness({ graph: client });
-    expect(normalize(h.client, { code: "nameAlreadyExists" }).tag).toBe(
-      "conflict",
-    );
+    expect(normalize(h.client, { code: "nameAlreadyExists" }).tag).toBe("conflict");
     expect(normalize(h.client, { statusCode: 409 }).tag).toBe("conflict");
   });
 
@@ -800,9 +766,9 @@ describe("OneDriveClient — normalizeError taxonomy", () => {
     const h = makeHarness({ graph: client });
     expect(normalize(h.client, { code: "ECONNRESET" }).tag).toBe("network-error");
     expect(normalize(h.client, { code: "ETIMEDOUT" }).tag).toBe("network-error");
-    expect(
-      normalize(h.client, { name: "FetchError", message: "fetch failed" }).tag,
-    ).toBe("network-error");
+    expect(normalize(h.client, { name: "FetchError", message: "fetch failed" }).tag).toBe(
+      "network-error",
+    );
   });
 
   it("unknown → provider-error", () => {
@@ -837,11 +803,7 @@ describe("OneDriveClient — normalizeError taxonomy", () => {
     const { client } = makeFakeGraph([]);
     const h = makeHarness({ graph: client });
     // Graph returns 403 with an inner error code when consent is revoked.
-    for (const innerCode of [
-      "unauthenticated",
-      "invalidAuthenticationToken",
-      "revoked",
-    ]) {
+    for (const innerCode of ["unauthenticated", "invalidAuthenticationToken", "revoked"]) {
       const e = normalize(h.client, {
         statusCode: 403,
         code: "accessDenied",
@@ -1051,10 +1013,9 @@ describe("OneDriveClient — resumable upload multi-chunk (Content-Range + isLas
       // 201 Created with the DriveItem JSON. The strategy only parses the
       // final response.
       if (!isLast) {
-        return new Response(
-          JSON.stringify({ nextExpectedRanges: [`${callIdx * CHUNK}-`] }),
-          { status: 202 },
-        );
+        return new Response(JSON.stringify({ nextExpectedRanges: [`${callIdx * CHUNK}-`] }), {
+          status: 202,
+        });
       }
       return new Response(
         JSON.stringify({
@@ -1075,8 +1036,10 @@ describe("OneDriveClient — resumable upload multi-chunk (Content-Range + isLas
   it("25 MiB → 3 chunks with the trailing chunk flushed via the post-loop branch; Content-Range headers match exactly and final entry carries the last response's driveItemId", async () => {
     const total = 25 * 1024 * 1024; // 26_214_400
     const expected = [CHUNK, CHUNK, total - 2 * CHUNK]; // [10 MiB, 10 MiB, 5 MiB]
-    const { file, graphClient, fetchImpl, fetchCalls, totalBytes } =
-      setupMultiChunkTest(total, expected);
+    const { file, graphClient, fetchImpl, fetchCalls, totalBytes } = setupMultiChunkTest(
+      total,
+      expected,
+    );
     try {
       const h = makeHarness({ graph: graphClient, fetchImpl });
       const entry = await h.client.uploadFile(
@@ -1095,12 +1058,8 @@ describe("OneDriveClient — resumable upload multi-chunk (Content-Range + isLas
       }
 
       // Content-Range headers.
-      expect(fetchCalls[0]!.contentRange).toBe(
-        `bytes 0-${CHUNK - 1}/${totalBytes}`,
-      );
-      expect(fetchCalls[1]!.contentRange).toBe(
-        `bytes ${CHUNK}-${2 * CHUNK - 1}/${totalBytes}`,
-      );
+      expect(fetchCalls[0]!.contentRange).toBe(`bytes 0-${CHUNK - 1}/${totalBytes}`);
+      expect(fetchCalls[1]!.contentRange).toBe(`bytes ${CHUNK}-${2 * CHUNK - 1}/${totalBytes}`);
       expect(fetchCalls[2]!.contentRange).toBe(
         `bytes ${2 * CHUNK}-${totalBytes - 1}/${totalBytes}`,
       );
@@ -1120,8 +1079,10 @@ describe("OneDriveClient — resumable upload multi-chunk (Content-Range + isLas
   it("30 MiB → 3 chunks where the last chunk is exactly UPLOAD_CHUNK_BYTES (inner-loop isLast branch)", async () => {
     const total = 30 * 1024 * 1024; // 31_457_280 — exact multiple of CHUNK
     const expected = [CHUNK, CHUNK, CHUNK];
-    const { file, graphClient, fetchImpl, fetchCalls, totalBytes } =
-      setupMultiChunkTest(total, expected);
+    const { file, graphClient, fetchImpl, fetchCalls, totalBytes } = setupMultiChunkTest(
+      total,
+      expected,
+    );
     try {
       const h = makeHarness({ graph: graphClient, fetchImpl });
       const entry = await h.client.uploadFile(
@@ -1131,12 +1092,8 @@ describe("OneDriveClient — resumable upload multi-chunk (Content-Range + isLas
 
       expect(entry.handle).toBe("final-id-last-response");
       expect(fetchCalls).toHaveLength(3);
-      expect(fetchCalls[0]!.contentRange).toBe(
-        `bytes 0-${CHUNK - 1}/${totalBytes}`,
-      );
-      expect(fetchCalls[1]!.contentRange).toBe(
-        `bytes ${CHUNK}-${2 * CHUNK - 1}/${totalBytes}`,
-      );
+      expect(fetchCalls[0]!.contentRange).toBe(`bytes 0-${CHUNK - 1}/${totalBytes}`);
+      expect(fetchCalls[1]!.contentRange).toBe(`bytes ${CHUNK}-${2 * CHUNK - 1}/${totalBytes}`);
       expect(fetchCalls[2]!.contentRange).toBe(
         `bytes ${2 * CHUNK}-${totalBytes - 1}/${totalBytes}`,
       );
@@ -1180,33 +1137,29 @@ describe("OneDriveClient — signal-driven cancel (resumable session)", () => {
       method: string;
       signal?: AbortSignal | null;
     }> = [];
-    const fetchImpl = vi.fn(
-      async (_url: string | URL | Request, init?: RequestInit) => {
-        const method = (init?.method ?? "GET").toUpperCase();
-        if (method === "DELETE") {
-          deleteCalls.push({
-            url: String(_url),
-            method,
-            signal: init?.signal ?? null,
-          });
-          return new Response(null, { status: 204 });
+    const fetchImpl = vi.fn(async (_url: string | URL | Request, init?: RequestInit) => {
+      const method = (init?.method ?? "GET").toUpperCase();
+      if (method === "DELETE") {
+        deleteCalls.push({
+          url: String(_url),
+          method,
+          signal: init?.signal ?? null,
+        });
+        return new Response(null, { status: 204 });
+      }
+      if (method === "PUT") {
+        const signal = init?.signal;
+        if (signal?.aborted) {
+          throw Object.assign(new Error("aborted"), { name: "AbortError" });
         }
-        if (method === "PUT") {
-          const signal = init?.signal;
-          if (signal?.aborted) {
-            throw Object.assign(new Error("aborted"), { name: "AbortError" });
-          }
-          return await new Promise<Response>((_resolve, reject) => {
-            signal?.addEventListener("abort", () => {
-              reject(
-                Object.assign(new Error("aborted"), { name: "AbortError" }),
-              );
-            });
+        return await new Promise<Response>((_resolve, reject) => {
+          signal?.addEventListener("abort", () => {
+            reject(Object.assign(new Error("aborted"), { name: "AbortError" }));
           });
-        }
-        return new Response("unexpected", { status: 500 });
-      },
-    ) as unknown as typeof fetch;
+        });
+      }
+      return new Response("unexpected", { status: 500 });
+    }) as unknown as typeof fetch;
 
     try {
       const h = makeHarness({ graph: graphClient, fetchImpl });
@@ -1420,8 +1373,7 @@ describe("OneDriveClient — path↔handle LRU invalidation", () => {
         },
       },
       {
-        match:
-          "/me/drive/items/PARENT-ROOT/children?$filter=name%20eq%20'new.txt'",
+        match: "/me/drive/items/PARENT-ROOT/children?$filter=name%20eq%20'new.txt'",
         verbs: { get: () => ({ value: [] }) },
       },
     ]);
@@ -1638,11 +1590,7 @@ describe("OneDriveClient — doRenameImpl (PATCH /me/drive/items, kind via folde
       },
     ]);
     const h = makeHarness({ graph: client });
-    const entry = await h.client.rename(
-      { kind: "path", path: "/old.txt" },
-      "new.txt",
-      "fail",
-    );
+    const entry = await h.client.rename({ kind: "path", path: "/old.txt" }, "new.txt", "fail");
     expect(entry.handle).toBe("FILE-X");
     expect(entry.name).toBe("new.txt");
     expect(entry.kind).toBe("file");
@@ -1687,11 +1635,7 @@ describe("OneDriveClient — doRenameImpl (PATCH /me/drive/items, kind via folde
       },
     ]);
     const h = makeHarness({ graph: client });
-    const entry = await h.client.rename(
-      { kind: "path", path: "/photos" },
-      "pictures",
-      "fail",
-    );
+    const entry = await h.client.rename({ kind: "path", path: "/photos" }, "pictures", "fail");
     expect(entry.kind).toBe("folder");
     expect(entry.mimeFamily).toBe("folder");
     expect(entry.name).toBe("pictures");
@@ -1744,11 +1688,7 @@ describe("OneDriveClient — doRenameImpl sibling-collision pre-check on `fail`"
 
     let caught: unknown;
     try {
-      await h.client.rename(
-        { kind: "path", path: "/foo.txt" },
-        "bar.txt",
-        "fail",
-      );
+      await h.client.rename({ kind: "path", path: "/foo.txt" }, "bar.txt", "fail");
     } catch (e) {
       caught = e;
     }
@@ -1826,11 +1766,7 @@ describe("OneDriveClient — doRenameImpl `overwrite` on a file deletes the coll
       },
     ]);
     const h = makeHarness({ graph: client });
-    const entry = await h.client.rename(
-      { kind: "path", path: "/old.txt" },
-      "new.txt",
-      "overwrite",
-    );
+    const entry = await h.client.rename({ kind: "path", path: "/old.txt" }, "new.txt", "overwrite");
     expect(entry.handle).toBe("OLD-FILE");
     expect(entry.name).toBe("new.txt");
     expect(deleteCalls).toEqual(["EXISTING-NEW"]);
@@ -1839,9 +1775,7 @@ describe("OneDriveClient — doRenameImpl `overwrite` on a file deletes the coll
     // colliding sibling URL (NOT via the public deleteFile primitive). The
     // engine emits no events at all post migrate-engine-events-to-consumer;
     // the direct DELETE is verified via deleteCalls / apiCalls below.
-    expect(apiCalls.some((u) => u === "/me/drive/items/EXISTING-NEW")).toBe(
-      true,
-    );
+    expect(apiCalls.some((u) => u === "/me/drive/items/EXISTING-NEW")).toBe(true);
   });
 });
 
@@ -1879,11 +1813,7 @@ describe("OneDriveClient — doRenameImpl directory-overwrite refusal", () => {
 
     let caught: unknown;
     try {
-      await h.client.rename(
-        { kind: "path", path: "/photos" },
-        "pictures",
-        "overwrite",
-      );
+      await h.client.rename({ kind: "path", path: "/photos" }, "pictures", "overwrite");
     } catch (e) {
       caught = e;
     }
@@ -1932,11 +1862,7 @@ describe("OneDriveClient — doRenameImpl Graph 409 race normalizes to conflict"
     const h = makeHarness({ graph: client });
     let caught: unknown;
     try {
-      await h.client.rename(
-        { kind: "path", path: "/old.txt" },
-        "bar.txt",
-        "fail",
-      );
+      await h.client.rename({ kind: "path", path: "/old.txt" }, "bar.txt", "fail");
     } catch (e) {
       caught = e;
     }
@@ -2013,11 +1939,7 @@ describe("OneDriveClient — doRenameImpl `keep-both` policy retries with suffix
       },
     ]);
     const h = makeHarness({ graph: client });
-    const entry = await h.client.rename(
-      { kind: "path", path: "/foo.pdf" },
-      "bar.pdf",
-      "keep-both",
-    );
+    const entry = await h.client.rename({ kind: "path", path: "/foo.pdf" }, "bar.pdf", "keep-both");
     expect(entry.name).toBe("bar-3.pdf");
     expect(entry.handle).toBe("FOO-FILE");
     expect(patchBodies).toHaveLength(1);
@@ -2072,11 +1994,7 @@ describe("OneDriveClient — doRenameImpl `keep-both` policy retries with suffix
     const h = makeHarness({ graph: client });
     let caught: unknown;
     try {
-      await h.client.rename(
-        { kind: "path", path: "/foo.pdf" },
-        "bar.pdf",
-        "keep-both",
-      );
+      await h.client.rename({ kind: "path", path: "/foo.pdf" }, "bar.pdf", "keep-both");
     } catch (e) {
       caught = e;
     }
@@ -2374,16 +2292,18 @@ describe("OneDriveClient — account identity (scope widening)", () => {
 
 describe("OneDriveClient — account identity (capture on exchange)", () => {
   function makeFakeGraphStub(): GraphClientLike {
-    return { api: () => { throw new Error("graph not expected in auth-only test"); } } as unknown as GraphClientLike;
+    return {
+      api: () => {
+        throw new Error("graph not expected in auth-only test");
+      },
+    } as unknown as GraphClientLike;
   }
 
   it("exchange with a valid Microsoft id_token (iss/tid use a GUID, not common) writes meta.account = { sub, email }", async () => {
     const { ctx, puts } = makeSpyAuthCtx();
     const fetchImpl = vi.fn(async () =>
       tokenResponseWithIdToken(
-        makeIdToken(
-          msIdTokenPayload({ sub: "ms-sub-cap", email: "carol@contoso.com" }),
-        ),
+        makeIdToken(msIdTokenPayload({ sub: "ms-sub-cap", email: "carol@contoso.com" })),
       ),
     ) as unknown as typeof fetch;
     const client = new OneDriveClient(
@@ -2453,9 +2373,7 @@ describe("OneDriveClient — account identity (capture on exchange)", () => {
     const { ctx, puts } = makeSpyAuthCtx();
     const fetchImpl = vi.fn(async () =>
       tokenResponseWithIdToken(
-        makeIdToken(
-          msIdTokenPayload({ exp: Math.floor(Date.now() / 1000) - 3600 }),
-        ),
+        makeIdToken(msIdTokenPayload({ exp: Math.floor(Date.now() / 1000) - 3600 })),
       ),
     ) as unknown as typeof fetch;
     const client = new OneDriveClient(
@@ -2474,15 +2392,16 @@ describe("OneDriveClient — account identity (capture on exchange)", () => {
 
   it("exchange with a MISSING id_token throws a RETRYABLE DatasourceError and does NOT persist (fail-closed)", async () => {
     const { ctx, puts } = makeSpyAuthCtx();
-    const fetchImpl = vi.fn(async () =>
-      new Response(
-        JSON.stringify({
-          access_token: "at",
-          refresh_token: "rt",
-          expires_in: 3600,
-        }),
-        { status: 200, headers: { "Content-Type": "application/json" } },
-      ),
+    const fetchImpl = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            access_token: "at",
+            refresh_token: "rt",
+            expires_in: 3600,
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } },
+        ),
     ) as unknown as typeof fetch;
     const client = new OneDriveClient(
       { datasourceId: "ds-od-noidtoken", ctx },
@@ -2501,7 +2420,11 @@ describe("OneDriveClient — account identity (capture on exchange)", () => {
 
 describe("OneDriveClient — account identity (reconnect enforcement)", () => {
   function makeFakeGraphStub(): GraphClientLike {
-    return { api: () => { throw new Error("graph not expected in auth-only test"); } } as unknown as GraphClientLike;
+    return {
+      api: () => {
+        throw new Error("graph not expected in auth-only test");
+      },
+    } as unknown as GraphClientLike;
   }
 
   it("login_hint is present in the authorize URL when constructed with expectedAccount; absent otherwise", async () => {
@@ -2515,9 +2438,7 @@ describe("OneDriveClient — account identity (reconnect enforcement)", () => {
     );
     createdClients.push(withAnchor);
     const intent1 = (await withAnchor.authenticate()) as OAuthIntent;
-    expect(new URL(intent1.authorizeUrl).searchParams.get("login_hint")).toBe(
-      "bound@contoso.com",
-    );
+    expect(new URL(intent1.authorizeUrl).searchParams.get("login_hint")).toBe("bound@contoso.com");
 
     const withoutAnchor = new OneDriveClient(
       { datasourceId: "ds-od-nohint", ctx },
@@ -2527,18 +2448,14 @@ describe("OneDriveClient — account identity (reconnect enforcement)", () => {
     );
     createdClients.push(withoutAnchor);
     const intent2 = (await withoutAnchor.authenticate()) as OAuthIntent;
-    expect(new URL(intent2.authorizeUrl).searchParams.has("login_hint")).toBe(
-      false,
-    );
+    expect(new URL(intent2.authorizeUrl).searchParams.has("login_hint")).toBe(false);
   });
 
   it("reconnect with a MATCHING sub persists normally and preserves meta.account", async () => {
     const { ctx, puts } = makeSpyAuthCtx();
     const fetchImpl = vi.fn(async () =>
       tokenResponseWithIdToken(
-        makeIdToken(
-          msIdTokenPayload({ sub: "same-sub", email: "new-email@contoso.com" }),
-        ),
+        makeIdToken(msIdTokenPayload({ sub: "same-sub", email: "new-email@contoso.com" })),
       ),
     ) as unknown as typeof fetch;
     const client = new OneDriveClient(
@@ -2562,9 +2479,7 @@ describe("OneDriveClient — account identity (reconnect enforcement)", () => {
     const { ctx, puts } = makeSpyAuthCtx();
     const fetchImpl = vi.fn(async () =>
       tokenResponseWithIdToken(
-        makeIdToken(
-          msIdTokenPayload({ sub: "intruder-sub", email: "intruder@contoso.com" }),
-        ),
+        makeIdToken(msIdTokenPayload({ sub: "intruder-sub", email: "intruder@contoso.com" })),
       ),
     ) as unknown as typeof fetch;
     const client = new OneDriveClient(
@@ -2598,14 +2513,15 @@ describe("OneDriveClient — account identity (reconnect enforcement)", () => {
 describe("OneDriveClient — account identity (refresh preserves anchor)", () => {
   it("refreshTokenImpl re-emits the stored meta.account unchanged (refresh response has no id_token)", async () => {
     const { client: graph } = makeFakeGraph([]);
-    const fetchImpl = vi.fn(async () =>
-      new Response(
-        JSON.stringify({
-          access_token: "refreshed-at",
-          expires_in: 3600,
-        }),
-        { status: 200, headers: { "Content-Type": "application/json" } },
-      ),
+    const fetchImpl = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            access_token: "refreshed-at",
+            expires_in: 3600,
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } },
+        ),
     ) as unknown as typeof fetch;
     // Build creds carrying meta.account so readCredsFromStored seeds the anchor.
     const creds: StoredCredentials = {

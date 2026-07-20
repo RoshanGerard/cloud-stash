@@ -1,13 +1,6 @@
 /** @vitest-environment jsdom */
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import {
-  act,
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-  within,
-} from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 
 import { createExplorerStore } from "../../store.js";
@@ -33,9 +26,7 @@ function makeStore(id = "ds-test"): ExplorerStore {
 }
 
 function getDataRows(): HTMLElement[] {
-  return Array.from(
-    document.querySelectorAll<HTMLElement>('[data-testid="explorer-row"]'),
-  );
+  return Array.from(document.querySelectorAll<HTMLElement>('[data-testid="explorer-row"]'));
 }
 
 describe("DetailsView", () => {
@@ -105,9 +96,7 @@ describe("DetailsView", () => {
   it("size and modified cells carry the tabular-nums class", () => {
     const store = makeStore();
     act(() => {
-      store.setEntries([
-        seedEntry({ id: "e1", name: "alpha.png", path: "/alpha.png" }),
-      ]);
+      store.setEntries([seedEntry({ id: "e1", name: "alpha.png", path: "/alpha.png" })]);
     });
     render(<DetailsView store={store} />);
 

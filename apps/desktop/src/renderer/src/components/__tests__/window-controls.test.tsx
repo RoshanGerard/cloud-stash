@@ -6,14 +6,7 @@
 // to a Restore label when the main process pushes a maximize-change event.
 
 import { afterEach, describe, expect, it, vi } from "vitest";
-import {
-  act,
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-} from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 
 import { WindowControls } from "../window-controls";
@@ -62,12 +55,8 @@ describe("WindowControls", () => {
   it("renders minimize, maximize, and close buttons with accessible names", () => {
     stubWindowApi();
     render(<WindowControls />);
-    expect(
-      screen.getByRole("button", { name: /^minimize$/i }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: /^maximize$/i }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^minimize$/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^maximize$/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /^close$/i })).toBeInTheDocument();
   });
 
@@ -93,24 +82,18 @@ describe("WindowControls", () => {
   it("swaps the maximize control to Restore on a maximize-change push, and back", async () => {
     const api = stubWindowApi();
     render(<WindowControls />);
-    expect(
-      screen.getByRole("button", { name: /^maximize$/i }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^maximize$/i })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /^restore$/i })).toBeNull();
 
     act(() => api.fire(true));
     await waitFor(() =>
-      expect(
-        screen.getByRole("button", { name: /^restore$/i }),
-      ).toBeInTheDocument(),
+      expect(screen.getByRole("button", { name: /^restore$/i })).toBeInTheDocument(),
     );
     expect(screen.queryByRole("button", { name: /^maximize$/i })).toBeNull();
 
     act(() => api.fire(false));
     await waitFor(() =>
-      expect(
-        screen.getByRole("button", { name: /^maximize$/i }),
-      ).toBeInTheDocument(),
+      expect(screen.getByRole("button", { name: /^maximize$/i })).toBeInTheDocument(),
     );
   });
 

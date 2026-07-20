@@ -76,8 +76,7 @@ function makeToast(): MockToast {
     ) => opts?.id ?? `toast-${next++}`,
   );
   const success: Mock = vi.fn(
-    (_msg: string, opts?: { id?: string | number }) =>
-      opts?.id ?? `toast-${next++}`,
+    (_msg: string, opts?: { id?: string | number }) => opts?.id ?? `toast-${next++}`,
   );
   const error: Mock = vi.fn(
     (_msg: string, opts?: { id?: string | number; description?: string }) =>
@@ -88,8 +87,7 @@ function makeToast(): MockToast {
   // mock just records the call args so tests can assert on the render
   // function's output by invoking it.
   const custom: Mock = vi.fn(
-    (_render: unknown, opts?: { id?: string | number }) =>
-      opts?.id ?? `toast-${next++}`,
+    (_render: unknown, opts?: { id?: string | number }) => opts?.id ?? `toast-${next++}`,
   );
   return { loading, success, error, dismiss, custom };
 }
@@ -103,12 +101,10 @@ interface MockEventApi extends DownloadEventApi {
 function makeEventApi(): MockEventApi {
   let listener: ((event: DownloadEvent) => void) | null = null;
   const unsubscribe: Mock = vi.fn();
-  const onDownloadEvent: Mock = vi.fn(
-    (cb: (event: DownloadEvent) => void): (() => void) => {
-      listener = cb;
-      return unsubscribe;
-    },
-  );
+  const onDownloadEvent: Mock = vi.fn((cb: (event: DownloadEvent) => void): (() => void) => {
+    listener = cb;
+    return unsubscribe;
+  });
   return {
     onDownloadEvent,
     unsubscribe,
@@ -160,9 +156,7 @@ function downloadingEvent(
   const progress = patch.progress ?? 0;
   const bytesLoaded =
     patch.bytesLoaded ??
-    (bytesTotal !== null && bytesTotal > 0
-      ? Math.floor((progress / 100) * bytesTotal)
-      : 0);
+    (bytesTotal !== null && bytesTotal > 0 ? Math.floor((progress / 100) * bytesTotal) : 0);
   return {
     kind: "downloading",
     payload: {
@@ -190,9 +184,7 @@ describe("createDownloadJobToaster (§24.1)", () => {
   it("(a) FIRST downloading event opens a loading toast referencing the basename", () => {
     createDownloadJobToaster({ toast, eventApi });
 
-    eventApi.emit(
-      downloadingEvent("job-A", { progress: 25, path: "/folder/welcome.pdf" }),
-    );
+    eventApi.emit(downloadingEvent("job-A", { progress: 25, path: "/folder/welcome.pdf" }));
 
     expect(toast.loading).toHaveBeenCalledTimes(1);
     const [message, opts] = toast.loading.mock.calls[0] as [
@@ -208,18 +200,11 @@ describe("createDownloadJobToaster (§24.1)", () => {
     toast.loading.mockReturnValueOnce("toast-A");
     createDownloadJobToaster({ toast, eventApi });
 
-    eventApi.emit(
-      downloadingEvent("job-A", { progress: 10, path: "/welcome.pdf" }),
-    );
-    eventApi.emit(
-      downloadingEvent("job-A", { progress: 60, path: "/welcome.pdf" }),
-    );
+    eventApi.emit(downloadingEvent("job-A", { progress: 10, path: "/welcome.pdf" }));
+    eventApi.emit(downloadingEvent("job-A", { progress: 60, path: "/welcome.pdf" }));
 
     expect(toast.loading).toHaveBeenCalledTimes(2);
-    const second = toast.loading.mock.calls[1] as [
-      string,
-      { id?: string | number } | undefined,
-    ];
+    const second = toast.loading.mock.calls[1] as [string, { id?: string | number } | undefined];
     expect(second[1]?.id).toBe("toast-A");
     expect(second[0]).toMatch(/60\s*%/);
   });
@@ -235,9 +220,7 @@ describe("createDownloadJobToaster (§24.1)", () => {
       filesApi: { openSavedPath, showSavedInFolder },
     });
 
-    eventApi.emit(
-      downloadingEvent("job-A", { progress: 50, path: "/welcome.pdf" }),
-    );
+    eventApi.emit(downloadingEvent("job-A", { progress: 50, path: "/welcome.pdf" }));
     eventApi.emit({
       kind: "file-downloaded",
       payload: {
@@ -287,9 +270,7 @@ describe("createDownloadJobToaster (§24.1)", () => {
     toast.loading.mockReturnValueOnce("toast-A");
     createDownloadJobToaster({ toast, eventApi });
 
-    eventApi.emit(
-      downloadingEvent("job-A", { progress: 50, path: "/welcome.pdf" }),
-    );
+    eventApi.emit(downloadingEvent("job-A", { progress: 50, path: "/welcome.pdf" }));
     eventApi.emit({
       kind: "file-downloaded",
       payload: {
@@ -306,9 +287,7 @@ describe("createDownloadJobToaster (§24.1)", () => {
     // state.
     expect(toast.dismiss).toHaveBeenCalledWith("toast-A");
     expect(toast.custom).toHaveBeenCalledTimes(1);
-    const customOpts = toast.custom.mock.calls[0]![1] as
-      | { id?: string | number }
-      | undefined;
+    const customOpts = toast.custom.mock.calls[0]![1] as { id?: string | number } | undefined;
     expect(customOpts?.id).toBe("toast-A-success");
     expect(customOpts?.id).not.toBe("toast-A");
     const dismissOrder = toast.dismiss.mock.invocationCallOrder[0]!;
@@ -378,9 +357,7 @@ describe("createDownloadJobToaster (§24.1)", () => {
     toast.loading.mockReturnValueOnce("toast-A");
     createDownloadJobToaster({ toast, eventApi });
 
-    eventApi.emit(
-      downloadingEvent("job-A", { progress: 50, path: "/welcome.pdf" }),
-    );
+    eventApi.emit(downloadingEvent("job-A", { progress: 50, path: "/welcome.pdf" }));
     eventApi.emit({
       kind: "file-downloaded",
       payload: {
@@ -420,9 +397,7 @@ describe("createDownloadJobToaster (§24.1)", () => {
       filesApi: { openSavedPath, showSavedInFolder },
     });
 
-    eventApi.emit(
-      downloadingEvent("job-A", { progress: 50, path: "/welcome.pdf" }),
-    );
+    eventApi.emit(downloadingEvent("job-A", { progress: 50, path: "/welcome.pdf" }));
     eventApi.emit({
       kind: "file-downloaded",
       payload: {
@@ -448,9 +423,7 @@ describe("createDownloadJobToaster (§24.1)", () => {
     toast.dismiss.mockClear();
 
     opts.actions!.onOpen();
-    expect(openSavedPath).toHaveBeenCalledWith(
-      "/Users/alice/Downloads/CloudStash/welcome.pdf",
-    );
+    expect(openSavedPath).toHaveBeenCalledWith("/Users/alice/Downloads/CloudStash/welcome.pdf");
     expect(toast.dismiss).toHaveBeenCalledWith(successId);
   });
 
@@ -465,9 +438,7 @@ describe("createDownloadJobToaster (§24.1)", () => {
       filesApi: { openSavedPath, showSavedInFolder },
     });
 
-    eventApi.emit(
-      downloadingEvent("job-A", { progress: 50, path: "/welcome.pdf" }),
-    );
+    eventApi.emit(downloadingEvent("job-A", { progress: 50, path: "/welcome.pdf" }));
     eventApi.emit({
       kind: "file-downloaded",
       payload: {
@@ -489,9 +460,7 @@ describe("createDownloadJobToaster (§24.1)", () => {
     toast.dismiss.mockClear();
 
     opts.actions!.onShowInFolder();
-    expect(showSavedInFolder).toHaveBeenCalledWith(
-      "/Users/alice/Downloads/CloudStash/welcome.pdf",
-    );
+    expect(showSavedInFolder).toHaveBeenCalledWith("/Users/alice/Downloads/CloudStash/welcome.pdf");
     expect(toast.dismiss).toHaveBeenCalledWith(successId);
   });
 
@@ -504,9 +473,7 @@ describe("createDownloadJobToaster (§24.1)", () => {
     toast.loading.mockReturnValueOnce("toast-A");
     createDownloadJobToaster({ toast, eventApi });
 
-    eventApi.emit(
-      downloadingEvent("job-A", { progress: 50, path: "/welcome.pdf" }),
-    );
+    eventApi.emit(downloadingEvent("job-A", { progress: 50, path: "/welcome.pdf" }));
     eventApi.emit({
       kind: "file-downloaded",
       payload: {
@@ -580,13 +547,9 @@ describe("createDownloadJobToaster (§24.1)", () => {
     ];
     expect(opts.actions).toBeDefined();
     opts.actions!.onOpen();
-    expect(openSavedPath).toHaveBeenCalledWith(
-      "/Users/alice/Downloads/CloudStash/welcome.pdf",
-    );
+    expect(openSavedPath).toHaveBeenCalledWith("/Users/alice/Downloads/CloudStash/welcome.pdf");
     opts.actions!.onShowInFolder();
-    expect(showSavedInFolder).toHaveBeenCalledWith(
-      "/Users/alice/Downloads/CloudStash/welcome.pdf",
-    );
+    expect(showSavedInFolder).toHaveBeenCalledWith("/Users/alice/Downloads/CloudStash/welcome.pdf");
   });
 
   it("(d) terminal download-failed fires toast.error with richColors and a Retry action (Infinity duration); Retry click invokes the registered callback", () => {
@@ -600,9 +563,7 @@ describe("createDownloadJobToaster (§24.1)", () => {
     // ToastEntry's retry slot.
     toaster.registerRetry("ds-1", "/welcome.pdf", retry);
 
-    eventApi.emit(
-      downloadingEvent("job-A", { progress: 10, path: "/welcome.pdf" }),
-    );
+    eventApi.emit(downloadingEvent("job-A", { progress: 10, path: "/welcome.pdf" }));
     eventApi.emit({
       kind: "download-failed",
       payload: {
@@ -651,10 +612,7 @@ describe("createDownloadJobToaster (§24.1)", () => {
       },
     });
 
-    const errorCall = toast.error.mock.calls[0] as [
-      string,
-      { action?: { onClick: () => void } },
-    ];
+    const errorCall = toast.error.mock.calls[0] as [string, { action?: { onClick: () => void } }];
     errorCall[1].action!.onClick();
     expect(toast.dismiss).toHaveBeenCalledTimes(1);
   });
@@ -662,9 +620,7 @@ describe("createDownloadJobToaster (§24.1)", () => {
   // --- add-failed-download-cleanup-affordance §5 — Delete-partial card ---
 
   function emitKeptFailure(jobId: string): void {
-    eventApi.emit(
-      downloadingEvent(jobId, { progress: 40, path: "/welcome.pdf" }),
-    );
+    eventApi.emit(downloadingEvent(jobId, { progress: 40, path: "/welcome.pdf" }));
     eventApi.emit({
       kind: "download-failed",
       payload: {
@@ -719,9 +675,7 @@ describe("createDownloadJobToaster (§24.1)", () => {
     toast.loading.mockReturnValueOnce("toast-A");
     createDownloadJobToaster({ toast, eventApi, syncApi: makeSyncApi() });
 
-    eventApi.emit(
-      downloadingEvent("job-A", { progress: 40, path: "/welcome.pdf" }),
-    );
+    eventApi.emit(downloadingEvent("job-A", { progress: 40, path: "/welcome.pdf" }));
     eventApi.emit({
       kind: "download-failed",
       payload: {
@@ -759,9 +713,7 @@ describe("createDownloadJobToaster (§24.1)", () => {
   it("(d6) when deletePartial rejects, the card is NOT dismissed and re-renders with an inline error, keeping Retry", async () => {
     toast.loading.mockReturnValueOnce("toast-A");
     const syncApi = makeSyncApi();
-    syncApi.deletePartial.mockRejectedValueOnce(
-      new Error("EACCES: permission denied"),
-    );
+    syncApi.deletePartial.mockRejectedValueOnce(new Error("EACCES: permission denied"));
     createDownloadJobToaster({ toast, eventApi, syncApi });
 
     emitKeptFailure("job-A");
@@ -810,9 +762,7 @@ describe("createDownloadJobToaster (§24.1)", () => {
     toast.loading.mockReturnValueOnce("toast-A");
     createDownloadJobToaster({ toast, eventApi });
 
-    eventApi.emit(
-      downloadingEvent("job-A", { progress: 25, path: "/welcome.pdf" }),
-    );
+    eventApi.emit(downloadingEvent("job-A", { progress: 25, path: "/welcome.pdf" }));
     eventApi.emit({
       kind: "download-cancelled",
       payload: {
@@ -836,18 +786,12 @@ describe("createDownloadJobToaster (§24.1)", () => {
     toast.loading.mockReturnValueOnce("toast-B");
     createDownloadJobToaster({ toast, eventApi });
 
-    eventApi.emit(
-      downloadingEvent("job-A", { progress: 25, path: "/alpha.pdf" }),
-    );
-    eventApi.emit(
-      downloadingEvent("job-B", { progress: 50, path: "/beta.png" }),
-    );
+    eventApi.emit(downloadingEvent("job-A", { progress: 25, path: "/alpha.pdf" }));
+    eventApi.emit(downloadingEvent("job-B", { progress: 50, path: "/beta.png" }));
 
     expect(toast.loading).toHaveBeenCalledTimes(2);
 
-    eventApi.emit(
-      downloadingEvent("job-A", { progress: 75, path: "/alpha.pdf" }),
-    );
+    eventApi.emit(downloadingEvent("job-A", { progress: 75, path: "/alpha.pdf" }));
     expect(toast.loading).toHaveBeenCalledTimes(3);
     const updateCall = toast.loading.mock.calls[2] as [
       string,
@@ -897,17 +841,11 @@ describe("createDownloadJobToaster — hydration (§24.3)", () => {
 
     // ONE toast per job, with the seeded percentage.
     expect(toast.loading).toHaveBeenCalledTimes(2);
-    const firstA = toast.loading.mock.calls[0] as [
-      string,
-      { id?: string | number } | undefined,
-    ];
+    const firstA = toast.loading.mock.calls[0] as [string, { id?: string | number } | undefined];
     expect(firstA[0]).toContain("welcome.pdf");
     expect(firstA[0]).toMatch(/25\s*%/);
 
-    const firstB = toast.loading.mock.calls[1] as [
-      string,
-      { id?: string | number } | undefined,
-    ];
+    const firstB = toast.loading.mock.calls[1] as [string, { id?: string | number } | undefined];
     expect(firstB[0]).toContain("another.pdf");
     // §12.3 (Decision 14): null contentLength → bytes-only fallback.
     // Seeded with `bytesDownloaded: 0` → "0.0 MB" instead of "0%".
@@ -915,9 +853,7 @@ describe("createDownloadJobToaster — hydration (§24.3)", () => {
 
     // A subsequent live event for jobId A must update the EXISTING
     // toast id, not spawn a new one.
-    eventApi.emit(
-      downloadingEvent("job-A", { progress: 50, path: "/welcome.pdf" }),
-    );
+    eventApi.emit(downloadingEvent("job-A", { progress: 50, path: "/welcome.pdf" }));
     expect(toast.loading).toHaveBeenCalledTimes(3);
     const updateCall = toast.loading.mock.calls[2] as [
       string,
@@ -977,9 +913,7 @@ describe("createDownloadJobToaster — retrying state (§8)", () => {
     toast.loading.mockReturnValueOnce("toast-A");
     createDownloadJobToaster({ toast, eventApi });
 
-    eventApi.emit(
-      downloadingEvent("job-A", { progress: 62, path: "/welcome.pdf" }),
-    );
+    eventApi.emit(downloadingEvent("job-A", { progress: 62, path: "/welcome.pdf" }));
     eventApi.emit(
       retryingEvent("job-A", {
         attempt: 2,
@@ -1022,17 +956,13 @@ describe("createDownloadJobToaster — retrying state (§8)", () => {
     toast.loading.mockReturnValueOnce("toast-A");
     createDownloadJobToaster({ toast, eventApi });
 
-    eventApi.emit(
-      downloadingEvent("job-A", { progress: 62, path: "/welcome.pdf" }),
-    );
+    eventApi.emit(downloadingEvent("job-A", { progress: 62, path: "/welcome.pdf" }));
     eventApi.emit(retryingEvent("job-A", { attempt: 2, limit: 5 }));
 
     // Bytes flowing again — the next downloading event reverts the toast
     // to the percentage form on the same id.
     toast.loading.mockClear();
-    eventApi.emit(
-      downloadingEvent("job-A", { progress: 63, path: "/welcome.pdf" }),
-    );
+    eventApi.emit(downloadingEvent("job-A", { progress: 63, path: "/welcome.pdf" }));
 
     expect(toast.loading).toHaveBeenCalledTimes(1);
     const [msg, opts] = toast.loading.mock.calls[0] as [
@@ -1060,9 +990,7 @@ describe("createDownloadJobToaster — retrying state (§8)", () => {
     toast.loading.mockReturnValueOnce("toast-A");
     createDownloadJobToaster({ toast, eventApi });
 
-    eventApi.emit(
-      downloadingEvent("job-A", { progress: 62, path: "/welcome.pdf" }),
-    );
+    eventApi.emit(downloadingEvent("job-A", { progress: 62, path: "/welcome.pdf" }));
     eventApi.emit(
       retryingEvent("job-A", {
         attempt: 2,
@@ -1072,10 +1000,7 @@ describe("createDownloadJobToaster — retrying state (§8)", () => {
       }),
     );
 
-    const [, opts] = toast.loading.mock.calls[1] as [
-      string,
-      { description?: string },
-    ];
+    const [, opts] = toast.loading.mock.calls[1] as [string, { description?: string }];
     expect(typeof opts.description).toBe("string");
     expect(opts.description).toContain("network-error");
     expect(opts.description).toContain("4000");
@@ -1089,15 +1014,9 @@ describe("createDownloadJobToaster — retrying state (§8)", () => {
     toast.loading.mockReturnValueOnce("toast-A");
     createDownloadJobToaster({ toast, eventApi });
 
-    eventApi.emit(
-      downloadingEvent("job-A", { progress: 50, path: "/welcome.pdf" }),
-    );
-    eventApi.emit(
-      downloadingEvent("job-A", { progress: 60, path: "/welcome.pdf" }),
-    );
-    eventApi.emit(
-      downloadingEvent("job-A", { progress: 70, path: "/welcome.pdf" }),
-    );
+    eventApi.emit(downloadingEvent("job-A", { progress: 50, path: "/welcome.pdf" }));
+    eventApi.emit(downloadingEvent("job-A", { progress: 60, path: "/welcome.pdf" }));
+    eventApi.emit(downloadingEvent("job-A", { progress: 70, path: "/welcome.pdf" }));
 
     expect(toast.custom).not.toHaveBeenCalled();
     expect(toast.loading).toHaveBeenCalledTimes(3);
@@ -1119,9 +1038,7 @@ describe("createDownloadJobToaster — retrying state (§8)", () => {
     toast.loading.mockReturnValueOnce("toast-A");
     createDownloadJobToaster({ toast, eventApi });
 
-    eventApi.emit(
-      downloadingEvent("job-A", { progress: 62, path: "/welcome.pdf" }),
-    );
+    eventApi.emit(downloadingEvent("job-A", { progress: 62, path: "/welcome.pdf" }));
     eventApi.emit(retryingEvent("job-A", { attempt: 2, limit: 5 }));
 
     eventApi.emit({
@@ -1202,9 +1119,7 @@ describe("createDownloadJobToaster — retrying state (§8)", () => {
 
     // Bytes were already flowing when the renderer connected — the
     // first event is a downloading update.
-    eventApi.emit(
-      downloadingEvent("job-A", { progress: 64, path: "/welcome.pdf" }),
-    );
+    eventApi.emit(downloadingEvent("job-A", { progress: 64, path: "/welcome.pdf" }));
 
     expect(toast.custom).not.toHaveBeenCalled();
     expect(toast.loading).toHaveBeenCalledTimes(2);
@@ -1221,9 +1136,7 @@ describe("createDownloadJobToaster — retrying state (§8)", () => {
     toast.loading.mockReturnValueOnce("toast-A");
     createDownloadJobToaster({ toast, eventApi });
 
-    eventApi.emit(
-      downloadingEvent("job-A", { progress: 50, path: "/welcome.pdf" }),
-    );
+    eventApi.emit(downloadingEvent("job-A", { progress: 50, path: "/welcome.pdf" }));
     eventApi.emit({
       kind: "download-failed",
       payload: {
@@ -1295,9 +1208,7 @@ describe("createDownloadJobToaster — retrying state (§8)", () => {
     const t = createDownloadJobToaster({ toast, eventApi });
     t.registerRetry("ds-1", "/welcome.pdf", retryFn);
 
-    eventApi.emit(
-      downloadingEvent("job-A", { progress: 50, path: "/welcome.pdf" }),
-    );
+    eventApi.emit(downloadingEvent("job-A", { progress: 50, path: "/welcome.pdf" }));
     eventApi.emit(retryingEvent("job-A", { attempt: 3, limit: 5 }));
     expect(toast.loading).toHaveBeenCalledTimes(2);
 
@@ -1355,9 +1266,7 @@ describe("createDownloadJobToaster — retrying state (§8)", () => {
     toast.loading.mockReturnValueOnce("toast-A");
     createDownloadJobToaster({ toast, eventApi });
 
-    eventApi.emit(
-      downloadingEvent("job-A", { progress: 50, path: "/welcome.pdf" }),
-    );
+    eventApi.emit(downloadingEvent("job-A", { progress: 50, path: "/welcome.pdf" }));
     eventApi.emit({
       kind: "download-failed",
       payload: {
@@ -1369,10 +1278,7 @@ describe("createDownloadJobToaster — retrying state (§8)", () => {
     });
 
     expect(toast.error).toHaveBeenCalledTimes(1);
-    const errorCall = toast.error.mock.calls[0] as [
-      string,
-      { id?: string | number },
-    ];
+    const errorCall = toast.error.mock.calls[0] as [string, { id?: string | number }];
     expect(errorCall[1].id).toBe("toast-A");
     expect(toast.dismiss).not.toHaveBeenCalledWith("toast-A");
   });
@@ -1398,9 +1304,7 @@ describe("createDownloadJobToaster — Cancel action (§12.2)", () => {
   it("(12.2.6) downloading-state toast carries a Cancel action wired to syncApi.cancelDownload", () => {
     createDownloadJobToaster({ toast, eventApi, syncApi });
 
-    eventApi.emit(
-      downloadingEvent("job-A", { progress: 42, path: "/welcome.pdf" }),
-    );
+    eventApi.emit(downloadingEvent("job-A", { progress: 42, path: "/welcome.pdf" }));
 
     expect(toast.loading).toHaveBeenCalledTimes(1);
     const loadingCall = toast.loading.mock.calls[0] as [
@@ -1426,9 +1330,7 @@ describe("createDownloadJobToaster — Cancel action (§12.2)", () => {
     toast.loading.mockReturnValueOnce("toast-A");
     createDownloadJobToaster({ toast, eventApi, syncApi });
 
-    eventApi.emit(
-      downloadingEvent("job-A", { progress: 62, path: "/welcome.pdf" }),
-    );
+    eventApi.emit(downloadingEvent("job-A", { progress: 62, path: "/welcome.pdf" }));
     eventApi.emit({
       kind: "download-retrying",
       payload: {
@@ -1459,9 +1361,7 @@ describe("createDownloadJobToaster — Cancel action (§12.2)", () => {
 
   it("(12.2.8) Cancel-action click does NOT pre-emptively dismiss the toast (the dismiss flows through the download-cancelled event)", () => {
     createDownloadJobToaster({ toast, eventApi, syncApi });
-    eventApi.emit(
-      downloadingEvent("job-A", { progress: 50, path: "/welcome.pdf" }),
-    );
+    eventApi.emit(downloadingEvent("job-A", { progress: 50, path: "/welcome.pdf" }));
 
     const loadingCall = toast.loading.mock.calls[0] as [
       string,
@@ -1480,9 +1380,7 @@ describe("createDownloadJobToaster — Cancel action (§12.2)", () => {
     toast.loading.mockReturnValueOnce("toast-A");
     createDownloadJobToaster({ toast, eventApi, syncApi });
 
-    eventApi.emit(
-      downloadingEvent("job-A", { progress: 10, path: "/welcome.pdf" }),
-    );
+    eventApi.emit(downloadingEvent("job-A", { progress: 10, path: "/welcome.pdf" }));
     eventApi.emit({
       kind: "download-failed",
       payload: {
@@ -1494,10 +1392,7 @@ describe("createDownloadJobToaster — Cancel action (§12.2)", () => {
     });
 
     expect(toast.error).toHaveBeenCalledTimes(1);
-    const errorCall = toast.error.mock.calls[0] as [
-      string,
-      { action?: { label: string } },
-    ];
+    const errorCall = toast.error.mock.calls[0] as [string, { action?: { label: string } }];
     expect(errorCall[1].action).toBeDefined();
     expect(errorCall[1].action!.label).toMatch(/retry/i);
     // The failure path uses Sonner's built-in error template — its only
@@ -1510,9 +1405,7 @@ describe("createDownloadJobToaster — Cancel action (§12.2)", () => {
     createDownloadJobToaster({ toast, eventApi, syncApi });
 
     // downloading → retrying → downloading (resume after sleep)
-    eventApi.emit(
-      downloadingEvent("job-A", { progress: 20, path: "/welcome.pdf" }),
-    );
+    eventApi.emit(downloadingEvent("job-A", { progress: 20, path: "/welcome.pdf" }));
     eventApi.emit({
       kind: "download-retrying",
       payload: {
@@ -1524,16 +1417,11 @@ describe("createDownloadJobToaster — Cancel action (§12.2)", () => {
         engineCause: DatasourceErrorTag.NetworkError,
       },
     });
-    eventApi.emit(
-      downloadingEvent("job-A", { progress: 21, path: "/welcome.pdf" }),
-    );
+    eventApi.emit(downloadingEvent("job-A", { progress: 21, path: "/welcome.pdf" }));
 
     expect(toast.loading).toHaveBeenCalledTimes(3);
     for (const call of toast.loading.mock.calls) {
-      const [, opts] = call as [
-        string,
-        { action?: { label: string; onClick: () => void } },
-      ];
+      const [, opts] = call as [string, { action?: { label: string; onClick: () => void } }];
       expect(opts.action).toBeDefined();
       expect(opts.action!.label).toBe("Cancel");
     }
@@ -1592,9 +1480,7 @@ describe("createDownloadJobToaster — Cancel IPC bridge regression guards (§12
     try {
       // No `syncApi` injected → production fallback path engages.
       const toaster = createDownloadJobToaster({ toast, eventApi });
-      eventApi.emit(
-        downloadingEvent("job-A", { progress: 50, path: "/welcome.pdf" }),
-      );
+      eventApi.emit(downloadingEvent("job-A", { progress: 50, path: "/welcome.pdf" }));
       const loadingCall = toast.loading.mock.calls[0] as [
         string,
         { action?: { onClick: () => void } },
@@ -1625,9 +1511,7 @@ describe("createDownloadJobToaster — Cancel IPC bridge regression guards (§12
     toast.loading.mockReturnValueOnce("toast-A");
     createDownloadJobToaster({ toast, eventApi, syncApi });
 
-    eventApi.emit(
-      downloadingEvent("job-A", { progress: 50, path: "/welcome.pdf" }),
-    );
+    eventApi.emit(downloadingEvent("job-A", { progress: 50, path: "/welcome.pdf" }));
     const loadingCall = toast.loading.mock.calls[0] as [
       string,
       { action?: { onClick: () => void } },
@@ -1816,9 +1700,7 @@ describe("createDownloadJobToaster — bytes-only progress fallback (§12.3)", (
     // instead of the awkward "Waiting 0ms before retry" phrasing.
     toast.loading.mockReturnValueOnce("toast-A");
     createDownloadJobToaster({ toast, eventApi });
-    eventApi.emit(
-      downloadingEvent("job-A", { progress: 50, path: "/welcome.mp4" }),
-    );
+    eventApi.emit(downloadingEvent("job-A", { progress: 50, path: "/welcome.mp4" }));
     eventApi.emit({
       kind: "download-retrying",
       payload: {
@@ -1830,13 +1712,8 @@ describe("createDownloadJobToaster — bytes-only progress fallback (§12.3)", (
         engineCause: "range-not-honored",
       },
     });
-    const retryCall = toast.loading.mock.calls[1] as [
-      string,
-      { description?: string },
-    ];
-    expect(retryCall[1].description).toBe(
-      "Last error: range-not-honored. Restarting download.",
-    );
+    const retryCall = toast.loading.mock.calls[1] as [string, { description?: string }];
+    expect(retryCall[1].description).toBe("Last error: range-not-honored. Restarting download.");
     // And a non-zero waitMs keeps the original format.
     eventApi.emit({
       kind: "download-retrying",
@@ -1849,10 +1726,7 @@ describe("createDownloadJobToaster — bytes-only progress fallback (§12.3)", (
         engineCause: DatasourceErrorTag.NetworkError,
       },
     });
-    const retryCall2 = toast.loading.mock.calls[2] as [
-      string,
-      { description?: string },
-    ];
+    const retryCall2 = toast.loading.mock.calls[2] as [string, { description?: string }];
     expect(retryCall2[1].description).toBe(
       "Last error: network-error. Waiting 4000ms before retry.",
     );

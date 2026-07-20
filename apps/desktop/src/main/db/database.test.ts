@@ -31,9 +31,7 @@ function mkTmpDir(): string {
 const createUsersMigration: Migration = {
   id: "0001_create_users",
   up: (db) => {
-    db.exec(
-      "CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT NOT NULL);",
-    );
+    db.exec("CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT NOT NULL);");
   },
 };
 
@@ -63,9 +61,7 @@ describe("openDatabase + runMigrations (Phase 9a)", () => {
       // Confirm we have a live handle that accepts SQL.
       db.exec("CREATE TABLE smoke (x INT);");
       db.prepare("INSERT INTO smoke VALUES (1)").run();
-      const row = db.prepare("SELECT x FROM smoke").get() as
-        | { x: number }
-        | undefined;
+      const row = db.prepare("SELECT x FROM smoke").get() as { x: number } | undefined;
       expect(row?.x).toBe(1);
     } finally {
       db.close();
@@ -132,20 +128,16 @@ describe("openDatabase + runMigrations (Phase 9a)", () => {
 
     const db2 = openDatabase(dbPath);
     try {
-      runMigrations(db2, [
-        createUsersMigration,
-        seedUsersMigration,
-        addColumn,
-      ]);
+      runMigrations(db2, [createUsersMigration, seedUsersMigration, addColumn]);
       // Not re-run: still 2 rows, not 4.
       const count = db2.prepare("SELECT COUNT(*) AS n FROM users").get() as
         | { n: number }
         | undefined;
       expect(count?.n).toBe(2);
       // New column exists and is null for pre-existing rows.
-      const row = db2
-        .prepare("SELECT email FROM users WHERE name = 'alice'")
-        .get() as { email: string | null } | undefined;
+      const row = db2.prepare("SELECT email FROM users WHERE name = 'alice'").get() as
+        | { email: string | null }
+        | undefined;
       expect(row?.email).toBeNull();
     } finally {
       db2.close();
@@ -169,15 +161,8 @@ describe("openDatabase + runMigrations (Phase 9a)", () => {
     const db = openDatabase(":memory:");
     try {
       runMigrations(db, [createUsersMigration, seedUsersMigration]);
-      const ids = db
-        .prepare(
-          "SELECT id FROM _migrations ORDER BY id",
-        )
-        .all() as { id: string }[];
-      expect(ids.map((r) => r.id)).toEqual([
-        "0001_create_users",
-        "0002_seed_users",
-      ]);
+      const ids = db.prepare("SELECT id FROM _migrations ORDER BY id").all() as { id: string }[];
+      expect(ids.map((r) => r.id)).toEqual(["0001_create_users", "0002_seed_users"]);
     } finally {
       db.close();
     }
@@ -211,9 +196,9 @@ describe("openDatabase + runMigrations (Phase 9a)", () => {
       db.prepare(
         "INSERT INTO datasource_credentials (datasource_id, encrypted_blob, schema_version, created_at, updated_at) VALUES (?, ?, 1, ?, ?)",
       ).run("ds-legacy", Buffer.from([0x00, 0x01, 0x02]), 0, 0);
-      const before = db
-        .prepare("SELECT COUNT(*) AS n FROM datasource_credentials")
-        .get() as { n: number };
+      const before = db.prepare("SELECT COUNT(*) AS n FROM datasource_credentials").get() as {
+        n: number;
+      };
       expect(before.n).toBe(1);
 
       runMigrations(db, [
@@ -222,13 +207,11 @@ describe("openDatabase + runMigrations (Phase 9a)", () => {
       ]);
 
       // Table no longer exists — a SELECT against it throws.
-      expect(() =>
-        db.prepare("SELECT 1 FROM datasource_credentials").get(),
-      ).toThrow(/no such table/i);
+      expect(() => db.prepare("SELECT 1 FROM datasource_credentials").get()).toThrow(
+        /no such table/i,
+      );
       // Bookkeeping records both ids.
-      const ids = db
-        .prepare("SELECT id FROM _migrations ORDER BY id")
-        .all() as { id: string }[];
+      const ids = db.prepare("SELECT id FROM _migrations ORDER BY id").all() as { id: string }[];
       expect(ids.map((r) => r.id)).toEqual([
         "0001_datasource_credentials",
         "0003_drop_datasource_credentials",
@@ -253,9 +236,7 @@ describe("openDatabase + runMigrations (Phase 9a)", () => {
         .get();
       expect(existsBefore).toBeUndefined();
 
-      expect(() =>
-        runMigrations(db, [migration_0003_drop_datasource_credentials]),
-      ).not.toThrow();
+      expect(() => runMigrations(db, [migration_0003_drop_datasource_credentials])).not.toThrow();
 
       // Still absent after.
       const existsAfter = db
@@ -265,12 +246,8 @@ describe("openDatabase + runMigrations (Phase 9a)", () => {
         .get();
       expect(existsAfter).toBeUndefined();
       // And the id is recorded exactly once.
-      const ids = db
-        .prepare("SELECT id FROM _migrations ORDER BY id")
-        .all() as { id: string }[];
-      expect(ids.map((r) => r.id)).toEqual([
-        "0003_drop_datasource_credentials",
-      ]);
+      const ids = db.prepare("SELECT id FROM _migrations ORDER BY id").all() as { id: string }[];
+      expect(ids.map((r) => r.id)).toEqual(["0003_drop_datasource_credentials"]);
     } finally {
       db.close();
     }
@@ -306,14 +283,10 @@ describe("openDatabase + runMigrations (Phase 9a)", () => {
       },
     };
     try {
-      expect(() => runMigrations(db, [createUsersMigration, failing])).toThrow(
-        /boom/,
-      );
+      expect(() => runMigrations(db, [createUsersMigration, failing])).toThrow(/boom/);
       // The first migration applied; the failing one did not and is not
       // recorded.
-      const ids = db
-        .prepare("SELECT id FROM _migrations ORDER BY id")
-        .all() as { id: string }[];
+      const ids = db.prepare("SELECT id FROM _migrations ORDER BY id").all() as { id: string }[];
       expect(ids.map((r) => r.id)).toEqual(["0001_create_users"]);
     } finally {
       db.close();

@@ -112,10 +112,7 @@ describe("startSupervisor in dev mode does not spawn the service", () => {
     const pipePath = pipeFor("dev-unreachable");
 
     // Deliberately pass spawn paths too — they must be ignored in dev.
-    const nodeBinary =
-      process.platform === "win32"
-        ? "C:\\fake\\node.exe"
-        : "/fake/path/to/node";
+    const nodeBinary = process.platform === "win32" ? "C:\\fake\\node.exe" : "/fake/path/to/node";
     const servicePath = "/fake/path/to/service.js";
 
     await expect(

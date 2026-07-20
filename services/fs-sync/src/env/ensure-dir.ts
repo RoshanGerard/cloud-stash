@@ -24,10 +24,7 @@ const DEFAULT_ICACLS: (dir: string) => void = (dir) => {
   );
 };
 
-export async function ensureDataDir(
-  dir: string,
-  options: EnsureDirOptions = {},
-): Promise<void> {
+export async function ensureDataDir(dir: string, options: EnsureDirOptions = {}): Promise<void> {
   if (process.platform === "win32") {
     await fsp.mkdir(dir, { recursive: true });
     const runIcacls = options.icaclsRunner ?? DEFAULT_ICACLS;

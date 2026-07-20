@@ -48,26 +48,16 @@ import {
 } from "../env/paths.js";
 import { createEventBus, type EventBus } from "../events/event-bus.js";
 import { buildMirrorSyncExecutor } from "../executors/mirror-sync.js";
-import {
-  startServer,
-  type CommandHandler,
-  type RunningServer,
-} from "../ipc/server.js";
+import { startServer, type CommandHandler, type RunningServer } from "../ipc/server.js";
 import { createSubscriptionRegistry } from "../ipc/subscriptions.js";
 import { createOAuthLoopbackBroker } from "../oauth/loopback-broker.js";
 import { NetworkProbe } from "../retry/network-probe.js";
 import { Scheduler } from "../scheduler/scheduler.js";
 import { createAuthCorrelationStore } from "../state/auth-correlation-store.js";
-import {
-  acquirePidGuardSync,
-  AlreadyRunningError,
-} from "../single-instance/pid-guard.js";
+import { acquirePidGuardSync, AlreadyRunningError } from "../single-instance/pid-guard.js";
 import { recoverRunningJobs } from "../startup/recovery.js";
 import { sweepInterruptedDownloads } from "../downloads/sweep-interrupted.js";
-import {
-  createPruneScheduler,
-  type PruneScheduler,
-} from "../downloads/prune-scheduler.js";
+import { createPruneScheduler, type PruneScheduler } from "../downloads/prune-scheduler.js";
 import { createHashComputer } from "../util/hash-computer.js";
 
 export type BootstrapStage =
@@ -105,11 +95,7 @@ export interface BootstrapLogger {
 export class IpcBindError extends Error {
   constructor(cause: unknown) {
     const suffix =
-      cause instanceof Error
-        ? cause.message
-        : typeof cause === "string"
-          ? cause
-          : "unknown";
+      cause instanceof Error ? cause.message : typeof cause === "string" ? cause : "unknown";
     // Use ES2022 Error cause slot (inherited) rather than declaring a shadow
     // field — avoids useDefineForClassFields redefining it at construction.
     super(`ipc-bind-failed: ${suffix}`, { cause });
@@ -168,10 +154,8 @@ export async function bootstrap(options: BootstrapOptions): Promise<Runtime> {
   const pidPath = options.pidPath ?? resolvePidPath(pathOpts, env);
   const dbPath = options.dbPath ?? resolveDbPath(pathOpts, env);
   const socketPath = options.socketPath ?? resolveSocketPath(pathOpts, env);
-  const credentialsPath =
-    options.credentialsPath ?? resolveCredentialsPath(pathOpts, env);
-  const configPath =
-    options.configPath ?? resolveServiceConfigPath(pathOpts, env);
+  const credentialsPath = options.credentialsPath ?? resolveCredentialsPath(pathOpts, env);
+  const configPath = options.configPath ?? resolveServiceConfigPath(pathOpts, env);
 
   // Data directory must exist with the right mode BEFORE anything else
   // touches it (openDatabase will create sync.db inside). This is setup,
@@ -313,9 +297,7 @@ export async function bootstrap(options: BootstrapOptions): Promise<Runtime> {
       // via CLOUDSTASH_DEV_CREDENTIALS (service-side)".
       isDevOverride: env.CLOUDSTASH_DEV_CREDENTIALS === "1",
       warnOnce: () => {
-        logger?.info?.(
-          "CLOUDSTASH_DEV_CREDENTIALS active — browser consent bypassed",
-        );
+        logger?.info?.("CLOUDSTASH_DEV_CREDENTIALS active — browser consent bypassed");
       },
     });
     observer?.onStage("construct-loopback-broker");
@@ -398,18 +380,14 @@ export async function bootstrap(options: BootstrapOptions): Promise<Runtime> {
       // chunk F; uploads are now exclusively a service-direct-RPC.
       uploadRegistry,
     });
-    const subscribeHandler: CommandHandler<"sync:subscribe-events"> = async (
-      _params,
-      ctx,
-    ) => {
+    const subscribeHandler: CommandHandler<"sync:subscribe-events"> = async (_params, ctx) => {
       subs.subscribe(ctx.connection);
       return { ok: true, result: { subscribed: true } };
     };
-    const unsubscribeHandler: CommandHandler<"sync:unsubscribe-events"> =
-      async (_params, ctx) => {
-        subs.unsubscribe(ctx.connection);
-        return { ok: true, result: { unsubscribed: true } };
-      };
+    const unsubscribeHandler: CommandHandler<"sync:unsubscribe-events"> = async (_params, ctx) => {
+      subs.unsubscribe(ctx.connection);
+      return { ok: true, result: { unsubscribed: true } };
+    };
     const handlers = {
       ...baseHandlers,
       "sync:subscribe-events": subscribeHandler,
@@ -428,8 +406,7 @@ export async function bootstrap(options: BootstrapOptions): Promise<Runtime> {
       // Flatten `cause` into string fields — raw Error objects have no
       // enumerable properties so `JSON.stringify` would drop the code and
       // message, leaving operators nothing to grep for.
-      const causeMessage =
-        cause instanceof Error ? cause.message : String(cause);
+      const causeMessage = cause instanceof Error ? cause.message : String(cause);
       const causeCode =
         cause && typeof cause === "object" && "code" in cause
           ? String((cause as { code?: unknown }).code)

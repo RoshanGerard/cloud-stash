@@ -47,9 +47,7 @@ export function DatasourcesToolbar({
           accessible name stays "Datasources" (a11y contract). `text-lg` keeps
           the heading within the Visual-direction text-base/text-lg rule. */}
       <div className="flex flex-col gap-0.5">
-        <h1 className="font-display text-lg font-semibold tracking-tight">
-          Datasources
-        </h1>
+        <h1 className="font-display text-lg font-semibold tracking-tight">Datasources</h1>
         <p className="text-muted-foreground text-sm">
           Connect and sync your cloud storage in one place.
         </p>
@@ -155,18 +153,12 @@ function DashboardEmpty({
     >
       <EmptyDatasourcesIllustration className="h-40 w-60 text-muted-foreground" />
       <div className="flex flex-col gap-2">
-        <h2 className="font-display text-lg font-semibold">
-          No cloud datasources yet
-        </h2>
+        <h2 className="font-display text-lg font-semibold">No cloud datasources yet</h2>
         <p className="text-muted-foreground text-sm">
           Connect Google Drive, OneDrive, or Amazon S3 to start syncing files.
         </p>
       </div>
-      <Button
-        size="sm"
-        onClick={onAddDatasourceClick}
-        data-testid="empty-add-datasource-trigger"
-      >
+      <Button size="sm" onClick={onAddDatasourceClick} data-testid="empty-add-datasource-trigger">
         <Icon name="plus" className="size-4" aria-hidden />
         Add datasource
       </Button>
@@ -174,22 +166,14 @@ function DashboardEmpty({
   );
 }
 
-function DashboardError({
-  message,
-  onRetry,
-}: {
-  message: string;
-  onRetry: () => void;
-}) {
+function DashboardError({ message, onRetry }: { message: string; onRetry: () => void }) {
   return (
     <div
       data-testid="datasources-error"
       role="alert"
       className="flex flex-col items-center justify-center gap-3 p-8 text-center"
     >
-      <h2 className="font-display text-lg font-semibold">
-        Couldn&apos;t load datasources
-      </h2>
+      <h2 className="font-display text-lg font-semibold">Couldn&apos;t load datasources</h2>
       <p className="text-muted-foreground text-sm">{message}</p>
       <Button size="sm" onClick={onRetry}>
         Retry
@@ -222,9 +206,7 @@ function DashboardPopulated({
         data-testid="datasources-no-matches"
         className="flex flex-col items-center justify-center gap-2 p-8 text-center"
       >
-        <p className="text-muted-foreground text-sm">
-          No datasources match &ldquo;{query}&rdquo;.
-        </p>
+        <p className="text-muted-foreground text-sm">No datasources match &ldquo;{query}&rdquo;.</p>
       </div>
     );
   }
@@ -261,13 +243,10 @@ export function DatasourcesDashboard() {
   const openerRef = useRef<HTMLElement | null>(null);
   const toolbarTriggerRef = useRef<HTMLButtonElement | null>(null);
 
-  const onAddDatasourceClick = useCallback(
-    (event: MouseEvent<HTMLElement>) => {
-      openerRef.current = event.currentTarget;
-      setAddDialogOpen(true);
-    },
-    [],
-  );
+  const onAddDatasourceClick = useCallback((event: MouseEvent<HTMLElement>) => {
+    openerRef.current = event.currentTarget;
+    setAddDialogOpen(true);
+  }, []);
 
   const returnFocusTo =
     openerRef.current && openerRef.current.isConnected
@@ -285,20 +264,14 @@ export function DatasourcesDashboard() {
     // are both gone — the gradient read as "shady" against the visual-
     // refinement mockup, which calls for a flat, modern canvas. The root
     // inherits the flat `--background` from the body; no per-surface background.
-    <div
-      data-testid="datasources-dashboard-root"
-      className="flex h-full flex-col"
-    >
+    <div data-testid="datasources-dashboard-root" className="flex h-full flex-col">
       <DatasourcesToolbar
         onAddDatasourceClick={onAddDatasourceClick}
         triggerRef={toolbarTriggerRef}
         query={query}
         onQueryChange={setQuery}
       />
-      <DashboardStates
-        onAddDatasourceClick={onAddDatasourceClick}
-        query={query}
-      />
+      <DashboardStates onAddDatasourceClick={onAddDatasourceClick} query={query} />
       <AddDatasourceDialog
         open={addDialogOpen}
         onOpenChange={setAddDialogOpen}

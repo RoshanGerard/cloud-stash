@@ -45,20 +45,13 @@ const stubCreds = {
 describe("S3Client — preAuth (type uniformity, no-op)", () => {
   it("accepts construction with preAuth omitted (legacy shape)", () => {
     const ctx = makeContext();
-    const client = new S3Client(
-      { datasourceId: "ds-s3-1", ctx },
-      stubCreds,
-    );
+    const client = new S3Client({ datasourceId: "ds-s3-1", ctx }, stubCreds);
     expect(client.type).toBe("amazon-s3");
   });
 
   it("accepts construction with preAuth: undefined explicitly", () => {
     const ctx = makeContext();
-    const client = new S3Client(
-      { datasourceId: "ds-s3-2", ctx },
-      stubCreds,
-      undefined,
-    );
+    const client = new S3Client({ datasourceId: "ds-s3-2", ctx }, stubCreds, undefined);
     expect(client.type).toBe("amazon-s3");
   });
 
@@ -66,11 +59,7 @@ describe("S3Client — preAuth (type uniformity, no-op)", () => {
     const ctx = makeContext();
     // Mirror the upcoming `factory.createForAuth("amazon-s3", null, ctx)`
     // call shape — null carries the credentials-form intent semantics.
-    const client = new S3Client(
-      { datasourceId: "ds-s3-null", ctx },
-      stubCreds,
-      null,
-    );
+    const client = new S3Client({ datasourceId: "ds-s3-null", ctx }, stubCreds, null);
     expect(client.type).toBe("amazon-s3");
   });
 
@@ -81,11 +70,7 @@ describe("S3Client — preAuth (type uniformity, no-op)", () => {
       clientSecret: "ignored-by-s3",
       redirectUri: "ignored-by-s3",
     };
-    const client = new S3Client(
-      { datasourceId: "ds-s3-3", ctx },
-      stubCreds,
-      preAuth,
-    );
+    const client = new S3Client({ datasourceId: "ds-s3-3", ctx }, stubCreds, preAuth);
     expect(client.type).toBe("amazon-s3");
   });
 
@@ -96,11 +81,7 @@ describe("S3Client — preAuth (type uniformity, no-op)", () => {
       clientSecret: "y",
       redirectUri: "z",
     };
-    const client = new S3Client(
-      { datasourceId: "ds-s3-4", ctx },
-      stubCreds,
-      preAuth,
-    );
+    const client = new S3Client({ datasourceId: "ds-s3-4", ctx }, stubCreds, preAuth);
     const intent = (await client.authenticate()) as CredentialsFormIntent;
     expect(intent.kind).toBe("credentials-form");
     expect(intent.schema).toBe("aws-access-key");

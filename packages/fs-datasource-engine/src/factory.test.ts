@@ -15,10 +15,7 @@ import { DatasourceError } from "@cloudstash/ipc-contracts";
 import type { OAuthAppConfig } from "./auth-types.js";
 
 import type { CredentialStore } from "./credential-store.js";
-import type {
-  BaseClientContext,
-  DatasourceClient,
-} from "./base-client.js";
+import type { BaseClientContext, DatasourceClient } from "./base-client.js";
 import {
   createClientFactory,
   createDefaultProviderRegistry,
@@ -60,10 +57,7 @@ const mockCreds = {
  * avoids any dependency on the real stubs for the core factory-wiring tests
  * (they verify plumbing, not strategy behaviour).
  */
-function makeFakeClient<T extends ProviderId>(
-  type: T,
-  datasourceId: string,
-): DatasourceClient<T> {
+function makeFakeClient<T extends ProviderId>(type: T, datasourceId: string): DatasourceClient<T> {
   return {
     type,
     datasourceId,
@@ -126,22 +120,12 @@ describe("createClientFactory", () => {
     const factory = createClientFactory(registry);
 
     expect(() =>
-      factory.create(
-        "dropbox" as unknown as ProviderId,
-        "ds-1",
-        mockCreds,
-        ctx,
-      ),
+      factory.create("dropbox" as unknown as ProviderId, "ds-1", mockCreds, ctx),
     ).toThrow(DatasourceError);
 
     // Error should carry the InvalidDatasource tag and a recognisable raw marker.
     try {
-      factory.create(
-        "dropbox" as unknown as ProviderId,
-        "ds-1",
-        mockCreds,
-        ctx,
-      );
+      factory.create("dropbox" as unknown as ProviderId, "ds-1", mockCreds, ctx);
     } catch (err) {
       expect(err).toBeInstanceOf(DatasourceError);
       const e = err as DatasourceError;
@@ -238,9 +222,7 @@ describe("createClientFactory", () => {
     const ctx = makeEngineContext();
     const create: ProviderFactoryFn<"amazon-s3"> = vi
       .fn<ProviderFactoryFn<"amazon-s3">>()
-      .mockImplementation((datasourceId) =>
-        makeFakeClient("amazon-s3", datasourceId),
-      );
+      .mockImplementation((datasourceId) => makeFakeClient("amazon-s3", datasourceId));
     const registry: ProviderRegistry = {
       "amazon-s3": {
         create,
@@ -418,9 +400,7 @@ describe("ClientFactory.createForAuth — expectedAccount threading (§6.1)", ()
   } {
     const googleCreateForAuth = vi
       .fn<PreAuthFactoryFn<"google-drive">>()
-      .mockImplementation((datasourceId) =>
-        makeFakeClient("google-drive", datasourceId),
-      );
+      .mockImplementation((datasourceId) => makeFakeClient("google-drive", datasourceId));
     const registry: ProviderRegistry = {
       "amazon-s3": makeSpyRegistryEntry<"amazon-s3">(),
       "google-drive": {
@@ -462,12 +442,7 @@ describe("ClientFactory.createForAuth — expectedAccount threading (§6.1)", ()
     const { registry, googleCreateForAuth } = registryWithGoogleSpy();
     const factory = createClientFactory(registry);
 
-    factory.createForAuth(
-      "google-drive",
-      sampleOAuthConfig,
-      ctx,
-      "ds-first-connect",
-    );
+    factory.createForAuth("google-drive", sampleOAuthConfig, ctx, "ds-first-connect");
 
     expect(googleCreateForAuth).toHaveBeenCalledTimes(1);
     const call = googleCreateForAuth.mock.calls[0];

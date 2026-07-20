@@ -43,9 +43,7 @@ export interface OSDownloadsFolderProvider {
   getOSDefaultDownloadsFolder: () => string;
 }
 
-export function handleGetOSDefaultDownloadsFolder(
-  deps: OSDownloadsFolderProvider,
-): string {
+export function handleGetOSDefaultDownloadsFolder(deps: OSDownloadsFolderProvider): string {
   return deps.getOSDefaultDownloadsFolder();
 }
 

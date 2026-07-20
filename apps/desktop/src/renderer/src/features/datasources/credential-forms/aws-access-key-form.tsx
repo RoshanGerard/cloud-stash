@@ -88,9 +88,7 @@ export function AwsAccessKeyForm({
           // Defensive: the dialog routes this form to credentials-form
           // providers only, but if a provider's classification flips at
           // runtime the renderer should not crash.
-          setError(
-            "Provider configuration mismatch — expected credentials form.",
-          );
+          setError("Provider configuration mismatch — expected credentials form.");
           return;
         }
         const completeRes = await window.api.sync.authenticateComplete({
@@ -113,16 +111,7 @@ export function AwsAccessKeyForm({
         setSubmitting(false);
       }
     },
-    [
-      canSubmit,
-      providerId,
-      datasourceId,
-      accessKeyId,
-      secretAccessKey,
-      region,
-      bucket,
-      onSubmit,
-    ],
+    [canSubmit, providerId, datasourceId, accessKeyId, secretAccessKey, region, bucket, onSubmit],
   );
 
   return (
@@ -191,13 +180,7 @@ export function AwsAccessKeyForm({
       ) : null}
 
       <div className="mt-2 flex items-center justify-between gap-2">
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={onBack}
-          disabled={submitting}
-        >
+        <Button type="button" variant="outline" size="sm" onClick={onBack} disabled={submitting}>
           Back
         </Button>
         <Button type="submit" size="sm" disabled={!canSubmit}>

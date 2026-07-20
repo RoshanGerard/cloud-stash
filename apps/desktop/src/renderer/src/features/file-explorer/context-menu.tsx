@@ -72,16 +72,8 @@ export interface FileContextMenuProps {
 }
 
 export function FileContextMenu(props: FileContextMenuProps): JSX.Element {
-  const {
-    entry,
-    children,
-    onOpen,
-    onDownload,
-    onRename,
-    onDelete,
-    onCopyPath,
-    onProperties,
-  } = props;
+  const { entry, children, onOpen, onDownload, onRename, onDelete, onCopyPath, onProperties } =
+    props;
 
   // Rename / Download affordances are now wired end-to-end through the
   // engine (`add-engine-rename-download` § Rename and Download
@@ -96,8 +88,7 @@ export function FileContextMenu(props: FileContextMenuProps): JSX.Element {
   //     scope for this change).
   const providerKind = useProviderKind();
   const isDirectory = entry.kind === "directory";
-  const renameDisabled =
-    isDirectory && (providerKind === "s3" || providerKind === "mock");
+  const renameDisabled = isDirectory && (providerKind === "s3" || providerKind === "mock");
   const downloadDisabled = isDirectory;
   const renameTooltip = !isDirectory
     ? undefined
@@ -155,16 +146,11 @@ export function FileContextMenu(props: FileContextMenuProps): JSX.Element {
         >
           Rename
         </ContextMenuItem>
-        <ContextMenuItem
-          variant="destructive"
-          onSelect={() => onDelete?.(entry)}
-        >
+        <ContextMenuItem variant="destructive" onSelect={() => onDelete?.(entry)}>
           Delete
         </ContextMenuItem>
         <ContextMenuItem onSelect={handleCopyPath}>Copy path</ContextMenuItem>
-        <ContextMenuItem onSelect={() => onProperties?.(entry)}>
-          Properties
-        </ContextMenuItem>
+        <ContextMenuItem onSelect={() => onProperties?.(entry)}>Properties</ContextMenuItem>
       </ContextMenuContent>
     </ContextMenu>
   );

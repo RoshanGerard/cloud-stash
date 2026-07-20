@@ -1,29 +1,12 @@
 /** @vitest-environment jsdom */
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-} from "vitest";
-import {
-  act,
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-} from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 
 import type { FileEntry } from "@cloudstash/ipc-contracts";
 
 import { PropertiesModal } from "../properties-modal.js";
-import {
-  __resetExplorerStoreCacheForTests,
-  createExplorerStore,
-} from "../store.js";
+import { __resetExplorerStoreCacheForTests, createExplorerStore } from "../store.js";
 import type { ExplorerStore } from "../store.js";
 import { modalFields } from "../metadata/field-catalog.js";
 import { seedEntry } from "./test-utils.js";
@@ -307,7 +290,7 @@ describe("PropertiesModal — focus trap + keyboard", () => {
     // own close button + copy buttons. Real-browser Tab trapping is
     // exercised in the spec scenario at archive-time.
     const buttons = dialog.querySelectorAll<HTMLElement>(
-      "button, [href], [tabindex]:not([tabindex=\"-1\"])",
+      'button, [href], [tabindex]:not([tabindex="-1"])',
     );
     expect(buttons.length).toBeGreaterThan(0);
     for (const btn of Array.from(buttons)) {
@@ -315,9 +298,7 @@ describe("PropertiesModal — focus trap + keyboard", () => {
     }
     // The shadcn DialogContent includes a built-in Close button ("Close"
     // sr-only text). It must be present.
-    expect(
-      dialog.querySelector<HTMLElement>("[data-slot=\"dialog-close\"]"),
-    ).not.toBeNull();
+    expect(dialog.querySelector<HTMLElement>('[data-slot="dialog-close"]')).not.toBeNull();
   });
 
   it("Escape closes the modal", async () => {

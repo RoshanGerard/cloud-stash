@@ -59,15 +59,8 @@ import { HistoryButtons } from "./history-buttons";
 import { LoadMoreRegion } from "./load-more";
 import { PropertiesModal } from "./properties-modal";
 import { ProviderKindContext } from "./provider-kind-context";
-import type {
-  ConflictResolver,
-  UploadToaster,
-} from "./use-upload-orchestrator";
-import {
-  SearchResults,
-  isEngineBacked,
-  type ProviderKind,
-} from "./search-results";
+import type { ConflictResolver, UploadToaster } from "./use-upload-orchestrator";
+import { SearchResults, isEngineBacked, type ProviderKind } from "./search-results";
 import { DisconnectedState } from "./states/disconnected";
 import { EmptyState } from "./states/empty";
 import { InvalidDatasourceState } from "./states/invalid-datasource";
@@ -80,10 +73,7 @@ import { StatusRow } from "./status-row";
 import { Toolbar } from "./toolbar";
 import { UploadDialog } from "./upload-dialog";
 import { createUploadJobToaster } from "./upload-job-toast";
-import {
-  createDownloadJobToaster,
-  type DownloadToaster,
-} from "./download-job-toast";
+import { createDownloadJobToaster, type DownloadToaster } from "./download-job-toast";
 import { useDownloadOrchestrator } from "./use-download-orchestrator";
 import { useExplorerData } from "./use-explorer-data";
 import { useKeyboardNav } from "./use-keyboard-nav";
@@ -271,10 +261,8 @@ export function FileExplorer({
   // surfaces an error toast. See design.md Decision 7 (renderer-wiring
   // deviation note 2026-04-28) for why rename uses a parallel dialog
   // rather than the upload component.
-  const {
-    prompt: renameConflictPrompt,
-    dialogProps: renameConflictDialogProps,
-  } = useRenameConflictDialog();
+  const { prompt: renameConflictPrompt, dialogProps: renameConflictDialogProps } =
+    useRenameConflictDialog();
   // add-download-overwrite-confirm §6.5/§6.6 — instantiate the
   // download-conflict dialog hook once per mount. Parallel to the
   // rename hook (same component, different copy + hint metadata).
@@ -286,10 +274,8 @@ export function FileExplorer({
   // `RenameConflictDialog` (kept as-is for minimum churn); the hook's
   // `dialogProps` carries download-specific title/description and
   // optional hint metadata.
-  const {
-    prompt: downloadConflictPrompt,
-    dialogProps: downloadConflictDialogProps,
-  } = useDownloadConflictDialog();
+  const { prompt: downloadConflictPrompt, dialogProps: downloadConflictDialogProps } =
+    useDownloadConflictDialog();
   // Grab the per-datasource store directly — the module-level cache
   // ensures this is the same instance for every mount with the same id.
   // We subscribe to its state once here; child chrome components accept
@@ -346,9 +332,7 @@ export function FileExplorer({
         window?: {
           api?: {
             files?: {
-              onActiveUploadsHydrate?: (
-                callback: (jobs: readonly unknown[]) => void,
-              ) => () => void;
+              onActiveUploadsHydrate?: (callback: (jobs: readonly unknown[]) => void) => () => void;
             };
           };
         };
@@ -373,11 +357,7 @@ export function FileExplorer({
       defaultToaster.dispose();
     };
   }, [defaultToaster]);
-  const state = useSyncExternalStore(
-    store.subscribe,
-    store.getSnapshot,
-    store.getSnapshot,
-  );
+  const state = useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
 
   // add-engine-rename-download §25 — register the rename-conflict prompt
   // with the store so `store.rename`'s loop can re-prompt on
@@ -457,9 +437,7 @@ export function FileExplorer({
     const toaster = createDownloadJobToaster();
     toasterRef.current = toaster;
     const unsubscribeHydrate = hydrate((jobs) => {
-      toaster.hydrateActiveDownloads(
-        jobs as Parameters<typeof toaster.hydrateActiveDownloads>[0],
-      );
+      toaster.hydrateActiveDownloads(jobs as Parameters<typeof toaster.hydrateActiveDownloads>[0]);
     });
     return () => {
       unsubscribeHydrate();
@@ -571,13 +549,9 @@ export function FileExplorer({
       // `data-entry-id` and dispatch a native contextmenu event. Radix
       // ContextMenu's trigger listens on `contextmenu`, so this opens
       // the per-cell menu without needing a ref map.
-      const el = document.querySelector<HTMLElement>(
-        `[data-entry-id="${entry.id}"]`,
-      );
+      const el = document.querySelector<HTMLElement>(`[data-entry-id="${entry.id}"]`);
       if (el === null) return;
-      el.dispatchEvent(
-        new MouseEvent("contextmenu", { bubbles: true, cancelable: true }),
-      );
+      el.dispatchEvent(new MouseEvent("contextmenu", { bubbles: true, cancelable: true }));
     },
   });
 
@@ -676,8 +650,7 @@ export function FileExplorer({
     downloadOrchestrator
       .dispatchDownload(entry, { shiftKey: false }, datasourceId)
       .catch((err: unknown) => {
-        const message =
-          err instanceof Error ? err.message : "unexpected error";
+        const message = err instanceof Error ? err.message : "unexpected error";
         toast.error(`Download failed: ${message}`);
       });
   };
@@ -779,170 +752,164 @@ export function FileExplorer({
   // `loadMoreError` (also untouched by `loading`) keep the region's own
   // machine driving the button ↔ failed-row swap.
   const showLoadMoreRegion =
-    !state.search.active &&
-    state.errorTag === null &&
-    !state.loading &&
-    state.entries.length > 0;
+    !state.search.active && state.errorTag === null && !state.loading && state.entries.length > 0;
 
   return (
     <ProviderKindContext.Provider value={providerKind}>
-    <DropZone
-      datasourceId={datasourceId}
-      currentPath={state.currentPath}
-      status={dropZoneStatus}
-      conflictResolver={conflictResolver}
-      toaster={toaster}
-    >
-    <div
-      data-testid="file-explorer-root"
-      className="bg-background flex flex-1 min-h-0 flex-col"
-    >
-      {/* Chrome row: dashboard-home + history buttons + breadcrumb + toolbar. */}
-      <div className="border-border flex items-center gap-2 border-b px-3 py-2">
-        <DashboardHomeButton />
-        <HistoryButtons store={store} />
-        <div className="min-w-0 flex-1">
-          <Breadcrumb store={store} />
-        </div>
-        <Toolbar
-          store={store}
-          onDeleteSelection={handleToolbarDelete}
-          onUploadClick={() => setUploadDialogOpen(true)}
-          uploadBlockedReason={uploadBlockedReason}
-        />
-      </div>
+      <DropZone
+        datasourceId={datasourceId}
+        currentPath={state.currentPath}
+        status={dropZoneStatus}
+        conflictResolver={conflictResolver}
+        toaster={toaster}
+      >
+        <div
+          data-testid="file-explorer-root"
+          className="bg-background flex flex-1 min-h-0 flex-col"
+        >
+          {/* Chrome row: dashboard-home + history buttons + breadcrumb + toolbar. */}
+          <div className="border-border flex items-center gap-2 border-b px-3 py-2">
+            <DashboardHomeButton />
+            <HistoryButtons store={store} />
+            <div className="min-w-0 flex-1">
+              <Breadcrumb store={store} />
+            </div>
+            <Toolbar
+              store={store}
+              onDeleteSelection={handleToolbarDelete}
+              onUploadClick={() => setUploadDialogOpen(true)}
+              uploadBlockedReason={uploadBlockedReason}
+            />
+          </div>
 
-      {/* overflow-auto on the main column so scrolling entries does not scroll the Details pane. */}
-      <div className="flex min-h-0 flex-1 flex-row">
-        <div className="flex min-w-0 flex-1 flex-col overflow-auto">
-          {(() => {
-            // Search surface preempts state rendering — once the user
-            // activates a search, the results surface is authoritative.
-            if (state.search.active) {
-              return (
-                <SearchResults
-                  store={store}
-                  providerKind={providerKind}
-                  onResultActivate={handleSearchResultActivate}
-                />
-              );
-            }
-            // Tagged-error envelope branches. Engine response wins over
-            // the optional `providerStatus` hint — once an errorTag is
-            // set we trust it for the current folder.
-            if (state.errorTag === FilesErrorTag.Disconnected) {
-              return <DisconnectedState onRetry={handleRetry} />;
-            }
-            // unify-datasource-reconnect-view — auth-revoked and
-            // invalid-datasource both render the shared in-place reconnect
-            // view (the amber navigate-away AuthRevokedState is retired).
-            if (
-              state.errorTag === FilesErrorTag.AuthRevoked ||
-              state.errorTag === FilesErrorTag.InvalidDatasource
-            ) {
-              // Pattern-A full-replace state for misconfigured datasources.
-              // Reconnect lifecycle (sync.authenticateStart +
-              // useAuthSession) lives inside <InvalidDatasourceState>; the
-              // shared <ConfirmRemoveDatasourceDialog> + actions.remove
-              // dispatch live inside <InvalidDatasourceArm> per design.md
-              // Decisions 4 + 5. `onReconnectSucceeded` re-runs files:list
-              // via store.retryLoad(); on success the engine resolves the
-              // freshly-registered credential and the explorer naturally
-              // transitions out of this branch.
-              return (
-                <InvalidDatasourceArm
-                  providerId={providerId}
-                  datasourceId={datasourceId}
-                  onReconnectSucceeded={() => store.retryLoad()}
-                  onDatasourceRemoved={onDatasourceRemoved}
-                  authErrorKind={state.authErrorKind}
-                  authErrorMessage={state.error}
-                />
-              );
-            }
-            // rate-limited / other: no dedicated full-replace state
-            // component; surface the error inline so the user sees
-            // *why* the main pane is empty rather than assuming the
-            // folder itself is empty.
-            if (state.errorTag !== null && state.error !== null) {
-              return (
-                <div
-                  data-testid="file-explorer-error"
-                  role="alert"
-                  className="text-destructive p-4 text-sm"
-                >
-                  Failed to load: {state.error}
-                </div>
-              );
-            }
-            // While loading: syncing preempts skeleton only if the
-            // provider is mid-initial-sync AND no prior entries are
-            // visible (otherwise flashing mid-navigation would feel
-            // jarring).
-            if (state.loading) {
-              if (
-                providerStatus === "syncing" &&
-                state.entries.length === 0
-              ) {
-                return <SyncingState />;
-              }
-              return <Skeleton mode={state.viewMode} />;
-            }
-            // Resolved: rate-limited / other errors surface via the
-            // existing lastError-driven inline surfaces; the main pane
-            // still routes through empty / entries. `errorTag` ==
-            // "rate-limited" | "other" intentionally falls through to
-            // empty/entries so the error surfaces as a toast rather
-            // than hiding the current folder.
-            if (state.entries.length === 0) {
-              if (providerStatus === "syncing") {
-                return <SyncingState />;
-              }
-              return <EmptyState />;
-            }
-            return (
-              <ViewModeSwitcher
-                store={store}
-                keyboardNav={keyboardNav}
-                onOpen={handleOpen}
-                onDownload={handleDownload}
-                onRename={(entry) => {
-                  // Mirror the F2 keyboard guard — engine-backed
-                  // datasources disable rename at the menu level, but
-                  // a guard here prevents any direct caller from
-                  // bypassing the UI disable.
-                  if (isEngineBacked(providerKind)) return;
-                  store.startEdit(entry.id);
-                }}
-                onDelete={handleContextDelete}
-                onCopyPath={handleCopyPath}
-                onProperties={(entry) => store.openProperties(entry)}
-              />
-            );
-          })()}
-        </div>
-        <DetailsPane store={store} />
-      </div>
+          {/* overflow-auto on the main column so scrolling entries does not scroll the Details pane. */}
+          <div className="flex min-h-0 flex-1 flex-row">
+            <div className="flex min-w-0 flex-1 flex-col overflow-auto">
+              {(() => {
+                // Search surface preempts state rendering — once the user
+                // activates a search, the results surface is authoritative.
+                if (state.search.active) {
+                  return (
+                    <SearchResults
+                      store={store}
+                      providerKind={providerKind}
+                      onResultActivate={handleSearchResultActivate}
+                    />
+                  );
+                }
+                // Tagged-error envelope branches. Engine response wins over
+                // the optional `providerStatus` hint — once an errorTag is
+                // set we trust it for the current folder.
+                if (state.errorTag === FilesErrorTag.Disconnected) {
+                  return <DisconnectedState onRetry={handleRetry} />;
+                }
+                // unify-datasource-reconnect-view — auth-revoked and
+                // invalid-datasource both render the shared in-place reconnect
+                // view (the amber navigate-away AuthRevokedState is retired).
+                if (
+                  state.errorTag === FilesErrorTag.AuthRevoked ||
+                  state.errorTag === FilesErrorTag.InvalidDatasource
+                ) {
+                  // Pattern-A full-replace state for misconfigured datasources.
+                  // Reconnect lifecycle (sync.authenticateStart +
+                  // useAuthSession) lives inside <InvalidDatasourceState>; the
+                  // shared <ConfirmRemoveDatasourceDialog> + actions.remove
+                  // dispatch live inside <InvalidDatasourceArm> per design.md
+                  // Decisions 4 + 5. `onReconnectSucceeded` re-runs files:list
+                  // via store.retryLoad(); on success the engine resolves the
+                  // freshly-registered credential and the explorer naturally
+                  // transitions out of this branch.
+                  return (
+                    <InvalidDatasourceArm
+                      providerId={providerId}
+                      datasourceId={datasourceId}
+                      onReconnectSucceeded={() => store.retryLoad()}
+                      onDatasourceRemoved={onDatasourceRemoved}
+                      authErrorKind={state.authErrorKind}
+                      authErrorMessage={state.error}
+                    />
+                  );
+                }
+                // rate-limited / other: no dedicated full-replace state
+                // component; surface the error inline so the user sees
+                // *why* the main pane is empty rather than assuming the
+                // folder itself is empty.
+                if (state.errorTag !== null && state.error !== null) {
+                  return (
+                    <div
+                      data-testid="file-explorer-error"
+                      role="alert"
+                      className="text-destructive p-4 text-sm"
+                    >
+                      Failed to load: {state.error}
+                    </div>
+                  );
+                }
+                // While loading: syncing preempts skeleton only if the
+                // provider is mid-initial-sync AND no prior entries are
+                // visible (otherwise flashing mid-navigation would feel
+                // jarring).
+                if (state.loading) {
+                  if (providerStatus === "syncing" && state.entries.length === 0) {
+                    return <SyncingState />;
+                  }
+                  return <Skeleton mode={state.viewMode} />;
+                }
+                // Resolved: rate-limited / other errors surface via the
+                // existing lastError-driven inline surfaces; the main pane
+                // still routes through empty / entries. `errorTag` ==
+                // "rate-limited" | "other" intentionally falls through to
+                // empty/entries so the error surfaces as a toast rather
+                // than hiding the current folder.
+                if (state.entries.length === 0) {
+                  if (providerStatus === "syncing") {
+                    return <SyncingState />;
+                  }
+                  return <EmptyState />;
+                }
+                return (
+                  <ViewModeSwitcher
+                    store={store}
+                    keyboardNav={keyboardNav}
+                    onOpen={handleOpen}
+                    onDownload={handleDownload}
+                    onRename={(entry) => {
+                      // Mirror the F2 keyboard guard — engine-backed
+                      // datasources disable rename at the menu level, but
+                      // a guard here prevents any direct caller from
+                      // bypassing the UI disable.
+                      if (isEngineBacked(providerKind)) return;
+                      store.startEdit(entry.id);
+                    }}
+                    onDelete={handleContextDelete}
+                    onCopyPath={handleCopyPath}
+                    onProperties={(entry) => store.openProperties(entry)}
+                  />
+                );
+              })()}
+            </div>
+            <DetailsPane store={store} />
+          </div>
 
-      {/* Shared load-more region (Visual direction V-1 + V-2). A single
+          {/* Shared load-more region (Visual direction V-1 + V-2). A single
           full-width placement BETWEEN the scrollable entries area (the
           overflow-auto column above) and the status row — never inside a
           view-mode's scroll container, so it stays visible at the bottom
           regardless of scroll and renders identically below all six view
           modes. The region owns its button ↔ failed-row ↔ nothing state
           machine; the composite only gates whether it mounts at all. */}
-      {showLoadMoreRegion ? <LoadMoreRegion store={store} /> : null}
+          {showLoadMoreRegion ? <LoadMoreRegion store={store} /> : null}
 
-      {/* Status row pinned to bottom. */}
-      <StatusRow store={store} />
-      <PropertiesModal store={store} />
-      <ConfirmDeleteDialog
-        open={confirmOpen}
-        count={pendingDeleteRef.current.length}
-        onConfirm={handleConfirmDelete}
-        onCancel={handleCancelDelete}
-      />
-      {/* First-run downloads modal (§21) — opens on the user's first
+          {/* Status row pinned to bottom. */}
+          <StatusRow store={store} />
+          <PropertiesModal store={store} />
+          <ConfirmDeleteDialog
+            open={confirmOpen}
+            count={pendingDeleteRef.current.length}
+            onConfirm={handleConfirmDelete}
+            onCancel={handleCancelDelete}
+          />
+          {/* First-run downloads modal (§21) — opens on the user's first
           ever Download click when no default folder has been
           persisted. The orchestrator queues the deferred dispatch and
           flips `modalOpen` true; the modal persists the chosen folder
@@ -951,41 +918,41 @@ export function FileExplorer({
           commits the folder, subsequent downloads silently use it
           (Shift+Click + Always-ask preference still gate the
           Save-as flow). */}
-      <FirstDownloadModal
-        open={downloadOrchestrator.modalOpen}
-        onCommit={downloadOrchestrator.onModalCommit}
-      />
-      {/* Conflict-resolution dialog (Task 7) — Radix portal, so visual
+          <FirstDownloadModal
+            open={downloadOrchestrator.modalOpen}
+            onCommit={downloadOrchestrator.onModalCommit}
+          />
+          {/* Conflict-resolution dialog (Task 7) — Radix portal, so visual
           placement is immaterial. The hook above owns its open/close
           state; both the drop-zone and the Upload dialog share the same
           resolver so a single dialog mount suffices. */}
-      <ConflictResolutionDialog {...conflictDialogProps} />
-      {/* Rename-conflict dialog (add-engine-rename-download §25) — Radix
+          <ConflictResolutionDialog {...conflictDialogProps} />
+          {/* Rename-conflict dialog (add-engine-rename-download §25) — Radix
           portal. Opens only when `store.rename` hits a `tag: "conflict"`
           envelope and invokes the registered prompt. */}
-      <RenameConflictDialog {...renameConflictDialogProps} />
-      {/* Download-conflict dialog (add-download-overwrite-confirm §6) —
+          <RenameConflictDialog {...renameConflictDialogProps} />
+          {/* Download-conflict dialog (add-download-overwrite-confirm §6) —
           same controlled component as the rename dialog (per design.md
           Decision 5: prop-extracted title/description + optional hint
           metadata; component name kept for minimum churn). Opens only
           when the download orchestrator's loop hits a `tag: "conflict"`
           envelope and invokes the registered prompt. */}
-      <RenameConflictDialog {...downloadConflictDialogProps} />
-      {/* Upload dialog, opened by the toolbar's Upload button. Default
+          <RenameConflictDialog {...downloadConflictDialogProps} />
+          {/* Upload dialog, opened by the toolbar's Upload button. Default
           destination = file-explorer's currentPath (spec line 30). The
           dialog internally resets its Files list + navigation state on
           each false → true edge so reopening starts fresh. */}
-      <UploadDialog
-        open={uploadDialogOpen}
-        onOpenChange={setUploadDialogOpen}
-        datasourceId={datasourceId}
-        datasourceName={datasourceId}
-        initialDestination={state.currentPath}
-        conflictResolver={conflictResolver}
-        toaster={toaster}
-      />
-    </div>
-    </DropZone>
+          <UploadDialog
+            open={uploadDialogOpen}
+            onOpenChange={setUploadDialogOpen}
+            datasourceId={datasourceId}
+            datasourceName={datasourceId}
+            initialDestination={state.currentPath}
+            conflictResolver={conflictResolver}
+            toaster={toaster}
+          />
+        </div>
+      </DropZone>
     </ProviderKindContext.Provider>
   );
 }

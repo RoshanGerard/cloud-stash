@@ -53,8 +53,7 @@ const VIOLATING_PATTERNS: ReadonlyArray<{
     pattern: /\bDatasourcesUploadResponse\b/,
   },
   {
-    description:
-      "DATASOURCES_CHANNELS.upload (anything except the surviving uploadProgress)",
+    description: "DATASOURCES_CHANNELS.upload (anything except the surviving uploadProgress)",
     pattern: /DATASOURCES_CHANNELS\.upload(?!Progress)/,
   },
 ];
@@ -93,14 +92,7 @@ const SKIP_FILES = new Set<string>([
   path.basename(__filename_),
 ]);
 
-const SCANNED_EXTENSIONS = new Set<string>([
-  ".ts",
-  ".tsx",
-  ".js",
-  ".mjs",
-  ".cjs",
-  ".json",
-]);
+const SCANNED_EXTENSIONS = new Set<string>([".ts", ".tsx", ".js", ".mjs", ".cjs", ".json"]);
 
 interface Violation {
   readonly file: string;
@@ -132,9 +124,7 @@ describe("retired datasources.upload surface is gone", () => {
     });
 
     if (violations.length > 0) {
-      const lines = violations
-        .map((v) => `  - ${v.file}: ${v.pattern}`)
-        .join("\n");
+      const lines = violations.map((v) => `  - ${v.file}: ${v.pattern}`).join("\n");
       expect.fail(
         `Found ${violations.length} reference(s) to the retired ` +
           `${RETIRED_CHANNEL} surface:\n${lines}`,

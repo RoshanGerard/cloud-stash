@@ -30,10 +30,7 @@ function extractThemeBlock(css: string): string {
   // the match unambiguous.
   const re = /(?:^|\n)@theme\b[^{]*\{/;
   const match = css.match(re);
-  expect(
-    match,
-    "expected an @theme at-rule in globals.css (not a comment)",
-  ).not.toBeNull();
+  expect(match, "expected an @theme at-rule in globals.css (not a comment)").not.toBeNull();
   const openBrace = (match!.index ?? 0) + match![0].length - 1;
   let depth = 1;
   let i = openBrace + 1;

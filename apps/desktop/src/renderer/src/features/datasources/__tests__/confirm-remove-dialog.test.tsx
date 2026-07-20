@@ -1,12 +1,6 @@
 /** @vitest-environment jsdom */
 import { afterEach, describe, expect, it, vi } from "vitest";
-import {
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-} from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 
 import { ConfirmRemoveDatasourceDialog } from "../confirm-remove-dialog.js";
@@ -31,24 +25,12 @@ describe("ConfirmRemoveDatasourceDialog — visibility", () => {
   });
 
   it("is not in the DOM when open=false", () => {
-    render(
-      <ConfirmRemoveDatasourceDialog
-        open={false}
-        onConfirm={() => {}}
-        onCancel={() => {}}
-      />,
-    );
+    render(<ConfirmRemoveDatasourceDialog open={false} onConfirm={() => {}} onCancel={() => {}} />);
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 
   it("mounts when open=true", () => {
-    render(
-      <ConfirmRemoveDatasourceDialog
-        open={true}
-        onConfirm={() => {}}
-        onCancel={() => {}}
-      />,
-    );
+    render(<ConfirmRemoveDatasourceDialog open={true} onConfirm={() => {}} onCancel={() => {}} />);
     expect(screen.getByRole("dialog")).toBeInTheDocument();
   });
 });
@@ -59,25 +41,13 @@ describe("ConfirmRemoveDatasourceDialog — copy", () => {
   });
 
   it("renders the title 'Remove this datasource?'", () => {
-    render(
-      <ConfirmRemoveDatasourceDialog
-        open={true}
-        onConfirm={() => {}}
-        onCancel={() => {}}
-      />,
-    );
+    render(<ConfirmRemoveDatasourceDialog open={true} onConfirm={() => {}} onCancel={() => {}} />);
     const dialog = screen.getByRole("dialog");
     expect(dialog.textContent).toContain("Remove this datasource?");
   });
 
   it("renders the body 'This deletes the local registry entry; cloud files are not deleted.'", () => {
-    render(
-      <ConfirmRemoveDatasourceDialog
-        open={true}
-        onConfirm={() => {}}
-        onCancel={() => {}}
-      />,
-    );
+    render(<ConfirmRemoveDatasourceDialog open={true} onConfirm={() => {}} onCancel={() => {}} />);
     const dialog = screen.getByRole("dialog");
     expect(dialog.textContent).toContain(
       "This deletes the local registry entry; cloud files are not deleted.",
@@ -91,13 +61,7 @@ describe("ConfirmRemoveDatasourceDialog — buttons", () => {
   });
 
   it("renders a 'Remove' button with destructive styling", () => {
-    render(
-      <ConfirmRemoveDatasourceDialog
-        open={true}
-        onConfirm={() => {}}
-        onCancel={() => {}}
-      />,
-    );
+    render(<ConfirmRemoveDatasourceDialog open={true} onConfirm={() => {}} onCancel={() => {}} />);
     const removeBtn = screen.getByRole("button", { name: "Remove" });
     // shadcn Button variant="destructive" stamps the `bg-destructive` class.
     expect(removeBtn.className).toContain("bg-destructive");
@@ -105,13 +69,7 @@ describe("ConfirmRemoveDatasourceDialog — buttons", () => {
   });
 
   it("renders a 'Cancel' button using the ghost variant (non-destructive)", () => {
-    render(
-      <ConfirmRemoveDatasourceDialog
-        open={true}
-        onConfirm={() => {}}
-        onCancel={() => {}}
-      />,
-    );
+    render(<ConfirmRemoveDatasourceDialog open={true} onConfirm={() => {}} onCancel={() => {}} />);
     const cancelBtn = screen.getByRole("button", { name: "Cancel" });
     expect(cancelBtn).toBeInTheDocument();
     // Button stamps data-variant per the variant prop.
@@ -125,13 +83,7 @@ describe("ConfirmRemoveDatasourceDialog — focus", () => {
   });
 
   it("destructive Remove button has focus on open", async () => {
-    render(
-      <ConfirmRemoveDatasourceDialog
-        open={true}
-        onConfirm={() => {}}
-        onCancel={() => {}}
-      />,
-    );
+    render(<ConfirmRemoveDatasourceDialog open={true} onConfirm={() => {}} onCancel={() => {}} />);
 
     // Wait for the portal to mount and onOpenAutoFocus to redirect focus
     // to the Remove button via the component's useEffect/ref.
@@ -150,13 +102,7 @@ describe("ConfirmRemoveDatasourceDialog — keyboard", () => {
   it("Escape triggers onCancel and does NOT trigger onConfirm", async () => {
     const onConfirm = vi.fn();
     const onCancel = vi.fn();
-    render(
-      <ConfirmRemoveDatasourceDialog
-        open={true}
-        onConfirm={onConfirm}
-        onCancel={onCancel}
-      />,
-    );
+    render(<ConfirmRemoveDatasourceDialog open={true} onConfirm={onConfirm} onCancel={onCancel} />);
 
     // Radix Dialog listens for Escape on the active element.
     fireEvent.keyDown(document.activeElement ?? document.body, {
@@ -178,13 +124,7 @@ describe("ConfirmRemoveDatasourceDialog — click handlers", () => {
   it("clicking Cancel fires onCancel exactly once and does NOT fire onConfirm", () => {
     const onConfirm = vi.fn();
     const onCancel = vi.fn();
-    render(
-      <ConfirmRemoveDatasourceDialog
-        open={true}
-        onConfirm={onConfirm}
-        onCancel={onCancel}
-      />,
-    );
+    render(<ConfirmRemoveDatasourceDialog open={true} onConfirm={onConfirm} onCancel={onCancel} />);
 
     fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
     expect(onCancel).toHaveBeenCalledTimes(1);
@@ -194,13 +134,7 @@ describe("ConfirmRemoveDatasourceDialog — click handlers", () => {
   it("clicking Remove fires onConfirm exactly once", () => {
     const onConfirm = vi.fn();
     const onCancel = vi.fn();
-    render(
-      <ConfirmRemoveDatasourceDialog
-        open={true}
-        onConfirm={onConfirm}
-        onCancel={onCancel}
-      />,
-    );
+    render(<ConfirmRemoveDatasourceDialog open={true} onConfirm={onConfirm} onCancel={onCancel} />);
 
     fireEvent.click(screen.getByRole("button", { name: "Remove" }));
     expect(onConfirm).toHaveBeenCalledTimes(1);

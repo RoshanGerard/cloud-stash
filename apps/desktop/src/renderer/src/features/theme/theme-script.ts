@@ -22,4 +22,4 @@
 // adds or removes `.dark` — an explicit stored "dark"/"light" wins, otherwise
 // it falls back to `prefers-color-scheme`. Mirrors `applyEffectiveTheme()` in
 // theme-store.ts. ES5-safe: `var`, no arrow fns, no optional chaining.
-export const THEME_BOOTSTRAP_SCRIPT = `(function(){try{var k="cloudstash.theme";var v=null;try{v=window.localStorage.getItem(k)}catch(_){v=null}var d=document.documentElement;var eff;if(v==="dark"||v==="light"){eff=v}else{var m=window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)");eff=(m&&m.matches)?"dark":"light"}if(eff==="dark"){d.classList.add("dark")}else{d.classList.remove("dark")}}catch(_){}})();`
+export const THEME_BOOTSTRAP_SCRIPT = `(function(){try{var k="cloudstash.theme";var v=null;try{v=window.localStorage.getItem(k)}catch(_){v=null}var d=document.documentElement;var eff;if(v==="dark"||v==="light"){eff=v}else{var m=window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)");eff=(m&&m.matches)?"dark":"light"}if(eff==="dark"){d.classList.add("dark")}else{d.classList.remove("dark")}}catch(_){}})();`;

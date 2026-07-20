@@ -52,11 +52,7 @@ vi.mock("next/navigation", () => ({
 
 import { DatasourceCard } from "../card";
 import { DatasourcesProvider } from "../store";
-import {
-  ensureResizeObserver,
-  installApiMock,
-  type SyncHarness,
-} from "./helpers/sync-harness";
+import { ensureResizeObserver, installApiMock, type SyncHarness } from "./helpers/sync-harness";
 
 let syncHarness: SyncHarness;
 
@@ -66,9 +62,7 @@ function renderWithProvider(ui: ReactNode) {
 
 const DS_ID = "ds-1";
 
-function buildSummary(
-  overrides: Partial<DatasourceSummary> = {},
-): DatasourceSummary {
+function buildSummary(overrides: Partial<DatasourceSummary> = {}): DatasourceSummary {
   return {
     id: DS_ID,
     displayName: "Multi-upload Drive",
@@ -102,11 +96,7 @@ function startedPayload(jobId: string, startedAt: number): JobStartedPayload {
   return { jobId, attempt: 1, startedAt };
 }
 
-function progressPayload(
-  jobId: string,
-  percent: number,
-  totalBytes = 1000,
-): JobProgressPayload {
+function progressPayload(jobId: string, percent: number, totalBytes = 1000): JobProgressPayload {
   return {
     jobId,
     bytesSent: Math.round((percent / 100) * totalBytes),
@@ -280,9 +270,7 @@ describe("DatasourceCard — multiple in-flight uploads (Decision 13 tiebreak)",
     });
 
     await waitFor(() => {
-      expect(
-        screen.getByTestId("datasource-upload-progress"),
-      ).toBeInTheDocument();
+      expect(screen.getByTestId("datasource-upload-progress")).toBeInTheDocument();
     });
 
     syncHarness.emit({
@@ -295,9 +283,7 @@ describe("DatasourceCard — multiple in-flight uploads (Decision 13 tiebreak)",
     });
 
     await waitFor(() => {
-      expect(
-        screen.queryByTestId("datasource-upload-progress"),
-      ).not.toBeInTheDocument();
+      expect(screen.queryByTestId("datasource-upload-progress")).not.toBeInTheDocument();
     });
   });
 

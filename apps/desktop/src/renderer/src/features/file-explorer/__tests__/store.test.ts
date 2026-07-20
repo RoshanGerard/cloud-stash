@@ -5,11 +5,7 @@ import "@testing-library/jest-dom/vitest";
 import { createElement, useSyncExternalStore } from "react";
 
 import { FilesErrorTag } from "@cloudstash/ipc-contracts";
-import type {
-  FileEntry,
-  FilesListResponse,
-  FilesListValue,
-} from "@cloudstash/ipc-contracts";
+import type { FileEntry, FilesListResponse, FilesListValue } from "@cloudstash/ipc-contracts";
 
 // Sonner is mocked so rename's toast.error call is observable.
 vi.mock("sonner", () => ({
@@ -29,12 +25,7 @@ import {
   readExplorerPageSize,
   useExplorerStore,
 } from "../store.js";
-import type {
-  ExplorerState,
-  ExplorerStore,
-  SortBy,
-  ViewMode,
-} from "../store.js";
+import type { ExplorerState, ExplorerStore, SortBy, ViewMode } from "../store.js";
 
 // --- Test helpers ---------------------------------------------------------
 
@@ -981,9 +972,7 @@ describe("rename action", () => {
       entryId: "dir-1",
       reason: "Folder rename is not supported in this version",
     });
-    expect(toast.error).toHaveBeenCalledWith(
-      "Folder rename is not supported in this version",
-    );
+    expect(toast.error).toHaveBeenCalledWith("Folder rename is not supported in this version");
   });
 
   it("no-op when newName === entry.name: no IPC, no pendingOp, no lastError", async () => {
@@ -1133,9 +1122,7 @@ describe("rename action — conflict re-prompt (§25)", () => {
     const store = makeStore("ds-1");
     store.setEntries([entry]);
 
-    const prompt = vi.fn(
-      async (_existingPath: string) => "overwrite" as const,
-    );
+    const prompt = vi.fn(async (_existingPath: string) => "overwrite" as const);
     store.setRenameConflictPrompt(prompt);
 
     await store.rename("e1", "bar.pdf");
@@ -1302,9 +1289,7 @@ describe("remove action", () => {
   });
 
   function seedEntries(paths: string[]): FileEntry[] {
-    return paths.map((p) =>
-      makeEntry({ id: p, name: `${p}.txt`, path: p }),
-    );
+    return paths.map((p) => makeEntry({ id: p, name: `${p}.txt`, path: p }));
   }
 
   // Build FilesRemoveTarget[] from the test seed. In seedEntries we use
@@ -1434,9 +1419,7 @@ describe("remove action", () => {
       entryId: "c",
       reason: "provider locked the file",
     });
-    expect(toast.success).toHaveBeenCalledWith(
-      "Deleted 2 of 3 items; 1 failed",
-    );
+    expect(toast.success).toHaveBeenCalledWith("Deleted 2 of 3 items; 1 failed");
   });
 
   it("envelope-level failure (ok:false): no removals, all pending ops cleared, lastError set, toast.error", async () => {
@@ -1530,9 +1513,7 @@ describe("download action", () => {
     expect(downloadFn).toHaveBeenCalledWith(
       expect.objectContaining({ datasourceId: "ds-1", path: "/file.pdf" }),
     );
-    expect(toast.success).toHaveBeenCalledWith(
-      "Downloaded to /path/to/saved/file.pdf",
-    );
+    expect(toast.success).toHaveBeenCalledWith("Downloaded to /path/to/saved/file.pdf");
     // Download does not use pendingOps; state shape stays clean.
     const after = snap(store);
     expect(after.pendingOps).toEqual({});
@@ -1668,13 +1649,7 @@ describe("useExplorerStore hook", () => {
     const selections: { store: ExplorerStore | null } = { store: null };
     const selectionsB: { store: ExplorerStore | null } = { store: null };
 
-    function Probe({
-      id,
-      sink,
-    }: {
-      id: string;
-      sink: { store: ExplorerStore | null };
-    }) {
+    function Probe({ id, sink }: { id: string; sink: { store: ExplorerStore | null } }) {
       const { store } = useExplorerStore(id);
       // capture on first render
       sink.store = store;
@@ -1757,17 +1732,11 @@ function installFilesListApi(listImpl: FilesListStub): void {
   };
 }
 
-function listValue(
-  entries: FileEntry[],
-  nextCursor: string | null,
-): FilesListValue {
+function listValue(entries: FileEntry[], nextCursor: string | null): FilesListValue {
   return { entries, truncated: nextCursor !== null, nextCursor };
 }
 
-function okList(
-  entries: FileEntry[],
-  nextCursor: string | null,
-): FilesListResponse {
+function okList(entries: FileEntry[], nextCursor: string | null): FilesListResponse {
   return { ok: true, value: listValue(entries, nextCursor) };
 }
 
@@ -1878,9 +1847,7 @@ describe("pagination — loadMore success (§8.2, §8.3)", () => {
 
     await store.loadMore();
 
-    expect(listFn).toHaveBeenCalledWith(
-      expect.objectContaining({ pageSize: 1000 }),
-    );
+    expect(listFn).toHaveBeenCalledWith(expect.objectContaining({ pageSize: 1000 }));
   });
 
   it("loadMore on the last page (nextCursor === null after append) clears the cursor", async () => {
@@ -2035,14 +2002,8 @@ describe("pagination — loadMore failure + retryLoadMore (§8.4, §8.5)", () =>
 
     // Both calls used the SAME stored cursor (cursor-1).
     expect(listFn).toHaveBeenCalledTimes(2);
-    expect(listFn).toHaveBeenNthCalledWith(
-      1,
-      expect.objectContaining({ cursor: "cursor-1" }),
-    );
-    expect(listFn).toHaveBeenNthCalledWith(
-      2,
-      expect.objectContaining({ cursor: "cursor-1" }),
-    );
+    expect(listFn).toHaveBeenNthCalledWith(1, expect.objectContaining({ cursor: "cursor-1" }));
+    expect(listFn).toHaveBeenNthCalledWith(2, expect.objectContaining({ cursor: "cursor-1" }));
 
     const after = snap(store);
     expect(after.entries.map((e) => e.id)).toEqual(["a", "b", "c", "d"]);
@@ -2155,4 +2116,3 @@ describe("pagination — navigation discards cursor + failed-state (§8.6)", () 
     expect(after.loadingMore).toBe(false);
   });
 });
-

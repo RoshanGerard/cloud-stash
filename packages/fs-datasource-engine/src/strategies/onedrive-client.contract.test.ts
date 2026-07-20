@@ -117,45 +117,41 @@ function buildGraphClient(): GraphClientLike {
   };
 }
 
-const fakeFetch = vi.fn(
-  async (url: string | URL | Request, init?: RequestInit) => {
-    const urlStr = String(url);
-    const method = (init?.method ?? "").toUpperCase();
-    if (cancelMode) {
-      if (method === "DELETE" && urlStr.includes("/CONTRACT-UPLOAD-URL")) {
-        cancelDeleteSignal = init?.signal ?? null;
-        // The Response constructor rejects null-body status codes (204)
-        // with a body arg per the Fetch spec; use 200 to keep the test
-        // stderr clean. The strategy's cleanup catch does not branch on
-        // status, so the choice is purely cosmetic.
-        return new Response("", { status: 200 });
-      }
-      if (method === "PUT" && urlStr.includes("/CONTRACT-UPLOAD-URL")) {
-        return new Promise<Response>((_resolve, reject) => {
-          const sig = init?.signal;
-          if (sig?.aborted) {
+const fakeFetch = vi.fn(async (url: string | URL | Request, init?: RequestInit) => {
+  const urlStr = String(url);
+  const method = (init?.method ?? "").toUpperCase();
+  if (cancelMode) {
+    if (method === "DELETE" && urlStr.includes("/CONTRACT-UPLOAD-URL")) {
+      cancelDeleteSignal = init?.signal ?? null;
+      // The Response constructor rejects null-body status codes (204)
+      // with a body arg per the Fetch spec; use 200 to keep the test
+      // stderr clean. The strategy's cleanup catch does not branch on
+      // status, so the choice is purely cosmetic.
+      return new Response("", { status: 200 });
+    }
+    if (method === "PUT" && urlStr.includes("/CONTRACT-UPLOAD-URL")) {
+      return new Promise<Response>((_resolve, reject) => {
+        const sig = init?.signal;
+        if (sig?.aborted) {
+          reject(Object.assign(new Error("aborted"), { name: "AbortError" }));
+          return;
+        }
+        sig?.addEventListener(
+          "abort",
+          () => {
             reject(Object.assign(new Error("aborted"), { name: "AbortError" }));
-            return;
-          }
-          sig?.addEventListener(
-            "abort",
-            () => {
-              reject(
-                Object.assign(new Error("aborted"), { name: "AbortError" }),
-              );
-            },
-            { once: true },
-          );
-        });
-      }
+          },
+          { once: true },
+        );
+      });
     }
-    const next = fetchResponses.shift();
-    if (!next) {
-      return new Response("{}", { status: 500 });
-    }
-    return next();
-  },
-) as unknown as typeof fetch;
+  }
+  const next = fetchResponses.shift();
+  if (!next) {
+    return new Response("{}", { status: 500 });
+  }
+  return next();
+}) as unknown as typeof fetch;
 
 // ---------------------------------------------------------------------------
 // Credentials
@@ -213,7 +209,9 @@ const fixture: StrategyContractFixture = {
               name: "folder-a",
               folder: { childCount: 0 },
               lastModifiedDateTime: "2024-06-01T00:00:00Z",
-              parentReference: { path: `/drive/root:${opts.rootPath === "/" ? "" : opts.rootPath}` },
+              parentReference: {
+                path: `/drive/root:${opts.rootPath === "/" ? "" : opts.rootPath}`,
+              },
             },
             {
               id: "contract-file-id",
@@ -221,7 +219,9 @@ const fixture: StrategyContractFixture = {
               file: { mimeType: "text/plain" },
               size: 10,
               lastModifiedDateTime: "2024-06-01T00:00:00Z",
-              parentReference: { path: `/drive/root:${opts.rootPath === "/" ? "" : opts.rootPath}` },
+              parentReference: {
+                path: `/drive/root:${opts.rootPath === "/" ? "" : opts.rootPath}`,
+              },
             },
           ],
         }),
@@ -283,10 +283,9 @@ const fixture: StrategyContractFixture = {
     // token-expired + authentication-failed).
     fetchResponses.push(
       () =>
-        new Response(
-          JSON.stringify({ error: "invalid_grant", error_description: "bad" }),
-          { status: 400 },
-        ),
+        new Response(JSON.stringify({ error: "invalid_grant", error_description: "bad" }), {
+          status: 400,
+        }),
     );
   },
 
@@ -320,7 +319,9 @@ const fixture: StrategyContractFixture = {
           file: { mimeType: "text/plain" },
           size: 13,
           lastModifiedDateTime: "2024-06-01T00:00:00Z",
-          parentReference: { path: `/drive/root:${opts.parentPath === "/" ? "" : opts.parentPath}` },
+          parentReference: {
+            path: `/drive/root:${opts.parentPath === "/" ? "" : opts.parentPath}`,
+          },
         }),
       },
     });
@@ -341,17 +342,14 @@ const fixture: StrategyContractFixture = {
       match: base,
       verbs: {
         post: () => ({
-          uploadUrl:
-            "https://contract.onedrive.local/CONTRACT-UPLOAD-URL",
+          uploadUrl: "https://contract.onedrive.local/CONTRACT-UPLOAD-URL",
         }),
       },
     });
   },
 
   observedFreshCancelCleanup(opts) {
-    return (
-      cancelDeleteSignal !== null && cancelDeleteSignal !== opts.userSignal
-    );
+    return cancelDeleteSignal !== null && cancelDeleteSignal !== opts.userSignal;
   },
 
   primeDeleteOk(targetPath) {

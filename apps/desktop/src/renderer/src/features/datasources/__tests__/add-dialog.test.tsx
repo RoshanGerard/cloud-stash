@@ -16,24 +16,8 @@
 // On either sentinel the dialog calls actions.refresh() (NOT actions.add)
 // and closes. The dialog itself never calls window.api.datasources.add.
 
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-  type Mock,
-} from "vitest";
-import {
-  act,
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-  within,
-} from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from "vitest";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import type { DatasourceSummary } from "@cloudstash/ipc-contracts";
 import { providers } from "@cloudstash/ipc-contracts";
@@ -74,9 +58,7 @@ function installApiMock() {
     result: { correlationId: "corr-add-dialog", kind: "oauth" },
   });
   authenticateCompleteMock = vi.fn();
-  authenticateCancelMock = vi
-    .fn()
-    .mockResolvedValue({ ok: true, result: { cancelled: true } });
+  authenticateCancelMock = vi.fn().mockResolvedValue({ ok: true, result: { cancelled: true } });
   syncOnEventCapture = null;
 
   (window as unknown as { api: unknown }).api = {
@@ -105,9 +87,7 @@ function installApiMock() {
   };
 }
 
-function buildSummary(
-  overrides: Partial<DatasourceSummary> = {},
-): DatasourceSummary {
+function buildSummary(overrides: Partial<DatasourceSummary> = {}): DatasourceSummary {
   return {
     id: "ds-new",
     displayName: "Freshly Connected",
@@ -140,12 +120,11 @@ async function openDialog(): Promise<HTMLElement> {
 
 beforeEach(() => {
   if (!("ResizeObserver" in window)) {
-    (window as unknown as { ResizeObserver: unknown }).ResizeObserver =
-      class MockResizeObserver {
-        observe() {}
-        unobserve() {}
-        disconnect() {}
-      };
+    (window as unknown as { ResizeObserver: unknown }).ResizeObserver = class MockResizeObserver {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    };
   }
   listMock = vi.fn().mockResolvedValue({ datasources: [] });
   addMock = vi.fn();
@@ -213,13 +192,9 @@ describe("AddDatasourceDialog", () => {
         });
         expect(connect).toBeInTheDocument();
       } else if (schema === "aws-access-key") {
-        const accessKey = await within(dialog).findByLabelText(
-          /access key id/i,
-        );
+        const accessKey = await within(dialog).findByLabelText(/access key id/i);
         expect(accessKey).toBeInTheDocument();
-        expect(
-          within(dialog).getByLabelText(/secret access key/i),
-        ).toBeInTheDocument();
+        expect(within(dialog).getByLabelText(/secret access key/i)).toBeInTheDocument();
         expect(within(dialog).getByLabelText(/bucket/i)).toBeInTheDocument();
       }
     });
@@ -284,9 +259,7 @@ describe("AddDatasourceDialog", () => {
     });
 
     await waitFor(() => {
-      expect(
-        screen.getByText(returnedSummary.displayName),
-      ).toBeInTheDocument();
+      expect(screen.getByText(returnedSummary.displayName)).toBeInTheDocument();
     });
   });
 
@@ -375,19 +348,11 @@ describe("AddDatasourceDialog", () => {
     fireEvent.click(back);
 
     await waitFor(() => {
-      expect(
-        within(dialog).getByTestId("provider-option-google-drive"),
-      ).toBeInTheDocument();
-      expect(
-        within(dialog).getByTestId("provider-option-onedrive"),
-      ).toBeInTheDocument();
-      expect(
-        within(dialog).getByTestId("provider-option-amazon-s3"),
-      ).toBeInTheDocument();
+      expect(within(dialog).getByTestId("provider-option-google-drive")).toBeInTheDocument();
+      expect(within(dialog).getByTestId("provider-option-onedrive")).toBeInTheDocument();
+      expect(within(dialog).getByTestId("provider-option-amazon-s3")).toBeInTheDocument();
     });
-    expect(
-      within(dialog).queryByRole("button", { name: /^connect/i }),
-    ).toBeNull();
+    expect(within(dialog).queryByRole("button", { name: /^connect/i })).toBeNull();
   });
 
   it("closing the dialog via Escape does NOT call datasources.add", async () => {

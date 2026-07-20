@@ -19,10 +19,7 @@
 
 import type { DatasourceClient } from "@cloudstash/fs-datasource-engine";
 import { withAuthRefresh } from "@cloudstash/fs-datasource-engine";
-import type {
-  DatasourceType,
-  FilesRemoveEntryResult,
-} from "@cloudstash/ipc-contracts";
+import type { DatasourceType, FilesRemoveEntryResult } from "@cloudstash/ipc-contracts";
 import { FilesErrorTag } from "@cloudstash/ipc-contracts";
 
 import type { CommandHandler } from "../ipc/server.js";
@@ -30,14 +27,10 @@ import type { CommandHandler } from "../ipc/server.js";
 import { normalizeFilesError } from "./files-error-mapping.js";
 
 export interface FilesRemoveDeps {
-  readonly resolveClient: (
-    datasourceId: string,
-  ) => Promise<DatasourceClient<DatasourceType>>;
+  readonly resolveClient: (datasourceId: string) => Promise<DatasourceClient<DatasourceType>>;
 }
 
-export function makeFilesRemoveHandler(
-  deps: FilesRemoveDeps,
-): CommandHandler<"files:remove"> {
+export function makeFilesRemoveHandler(deps: FilesRemoveDeps): CommandHandler<"files:remove"> {
   return async (params) => {
     let client: DatasourceClient<DatasourceType>;
     try {
@@ -59,10 +52,7 @@ export function makeFilesRemoveHandler(
           // longer auto-refreshes on `auth-expired`; each per-target delete
           // owns its own refresh-once/retry-once via `withAuthRefresh`.
           await withAuthRefresh(client, () =>
-            client.delete(
-              { kind: "handle", handle: target.handle },
-              target.kind,
-            ),
+            client.delete({ kind: "handle", handle: target.handle }, target.kind),
           );
           return { path: target.path, handle: target.handle, ok: true };
         } catch (err) {
@@ -87,8 +77,7 @@ export function makeFilesRemoveHandler(
             ok: false,
             error: {
               tag: FilesErrorTag.Other,
-              message:
-                s.reason instanceof Error ? s.reason.message : String(s.reason),
+              message: s.reason instanceof Error ? s.reason.message : String(s.reason),
             },
           },
     );

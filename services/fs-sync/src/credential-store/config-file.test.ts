@@ -5,10 +5,7 @@ import * as path from "node:path";
 import type { StoredCredentials } from "@cloudstash/ipc-contracts";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import {
-  ConfigFileCredentialStore,
-  CredentialStorePermissionError,
-} from "./config-file.js";
+import { ConfigFileCredentialStore, CredentialStorePermissionError } from "./config-file.js";
 
 let cleanup: string[] = [];
 
@@ -135,10 +132,7 @@ describe("ConfigFileCredentialStore — atomic write + crash recovery (task 4.5)
 
     // Simulate crash: write a leftover .tmp file (half-written second put)
     // and assert the committed value is still readable from the real file.
-    await fsp.writeFile(
-      `${file}.tmp`,
-      '{"schemaVersion":1,"credentials":{"ds-1":"garbage"}}',
-    );
+    await fsp.writeFile(`${file}.tmp`, '{"schemaVersion":1,"credentials":{"ds-1":"garbage"}}');
     const back = await store.get("ds-1");
     expect(back).toEqual(sampleCreds("committed"));
   });
@@ -187,9 +181,7 @@ describe.skipIf(process.platform === "win32")(
       await store.put("ds-1", sampleCreds());
       await fsp.chmod(file, 0o644);
 
-      await expect(store.get("ds-1")).rejects.toBeInstanceOf(
-        CredentialStorePermissionError,
-      );
+      await expect(store.get("ds-1")).rejects.toBeInstanceOf(CredentialStorePermissionError);
     });
 
     it("emits credential-store-permission-violation with the observed mode", async () => {
@@ -203,9 +195,7 @@ describe.skipIf(process.platform === "win32")(
       await store.put("ds-1", sampleCreds());
       await fsp.chmod(file, 0o644);
 
-      await expect(store.get("ds-1")).rejects.toBeInstanceOf(
-        CredentialStorePermissionError,
-      );
+      await expect(store.get("ds-1")).rejects.toBeInstanceOf(CredentialStorePermissionError);
       expect(sink.emit).toHaveBeenCalledWith(
         "credential-store-permission-violation",
         expect.objectContaining({

@@ -11,7 +11,7 @@ Two Node.js background services live under `services/`:
   queue + snapshot diff, global concurrency cap of 2, retry split
   (system-level network + rate-limit, user-level provider-error),
   ConfigFileCredentialStore plaintext JSON at `$HOME/cloudstash/sync_app/
-  credentials.json` with `0600` / user-ACL enforcement, and per-OS
+credentials.json` with `0600` / user-ACL enforcement, and per-OS
   install hooks (Windows Scheduled Task, macOS LaunchAgent, Linux
   `systemd --user`). See `services/fs-sync/README.md`.
 - **`services/fs-monitor`** — future filesystem watcher that will feed
@@ -29,7 +29,7 @@ pnpm dev:sync-service
 
 OAuth-class datasources (Google Drive, OneDrive) require a per-provider
 "app" registration in the vendor's developer console. The resulting
-`clientId` / `clientSecret` pair identifies *this application* to the
+`clientId` / `clientSecret` pair identifies _this application_ to the
 vendor and is consumed by the fs-sync service at authenticate-time.
 Configuration lives at `~/cloudstash/sync_app/config.json` (Unix) or
 `%USERPROFILE%\cloudstash\sync_app\config.json` (Windows) — service-owned,
@@ -56,7 +56,7 @@ in the dialog.
 4. **APIs & Services → Library** → search "Drive" → **Enable Google
    Drive API** in the same project. Without this, every authenticated
    call fails with `provider-error: Google Drive API has not been used
-   in project …`.
+in project …`.
 5. Capture the resulting `client_id` (looks like
    `1234567890-abc….apps.googleusercontent.com`) and `client_secret`
    (looks like `GOCSPX-…`). These go into `config.json` below.
@@ -116,11 +116,11 @@ The file shape (after editing):
   "schemaVersion": 1,
   "providers": {
     "google-drive": {
-      "clientId":     "1234567890-abc….apps.googleusercontent.com",
+      "clientId": "1234567890-abc….apps.googleusercontent.com",
       "clientSecret": "GOCSPX-…"
     },
     "onedrive": {
-      "clientId":     "<Azure Application (client) ID>",
+      "clientId": "<Azure Application (client) ID>",
       "clientSecret": "<Azure client secret value>"
     }
   }
@@ -282,7 +282,7 @@ on your host:
   mode the desktop process does **not** spawn the service — it expects one
   to be already running on the dev pipe. If you start the desktop alone and
   click Upload you will get `sync client not initialized — IPC handler
-  invoked before supervisor started` from
+invoked before supervisor started` from
   `apps/desktop/src/main/sync/sync-client-holder.ts`.
 - `pnpm dev` (root) — runs both in parallel via `pnpm -r --parallel`. Works
   only if the single on-disk `better-sqlite3` binary happens to satisfy both
@@ -394,9 +394,9 @@ Then write the dev-credentials file at the service's data dir:
     "accessToken": "<from helper>",
     "refreshToken": "<from helper>",
     "meta": {
-      "clientId":     "<from Provider OAuth registration → Google Drive>",
+      "clientId": "<from Provider OAuth registration → Google Drive>",
       "clientSecret": "<from Provider OAuth registration → Google Drive>",
-      "redirectUri":  "http://localhost:8765/"
+      "redirectUri": "http://localhost:8765/"
     }
   },
   "createdAt": 1714000000000,
@@ -414,7 +414,7 @@ keyed by the registry's datasource id. Open the desktop's DevTools
 (`Ctrl+Shift+I`) → Console:
 
 ```js
-await window.api.datasources.list()
+await window.api.datasources.list();
 ```
 
 …copy the `id` of the Google Drive row, then save it to the service's
@@ -440,14 +440,14 @@ restart required.
 
 #### Troubleshooting
 
-| Error / symptom                                              | Cause                                                                                                                         |
-|---                                                           |---                                                                                                                            |
-| Add-Datasource dialog shows "Service configuration missing. Add OAuth credentials to `<path>`." | `~/cloudstash/sync_app/config.json` is absent, or the requested provider's `clientId` / `clientSecret` is empty. See **Provider OAuth registration → Configure the service** above. |
+| Error / symptom                                                                                        | Cause                                                                                                                                                                                                                                                                                                                  |
+| ------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Add-Datasource dialog shows "Service configuration missing. Add OAuth credentials to `<path>`."        | `~/cloudstash/sync_app/config.json` is absent, or the requested provider's `clientId` / `clientSecret` is empty. See **Provider OAuth registration → Configure the service** above.                                                                                                                                    |
 | Connect opens browser, you authorize, browser shows "you can close this tab", but desktop dialog hangs | Token-exchange failure — most often `redirect_uri_mismatch` (you registered a "Web application" client instead of a "Desktop app" client; only Desktop clients accept loopback redirects) or `invalid_client` (clientSecret mismatch in `config.json`). Inspect the fs-sync service log for the `auth-failed` message. |
-| Browser never opens after Connect                            | Corporate firewall / endpoint-protection product is quarantining the loopback listener on `127.0.0.1:<ephemeral-port>`. Disable the interfering product temporarily, or use the dev override path. |
-| `auth-revoked: Google Drive credentials must include meta.*` | `meta` block missing or a field isn't a string in `dev-credentials.json` / `credentials.json`. Re-check the JSON schema above. |
-| `provider-error: Google Drive API has not been used…`        | Drive API not enabled in your GCP project. See **Provider OAuth registration → Google Drive** step 4. |
-| `no credentials registered for datasourceId=…`               | The datasource id in `credentials.json` doesn't match the one in the desktop registry. Re-fetch via DevTools.                |
+| Browser never opens after Connect                                                                      | Corporate firewall / endpoint-protection product is quarantining the loopback listener on `127.0.0.1:<ephemeral-port>`. Disable the interfering product temporarily, or use the dev override path.                                                                                                                     |
+| `auth-revoked: Google Drive credentials must include meta.*`                                           | `meta` block missing or a field isn't a string in `dev-credentials.json` / `credentials.json`. Re-check the JSON schema above.                                                                                                                                                                                         |
+| `provider-error: Google Drive API has not been used…`                                                  | Drive API not enabled in your GCP project. See **Provider OAuth registration → Google Drive** step 4.                                                                                                                                                                                                                  |
+| `no credentials registered for datasourceId=…`                                                         | The datasource id in `credentials.json` doesn't match the one in the desktop registry. Re-fetch via DevTools.                                                                                                                                                                                                          |
 
 ### Hot-reload behaviour (desktop)
 

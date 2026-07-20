@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import { useSyncExternalStore } from "react"
+import { useSyncExternalStore } from "react";
 
 /**
  * Motion preference store — the user-tunable toggle that controls whether
@@ -29,84 +29,84 @@ import { useSyncExternalStore } from "react"
  * remain gated at the utility level, independent of this preference.
  */
 
-export type MotionPreference = "always-on" | "safe"
+export type MotionPreference = "always-on" | "safe";
 
-export const MOTION_STORAGE_KEY = "cloudstash.motion"
+export const MOTION_STORAGE_KEY = "cloudstash.motion";
 
-const listeners = new Set<() => void>()
+const listeners = new Set<() => void>();
 
 function isBrowser(): boolean {
-  return typeof window !== "undefined" && typeof document !== "undefined"
+  return typeof window !== "undefined" && typeof document !== "undefined";
 }
 
 function notify(): void {
-  for (const l of listeners) l()
+  for (const l of listeners) l();
 }
 
 export function getStoredPreference(): MotionPreference {
-  if (!isBrowser()) return "always-on"
+  if (!isBrowser()) return "always-on";
   try {
-    const raw = window.localStorage.getItem(MOTION_STORAGE_KEY)
-    if (raw === "safe") return "safe"
+    const raw = window.localStorage.getItem(MOTION_STORAGE_KEY);
+    if (raw === "safe") return "safe";
     // Any other value — missing, "always-on", or garbage from a prior schema —
     // resolves to the default. We could have stored "always-on" explicitly,
     // but keeping the default key-absent is simpler and mirrors the
     // theme-store's "system" representation.
-    return "always-on"
+    return "always-on";
   } catch {
-    return "always-on"
+    return "always-on";
   }
 }
 
 export function applyEffectivePreference(): void {
-  if (!isBrowser()) return
-  const pref = getStoredPreference()
-  const root = document.documentElement
+  if (!isBrowser()) return;
+  const pref = getStoredPreference();
+  const root = document.documentElement;
   if (pref === "safe") {
-    root.setAttribute("data-motion", "safe")
+    root.setAttribute("data-motion", "safe");
   } else {
-    root.removeAttribute("data-motion")
+    root.removeAttribute("data-motion");
   }
 }
 
 export function setPreference(pref: MotionPreference): void {
-  if (!isBrowser()) return
+  if (!isBrowser()) return;
   try {
     if (pref === "safe") {
-      window.localStorage.setItem(MOTION_STORAGE_KEY, "safe")
+      window.localStorage.setItem(MOTION_STORAGE_KEY, "safe");
     } else {
       // "always-on" is represented by the absence of the key — keeps the
       // storage schema minimal and mirrors theme-store's treatment of
       // "system".
-      window.localStorage.removeItem(MOTION_STORAGE_KEY)
+      window.localStorage.removeItem(MOTION_STORAGE_KEY);
     }
   } catch {
     // Storage quota / sandbox — still apply the DOM change.
   }
-  applyEffectivePreference()
-  notify()
+  applyEffectivePreference();
+  notify();
 }
 
 export function subscribe(listener: () => void): () => void {
-  listeners.add(listener)
+  listeners.add(listener);
 
   const storageHandler = (e: StorageEvent) => {
     if (e.key === MOTION_STORAGE_KEY || e.key === null) {
-      applyEffectivePreference()
-      listener()
+      applyEffectivePreference();
+      listener();
     }
-  }
+  };
 
   if (isBrowser()) {
-    window.addEventListener("storage", storageHandler)
+    window.addEventListener("storage", storageHandler);
   }
 
   return () => {
-    listeners.delete(listener)
+    listeners.delete(listener);
     if (isBrowser()) {
-      window.removeEventListener("storage", storageHandler)
+      window.removeEventListener("storage", storageHandler);
     }
-  }
+  };
 }
 
 export function useMotionPreference(): MotionPreference {
@@ -114,5 +114,5 @@ export function useMotionPreference(): MotionPreference {
     subscribe,
     () => getStoredPreference(),
     () => "always-on",
-  )
+  );
 }

@@ -9,23 +9,8 @@
 // pair directly without importing the Next.js page module (which is only
 // wired up in task 5.5).
 
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-  type Mock,
-} from "vitest";
-import {
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-  within,
-} from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from "vitest";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import type { DatasourceSummary } from "@cloudstash/ipc-contracts";
 
@@ -141,16 +126,12 @@ describe("DatasourcesDashboard state machine (task 5.1)", () => {
     );
 
     // At least one element carries the shimmer animation class.
-    const shimmering = container.querySelectorAll(
-      "[class*='animate-skeleton-shimmer']",
-    );
+    const shimmering = container.querySelectorAll("[class*='animate-skeleton-shimmer']");
     expect(shimmering.length).toBeGreaterThan(0);
 
     // No card-root articles/headings for specific datasources — loading
     // placeholders are generic, not data-bound.
-    expect(
-      container.querySelector("[data-testid='datasource-card']"),
-    ).toBeNull();
+    expect(container.querySelector("[data-testid='datasource-card']")).toBeNull();
   });
 
   it("toolbar shows the page title and a one-line subtitle (Title B)", () => {
@@ -165,14 +146,10 @@ describe("DatasourcesDashboard state machine (task 5.1)", () => {
 
     // Exactly-one-h1 a11y contract holds: the heading's accessible name is
     // still just "Datasources" (the subtitle is a sibling <p>, not inside it).
-    expect(
-      screen.getByRole("heading", { level: 1, name: "Datasources" }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1, name: "Datasources" })).toBeInTheDocument();
 
     // The subtitle line renders beneath it and is not a heading.
-    const subtitle = screen.getByText(
-      /connect and sync your cloud storage/i,
-    );
+    const subtitle = screen.getByText(/connect and sync your cloud storage/i);
     expect(subtitle).toBeInTheDocument();
     expect(subtitle.tagName).toBe("P");
   });
@@ -193,9 +170,7 @@ describe("DatasourcesDashboard state machine (task 5.1)", () => {
     expect(heading).toBeInTheDocument();
 
     // Illustration from task 4b.8 is present.
-    const illustration = document.querySelector(
-      "[data-illustration='empty-datasources']",
-    );
+    const illustration = document.querySelector("[data-illustration='empty-datasources']");
     expect(illustration).not.toBeNull();
 
     // Primary CTA is focusable. Scope to the empty-state panel so we don't
@@ -251,9 +226,9 @@ describe("DatasourcesDashboard state machine (task 5.1)", () => {
     );
 
     await waitFor(() => {
-      expect(
-        container.querySelectorAll("[data-testid='datasource-card']").length,
-      ).toBe(POPULATED_FIXTURE.length);
+      expect(container.querySelectorAll("[data-testid='datasource-card']").length).toBe(
+        POPULATED_FIXTURE.length,
+      );
     });
 
     const search = screen.getByRole("searchbox", {
@@ -263,25 +238,21 @@ describe("DatasourcesDashboard state machine (task 5.1)", () => {
     // Query matching only the OneDrive datasource (by provider id + name).
     fireEvent.change(search, { target: { value: "onedrive" } });
     await waitFor(() => {
-      expect(
-        container.querySelectorAll("[data-testid='datasource-card']").length,
-      ).toBe(1);
+      expect(container.querySelectorAll("[data-testid='datasource-card']").length).toBe(1);
     });
     expect(screen.getByText("Team OneDrive")).toBeInTheDocument();
 
     // A non-matching query shows the no-matches state and mounts no cards.
     fireEvent.change(search, { target: { value: "no-such-source" } });
     expect(screen.getByTestId("datasources-no-matches")).toBeInTheDocument();
-    expect(
-      container.querySelector("[data-testid='datasource-card']"),
-    ).toBeNull();
+    expect(container.querySelector("[data-testid='datasource-card']")).toBeNull();
 
     // Clearing the query restores the full list.
     fireEvent.change(search, { target: { value: "" } });
     await waitFor(() => {
-      expect(
-        container.querySelectorAll("[data-testid='datasource-card']").length,
-      ).toBe(POPULATED_FIXTURE.length);
+      expect(container.querySelectorAll("[data-testid='datasource-card']").length).toBe(
+        POPULATED_FIXTURE.length,
+      );
     });
   });
 
@@ -291,9 +262,7 @@ describe("DatasourcesDashboard state machine (task 5.1)", () => {
     const secondResolve: { datasources: DatasourceSummary[] } = {
       datasources: POPULATED_FIXTURE.slice(0, 1),
     };
-    listMock
-      .mockReturnValueOnce(firstReject.promise)
-      .mockResolvedValueOnce(secondResolve);
+    listMock.mockReturnValueOnce(firstReject.promise).mockResolvedValueOnce(secondResolve);
 
     render(
       <DatasourcesProvider>

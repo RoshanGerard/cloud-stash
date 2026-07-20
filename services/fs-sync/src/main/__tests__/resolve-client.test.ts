@@ -8,20 +8,12 @@
 
 import { describe, expect, it, vi } from "vitest";
 
-import {
-  DatasourceError,
-  DatasourceErrorTag,
-} from "@cloudstash/ipc-contracts";
-import type {
-  ClientFactory,
-  CredentialStore,
-} from "@cloudstash/fs-datasource-engine";
+import { DatasourceError, DatasourceErrorTag } from "@cloudstash/ipc-contracts";
+import type { ClientFactory, CredentialStore } from "@cloudstash/fs-datasource-engine";
 
 import { createResolveClient } from "../resolve-client.js";
 
-function makeCredentialStore(
-  getImpl: () => Promise<unknown>,
-): CredentialStore {
+function makeCredentialStore(getImpl: () => Promise<unknown>): CredentialStore {
   return {
     get: vi.fn().mockImplementation(getImpl),
     put: vi.fn(),

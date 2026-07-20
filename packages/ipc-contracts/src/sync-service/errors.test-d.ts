@@ -21,9 +21,7 @@ describe("sync-service error contract", () => {
   });
 
   it("UnknownCommandErrorShape has tag 'unknown-command'", () => {
-    expectTypeOf<UnknownCommandErrorShape["tag"]>().toEqualTypeOf<
-      "unknown-command"
-    >();
+    expectTypeOf<UnknownCommandErrorShape["tag"]>().toEqualTypeOf<"unknown-command">();
   });
 
   it("ServiceErrorTag covers every tag the service emits", () => {
@@ -40,8 +38,6 @@ describe("sync-service error contract", () => {
   });
 
   it("SERVICE_ERROR_TAGS tuple contains every ServiceErrorTag", () => {
-    expectTypeOf<(typeof SERVICE_ERROR_TAGS)[number]>().toEqualTypeOf<
-      ServiceErrorTag
-    >();
+    expectTypeOf<(typeof SERVICE_ERROR_TAGS)[number]>().toEqualTypeOf<ServiceErrorTag>();
   });
 });

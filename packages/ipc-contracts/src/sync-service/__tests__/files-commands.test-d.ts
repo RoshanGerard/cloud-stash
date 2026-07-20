@@ -146,9 +146,7 @@ describe("sync-service files:* command contract", () => {
   });
 
   it("files:search error carries the tagged envelope error shape", () => {
-    expectTypeOf<
-      CommandError<"files:search">
-    >().toEqualTypeOf<FilesCommandErrorShape>();
+    expectTypeOf<CommandError<"files:search">>().toEqualTypeOf<FilesCommandErrorShape>();
   });
 
   // -- files:remove ---------------------------------------------------------
@@ -174,9 +172,7 @@ describe("sync-service files:* command contract", () => {
     // The command-level error fires when the request itself is rejected
     // (e.g. bad datasourceId, auth revoked before any path was attempted).
     // Per-path failures travel inside `result.results`, not `error`.
-    expectTypeOf<
-      CommandError<"files:remove">
-    >().toEqualTypeOf<FilesCommandErrorShape>();
+    expectTypeOf<CommandError<"files:remove">>().toEqualTypeOf<FilesCommandErrorShape>();
   });
 
   // -- files:rename ---------------------------------------------------------
@@ -198,9 +194,7 @@ describe("sync-service files:* command contract", () => {
   });
 
   it("files:rename error carries the tagged envelope error shape (existingPath populated when tag === 'conflict')", () => {
-    expectTypeOf<
-      CommandError<"files:rename">
-    >().toEqualTypeOf<FilesCommandErrorShape>();
+    expectTypeOf<CommandError<"files:rename">>().toEqualTypeOf<FilesCommandErrorShape>();
   });
 
   it("FilesCommandErrorShape.existingPath is a flat-optional string (Decision 7)", () => {
@@ -233,9 +227,7 @@ describe("sync-service files:* command contract", () => {
   });
 
   it("files:download error carries the tagged envelope error shape", () => {
-    expectTypeOf<
-      CommandError<"files:download">
-    >().toEqualTypeOf<FilesCommandErrorShape>();
+    expectTypeOf<CommandError<"files:download">>().toEqualTypeOf<FilesCommandErrorShape>();
   });
 
   // -- sync:cancel-download (add-engine-rename-download §13.15) -----------

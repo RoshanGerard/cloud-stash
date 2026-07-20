@@ -12,10 +12,7 @@
 
 import { describe, expect, expectTypeOf, it } from "vitest";
 
-import {
-  DatasourceError,
-  DatasourceErrorTag,
-} from "../fs-datasource-engine.js";
+import { DatasourceError, DatasourceErrorTag } from "../fs-datasource-engine.js";
 
 describe("DatasourceErrorTag — `as const` object shape (Decision 1)", () => {
   it("exposes a runtime const object with exactly the 11 documented members", () => {

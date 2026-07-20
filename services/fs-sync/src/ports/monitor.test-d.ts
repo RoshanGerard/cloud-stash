@@ -7,19 +7,13 @@ describe("MonitorEventSource port", () => {
     type Src = MonitorEventSource;
     expectTypeOf<Src["start"]>().toEqualTypeOf<() => Promise<void>>();
     expectTypeOf<Src["stop"]>().toEqualTypeOf<() => Promise<void>>();
-    expectTypeOf<Src["onChange"]>().parameter(0).parameters.toEqualTypeOf<
-      [MonitorChangeEvent]
-    >();
+    expectTypeOf<Src["onChange"]>().parameter(0).parameters.toEqualTypeOf<[MonitorChangeEvent]>();
   });
 
   it("MonitorChangeEvent is a discriminated union of five variants", () => {
     type Kinds = MonitorChangeEvent["kind"];
     expectTypeOf<Kinds>().toEqualTypeOf<
-      | "file-created"
-      | "file-modified"
-      | "file-deleted"
-      | "source-appeared"
-      | "source-disappeared"
+      "file-created" | "file-modified" | "file-deleted" | "source-appeared" | "source-disappeared"
     >();
   });
 });

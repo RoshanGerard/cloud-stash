@@ -40,19 +40,9 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const repoRoot = path.resolve(__dirname, "..");
 
-const RENDERER_SRC = path.join(
-  repoRoot,
-  "apps",
-  "desktop",
-  "src",
-  "renderer",
-  "src",
-);
+const RENDERER_SRC = path.join(repoRoot, "apps", "desktop", "src", "renderer", "src");
 
-const TSX_ROOTS = [
-  path.join(RENDERER_SRC, "features"),
-  path.join(RENDERER_SRC, "components"),
-];
+const TSX_ROOTS = [path.join(RENDERER_SRC, "features"), path.join(RENDERER_SRC, "components")];
 
 const CSS_ROOT = path.join(RENDERER_SRC, "styles");
 
@@ -73,19 +63,10 @@ const ALLOWED_ANIMATE_CLASSES = new Set([
 // whitelisted animations when the user has toggled Motion Safe AND the OS
 // signals reduce-motion. It's not declaring a new animation, it's turning
 // whitelisted ones off — aligned with the whitelist's intent.
-const ALLOWED_ANIMATION_NAMES = new Set([
-  "skeleton-shimmer",
-  "sync-pulse",
-  "sync-ripple",
-  "none",
-]);
+const ALLOWED_ANIMATION_NAMES = new Set(["skeleton-shimmer", "sync-pulse", "sync-ripple", "none"]);
 
 // Allowed CSS `transition-property` values.
-const ALLOWED_TRANSITION_PROPS = new Set([
-  "color",
-  "border-color",
-  "background-color",
-]);
+const ALLOWED_TRANSITION_PROPS = new Set(["color", "border-color", "background-color"]);
 
 type Violation = {
   file: string;
@@ -95,10 +76,7 @@ type Violation = {
   rule: string;
 };
 
-function offsetToLineCol(
-  text: string,
-  offset: number,
-): { line: number; column: number } {
+function offsetToLineCol(text: string, offset: number): { line: number; column: number } {
   let line = 1;
   let column = 1;
   for (let i = 0; i < offset && i < text.length; i++) {
@@ -121,10 +99,7 @@ function offsetToLineCol(
 // (`data-[state=open]:animate-in`) and motion-safe gates
 // (`motion-safe:animate-in`) are recognised by looking at the character(s)
 // immediately preceding the token.
-export function findTsxViolations(
-  text: string,
-  file: string,
-): Violation[] {
+export function findTsxViolations(text: string, file: string): Violation[] {
   const violations: Violation[] = [];
 
   const classTokenRe =
@@ -201,10 +176,7 @@ function splitVariants(token: string): string[] {
 // `--animate-*:` variables and `@keyframes <name> {}` rules are NOT
 // property-position declarations (they live at the at-rule / custom-property
 // level) and so they do not match this regex — they're allowed implicitly.
-export function findCssViolations(
-  text: string,
-  file: string,
-): Violation[] {
+export function findCssViolations(text: string, file: string): Violation[] {
   const violations: Violation[] = [];
 
   // Match lines that look like `<whitespace>animation: ...;` or
@@ -245,8 +217,7 @@ export function findCssViolations(
       line: loc.line,
       column: loc.column,
       match: `${prop}: ${value}`,
-      rule:
-        prop.startsWith("animation") ? "forbidden-animation-decl" : "forbidden-transition-decl",
+      rule: prop.startsWith("animation") ? "forbidden-animation-decl" : "forbidden-transition-decl",
     });
   }
 
@@ -291,11 +262,7 @@ function walkFiles(root: string, exts: string[], out: string[]): void {
     const full = path.join(root, entry.name);
     if (entry.isDirectory()) {
       if (entry.name === "__tests__") continue;
-      if (
-        EXEMPT_DIRS.some(
-          (exempt) => full === exempt || full.startsWith(exempt + path.sep),
-        )
-      ) {
+      if (EXEMPT_DIRS.some((exempt) => full === exempt || full.startsWith(exempt + path.sep))) {
         continue;
       }
       walkFiles(full, exts, out);
@@ -307,72 +274,48 @@ function walkFiles(root: string, exts: string[], out: string[]): void {
 
 describe("motion-budget — .tsx class detection", () => {
   it("flags animate-bounce", () => {
-    const v = findTsxViolations(
-      'const cls = "animate-bounce";\n',
-      "synthetic.tsx",
-    );
+    const v = findTsxViolations('const cls = "animate-bounce";\n', "synthetic.tsx");
     expect(v.length).toBe(1);
     expect(v[0]!.rule).toBe("forbidden-animate-class");
     expect(v[0]!.match).toBe("animate-bounce");
   });
 
   it("flags animate-spin", () => {
-    const v = findTsxViolations(
-      'const cls = "animate-spin";\n',
-      "synthetic.tsx",
-    );
+    const v = findTsxViolations('const cls = "animate-spin";\n', "synthetic.tsx");
     expect(v.length).toBe(1);
     expect(v[0]!.match).toBe("animate-spin");
   });
 
   it("flags bare transition class", () => {
-    const v = findTsxViolations(
-      'const cls = "transition";\n',
-      "synthetic.tsx",
-    );
+    const v = findTsxViolations('const cls = "transition";\n', "synthetic.tsx");
     expect(v.length).toBe(1);
     expect(v[0]!.match).toBe("transition");
   });
 
   it("flags transition-all class", () => {
-    const v = findTsxViolations(
-      'const cls = "transition-all";\n',
-      "synthetic.tsx",
-    );
+    const v = findTsxViolations('const cls = "transition-all";\n', "synthetic.tsx");
     expect(v.length).toBe(1);
     expect(v[0]!.match).toBe("transition-all");
   });
 
   it("flags transition-opacity class", () => {
-    const v = findTsxViolations(
-      'const cls = "transition-opacity";\n',
-      "synthetic.tsx",
-    );
+    const v = findTsxViolations('const cls = "transition-opacity";\n', "synthetic.tsx");
     expect(v.length).toBe(1);
     expect(v[0]!.match).toBe("transition-opacity");
   });
 
   it("allows animate-skeleton-shimmer", () => {
-    const v = findTsxViolations(
-      'const cls = "animate-skeleton-shimmer";\n',
-      "synthetic.tsx",
-    );
+    const v = findTsxViolations('const cls = "animate-skeleton-shimmer";\n', "synthetic.tsx");
     expect(v).toEqual([]);
   });
 
   it("allows animate-sync-pulse", () => {
-    const v = findTsxViolations(
-      'const cls = "animate-sync-pulse";\n',
-      "synthetic.tsx",
-    );
+    const v = findTsxViolations('const cls = "animate-sync-pulse";\n', "synthetic.tsx");
     expect(v).toEqual([]);
   });
 
   it("allows transition-colors", () => {
-    const v = findTsxViolations(
-      'const cls = "transition-colors";\n',
-      "synthetic.tsx",
-    );
+    const v = findTsxViolations('const cls = "transition-colors";\n', "synthetic.tsx");
     expect(v).toEqual([]);
   });
 
@@ -427,8 +370,7 @@ describe("motion-budget — .css declaration detection", () => {
   });
 
   it("allows transition-property: color, border-color, background-color", () => {
-    const css =
-      "a {\n  transition-property: color, border-color, background-color;\n}\n";
+    const css = "a {\n  transition-property: color, border-color, background-color;\n}\n";
     const v = findCssViolations(css, "synthetic.css");
     expect(v).toEqual([]);
   });
@@ -455,10 +397,7 @@ describe("motion-budget — repository is clean", () => {
     for (const root of TSX_ROOTS) {
       walkFiles(root, [".tsx"], files);
     }
-    expect(
-      files.length,
-      "expected at least one .tsx file to scan",
-    ).toBeGreaterThan(0);
+    expect(files.length, "expected at least one .tsx file to scan").toBeGreaterThan(0);
 
     const violations: Violation[] = [];
     for (const file of files) {
@@ -472,10 +411,7 @@ describe("motion-budget — repository is clean", () => {
       violations,
       violations.length
         ? `Found forbidden motion classes:\n${violations
-            .map(
-              (v) =>
-                `  ${v.file}:${v.line}:${v.column}  [${v.rule}]  ${v.match}`,
-            )
+            .map((v) => `  ${v.file}:${v.line}:${v.column}  [${v.rule}]  ${v.match}`)
             .join("\n")}`
         : "",
     ).toEqual([]);
@@ -498,10 +434,7 @@ describe("motion-budget — repository is clean", () => {
       violations,
       violations.length
         ? `Found forbidden CSS motion declarations:\n${violations
-            .map(
-              (v) =>
-                `  ${v.file}:${v.line}:${v.column}  [${v.rule}]  ${v.match}`,
-            )
+            .map((v) => `  ${v.file}:${v.line}:${v.column}  [${v.rule}]  ${v.match}`)
             .join("\n")}`
         : "",
     ).toEqual([]);

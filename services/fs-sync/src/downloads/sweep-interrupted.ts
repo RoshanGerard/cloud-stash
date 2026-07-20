@@ -25,13 +25,9 @@ import type Database from "better-sqlite3";
  * caller logs the count. Synchronous (better-sqlite3); the SELECT-then-UPDATE
  * pair runs on the single Node thread with no interleaving.
  */
-export function sweepInterruptedDownloads(
-  db: Database.Database,
-): ReadonlyArray<string> {
+export function sweepInterruptedDownloads(db: Database.Database): ReadonlyArray<string> {
   const rows = db
-    .prepare(
-      `SELECT download_job_id FROM downloads WHERE status = 'in-flight'`,
-    )
+    .prepare(`SELECT download_job_id FROM downloads WHERE status = 'in-flight'`)
     .all() as Array<{ download_job_id: string }>;
   if (rows.length === 0) return [];
 

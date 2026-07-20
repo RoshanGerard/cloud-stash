@@ -37,19 +37,9 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const repoRoot = path.resolve(__dirname, "..");
 
-const RENDERER_SRC = path.join(
-  repoRoot,
-  "apps",
-  "desktop",
-  "src",
-  "renderer",
-  "src",
-);
+const RENDERER_SRC = path.join(repoRoot, "apps", "desktop", "src", "renderer", "src");
 
-const SCAN_ROOTS = [
-  path.join(RENDERER_SRC, "features"),
-  path.join(RENDERER_SRC, "components"),
-];
+const SCAN_ROOTS = [path.join(RENDERER_SRC, "features"), path.join(RENDERER_SRC, "components")];
 
 const EXEMPT_DIRS = [path.join(RENDERER_SRC, "components", "ui")];
 
@@ -78,10 +68,7 @@ function buildClassRegex(cls: string): RegExp {
   return new RegExp(`(?<=^|[\\s"'\`{])${escaped}(?=$|[\\s"'\`}])`, "g");
 }
 
-function findViolationsInText(
-  text: string,
-  file: string,
-): Violation[] {
+function findViolationsInText(text: string, file: string): Violation[] {
   const violations: Violation[] = [];
   const basename = path.basename(file).toLowerCase();
   const isDialog = basename.includes("dialog");
@@ -101,10 +88,7 @@ function findViolationsInText(
   return violations;
 }
 
-function offsetToLineCol(
-  text: string,
-  offset: number,
-): { line: number; column: number } {
+function offsetToLineCol(text: string, offset: number): { line: number; column: number } {
   let line = 1;
   let column = 1;
   for (let i = 0; i < offset && i < text.length; i++) {
@@ -150,10 +134,7 @@ describe("radii-ceiling guardrail — forbidden class detection", () => {
   });
 
   it("flags rounded-xl in any file", () => {
-    const v = findViolationsInText(
-      'const cls = "rounded-xl";\n',
-      "anything.tsx",
-    );
+    const v = findViolationsInText('const cls = "rounded-xl";\n', "anything.tsx");
     expect(v.length).toBe(1);
     expect(v[0]!.match).toBe("rounded-xl");
   });
@@ -194,10 +175,7 @@ describe("radii-ceiling guardrail — forbidden class detection", () => {
   });
 
   it("does not flag rounded-sm or rounded-md", () => {
-    const v = findViolationsInText(
-      'const cls = "rounded-sm rounded-md";\n',
-      "x.tsx",
-    );
+    const v = findViolationsInText('const cls = "rounded-sm rounded-md";\n', "x.tsx");
     expect(v).toEqual([]);
   });
 
@@ -224,10 +202,7 @@ describe("radii-ceiling guardrail — feature code is clean", () => {
     for (const root of SCAN_ROOTS) {
       walkTsx(root, files);
     }
-    expect(
-      files.length,
-      "expected at least one .tsx file to scan",
-    ).toBeGreaterThan(0);
+    expect(files.length, "expected at least one .tsx file to scan").toBeGreaterThan(0);
 
     const violations: Violation[] = [];
     for (const file of files) {

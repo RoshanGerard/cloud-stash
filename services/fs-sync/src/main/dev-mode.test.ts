@@ -7,12 +7,7 @@
 
 import { describe, expect, it } from "vitest";
 
-import {
-  resolveDataDir,
-  resolveDbPath,
-  resolvePidPath,
-  resolveSocketPath,
-} from "../env/paths.js";
+import { resolveDataDir, resolveDbPath, resolvePidPath, resolveSocketPath } from "../env/paths.js";
 
 describe("dev vs prod path selection", () => {
   it("resolveDataDir('dev') is under a 'dev' subdir", () => {
@@ -45,12 +40,8 @@ describe("dev vs prod path selection", () => {
 
   it("CLOUDSTASH_SYNC_DATA_DIR overrides both dev and prod defaults equivalently", () => {
     const override = "/tmp/custom";
-    expect(resolveDataDir({ dev: false }, { CLOUDSTASH_SYNC_DATA_DIR: override })).toBe(
-      override,
-    );
-    expect(resolveDataDir({ dev: true }, { CLOUDSTASH_SYNC_DATA_DIR: override })).toBe(
-      override,
-    );
+    expect(resolveDataDir({ dev: false }, { CLOUDSTASH_SYNC_DATA_DIR: override })).toBe(override);
+    expect(resolveDataDir({ dev: true }, { CLOUDSTASH_SYNC_DATA_DIR: override })).toBe(override);
   });
 
   it("resolveDbPath uses the data-dir-relative sync.db under both modes", () => {

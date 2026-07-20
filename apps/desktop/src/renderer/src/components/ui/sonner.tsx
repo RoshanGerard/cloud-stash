@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import {
   CircleCheckIcon,
@@ -6,10 +6,10 @@ import {
   Loader2Icon,
   OctagonXIcon,
   TriangleAlertIcon,
-} from "lucide-react"
-import { Toaster as Sonner, type ToasterProps } from "sonner"
+} from "lucide-react";
+import { Toaster as Sonner, type ToasterProps } from "sonner";
 
-import { usePreference } from "@/features/theme/theme-store"
+import { usePreference } from "@/features/theme/theme-store";
 
 // design.md Decision 6 rejects next-themes; this wrapper reads the renderer's
 // own theme store so Sonner reflects the user's explicit Light/Dark choice
@@ -19,8 +19,8 @@ import { usePreference } from "@/features/theme/theme-store"
 // the CloudStash palette through the CSS variables (`--normal-bg` →
 // `var(--popover)`, etc.) below.
 const Toaster = ({ ...props }: ToasterProps) => {
-  const pref = usePreference()
-  const theme: ToasterProps["theme"] = pref
+  const pref = usePreference();
+  const theme: ToasterProps["theme"] = pref;
 
   return (
     <Sonner
@@ -52,7 +52,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
       }
       {...props}
     />
-  )
-}
+  );
+};
 
-export { Toaster }
+export { Toaster };

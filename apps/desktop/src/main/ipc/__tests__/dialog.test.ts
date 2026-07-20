@@ -10,10 +10,7 @@
 
 import { describe, expect, it, vi } from "vitest";
 
-import {
-  handleDialogShowOpenDialog,
-  handleDialogShowSaveDialog,
-} from "../dialog.js";
+import { handleDialogShowOpenDialog, handleDialogShowSaveDialog } from "../dialog.js";
 
 describe("handleDialogShowSaveDialog — proxy over dialog.showSaveDialog", () => {
   it("delegates to deps.showSaveDialog with the renderer's opts verbatim and returns the result", async () => {
@@ -126,10 +123,7 @@ describe("handleDialogShowOpenDialog — proxy over dialog.showOpenDialog", () =
     const showOpenDialog = vi.fn().mockRejectedValue(boom);
 
     await expect(
-      handleDialogShowOpenDialog(
-        { properties: ["openDirectory"] as const },
-        { showOpenDialog },
-      ),
+      handleDialogShowOpenDialog({ properties: ["openDirectory"] as const }, { showOpenDialog }),
     ).rejects.toBe(boom);
   });
 });

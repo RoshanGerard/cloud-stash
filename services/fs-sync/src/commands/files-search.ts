@@ -16,14 +16,10 @@ import { mapEngineEntryToFileEntry } from "./files-entry-mapping.js";
 import { normalizeFilesError } from "./files-error-mapping.js";
 
 export interface FilesSearchDeps {
-  readonly resolveClient: (
-    datasourceId: string,
-  ) => Promise<DatasourceClient<DatasourceType>>;
+  readonly resolveClient: (datasourceId: string) => Promise<DatasourceClient<DatasourceType>>;
 }
 
-export function makeFilesSearchHandler(
-  deps: FilesSearchDeps,
-): CommandHandler<"files:search"> {
+export function makeFilesSearchHandler(deps: FilesSearchDeps): CommandHandler<"files:search"> {
   return async (params) => {
     let client: DatasourceClient<DatasourceType>;
     try {

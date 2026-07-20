@@ -12,9 +12,10 @@ import type { SyncCancelDownloadRequest } from "@cloudstash/ipc-contracts/sync-s
 import type { SyncClient } from "../../../sync/client.js";
 import { handleSyncCancelDownload } from "../cancel-download.js";
 
-function makeFakeClient(
-  impl: (params: SyncCancelDownloadRequest) => Promise<unknown>,
-): { client: SyncClient; cancelDownload: ReturnType<typeof vi.fn> } {
+function makeFakeClient(impl: (params: SyncCancelDownloadRequest) => Promise<unknown>): {
+  client: SyncClient;
+  cancelDownload: ReturnType<typeof vi.fn>;
+} {
   const cancelDownload = vi.fn(impl);
   const client = { cancelDownload } as unknown as SyncClient;
   return { client, cancelDownload };
@@ -43,10 +44,7 @@ describe("handleSyncCancelDownload", () => {
       cancelled: false,
     }));
 
-    const res = await handleSyncCancelDownload(
-      { downloadJobId: "d-missing" },
-      client,
-    );
+    const res = await handleSyncCancelDownload({ downloadJobId: "d-missing" }, client);
 
     expect(cancelDownload).toHaveBeenCalledTimes(1);
     expect(cancelDownload).toHaveBeenCalledWith({
@@ -66,8 +64,6 @@ describe("handleSyncCancelDownload", () => {
       throw err;
     });
 
-    await expect(
-      handleSyncCancelDownload({ downloadJobId: "d-1" }, client),
-    ).rejects.toBe(err);
+    await expect(handleSyncCancelDownload({ downloadJobId: "d-1" }, client)).rejects.toBe(err);
   });
 });

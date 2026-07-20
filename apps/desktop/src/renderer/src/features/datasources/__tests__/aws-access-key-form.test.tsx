@@ -13,23 +13,8 @@
 //   - On ok: true → onSubmit({_authCompleted: "completed", datasourceId})
 //   - On ok: false → inline error, retry available
 
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-  type Mock,
-} from "vitest";
-import {
-  act,
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-} from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from "vitest";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import type { SyncEvent } from "@cloudstash/ipc-contracts/sync-service-desktop";
 
@@ -69,13 +54,9 @@ function installApiMock() {
     ok: true,
     result: { datasourceId: "ds-amazon-s3-new", summary: FIXTURE_SUMMARY },
   });
-  authenticateCancelMock = vi
-    .fn()
-    .mockResolvedValue({ ok: true, result: { cancelled: true } });
+  authenticateCancelMock = vi.fn().mockResolvedValue({ ok: true, result: { cancelled: true } });
   addMock = vi.fn();
-  const syncOnEventMock = vi
-    .fn()
-    .mockImplementation((_cb: (e: SyncEvent) => void) => () => {});
+  const syncOnEventMock = vi.fn().mockImplementation((_cb: (e: SyncEvent) => void) => () => {});
 
   (window as unknown as { api: unknown }).api = {
     ping: vi.fn().mockResolvedValue({ ok: true, ts: 1 }),
@@ -226,10 +207,7 @@ describe("AwsAccessKeyForm — migrated to sync.authenticate{Start,Complete}", (
     await waitFor(() => {
       expect(authenticateStartMock).toHaveBeenCalledTimes(1);
     });
-    const arg = authenticateStartMock.mock.calls[0]![0] as Record<
-      string,
-      unknown
-    >;
+    const arg = authenticateStartMock.mock.calls[0]![0] as Record<string, unknown>;
     expect(arg).toEqual({ providerId: "amazon-s3" });
     expect("datasourceId" in arg).toBe(false);
   });

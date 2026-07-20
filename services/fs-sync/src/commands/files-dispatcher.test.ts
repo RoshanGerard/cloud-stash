@@ -45,9 +45,7 @@ function makeFakeClient(): DatasourceClient<DatasourceType> {
     // Required on DatasourceClient after migrate-engine-retry-policy-to-consumer;
     // the wrapped handlers call it only on an `auth-expired` path (none here),
     // but it is stubbed for runtime-safety since the casts bypass the compile check.
-    refreshCredentials: vi
-      .fn()
-      .mockResolvedValue({ accessToken: "new", refreshToken: "r" }),
+    refreshCredentials: vi.fn().mockResolvedValue({ accessToken: "new", refreshToken: "r" }),
   } as DatasourceClient<DatasourceType>;
 }
 
@@ -161,9 +159,7 @@ describe("files:* dispatcher integration", () => {
       path: "/x/y.txt",
       name: "y.txt",
     });
-    (fakeClient.getMetadata as ReturnType<typeof vi.fn>).mockResolvedValue(
-      engineEntry,
-    );
+    (fakeClient.getMetadata as ReturnType<typeof vi.fn>).mockResolvedValue(engineEntry);
 
     const h = handlers["files:stat"]!;
     const result = await h({ datasourceId: "ds-1", path: "/x/y.txt" }, ctx);
@@ -189,10 +185,7 @@ describe("files:* dispatcher integration", () => {
     (fakeClient.search as ReturnType<typeof vi.fn>).mockResolvedValue([hit]);
 
     const h = handlers["files:search"]!;
-    const result = await h(
-      { datasourceId: "ds-1", query: "budget", path: "/p" },
-      ctx,
-    );
+    const result = await h({ datasourceId: "ds-1", query: "budget", path: "/p" }, ctx);
 
     expect(result.ok).toBe(true);
     if (result.ok) {

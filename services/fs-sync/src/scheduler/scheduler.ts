@@ -7,10 +7,7 @@
 // run in separate async contexts and we don't want the scheduler to reach
 // into their dispatch paths. A 100 ms poll is cheap and predictable.
 
-import type {
-  JobSummary,
-  JobKind,
-} from "@cloudstash/ipc-contracts/sync-service";
+import type { JobSummary, JobKind } from "@cloudstash/ipc-contracts/sync-service";
 import { DatasourceErrorTag } from "@cloudstash/ipc-contracts";
 
 import type { EventBus } from "../events/event-bus.js";
@@ -39,10 +36,7 @@ export interface ExecutorCancelled {
   readonly outcome: "cancelled";
 }
 
-export type ExecutorResult =
-  | ExecutorSuccess
-  | ExecutorFailure
-  | ExecutorCancelled;
+export type ExecutorResult = ExecutorSuccess | ExecutorFailure | ExecutorCancelled;
 
 export type Executor = (ctx: ExecutorCtx) => Promise<ExecutorResult>;
 

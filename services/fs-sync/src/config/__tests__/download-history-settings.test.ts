@@ -33,23 +33,18 @@ describe("resolveRetentionSettings — defensive read (Decision 2)", () => {
   });
 
   it("returns the stored value when valid", () => {
-    expect(
-      resolveRetentionSettings(
-        configWith({ autoPrune: false, retentionDays: 180 }),
-      ),
-    ).toEqual({ autoPrune: false, retentionDays: 180 });
+    expect(resolveRetentionSettings(configWith({ autoPrune: false, retentionDays: 180 }))).toEqual({
+      autoPrune: false,
+      retentionDays: 180,
+    });
   });
 
-  it.each([30, 90, 180, 365] as const)(
-    "accepts each preset retentionDays (%i)",
-    (days) => {
-      expect(
-        resolveRetentionSettings(
-          configWith({ autoPrune: true, retentionDays: days }),
-        ),
-      ).toEqual({ autoPrune: true, retentionDays: days });
-    },
-  );
+  it.each([30, 90, 180, 365] as const)("accepts each preset retentionDays (%i)", (days) => {
+    expect(resolveRetentionSettings(configWith({ autoPrune: true, retentionDays: days }))).toEqual({
+      autoPrune: true,
+      retentionDays: days,
+    });
+  });
 
   it.each([
     ["non-boolean autoPrune", { autoPrune: "yes", retentionDays: 90 }],
@@ -62,24 +57,15 @@ describe("resolveRetentionSettings — defensive read (Decision 2)", () => {
     ["non-object", 42],
     ["array", []],
     ["both fields invalid", { autoPrune: "yes", retentionDays: 7 }],
-  ])(
-    "falls back to the default for malformed downloadHistory: %s",
-    (_label, dh) => {
-      expect(resolveRetentionSettings(configWith(dh))).toEqual(
-        DEFAULT_RETENTION_SETTINGS,
-      );
-    },
-  );
+  ])("falls back to the default for malformed downloadHistory: %s", (_label, dh) => {
+    expect(resolveRetentionSettings(configWith(dh))).toEqual(DEFAULT_RETENTION_SETTINGS);
+  });
 });
 
 describe("isValidDownloadHistory — set-config validation predicate", () => {
   it("true for a valid value", () => {
-    expect(isValidDownloadHistory({ autoPrune: true, retentionDays: 365 })).toBe(
-      true,
-    );
-    expect(isValidDownloadHistory({ autoPrune: false, retentionDays: 30 })).toBe(
-      true,
-    );
+    expect(isValidDownloadHistory({ autoPrune: true, retentionDays: 365 })).toBe(true);
+    expect(isValidDownloadHistory({ autoPrune: false, retentionDays: 30 })).toBe(true);
   });
 
   it.each([

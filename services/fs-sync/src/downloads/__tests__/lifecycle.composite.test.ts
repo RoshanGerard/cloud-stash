@@ -20,10 +20,7 @@ import Database from "better-sqlite3";
 import { describe, expect, it } from "vitest";
 
 import { applyMigrations } from "../../db/migrations.js";
-import {
-  createDownloadRegistry,
-  type DownloadJobEntry,
-} from "../registry.js";
+import { createDownloadRegistry, type DownloadJobEntry } from "../registry.js";
 import { sweepInterruptedDownloads } from "../sweep-interrupted.js";
 
 interface DownloadRow {
@@ -57,12 +54,7 @@ function makeEntry(overrides: Partial<DownloadJobEntry> = {}): DownloadJobEntry 
 }
 
 // Seeds a row directly (no registry) to stand in for a prior process's write.
-function seedRow(
-  db: Database.Database,
-  id: string,
-  status: string,
-  endedAt: number | null,
-): void {
+function seedRow(db: Database.Database, id: string, status: string, endedAt: number | null): void {
   db.prepare(
     `INSERT INTO downloads (
        download_job_id, datasource_id, source_path, target_path,

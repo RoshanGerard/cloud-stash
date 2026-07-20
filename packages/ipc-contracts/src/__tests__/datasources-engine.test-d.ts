@@ -27,8 +27,7 @@ describe("ipc-contracts fs-datasource-engine types — addressing", () => {
 
   it("Target is a discriminated union of path and handle", () => {
     expectTypeOf<Target>().toEqualTypeOf<
-      | { kind: "path"; path: string }
-      | { kind: "handle"; handle: string }
+      { kind: "path"; path: string } | { kind: "handle"; handle: string }
     >();
 
     const pathTarget: Target = { kind: "path", path: "/photos/2024" };
@@ -142,9 +141,7 @@ describe("ipc-contracts fs-datasource-engine types — file entries", () => {
       ambiguous?: true;
       ambiguousSiblings?: string[];
     }>();
-    expectTypeOf<
-      ProviderMetadataMap["onedrive"]
-    >().toEqualTypeOf<Record<string, unknown>>();
+    expectTypeOf<ProviderMetadataMap["onedrive"]>().toEqualTypeOf<Record<string, unknown>>();
   });
 });
 
@@ -190,9 +187,7 @@ describe("ipc-contracts fs-datasource-engine types — auth", () => {
   });
 
   it("AuthIntent is the discriminated union of the two kinds", () => {
-    expectTypeOf<AuthIntent>().toEqualTypeOf<
-      OAuthIntent | CredentialsFormIntent
-    >();
+    expectTypeOf<AuthIntent>().toEqualTypeOf<OAuthIntent | CredentialsFormIntent>();
   });
 });
 
@@ -269,12 +264,15 @@ describe("ipc-contracts fs-datasource-engine types — error taxonomy", () => {
 
     // The generic parameter narrows `datasourceType` per-provider so the
     // typed events preserve provenance through the bus.
-    expectTypeOf<SerializedDatasourceError<"amazon-s3">["datasourceType"]>()
-      .toEqualTypeOf<"amazon-s3">();
-    expectTypeOf<SerializedDatasourceError<"google-drive">["datasourceType"]>()
-      .toEqualTypeOf<"google-drive">();
-    expectTypeOf<SerializedDatasourceError<"onedrive">["datasourceType"]>()
-      .toEqualTypeOf<"onedrive">();
+    expectTypeOf<
+      SerializedDatasourceError<"amazon-s3">["datasourceType"]
+    >().toEqualTypeOf<"amazon-s3">();
+    expectTypeOf<
+      SerializedDatasourceError<"google-drive">["datasourceType"]
+    >().toEqualTypeOf<"google-drive">();
+    expectTypeOf<
+      SerializedDatasourceError<"onedrive">["datasourceType"]
+    >().toEqualTypeOf<"onedrive">();
   });
 
   it("serializeDatasourceError projects a DatasourceError into its serialized shape", () => {

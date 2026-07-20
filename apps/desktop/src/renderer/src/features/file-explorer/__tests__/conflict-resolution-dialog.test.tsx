@@ -13,13 +13,7 @@
 // value. Walking-logic correctness is owned by `resolve-conflicts.test.ts`;
 // here we only verify the dialog wiring (button → resolver promise).
 
-import {
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-  type RenderResult,
-} from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, type RenderResult } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { useEffect, useRef, type JSX } from "react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -30,9 +24,7 @@ import {
 } from "../conflict-resolution-dialog.js";
 import type { ConflictChoice, ConflictInfo } from "../resolve-conflicts.js";
 
-type Resolved =
-  | { aborted: false; choices: readonly ConflictChoice[] }
-  | { aborted: true };
+type Resolved = { aborted: false; choices: readonly ConflictChoice[] } | { aborted: true };
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -80,16 +72,12 @@ interface RenderHarnessResult {
   readonly resolved: () => Promise<Resolved>;
 }
 
-function renderHarness(
-  conflicts: readonly ConflictInfo[],
-): RenderHarnessResult {
+function renderHarness(conflicts: readonly ConflictInfo[]): RenderHarnessResult {
   let resolveOuter: (v: Resolved) => void = () => {};
   const promise = new Promise<Resolved>((res) => {
     resolveOuter = res;
   });
-  const result = render(
-    <Harness conflicts={conflicts} onResolved={(v) => resolveOuter(v)} />,
-  );
+  const result = render(<Harness conflicts={conflicts} onResolved={(v) => resolveOuter(v)} />);
   return { result, resolved: () => promise };
 }
 
@@ -100,12 +88,11 @@ function renderHarness(
 beforeEach(() => {
   // shadcn dialog uses Radix which queries ResizeObserver in jsdom.
   if (!("ResizeObserver" in window)) {
-    (window as unknown as { ResizeObserver: unknown }).ResizeObserver =
-      class MockResizeObserver {
-        observe(): void {}
-        unobserve(): void {}
-        disconnect(): void {}
-      };
+    (window as unknown as { ResizeObserver: unknown }).ResizeObserver = class MockResizeObserver {
+      observe(): void {}
+      unobserve(): void {}
+      disconnect(): void {}
+    };
   }
 });
 
@@ -150,11 +137,7 @@ describe("ConflictResolutionDialog", () => {
 
   // (b)
   it("short-circuits remaining prompts when the user ticks 'Apply to remaining'", async () => {
-    const conflicts = [
-      makeConflict("a.pdf"),
-      makeConflict("b.pdf"),
-      makeConflict("c.pdf"),
-    ];
+    const conflicts = [makeConflict("a.pdf"), makeConflict("b.pdf"), makeConflict("c.pdf")];
     const { resolved } = renderHarness(conflicts);
 
     await screen.findByText("a.pdf");
@@ -169,11 +152,7 @@ describe("ConflictResolutionDialog", () => {
     const result = await resolved();
     expect(result).toEqual({
       aborted: false,
-      choices: [
-        { kind: "overwrite" },
-        { kind: "overwrite" },
-        { kind: "overwrite" },
-      ],
+      choices: [{ kind: "overwrite" }, { kind: "overwrite" }, { kind: "overwrite" }],
     });
     // Other files were never displayed — only one prompt rendered.
     expect(screen.queryByText("b.pdf")).not.toBeInTheDocument();
@@ -215,4 +194,3 @@ describe("ConflictResolutionDialog", () => {
     await screen.findByRole("heading", { name: /File already exists/i });
   });
 });
-

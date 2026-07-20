@@ -124,9 +124,7 @@ describe("StatusRow — idle state", () => {
     });
     render(<StatusRow store={store} />);
     const status = screen.getByRole("status");
-    const numericSpans = Array.from(
-      status.querySelectorAll<HTMLElement>(".tabular-nums"),
-    );
+    const numericSpans = Array.from(status.querySelectorAll<HTMLElement>(".tabular-nums"));
     // Expect at least two tabular-nums spans: the item count and the
     // selection count. Each should carry a digit as its textContent.
     expect(numericSpans.length).toBeGreaterThanOrEqual(2);
@@ -192,9 +190,7 @@ describe("StatusRow — pagination three-state count (V-3)", () => {
     });
     render(<StatusRow store={store} />);
     const status = screen.getByRole("status");
-    expect(status).toHaveTextContent(
-      /^500\+ items · 500 loaded · 3 selected$/,
-    );
+    expect(status).toHaveTextContent(/^500\+ items · 500 loaded · 3 selected$/);
   });
 
   it("more-available: both numerals are wrapped in tabular-nums", () => {
@@ -209,19 +205,14 @@ describe("StatusRow — pagination three-state count (V-3)", () => {
     });
     render(<StatusRow store={store} />);
     const status = screen.getByRole("status");
-    const digitTexts = Array.from(
-      status.querySelectorAll<HTMLElement>(".tabular-nums"),
-    ).map((el) => el.textContent ?? "");
-    // Two distinct numerals: the "N+" count and the "N loaded" count.
-    expect(digitTexts.filter((t) => t === "500").length).toBeGreaterThanOrEqual(
-      2,
+    const digitTexts = Array.from(status.querySelectorAll<HTMLElement>(".tabular-nums")).map(
+      (el) => el.textContent ?? "",
     );
+    // Two distinct numerals: the "N+" count and the "N loaded" count.
+    expect(digitTexts.filter((t) => t === "500").length).toBeGreaterThanOrEqual(2);
   });
 
-  async function driveLoadMoreFailure(
-    store: ExplorerStore,
-    message: string,
-  ): Promise<void> {
+  async function driveLoadMoreFailure(store: ExplorerStore, message: string): Promise<void> {
     // Simulate the post-exhaustion store state: a failed loadMore leaves
     // BOTH nextCursor (for retry) AND loadMoreError set. The failed state
     // must win over the more-available suffix (spec scenario lines 117-119).
@@ -275,9 +266,7 @@ describe("StatusRow — pagination three-state count (V-3)", () => {
     await driveLoadMoreFailure(store, "boom");
     render(<StatusRow store={store} />);
     const status = screen.getByRole("status");
-    expect(status).toHaveTextContent(
-      /^500 items · couldn't load more · 1 selected$/,
-    );
+    expect(status).toHaveTextContent(/^500 items · couldn't load more · 1 selected$/);
   });
 
   it("exhausted: nextCursor === null renders plain 'N items' (existing no-suffix behavior)", () => {
@@ -479,9 +468,7 @@ describe("StatusRow — search active", () => {
     });
     render(<StatusRow store={store} />);
     const status = screen.getByRole("status");
-    const numericSpans = Array.from(
-      status.querySelectorAll<HTMLElement>(".tabular-nums"),
-    );
+    const numericSpans = Array.from(status.querySelectorAll<HTMLElement>(".tabular-nums"));
     const digitTexts = numericSpans.map((el) => el.textContent ?? "");
     expect(digitTexts).toContain("7");
   });

@@ -1,13 +1,6 @@
 /** @vitest-environment jsdom */
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import {
-  act,
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-  within,
-} from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 
 import { createExplorerStore } from "../../store.js";
@@ -31,9 +24,7 @@ function makeStore(id = "si-test"): ExplorerStore {
 }
 
 function getCells(): HTMLElement[] {
-  return Array.from(
-    document.querySelectorAll<HTMLElement>('[data-testid="explorer-cell"]'),
-  );
+  return Array.from(document.querySelectorAll<HTMLElement>('[data-testid="explorer-cell"]'));
 }
 
 describe("SmallIconsView", () => {
@@ -69,9 +60,7 @@ describe("SmallIconsView", () => {
   it("each cell shows only icon + name (no type / size / modified labels)", () => {
     const store = makeStore();
     act(() => {
-      store.setEntries([
-        seedEntry({ id: "e1", name: "alpha.png", path: "/alpha.png" }),
-      ]);
+      store.setEntries([seedEntry({ id: "e1", name: "alpha.png", path: "/alpha.png" })]);
     });
     render(<SmallIconsView store={store} />);
     const cell = getCells()[0]!;
@@ -86,9 +75,7 @@ describe("SmallIconsView", () => {
   it("icon in each cell carries the size-4 class (16 px)", () => {
     const store = makeStore();
     act(() => {
-      store.setEntries([
-        seedEntry({ id: "e1", name: "alpha.png", path: "/alpha.png" }),
-      ]);
+      store.setEntries([seedEntry({ id: "e1", name: "alpha.png", path: "/alpha.png" })]);
     });
     render(<SmallIconsView store={store} />);
     const cell = getCells()[0]!;
@@ -102,9 +89,7 @@ describe("SmallIconsView", () => {
   it("outer container uses a wrapping flex layout when populated", () => {
     const store = makeStore();
     act(() => {
-      store.setEntries([
-        seedEntry({ id: "e1", name: "a.png", path: "/a.png" }),
-      ]);
+      store.setEntries([seedEntry({ id: "e1", name: "a.png", path: "/a.png" })]);
     });
     render(<SmallIconsView store={store} />);
     const list = screen.getByRole("list");

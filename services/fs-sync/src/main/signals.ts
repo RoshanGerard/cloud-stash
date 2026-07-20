@@ -47,8 +47,7 @@ export function installSignalHandlers(
   runtime: Runtime,
   options: InstallSignalHandlersOptions,
 ): InstalledSignalHandlers {
-  const emitter: NodeJS.EventEmitter =
-    options.emitter ?? (process as unknown as EventEmitter);
+  const emitter: NodeJS.EventEmitter = options.emitter ?? (process as unknown as EventEmitter);
   const graceMs = options.graceMs ?? DEFAULT_GRACE_MS;
 
   let resolveShutdown!: (code: number) => void;
@@ -86,9 +85,7 @@ export function installSignalHandlers(
 
     void Promise.race([stopPromise, gracePromise]).then((winner) => {
       if (winner === "timeout") {
-        console.log(
-          "fs-sync-service grace period exceeded; forcing exit",
-        );
+        console.log("fs-sync-service grace period exceeded; forcing exit");
         // Let runtime.stop() keep running in the background, but don't
         // block the exit on it.
         void stopPromise.finally(() => unlinkPidFile(options.pidPath));

@@ -26,11 +26,7 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import type {
-  AuthResult,
-  DatasourceSummary,
-  ProviderId,
-} from "@cloudstash/ipc-contracts";
+import type { AuthResult, DatasourceSummary, ProviderId } from "@cloudstash/ipc-contracts";
 import type {
   ClientFactory,
   CredentialStore,
@@ -42,10 +38,7 @@ import type {
 import { createEventBus, type EventBus } from "../../events/event-bus.js";
 import type { EventName, EventPayloadMap } from "@cloudstash/ipc-contracts/sync-service";
 
-import {
-  createOAuthLoopbackBroker,
-  type OAuthLoopbackBroker,
-} from "../loopback-broker.js";
+import { createOAuthLoopbackBroker, type OAuthLoopbackBroker } from "../loopback-broker.js";
 
 // ---------------------------------------------------------------------------
 // Test helpers
@@ -101,19 +94,18 @@ function makeFakeFactory(opts: {
       _ctx: EngineContext,
       _datasourceId?: string,
     ) => {
-      const redirectUri =
-        oauthAppConfig?.redirectUri ?? "http://127.0.0.1:0/callback";
+      const redirectUri = oauthAppConfig?.redirectUri ?? "http://127.0.0.1:0/callback";
       const fakeAuthorizeUrl =
-        "https://accounts.google.com/o/oauth2/v2/auth"
-        + "?client_id=" + (oauthAppConfig?.clientId ?? "test-client-id")
-        + "&response_type=code"
-        + "&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fdrive"
-        + "&redirect_uri=" + encodeURIComponent(redirectUri)
-        + "&code_challenge=FAKE_CHALLENGE"
-        + "&code_challenge_method=S256";
-      const completeWithSpy = vi.fn(
-        async (_code: string): Promise<AuthResult> => opts.authResult,
-      );
+        "https://accounts.google.com/o/oauth2/v2/auth" +
+        "?client_id=" +
+        (oauthAppConfig?.clientId ?? "test-client-id") +
+        "&response_type=code" +
+        "&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fdrive" +
+        "&redirect_uri=" +
+        encodeURIComponent(redirectUri) +
+        "&code_challenge=FAKE_CHALLENGE" +
+        "&code_challenge_method=S256";
+      const completeWithSpy = vi.fn(async (_code: string): Promise<AuthResult> => opts.authResult);
       lastCompleteWith = completeWithSpy;
       const intent: OAuthIntent = {
         kind: "oauth",
@@ -214,7 +206,9 @@ describe("OAuthLoopbackBroker", () => {
     try {
       probeResponse = await fetch(probeUrl, { signal: AbortSignal.timeout(2000) });
     } catch {
-      throw new Error("Expected listening HTTP server at " + probeUrl + " but got ECONNREFUSED or timeout.");
+      throw new Error(
+        "Expected listening HTTP server at " + probeUrl + " but got ECONNREFUSED or timeout.",
+      );
     }
     expect(probeResponse.status).toBeGreaterThanOrEqual(100);
 
@@ -227,8 +221,7 @@ describe("OAuthLoopbackBroker", () => {
     expect(initiatedIdx).toBeGreaterThanOrEqual(0);
     expect(openUrlIdx).toBeGreaterThanOrEqual(0);
     expect(initiatedIdx).toBeLessThan(openUrlIdx);
-    const initiatedPayload = events[initiatedIdx]!.payload as
-      EventPayloadMap["auth-initiated"];
+    const initiatedPayload = events[initiatedIdx]!.payload as EventPayloadMap["auth-initiated"];
     expect(initiatedPayload.correlationId).toBe(correlationId);
     expect(initiatedPayload.providerId).toBe("google-drive");
 
@@ -236,15 +229,13 @@ describe("OAuthLoopbackBroker", () => {
     // this correlation, and the URL's redirect_uri matches the bound port.
     const openUrlEvents = events.filter((e) => e.name === "oauth-open-url");
     expect(openUrlEvents).toHaveLength(1);
-    const openUrlPayload = openUrlEvents[0]!.payload as
-      EventPayloadMap["oauth-open-url"];
+    const openUrlPayload = openUrlEvents[0]!.payload as EventPayloadMap["oauth-open-url"];
     expect(openUrlPayload.correlationId).toBe(correlationId);
     const parsedUrl = new URL(openUrlPayload.authorizeUrl);
     const rawRedirectUri = parsedUrl.searchParams.get("redirect_uri");
     expect(rawRedirectUri).not.toBeNull();
     const decodedRedirectUri = decodeURIComponent(rawRedirectUri!);
-    const expectedRedirectUri =
-      "http://127.0.0.1:" + String(session!.port) + "/callback";
+    const expectedRedirectUri = "http://127.0.0.1:" + String(session!.port) + "/callback";
     expect(decodedRedirectUri).toBe(expectedRedirectUri);
 
     // ASSERT 5: the URL has the &state=... appended by the broker.
@@ -281,15 +272,19 @@ describe("OAuthLoopbackBroker", () => {
 
     // ACT (c): make a real HTTP GET to /callback with the wrong state.
     const callbackUrl =
-      "http://127.0.0.1:" + String(port) +
-      "/callback?code=fake-code&state=" + encodeURIComponent(wrongState);
+      "http://127.0.0.1:" +
+      String(port) +
+      "/callback?code=fake-code&state=" +
+      encodeURIComponent(wrongState);
     let response: Response;
     try {
       response = await fetch(callbackUrl, { signal: AbortSignal.timeout(3000) });
     } catch (err) {
       throw new Error(
         "Expected the loopback server to accept the connection at " +
-        callbackUrl + " but got: " + String(err),
+          callbackUrl +
+          " but got: " +
+          String(err),
       );
     }
 
@@ -302,10 +297,13 @@ describe("OAuthLoopbackBroker", () => {
     expect(completeWithSpy).not.toHaveBeenCalled();
 
     // ASSERT 3: an `auth-failed` event was emitted with `tag: "auth-revoked"`.
-    await vi.waitFor(() => {
-      const failed = events.filter((e) => e.name === "auth-failed");
-      expect(failed).toHaveLength(1);
-    }, { timeout: 2000 });
+    await vi.waitFor(
+      () => {
+        const failed = events.filter((e) => e.name === "auth-failed");
+        expect(failed).toHaveLength(1);
+      },
+      { timeout: 2000 },
+    );
     const failedEvent = events.find((e) => e.name === "auth-failed");
     const failedPayload = failedEvent!.payload as EventPayloadMap["auth-failed"];
     expect(failedPayload.correlationId).toBe(correlationId);
@@ -350,15 +348,19 @@ describe("OAuthLoopbackBroker", () => {
 
     // ACT (c): make a real HTTP GET to /callback with the CORRECT state.
     const callbackUrl =
-      "http://127.0.0.1:" + String(port) +
-      "/callback?code=valid-code&state=" + encodeURIComponent(correctState);
+      "http://127.0.0.1:" +
+      String(port) +
+      "/callback?code=valid-code&state=" +
+      encodeURIComponent(correctState);
     let response: Response;
     try {
       response = await fetch(callbackUrl, { signal: AbortSignal.timeout(3000) });
     } catch (err) {
       throw new Error(
         "Expected the loopback server to accept the connection at " +
-        callbackUrl + " but got: " + String(err),
+          callbackUrl +
+          " but got: " +
+          String(err),
       );
     }
 
@@ -367,27 +369,31 @@ describe("OAuthLoopbackBroker", () => {
 
     // ASSERT 2: completeWith called exactly once with valid-code.
     const completeWithSpy = getLastCompleteWith();
-    await vi.waitFor(() => {
-      expect(completeWithSpy).toHaveBeenCalledTimes(1);
-    }, { timeout: 2000 });
+    await vi.waitFor(
+      () => {
+        expect(completeWithSpy).toHaveBeenCalledTimes(1);
+      },
+      { timeout: 2000 },
+    );
     expect(completeWithSpy).toHaveBeenCalledWith("valid-code");
 
     // ASSERT 3: BOTH `credential-persisted` AND `auth-completed` were emitted
     // exactly once each, carrying the same correlationId / datasourceId /
     // summary (per spec Decision 7 — they fire as a pair on success).
-    await vi.waitFor(() => {
-      const persisted = events.filter((e) => e.name === "credential-persisted");
-      const completed = events.filter((e) => e.name === "auth-completed");
-      expect(persisted).toHaveLength(1);
-      expect(completed).toHaveLength(1);
-    }, { timeout: 2000 });
+    await vi.waitFor(
+      () => {
+        const persisted = events.filter((e) => e.name === "credential-persisted");
+        const completed = events.filter((e) => e.name === "auth-completed");
+        expect(persisted).toHaveLength(1);
+        expect(completed).toHaveLength(1);
+      },
+      { timeout: 2000 },
+    );
 
     const persistedEvent = events.find((e) => e.name === "credential-persisted");
     const completedEvent = events.find((e) => e.name === "auth-completed");
-    const persistedPayload =
-      persistedEvent!.payload as EventPayloadMap["credential-persisted"];
-    const completedPayload =
-      completedEvent!.payload as EventPayloadMap["auth-completed"];
+    const persistedPayload = persistedEvent!.payload as EventPayloadMap["credential-persisted"];
+    const completedPayload = completedEvent!.payload as EventPayloadMap["auth-completed"];
 
     expect(persistedPayload.correlationId).toBe(correlationId);
     expect(completedPayload.correlationId).toBe(correlationId);
@@ -433,10 +439,9 @@ describe("OAuthLoopbackBroker", () => {
     const { port } = session!;
 
     // Verify server is listening before cancel.
-    const preCancel = await fetch(
-      "http://127.0.0.1:" + String(port) + "/health-probe",
-      { signal: AbortSignal.timeout(2000) },
-    );
+    const preCancel = await fetch("http://127.0.0.1:" + String(port) + "/health-probe", {
+      signal: AbortSignal.timeout(2000),
+    });
     expect(preCancel.status).toBeGreaterThanOrEqual(100);
 
     // ACT: cancel the session.
@@ -450,23 +455,24 @@ describe("OAuthLoopbackBroker", () => {
     // ASSERT 1: subsequent HTTP requests fail.
     let connectionFailed = false;
     try {
-      await fetch(
-        "http://127.0.0.1:" + String(port) + "/callback",
-        { signal: AbortSignal.timeout(1000) },
-      );
+      await fetch("http://127.0.0.1:" + String(port) + "/callback", {
+        signal: AbortSignal.timeout(1000),
+      });
     } catch {
       connectionFailed = true;
     }
     expect(connectionFailed).toBe(true);
 
     // ASSERT 2: `auth-cancelled` event emitted with matching correlationId.
-    await vi.waitFor(() => {
-      const cancelled = events.filter((e) => e.name === "auth-cancelled");
-      expect(cancelled).toHaveLength(1);
-    }, { timeout: 2000 });
+    await vi.waitFor(
+      () => {
+        const cancelled = events.filter((e) => e.name === "auth-cancelled");
+        expect(cancelled).toHaveLength(1);
+      },
+      { timeout: 2000 },
+    );
     const cancelledEvent = events.find((e) => e.name === "auth-cancelled");
-    const cancelledPayload =
-      cancelledEvent!.payload as EventPayloadMap["auth-cancelled"];
+    const cancelledPayload = cancelledEvent!.payload as EventPayloadMap["auth-cancelled"];
     expect(cancelledPayload.correlationId).toBe(correlationId);
 
     // ASSERT 3: pending session cleared.
@@ -506,8 +512,7 @@ describe("OAuthLoopbackBroker", () => {
       // ASSERT 1: `auth-timeout` event emitted.
       const timeoutEvents = events.filter((e) => e.name === "auth-timeout");
       expect(timeoutEvents).toHaveLength(1);
-      const timeoutPayload =
-        timeoutEvents[0]!.payload as EventPayloadMap["auth-timeout"];
+      const timeoutPayload = timeoutEvents[0]!.payload as EventPayloadMap["auth-timeout"];
       expect(timeoutPayload.correlationId).toBe(correlationId);
 
       // ASSERT 2: loopback server is closed.
@@ -562,24 +567,28 @@ describe("OAuthLoopbackBroker", () => {
 
       // ACT: complete the callback at t=60000.
       const callbackUrl =
-        "http://127.0.0.1:" + String(port) +
-        "/callback?code=valid-code&state=" + encodeURIComponent(correctState);
+        "http://127.0.0.1:" +
+        String(port) +
+        "/callback?code=valid-code&state=" +
+        encodeURIComponent(correctState);
       let response: Response;
       try {
         response = await fetch(callbackUrl);
       } catch (err) {
         throw new Error(
-          "Expected HTTP server still listening at " + callbackUrl +
-          " but got: " + String(err),
+          "Expected HTTP server still listening at " + callbackUrl + " but got: " + String(err),
         );
       }
       expect(response.status).toBe(200);
 
       // ASSERT 1: exactly one `auth-completed` event for the correlation.
-      await vi.waitFor(() => {
-        const completed = events.filter((e) => e.name === "auth-completed");
-        expect(completed).toHaveLength(1);
-      }, { timeout: 2000 });
+      await vi.waitFor(
+        () => {
+          const completed = events.filter((e) => e.name === "auth-completed");
+          expect(completed).toHaveLength(1);
+        },
+        { timeout: 2000 },
+      );
 
       // ACT: advance well past the 5-minute mark.
       await vi.advanceTimersByTimeAsync(300_001);
@@ -616,13 +625,18 @@ describe("OAuthLoopbackBroker", () => {
 
     // Drive the callback so we observe the emitted summary.
     const callbackUrl =
-      "http://127.0.0.1:" + String(port) +
-      "/callback?code=valid-code&state=" + encodeURIComponent(correctState);
+      "http://127.0.0.1:" +
+      String(port) +
+      "/callback?code=valid-code&state=" +
+      encodeURIComponent(correctState);
     await fetch(callbackUrl, { signal: AbortSignal.timeout(2000) });
 
-    await vi.waitFor(() => {
-      expect(events.filter((e) => e.name === "auth-completed")).toHaveLength(1);
-    }, { timeout: 2000 });
+    await vi.waitFor(
+      () => {
+        expect(events.filter((e) => e.name === "auth-completed")).toHaveLength(1);
+      },
+      { timeout: 2000 },
+    );
 
     // mintDatasourceId must NOT have been called — the broker reused the
     // supplied id.
@@ -655,10 +669,9 @@ describe("OAuthLoopbackBroker", () => {
 
     // Verify each is listening.
     for (const port of ports) {
-      const probe = await fetch(
-        "http://127.0.0.1:" + String(port) + "/health-probe",
-        { signal: AbortSignal.timeout(2000) },
-      );
+      const probe = await fetch("http://127.0.0.1:" + String(port) + "/health-probe", {
+        signal: AbortSignal.timeout(2000),
+      });
       expect(probe.status).toBeGreaterThanOrEqual(100);
     }
 
@@ -674,10 +687,9 @@ describe("OAuthLoopbackBroker", () => {
     for (const port of ports) {
       let connectionFailed = false;
       try {
-        await fetch(
-          "http://127.0.0.1:" + String(port) + "/callback",
-          { signal: AbortSignal.timeout(1000) },
-        );
+        await fetch("http://127.0.0.1:" + String(port) + "/callback", {
+          signal: AbortSignal.timeout(1000),
+        });
       } catch {
         connectionFailed = true;
       }
@@ -728,8 +740,7 @@ describe("OAuthLoopbackBroker", () => {
     // ASSERT 3: the emitted oauth-open-url carries the pre-minted id.
     const openUrlEvents = events.filter((e) => e.name === "oauth-open-url");
     expect(openUrlEvents).toHaveLength(1);
-    const payload = openUrlEvents[0]!.payload as
-      EventPayloadMap["oauth-open-url"];
+    const payload = openUrlEvents[0]!.payload as EventPayloadMap["oauth-open-url"];
     expect(payload.correlationId).toBe(preMinted);
 
     await broker.cancel({ correlationId: preMinted });
@@ -755,9 +766,9 @@ describe("OAuthLoopbackBroker", () => {
     const { events } = makeBusSpy(bus);
 
     // ACT: start should reject.
-    await expect(
-      broker.start({ providerId: "google-drive" }),
-    ).rejects.toThrow(/ServiceConfigMissingError stub/);
+    await expect(broker.start({ providerId: "google-drive" })).rejects.toThrow(
+      /ServiceConfigMissingError stub/,
+    );
 
     // ASSERT 1: getOAuthAppConfig was tried exactly once.
     expect(failingGetConfig).toHaveBeenCalledTimes(1);
@@ -772,4 +783,3 @@ describe("OAuthLoopbackBroker", () => {
     expect(events).toHaveLength(0);
   });
 });
-

@@ -33,9 +33,7 @@ export interface PruneSchedulerDeps {
   // Structurally matches the bootstrap `BootstrapLogger` (info(msg, fields?));
   // `| undefined` so an absent bootstrap logger threads through under
   // `exactOptionalPropertyTypes`.
-  readonly logger?:
-    | { info(msg: string, fields?: Record<string, unknown>): void }
-    | undefined;
+  readonly logger?: { info(msg: string, fields?: Record<string, unknown>): void } | undefined;
   /** Override the 24h cadence (tests). Defaults to {@link PRUNE_INTERVAL_MS}. */
   readonly intervalMs?: number | undefined;
   // Filesystem `stat` port threaded into `pruneDownloadHistory` so the prune

@@ -17,9 +17,10 @@ import type { SyncClient } from "../../../sync/client.js";
 import { SyncCommandError } from "../../../sync/client.js";
 import { handleSyncCancelJob } from "../cancel-job.js";
 
-function makeFakeClient(
-  impl: (params: SyncCancelJobRequest) => Promise<unknown>,
-): { client: SyncClient; cancelJob: ReturnType<typeof vi.fn> } {
+function makeFakeClient(impl: (params: SyncCancelJobRequest) => Promise<unknown>): {
+  client: SyncClient;
+  cancelJob: ReturnType<typeof vi.fn>;
+} {
   const cancelJob = vi.fn(impl);
   const client = { cancelJob } as unknown as SyncClient;
   return { client, cancelJob };
@@ -66,9 +67,7 @@ describe("handleSyncCancelJob", () => {
       throw err;
     });
 
-    await expect(
-      handleSyncCancelJob({ jobId: "j-missing" }, client),
-    ).rejects.toBe(err);
+    await expect(handleSyncCancelJob({ jobId: "j-missing" }, client)).rejects.toBe(err);
   });
 
   it("re-throws non-SyncCommandError failures (e.g. service-disconnected)", async () => {
@@ -77,8 +76,6 @@ describe("handleSyncCancelJob", () => {
       throw err;
     });
 
-    await expect(handleSyncCancelJob({ jobId: "j-1" }, client)).rejects.toBe(
-      err,
-    );
+    await expect(handleSyncCancelJob({ jobId: "j-1" }, client)).rejects.toBe(err);
   });
 });

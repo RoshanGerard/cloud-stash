@@ -16,10 +16,7 @@
 import { describe, expectTypeOf, it } from "vitest";
 
 import type { CredentialsSchema } from "../datasources.js";
-import type {
-  SerializableAuthCompletion,
-  SerializableAuthIntent,
-} from "./commands.js";
+import type { SerializableAuthCompletion, SerializableAuthIntent } from "./commands.js";
 
 describe("sync-service authenticate split — wire descriptor", () => {
   it("SerializableAuthIntent has two pure-data variants", () => {
@@ -30,18 +27,14 @@ describe("sync-service authenticate split — wire descriptor", () => {
   });
 
   it("SerializableAuthIntent oauth variant is exactly { kind, authorizeUrl } — no completeWith", () => {
-    expectTypeOf<
-      Extract<SerializableAuthIntent, { kind: "oauth" }>
-    >().toEqualTypeOf<{
+    expectTypeOf<Extract<SerializableAuthIntent, { kind: "oauth" }>>().toEqualTypeOf<{
       readonly kind: "oauth";
       readonly authorizeUrl: string;
     }>();
   });
 
   it("SerializableAuthIntent credentials-form variant is exactly { kind, schema } — no submit", () => {
-    expectTypeOf<
-      Extract<SerializableAuthIntent, { kind: "credentials-form" }>
-    >().toEqualTypeOf<{
+    expectTypeOf<Extract<SerializableAuthIntent, { kind: "credentials-form" }>>().toEqualTypeOf<{
       readonly kind: "credentials-form";
       readonly schema: CredentialsSchema;
     }>();

@@ -47,10 +47,7 @@ function channelConstKeyFor(channel: string): string {
 
 describe("datasources IPC four-layer consistency", () => {
   it("contract exposes exactly the expected channel set (no drift)", () => {
-    const contractPath = path.join(
-      repoRoot,
-      "packages/ipc-contracts/src/datasources.ts",
-    );
+    const contractPath = path.join(repoRoot, "packages/ipc-contracts/src/datasources.ts");
     const contents = readFileSync(contractPath, "utf8");
     for (const channel of EXPECTED_CHANNELS) {
       expect(
@@ -61,17 +58,11 @@ describe("datasources IPC four-layer consistency", () => {
   });
 
   it("every channel has a handler file on disk (or is a progress event)", () => {
-    const handlersDir = path.join(
-      repoRoot,
-      "apps/desktop/src/main/ipc/datasources",
-    );
+    const handlersDir = path.join(repoRoot, "apps/desktop/src/main/ipc/datasources");
     for (const [channel, handlerFile] of Object.entries(HANDLER_BY_CHANNEL)) {
       if (handlerFile === null) continue;
       const fullPath = path.join(handlersDir, handlerFile);
-      expect(
-        existsSync(fullPath),
-        `channel ${channel} expects handler at ${fullPath}`,
-      ).toBe(true);
+      expect(existsSync(fullPath), `channel ${channel} expects handler at ${fullPath}`).toBe(true);
     }
   });
 
@@ -89,10 +80,7 @@ describe("datasources IPC four-layer consistency", () => {
   });
 
   it("preload/index.ts exposes every channel via contextBridge", () => {
-    const preloadPath = path.join(
-      repoRoot,
-      "apps/desktop/src/preload/index.ts",
-    );
+    const preloadPath = path.join(repoRoot, "apps/desktop/src/preload/index.ts");
     const contents = readFileSync(preloadPath, "utf8");
     for (const channel of EXPECTED_CHANNELS) {
       const channelConstKey = channelConstKeyFor(channel);

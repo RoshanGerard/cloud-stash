@@ -1,9 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type {
-  ConflictInfo,
-  ConflictPrompt,
-} from "../resolve-conflicts.js";
+import type { ConflictInfo, ConflictPrompt } from "../resolve-conflicts.js";
 import { resolveConflicts } from "../resolve-conflicts.js";
 
 // Pure unit tests for the conflict-resolution walker. The helper is what
@@ -29,11 +26,7 @@ function makeConflict(name: string): ConflictInfo {
 
 describe("resolveConflicts", () => {
   it("asks once per conflict when the user does NOT tick 'Apply to remaining'", async () => {
-    const conflicts = [
-      makeConflict("a.txt"),
-      makeConflict("b.txt"),
-      makeConflict("c.txt"),
-    ];
+    const conflicts = [makeConflict("a.txt"), makeConflict("b.txt"), makeConflict("c.txt")];
     const prompt: ConflictPrompt = {
       ask: vi.fn(async () => ({
         kind: "choice" as const,
@@ -47,20 +40,12 @@ describe("resolveConflicts", () => {
     expect(prompt.ask).toHaveBeenCalledTimes(3);
     expect(result).toEqual({
       aborted: false,
-      choices: [
-        { kind: "overwrite" },
-        { kind: "overwrite" },
-        { kind: "overwrite" },
-      ],
+      choices: [{ kind: "overwrite" }, { kind: "overwrite" }, { kind: "overwrite" }],
     });
   });
 
   it("short-circuits subsequent prompts when 'Apply to remaining' is chosen on the first conflict", async () => {
-    const conflicts = [
-      makeConflict("a.txt"),
-      makeConflict("b.txt"),
-      makeConflict("c.txt"),
-    ];
+    const conflicts = [makeConflict("a.txt"), makeConflict("b.txt"), makeConflict("c.txt")];
     const prompt: ConflictPrompt = {
       ask: vi.fn(async () => ({
         kind: "choice" as const,
@@ -76,20 +61,12 @@ describe("resolveConflicts", () => {
     expect(prompt.ask).toHaveBeenCalledTimes(1);
     expect(result).toEqual({
       aborted: false,
-      choices: [
-        { kind: "duplicate" },
-        { kind: "duplicate" },
-        { kind: "duplicate" },
-      ],
+      choices: [{ kind: "duplicate" }, { kind: "duplicate" }, { kind: "duplicate" }],
     });
   });
 
   it("aborts the entire batch when any prompt returns 'cancel'", async () => {
-    const conflicts = [
-      makeConflict("a.txt"),
-      makeConflict("b.txt"),
-      makeConflict("c.txt"),
-    ];
+    const conflicts = [makeConflict("a.txt"), makeConflict("b.txt"), makeConflict("c.txt")];
     let calls = 0;
     const prompt: ConflictPrompt = {
       ask: vi.fn(async () => {

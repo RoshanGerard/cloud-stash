@@ -37,11 +37,7 @@ import type {
   FilesUploadResponse,
 } from "@cloudstash/ipc-contracts";
 
-import type {
-  ConflictChoice,
-  ConflictInfo,
-  UploadFileItem,
-} from "./resolve-conflicts";
+import type { ConflictChoice, ConflictInfo, UploadFileItem } from "./resolve-conflicts";
 
 export type { ConflictChoice, ConflictInfo, UploadFileItem };
 
@@ -53,10 +49,7 @@ export interface ConflictResolver {
    */
   resolve(
     conflicts: readonly ConflictInfo[],
-  ): Promise<
-    | { aborted: false; choices: readonly ConflictChoice[] }
-    | { aborted: true }
-  >;
+  ): Promise<{ aborted: false; choices: readonly ConflictChoice[] } | { aborted: true }>;
 }
 
 export interface UploadJobDispatch {
@@ -239,9 +232,7 @@ interface DispatchPlan {
  * hooks inside a non-render callsite). See spec/design for the full
  * orchestration contract.
  */
-export function createUploadOrchestrator(
-  args: UploadOrchestratorArgs,
-): UploadOrchestratorResult {
+export function createUploadOrchestrator(args: UploadOrchestratorArgs): UploadOrchestratorResult {
   const api = resolveApi(args.api);
 
   // Per-file dispatch wrapped so both the initial batch and the
@@ -274,16 +265,9 @@ export function createUploadOrchestrator(
   async function start(): Promise<void> {
     if (args.files.length === 0) return;
 
-    const targetPaths = args.files.map((f) =>
-      joinDatasourcePath(args.targetDir, f.basename),
-    );
+    const targetPaths = args.files.map((f) => joinDatasourcePath(args.targetDir, f.basename));
 
-    const outcome = await preflight(
-      api,
-      args.datasourceId,
-      args.files,
-      targetPaths,
-    );
+    const outcome = await preflight(api, args.datasourceId, args.files, targetPaths);
     if (outcome.kind === "abort") {
       args.toaster.onBatchError(outcome.message);
       return;

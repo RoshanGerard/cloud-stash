@@ -3,15 +3,9 @@
 // here; consumers (the IPC subscription layer, the logger) subscribe. No
 // cross-process concerns live in this module.
 
-import type {
-  EventName,
-  EventPayloadMap,
-} from "@cloudstash/ipc-contracts/sync-service";
+import type { EventName, EventPayloadMap } from "@cloudstash/ipc-contracts/sync-service";
 
-export type Listener = <N extends EventName>(
-  name: N,
-  payload: EventPayloadMap[N],
-) => void;
+export type Listener = <N extends EventName>(name: N, payload: EventPayloadMap[N]) => void;
 
 export interface EventBus {
   emit<N extends EventName>(name: N, payload: EventPayloadMap[N]): void;

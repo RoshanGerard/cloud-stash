@@ -24,12 +24,9 @@ export function EmptyState() {
         strokeWidth={1.5}
         aria-hidden="true"
       />
-      <div className="text-[15px] font-semibold text-foreground">
-        This folder is empty
-      </div>
+      <div className="text-[15px] font-semibold text-foreground">This folder is empty</div>
       <div className="max-w-[320px] text-center text-[13px] text-muted-foreground">
-        Drop files on your datasource or upload from the sync service —
-        they&apos;ll appear here.
+        Drop files on your datasource or upload from the sync service — they&apos;ll appear here.
       </div>
     </div>
   );

@@ -10,10 +10,7 @@
 
 import { describe, expect, it, vi } from "vitest";
 
-import type {
-  JobStatus,
-  JobSummary,
-} from "@cloudstash/ipc-contracts/sync-service";
+import type { JobStatus, JobSummary } from "@cloudstash/ipc-contracts/sync-service";
 import type { SyncListJobsRequest } from "@cloudstash/ipc-contracts/sync-service-desktop";
 
 import type { SyncClient } from "../../../sync/client.js";

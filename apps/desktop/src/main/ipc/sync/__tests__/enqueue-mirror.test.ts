@@ -21,9 +21,10 @@ import type { SyncClient } from "../../../sync/client.js";
 import { SyncCommandError } from "../../../sync/client.js";
 import { handleSyncEnqueueMirror } from "../enqueue-mirror.js";
 
-function makeFakeClient(
-  impl: (params: SyncEnqueueMirrorRequest) => Promise<unknown>,
-): { client: SyncClient; enqueueMirror: ReturnType<typeof vi.fn> } {
+function makeFakeClient(impl: (params: SyncEnqueueMirrorRequest) => Promise<unknown>): {
+  client: SyncClient;
+  enqueueMirror: ReturnType<typeof vi.fn>;
+} {
   const enqueueMirror = vi.fn(impl);
   const client = { enqueueMirror } as unknown as SyncClient;
   return { client, enqueueMirror };
@@ -123,10 +124,7 @@ describe("handleSyncEnqueueMirror", () => {
     });
 
     await expect(
-      handleSyncEnqueueMirror(
-        { datasourceId: "ds-1", sourcePath: "/a" },
-        client,
-      ),
+      handleSyncEnqueueMirror({ datasourceId: "ds-1", sourcePath: "/a" }, client),
     ).rejects.toBe(err);
   });
 });

@@ -37,9 +37,7 @@ describe("window.api.sync type declarations", () => {
   });
 
   it("window.api.sync.listJobs has return type Promise<SyncListJobsResponse>", () => {
-    expectTypeOf<SyncSurface["listJobs"]>().returns.toEqualTypeOf<
-      Promise<SyncListJobsResponse>
-    >();
+    expectTypeOf<SyncSurface["listJobs"]>().returns.toEqualTypeOf<Promise<SyncListJobsResponse>>();
   });
 
   it("window.api.sync.onEvent has signature (cb: (event: SyncEvent) => void) => () => void", () => {
@@ -142,23 +140,15 @@ describe("window.api.window surface (add-frameless-window-chrome)", () => {
   });
 
   it("minimize / toggleMaximize / close return Promise<void>", () => {
-    expectTypeOf<WindowSurface["minimize"]>().returns.toEqualTypeOf<
-      Promise<void>
-    >();
-    expectTypeOf<WindowSurface["toggleMaximize"]>().returns.toEqualTypeOf<
-      Promise<void>
-    >();
-    expectTypeOf<WindowSurface["close"]>().returns.toEqualTypeOf<
-      Promise<void>
-    >();
+    expectTypeOf<WindowSurface["minimize"]>().returns.toEqualTypeOf<Promise<void>>();
+    expectTypeOf<WindowSurface["toggleMaximize"]>().returns.toEqualTypeOf<Promise<void>>();
+    expectTypeOf<WindowSurface["close"]>().returns.toEqualTypeOf<Promise<void>>();
   });
 
   it("onMaximizeChange takes a (maximized: boolean) callback and returns a dispose fn", () => {
     expectTypeOf<WindowSurface["onMaximizeChange"]>()
       .parameter(0)
       .toEqualTypeOf<(maximized: boolean) => void>();
-    expectTypeOf<WindowSurface["onMaximizeChange"]>().returns.toEqualTypeOf<
-      () => void
-    >();
+    expectTypeOf<WindowSurface["onMaximizeChange"]>().returns.toEqualTypeOf<() => void>();
   });
 });

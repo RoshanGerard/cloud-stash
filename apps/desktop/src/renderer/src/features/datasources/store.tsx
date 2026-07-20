@@ -88,12 +88,8 @@ function reducer(state: DatasourcesState, action: Action): DatasourcesState {
     }
     case "datasource/removed": {
       if (state.phase !== "populated") return state;
-      const next = state.datasources.filter(
-        (d) => d.id !== action.datasourceId,
-      );
-      return next.length === 0
-        ? { phase: "empty" }
-        : { phase: "populated", datasources: next };
+      const next = state.datasources.filter((d) => d.id !== action.datasourceId);
+      return next.length === 0 ? { phase: "empty" } : { phase: "populated", datasources: next };
     }
     case "datasource/updated": {
       if (state.phase !== "populated") return state;
@@ -192,7 +188,7 @@ function upsertJob(
   }
   const existing =
     loc && loc.datasourceId === datasourceId
-      ? working.get(datasourceId)![loc.index] ?? null
+      ? (working.get(datasourceId)![loc.index] ?? null)
       : null;
   const updated = getUpdated(existing);
   if (updated === null) return working;
@@ -210,10 +206,7 @@ function upsertJob(
 
 // Remove a job by jobId across all buckets. Returns a new Map. If the bucket
 // goes empty, the datasourceId key is deleted to bound memory.
-function removeJob(
-  byDs: Map<string, JobSummary[]>,
-  jobId: string,
-): Map<string, JobSummary[]> {
+function removeJob(byDs: Map<string, JobSummary[]>, jobId: string): Map<string, JobSummary[]> {
   const loc = findJobLocation(byDs, jobId);
   if (!loc) return byDs;
   const working = new Map(byDs);
@@ -237,10 +230,7 @@ function jobsReducer(state: JobsState, action: JobsAction): JobsState {
       // Evict `uploadProgressByJob` entries that reference jobs not in the
       // seed — the authoritative cross-process truth just overwrote ours.
       const liveJobIds = new Set(action.payload.jobs.map((j) => j.id));
-      const nextProgress = new Map<
-        string,
-        { bytesUploaded: number; bytesTotal: number }
-      >();
+      const nextProgress = new Map<string, { bytesUploaded: number; bytesTotal: number }>();
       for (const [jobId, progress] of state.uploadProgressByJob) {
         if (liveJobIds.has(jobId)) nextProgress.set(jobId, progress);
       }
@@ -253,28 +243,23 @@ function jobsReducer(state: JobsState, action: JobsAction): JobsState {
       const p = action.payload;
       return {
         ...state,
-        jobsByDatasource: upsertJob(
-          state.jobsByDatasource,
-          p.datasourceId,
-          p.jobId,
-          (existing) => {
-            if (existing) return { ...existing, status: "queued" };
-            return {
-              id: p.jobId,
-              kind: p.kind,
-              datasourceId: p.datasourceId,
-              sourcePath: p.sourcePath,
-              targetPath: p.targetPath,
-              conflictPolicy: p.conflictPolicy,
-              status: "queued",
-              attempt: 0,
-              lastErrorTag: null,
-              lastErrorMessage: null,
-              createdAt: p.enqueuedAt,
-              updatedAt: p.enqueuedAt,
-            };
-          },
-        ),
+        jobsByDatasource: upsertJob(state.jobsByDatasource, p.datasourceId, p.jobId, (existing) => {
+          if (existing) return { ...existing, status: "queued" };
+          return {
+            id: p.jobId,
+            kind: p.kind,
+            datasourceId: p.datasourceId,
+            sourcePath: p.sourcePath,
+            targetPath: p.targetPath,
+            conflictPolicy: p.conflictPolicy,
+            status: "queued",
+            attempt: 0,
+            lastErrorTag: null,
+            lastErrorMessage: null,
+            createdAt: p.enqueuedAt,
+            updatedAt: p.enqueuedAt,
+          };
+        }),
       };
     }
     case "sync/job-started": {
@@ -319,12 +304,8 @@ function jobsReducer(state: JobsState, action: JobsAction): JobsState {
       const loc = findJobLocation(state.jobsByDatasource, p.jobId);
       if (!loc) return state;
       const job = state.jobsByDatasource.get(loc.datasourceId)?.[loc.index];
-      const nextByDs = upsertJob(
-        state.jobsByDatasource,
-        loc.datasourceId,
-        p.jobId,
-        (existing) =>
-          existing ? { ...existing, updatedAt: Date.now() } : null,
+      const nextByDs = upsertJob(state.jobsByDatasource, loc.datasourceId, p.jobId, (existing) =>
+        existing ? { ...existing, updatedAt: Date.now() } : null,
       );
       // Defensive: if findJobLocation returned a stale loc the lookup above
       // could yield undefined — fall back to the jobsByDatasource refresh
@@ -482,9 +463,7 @@ function authSessionsReducer(
       const sessionState: AuthSessionState = {
         status: "failed",
         tag: action.payload.tag,
-        ...(action.payload.message !== undefined
-          ? { message: action.payload.message }
-          : {}),
+        ...(action.payload.message !== undefined ? { message: action.payload.message } : {}),
         ...(action.payload.expectedEmail !== undefined
           ? { expectedEmail: action.payload.expectedEmail }
           : {}),
@@ -506,12 +485,8 @@ function authSessionsReducer(
 export interface DatasourceActions {
   refresh: () => Promise<void>;
   add: (req: DatasourcesAddRequest) => Promise<DatasourcesAddResponse>;
-  remove: (
-    req: DatasourcesRemoveRequest,
-  ) => Promise<DatasourcesRemoveResponse>;
-  action: (
-    req: DatasourcesActionRequest,
-  ) => Promise<DatasourcesActionResponse>;
+  remove: (req: DatasourcesRemoveRequest) => Promise<DatasourcesRemoveResponse>;
+  action: (req: DatasourcesActionRequest) => Promise<DatasourcesActionResponse>;
 }
 
 interface DatasourcesContextValue {
@@ -565,30 +540,24 @@ export function DatasourcesProvider({ children }: DatasourcesProviderProps) {
       });
     } catch (err) {
       if (!mountedRef.current) return;
-      const message =
-        err instanceof Error ? err.message : "Failed to load datasources.";
+      const message = err instanceof Error ? err.message : "Failed to load datasources.";
       dispatch({ type: "load/failure", error: message });
     }
   }, []);
 
-  const add = useCallback(
-    async (req: DatasourcesAddRequest): Promise<DatasourcesAddResponse> => {
-      const response = await window.api.datasources.add(req);
-      if (mountedRef.current) {
-        dispatch({
-          type: "datasource/added",
-          datasource: response.datasource,
-        });
-      }
-      return response;
-    },
-    [],
-  );
+  const add = useCallback(async (req: DatasourcesAddRequest): Promise<DatasourcesAddResponse> => {
+    const response = await window.api.datasources.add(req);
+    if (mountedRef.current) {
+      dispatch({
+        type: "datasource/added",
+        datasource: response.datasource,
+      });
+    }
+    return response;
+  }, []);
 
   const remove = useCallback(
-    async (
-      req: DatasourcesRemoveRequest,
-    ): Promise<DatasourcesRemoveResponse> => {
+    async (req: DatasourcesRemoveRequest): Promise<DatasourcesRemoveResponse> => {
       const response = await window.api.datasources.remove(req);
       if (mountedRef.current) {
         dispatch({
@@ -602,9 +571,7 @@ export function DatasourcesProvider({ children }: DatasourcesProviderProps) {
   );
 
   const action = useCallback(
-    async (
-      req: DatasourcesActionRequest,
-    ): Promise<DatasourcesActionResponse> => {
+    async (req: DatasourcesActionRequest): Promise<DatasourcesActionResponse> => {
       const response = await window.api.datasources.action(req);
       if (mountedRef.current) {
         dispatch({
@@ -736,9 +703,7 @@ export function DatasourcesProvider({ children }: DatasourcesProviderProps) {
             payload: {
               correlationId: event.payload.correlationId,
               tag: event.payload.tag,
-              ...(event.payload.message !== undefined
-                ? { message: event.payload.message }
-                : {}),
+              ...(event.payload.message !== undefined ? { message: event.payload.message } : {}),
               // enforce-oauth-reconnect-account-match D5 — carry the
               // structured account-mismatch emails through to the failed
               // session so the reconnect surfaces can name the accounts.
@@ -784,19 +749,13 @@ export function DatasourcesProvider({ children }: DatasourcesProviderProps) {
     [state, jobs, actions, authSessions],
   );
 
-  return (
-    <DatasourcesContext.Provider value={value}>
-      {children}
-    </DatasourcesContext.Provider>
-  );
+  return <DatasourcesContext.Provider value={value}>{children}</DatasourcesContext.Provider>;
 }
 
 export function useDatasources(): DatasourcesState {
   const ctx = useContext(DatasourcesContext);
   if (ctx === null) {
-    throw new Error(
-      "useDatasources must be used within a <DatasourcesProvider>.",
-    );
+    throw new Error("useDatasources must be used within a <DatasourcesProvider>.");
   }
   return ctx.state;
 }
@@ -804,9 +763,7 @@ export function useDatasources(): DatasourcesState {
 export function useDatasourceActions(): DatasourceActions {
   const ctx = useContext(DatasourcesContext);
   if (ctx === null) {
-    throw new Error(
-      "useDatasourceActions must be used within a <DatasourcesProvider>.",
-    );
+    throw new Error("useDatasourceActions must be used within a <DatasourcesProvider>.");
   }
   return ctx.actions;
 }
@@ -823,9 +780,7 @@ const EMPTY_JOBS: ReadonlyArray<JobSummary> = [];
 export function useDatasourceJobs(datasourceId: string): ReadonlyArray<JobSummary> {
   const ctx = useContext(DatasourcesContext);
   if (ctx === null) {
-    throw new Error(
-      "useDatasourceJobs must be used within a <DatasourcesProvider>.",
-    );
+    throw new Error("useDatasourceJobs must be used within a <DatasourcesProvider>.");
   }
   return ctx.jobs.jobsByDatasource.get(datasourceId) ?? EMPTY_JOBS;
 }
@@ -861,30 +816,22 @@ const PENDING_SESSION: AuthSessionState = { status: "pending" };
 export function useAuthSession(correlationId: string): AuthSessionState {
   const ctx = useContext(DatasourcesContext);
   if (ctx === null) {
-    throw new Error(
-      "useAuthSession must be used within a <DatasourcesProvider>.",
-    );
+    throw new Error("useAuthSession must be used within a <DatasourcesProvider>.");
   }
   return ctx.authSessions.get(correlationId) ?? PENDING_SESSION;
 }
 
-export function useDatasourceUploadProgress(
-  datasourceId: string,
-): UploadProgressView | null {
+export function useDatasourceUploadProgress(datasourceId: string): UploadProgressView | null {
   const ctx = useContext(DatasourcesContext);
   if (ctx === null) {
-    throw new Error(
-      "useDatasourceUploadProgress must be used within a <DatasourcesProvider>.",
-    );
+    throw new Error("useDatasourceUploadProgress must be used within a <DatasourcesProvider>.");
   }
   const bucket = ctx.jobs.jobsByDatasource.get(datasourceId);
   if (!bucket) return null;
   const candidates = bucket.filter(
     (j) =>
       j.kind === "upload" &&
-      (j.status === "running" ||
-        j.status === "queued" ||
-        j.status === "waiting-network"),
+      (j.status === "running" || j.status === "queued" || j.status === "waiting-network"),
   );
   if (candidates.length === 0) return null;
   // Stable sort: createdAt desc (newest enqueued wins), then id lex desc.
@@ -911,9 +858,7 @@ export function useDatasourceUploadProgress(
     };
   }
   const percent =
-    progress.bytesTotal > 0
-      ? Math.round((progress.bytesUploaded / progress.bytesTotal) * 100)
-      : 0;
+    progress.bytesTotal > 0 ? Math.round((progress.bytesUploaded / progress.bytesTotal) * 100) : 0;
   return {
     jobId: picked.id,
     bytesUploaded: progress.bytesUploaded,

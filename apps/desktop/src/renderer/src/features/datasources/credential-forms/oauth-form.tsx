@@ -62,9 +62,7 @@ export function OAuthForm({
   // Set when authenticateStart's response is `{ ok: false, error }` — the
   // typed error class for `service-config-missing` is surfaced inline as
   // its own failed-state branch alongside auth-failed events.
-  const [configMissing, setConfigMissing] = useState<ConfigMissingError | null>(
-    null,
-  );
+  const [configMissing, setConfigMissing] = useState<ConfigMissingError | null>(null);
   // Capture a non-config-missing error on the start path so the user gets
   // some inline feedback (engine-error / unknown-provider) when the start
   // call rejects before any event fires.
@@ -105,9 +103,7 @@ export function OAuthForm({
       // cast is safe at the call site.
       const pid = providerId as ProviderId;
       const req =
-        datasourceId !== undefined
-          ? { providerId: pid, datasourceId }
-          : { providerId: pid };
+        datasourceId !== undefined ? { providerId: pid, datasourceId } : { providerId: pid };
       const res = await window.api.sync.authenticateStart(req);
       if (res.ok) {
         if (res.result.kind === "oauth") {
@@ -116,9 +112,7 @@ export function OAuthForm({
           // Defensive: a credentials-form provider was somehow routed through
           // the OAuth form. This should be unreachable per the dialog's
           // descriptor-based dispatch, but surface inline rather than crash.
-          setStartError(
-            "Provider configuration mismatch — expected OAuth flow.",
-          );
+          setStartError("Provider configuration mismatch — expected OAuth flow.");
         }
       } else {
         if (res.error.tag === "service-config-missing") {
@@ -166,26 +160,18 @@ export function OAuthForm({
     });
   }, [correlationId, sessionState, onSubmit]);
 
-  const isWaiting =
-    starting || (correlationId !== null && sessionState.status === "pending");
-  const isCancelled =
-    correlationId !== null && sessionState.status === "cancelled";
-  const isFailed =
-    correlationId !== null && sessionState.status === "failed";
-  const isTimeout =
-    correlationId !== null && sessionState.status === "timeout";
+  const isWaiting = starting || (correlationId !== null && sessionState.status === "pending");
+  const isCancelled = correlationId !== null && sessionState.status === "cancelled";
+  const isFailed = correlationId !== null && sessionState.status === "failed";
+  const isTimeout = correlationId !== null && sessionState.status === "timeout";
   const hasFailureCopy =
-    isCancelled ||
-    isFailed ||
-    isTimeout ||
-    configMissing !== null ||
-    startError !== null;
+    isCancelled || isFailed || isTimeout || configMissing !== null || startError !== null;
 
   return (
     <div className="flex flex-col gap-4">
       <p className="text-muted-foreground text-sm">
-        You&apos;ll be redirected to sign in to {providerDisplayName} and grant
-        access. Your browser will open automatically.
+        You&apos;ll be redirected to sign in to {providerDisplayName} and grant access. Your browser
+        will open automatically.
       </p>
 
       {isWaiting && (
@@ -224,23 +210,14 @@ export function OAuthForm({
       )}
 
       {configMissing !== null && (
-        <p
-          role="alert"
-          className="text-destructive text-sm"
-          data-testid="oauth-failed"
-        >
-          Service configuration missing. Add OAuth credentials to{" "}
-          <code>{configMissing.path}</code>. See README §Provider OAuth
-          registration.
+        <p role="alert" className="text-destructive text-sm" data-testid="oauth-failed">
+          Service configuration missing. Add OAuth credentials to <code>{configMissing.path}</code>.
+          See README §Provider OAuth registration.
         </p>
       )}
 
       {isFailed && configMissing === null && (
-        <p
-          role="alert"
-          className="text-destructive text-sm"
-          data-testid="oauth-failed"
-        >
+        <p role="alert" className="text-destructive text-sm" data-testid="oauth-failed">
           {sessionState.status === "failed" && sessionState.message
             ? sessionState.message
             : "Authentication failed — please try again."}
@@ -248,23 +225,13 @@ export function OAuthForm({
       )}
 
       {startError !== null && configMissing === null && !isFailed && (
-        <p
-          role="alert"
-          className="text-destructive text-sm"
-          data-testid="oauth-failed"
-        >
+        <p role="alert" className="text-destructive text-sm" data-testid="oauth-failed">
           {startError}
         </p>
       )}
 
       <div className="flex items-center justify-between gap-2">
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={onBack}
-          disabled={isWaiting}
-        >
+        <Button type="button" variant="outline" size="sm" onClick={onBack} disabled={isWaiting}>
           Back
         </Button>
 
@@ -273,12 +240,7 @@ export function OAuthForm({
             Retry
           </Button>
         ) : (
-          <Button
-            type="button"
-            size="sm"
-            onClick={handleConnect}
-            disabled={isWaiting}
-          >
+          <Button type="button" size="sm" onClick={handleConnect} disabled={isWaiting}>
             {isWaiting ? "Connecting…" : `Connect ${providerDisplayName}`}
           </Button>
         )}

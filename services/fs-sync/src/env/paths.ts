@@ -19,10 +19,7 @@ export interface PathOptions {
  * Pass `env` only in tests that need to override `process.env` — production
  * callers pass no second argument.
  */
-export function resolveDataDir(
-  options: PathOptions,
-  env: NodeJS.ProcessEnv = process.env,
-): string {
+export function resolveDataDir(options: PathOptions, env: NodeJS.ProcessEnv = process.env): string {
   const override = env["CLOUDSTASH_SYNC_DATA_DIR"];
   if (override !== undefined && override !== "") {
     return override;
@@ -31,10 +28,7 @@ export function resolveDataDir(
   return options.dev ? path.join(root, "dev") : root;
 }
 
-export function resolveCredentialsPath(
-  options: PathOptions,
-  env?: NodeJS.ProcessEnv,
-): string {
+export function resolveCredentialsPath(options: PathOptions, env?: NodeJS.ProcessEnv): string {
   return path.join(resolveDataDir(options, env), "credentials.json");
 }
 
@@ -46,17 +40,11 @@ export function resolveCredentialsPath(
  * `~/cloudstash/sync_app/` (or dev `~/cloudstash/sync_app/dev/`) holds a single co-located
  * configuration surface.
  */
-export function resolveServiceConfigPath(
-  options: PathOptions,
-  env?: NodeJS.ProcessEnv,
-): string {
+export function resolveServiceConfigPath(options: PathOptions, env?: NodeJS.ProcessEnv): string {
   return path.join(resolveDataDir(options, env), "config.json");
 }
 
-export function resolveDbPath(
-  options: PathOptions,
-  env?: NodeJS.ProcessEnv,
-): string {
+export function resolveDbPath(options: PathOptions, env?: NodeJS.ProcessEnv): string {
   return path.join(resolveDataDir(options, env), "sync.db");
 }
 
@@ -65,10 +53,7 @@ export function resolveDbPath(
  * — not a filesystem path), so it ignores the data dir and uses a constant
  * per the base spec. On Unix it's a socket file under the data dir.
  */
-export function resolveSocketPath(
-  options: PathOptions,
-  env?: NodeJS.ProcessEnv,
-): string {
+export function resolveSocketPath(options: PathOptions, env?: NodeJS.ProcessEnv): string {
   if (process.platform === "win32") {
     return options.dev ? "\\\\.\\pipe\\cloudstash-sync-dev" : "\\\\.\\pipe\\cloudstash-sync";
   }
@@ -76,17 +61,11 @@ export function resolveSocketPath(
   return path.join(resolveDataDir(options, env), basename);
 }
 
-export function resolvePidPath(
-  options: PathOptions,
-  env?: NodeJS.ProcessEnv,
-): string {
+export function resolvePidPath(options: PathOptions, env?: NodeJS.ProcessEnv): string {
   const basename = options.dev ? "service-dev.pid" : "service.pid";
   return path.join(resolveDataDir(options, env), basename);
 }
 
-export function resolveLogPath(
-  options: PathOptions,
-  env?: NodeJS.ProcessEnv,
-): string {
+export function resolveLogPath(options: PathOptions, env?: NodeJS.ProcessEnv): string {
   return path.join(resolveDataDir(options, env), "service.log");
 }

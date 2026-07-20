@@ -18,20 +18,14 @@ const ADJACENCY: Record<JobStatus, ReadonlyArray<JobStatus>> = {
   cancelled: [],
 };
 
-export const TERMINAL_STATUSES: ReadonlyArray<JobStatus> = [
-  "completed",
-  "failed",
-  "cancelled",
-];
+export const TERMINAL_STATUSES: ReadonlyArray<JobStatus> = ["completed", "failed", "cancelled"];
 
 export class IllegalJobTransitionError extends Error {
   readonly from: JobStatus;
   readonly to: JobStatus;
   readonly jobId: string;
   constructor(jobId: string, from: JobStatus, to: JobStatus) {
-    super(
-      `illegal job transition for ${jobId}: ${from} → ${to} is not a legal edge`,
-    );
+    super(`illegal job transition for ${jobId}: ${from} → ${to} is not a legal edge`);
     this.name = "IllegalJobTransitionError";
     this.jobId = jobId;
     this.from = from;
@@ -48,11 +42,7 @@ export function isLegalTransition(from: JobStatus, to: JobStatus): boolean {
 }
 
 /** Throw on illegal transition. Intended as a pre-write guard. */
-export function assertLegalTransition(
-  jobId: string,
-  from: JobStatus,
-  to: JobStatus,
-): void {
+export function assertLegalTransition(jobId: string, from: JobStatus, to: JobStatus): void {
   if (!isLegalTransition(from, to)) {
     throw new IllegalJobTransitionError(jobId, from, to);
   }

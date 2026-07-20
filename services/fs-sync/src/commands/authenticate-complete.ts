@@ -27,10 +27,7 @@
 //   credential-writing entry point" — the `sync:authenticate-complete`
 //   handler steps 1-4.
 
-import type {
-  DatasourceSummary,
-  ProviderId,
-} from "@cloudstash/ipc-contracts";
+import type { DatasourceSummary, ProviderId } from "@cloudstash/ipc-contracts";
 import { providers } from "@cloudstash/ipc-contracts";
 
 import type { CommandHandler } from "../ipc/server.js";
@@ -42,10 +39,7 @@ export interface AuthenticateCompleteHandlerDeps {
   readonly correlationStore: AuthCorrelationStore;
 }
 
-function buildSummary(
-  providerId: ProviderId,
-  datasourceId: string,
-): DatasourceSummary {
+function buildSummary(providerId: ProviderId, datasourceId: string): DatasourceSummary {
   const provider = providers[providerId];
   return {
     id: datasourceId,

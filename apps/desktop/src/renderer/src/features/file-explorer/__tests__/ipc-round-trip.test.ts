@@ -15,10 +15,7 @@ import type {
   FilesStatRequest,
   FilesStatResponse,
 } from "@cloudstash/ipc-contracts";
-import {
-  FILES_PROVIDER_SEARCH_DEFERRED_MESSAGE,
-  FilesErrorTag,
-} from "@cloudstash/ipc-contracts";
+import { FILES_PROVIDER_SEARCH_DEFERRED_MESSAGE, FilesErrorTag } from "@cloudstash/ipc-contracts";
 
 // Renderer-side round-trip test for every `window.api.files.*` method.
 //
@@ -243,10 +240,7 @@ describe("window.api.files round-trip", () => {
       expect(successes.every((r) => typeof r.path === "string")).toBe(true);
       expect(
         failures.every(
-          (r) =>
-            !r.ok &&
-            typeof r.error.tag === "string" &&
-            typeof r.error.message === "string",
+          (r) => !r.ok && typeof r.error.tag === "string" && typeof r.error.message === "string",
         ),
       ).toBe(true);
     }
@@ -321,13 +315,9 @@ describe("window.api.files round-trip", () => {
     expect(conflict.ok).toBe(false);
     if (!conflict.ok) {
       expect(conflict.error.tag).toBe("conflict");
-      expect(conflict.error.existingPath).toBe(
-        "/Users/me/Downloads/report.pdf",
-      );
+      expect(conflict.error.existingPath).toBe("/Users/me/Downloads/report.pdf");
       expect(conflict.error.existingSize).toBe(4_194_304);
-      expect(conflict.error.existingModifiedAt).toBe(
-        "2026-04-18T09:30:00.000Z",
-      );
+      expect(conflict.error.existingModifiedAt).toBe("2026-04-18T09:30:00.000Z");
     }
     assertStructuredCloneSafe(conflict);
     expect(vi.mocked(filesApi.download).mock.calls[0]).toEqual([failReq]);

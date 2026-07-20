@@ -20,11 +20,7 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import type { SyncClient } from "./client.js";
-import {
-  __resetSyncClientForTesting,
-  getSyncClient,
-  setSyncClient,
-} from "./sync-client-holder.js";
+import { __resetSyncClientForTesting, getSyncClient, setSyncClient } from "./sync-client-holder.js";
 
 // A minimal stand-in — the holder never touches the object, just
 // stores and returns it. Casting to SyncClient is safe for this test

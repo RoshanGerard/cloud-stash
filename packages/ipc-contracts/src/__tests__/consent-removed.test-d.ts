@@ -27,15 +27,8 @@ describe("ipc-contracts datasources — consent surface is fully retired", () =>
   });
 
   it("DATASOURCES_CHANNELS does NOT carry startConsent / cancelConsent keys at runtime", () => {
-    expect(
-      Object.prototype.hasOwnProperty.call(DATASOURCES_CHANNELS, "startConsent"),
-    ).toBe(false);
-    expect(
-      Object.prototype.hasOwnProperty.call(
-        DATASOURCES_CHANNELS,
-        "cancelConsent",
-      ),
-    ).toBe(false);
+    expect(Object.prototype.hasOwnProperty.call(DATASOURCES_CHANNELS, "startConsent")).toBe(false);
+    expect(Object.prototype.hasOwnProperty.call(DATASOURCES_CHANNELS, "cancelConsent")).toBe(false);
   });
 
   it("DATASOURCES_CHANNELS still exposes the non-consent keys", () => {
@@ -48,14 +41,6 @@ describe("ipc-contracts datasources — consent surface is fully retired", () =>
     // EventBus — it had no production emitter or consumer; datasource-
     // facing events flow as `auth-*` / `job-*` on `sync:event`.
     const remaining = Object.keys(DATASOURCES_CHANNELS).sort();
-    expect(remaining).toEqual(
-      [
-        "action",
-        "add",
-        "list",
-        "pickFilesToUpload",
-        "remove",
-      ].sort(),
-    );
+    expect(remaining).toEqual(["action", "add", "list", "pickFilesToUpload", "remove"].sort());
   });
 });

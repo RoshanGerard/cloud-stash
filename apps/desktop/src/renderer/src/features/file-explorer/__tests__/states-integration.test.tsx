@@ -5,15 +5,7 @@
 // `<FileExplorer>` composite against a mocked `window.api.files.list` and
 // asserts the correct state component is rendered.
 
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-  type Mock,
-} from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from "vitest";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 
@@ -32,10 +24,7 @@ vi.mock("next/navigation", () => ({
   }),
 }));
 
-type ListFn = Mock<
-  [{ datasourceId: string; path: string }],
-  Promise<unknown>
->;
+type ListFn = Mock<[{ datasourceId: string; path: string }], Promise<unknown>>;
 
 let listMock: ListFn;
 
@@ -68,12 +57,11 @@ function installApi(listImpl: (req: { path: string }) => Promise<unknown>) {
     },
   };
   if (!("ResizeObserver" in window)) {
-    (window as unknown as { ResizeObserver: unknown }).ResizeObserver =
-      class MockResizeObserver {
-        observe() {}
-        unobserve() {}
-        disconnect() {}
-      };
+    (window as unknown as { ResizeObserver: unknown }).ResizeObserver = class MockResizeObserver {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    };
   }
 }
 
@@ -119,13 +107,9 @@ describe("FileExplorer — state branch integration", () => {
     render(<FileExplorer datasourceId="ds-state-1" />);
 
     await waitFor(() =>
-      expect(
-        screen.getByTestId("file-explorer-state-disconnected"),
-      ).toBeInTheDocument(),
+      expect(screen.getByTestId("file-explorer-state-disconnected")).toBeInTheDocument(),
     );
-    expect(
-      screen.queryByTestId("file-explorer-state-auth-revoked"),
-    ).toBeNull();
+    expect(screen.queryByTestId("file-explorer-state-auth-revoked")).toBeNull();
     expect(screen.queryByTestId("file-explorer-skeleton")).toBeNull();
   });
 
@@ -147,23 +131,15 @@ describe("FileExplorer — state branch integration", () => {
     // engine says auth-revoked. Engine response must win.
     render(
       <DatasourcesProvider>
-        <FileExplorer
-          datasourceId="ds-state-2"
-          providerId="onedrive"
-          providerStatus="connected"
-        />
+        <FileExplorer datasourceId="ds-state-2" providerId="onedrive" providerStatus="connected" />
       </DatasourcesProvider>,
     );
 
     await waitFor(() =>
-      expect(
-        screen.getByTestId("file-explorer-state-invalid-datasource"),
-      ).toBeInTheDocument(),
+      expect(screen.getByTestId("file-explorer-state-invalid-datasource")).toBeInTheDocument(),
     );
     // The retired amber auth-revoked view is gone.
-    expect(
-      screen.queryByTestId("file-explorer-state-auth-revoked"),
-    ).toBeNull();
+    expect(screen.queryByTestId("file-explorer-state-auth-revoked")).toBeNull();
     expect(screen.queryByTestId("explorer-row")).toBeNull();
   });
 
@@ -172,14 +148,10 @@ describe("FileExplorer — state branch integration", () => {
     // "loading + providerStatus=syncing" branch.
     installApi(() => new Promise(() => {}));
 
-    render(
-      <FileExplorer datasourceId="ds-state-3" providerStatus="syncing" />,
-    );
+    render(<FileExplorer datasourceId="ds-state-3" providerStatus="syncing" />);
 
     await waitFor(() =>
-      expect(
-        screen.getByTestId("file-explorer-state-syncing"),
-      ).toBeInTheDocument(),
+      expect(screen.getByTestId("file-explorer-state-syncing")).toBeInTheDocument(),
     );
   });
 
@@ -189,14 +161,10 @@ describe("FileExplorer — state branch integration", () => {
       value: { entries: [], truncated: false },
     }));
 
-    render(
-      <FileExplorer datasourceId="ds-state-4" providerStatus="connected" />,
-    );
+    render(<FileExplorer datasourceId="ds-state-4" providerStatus="connected" />);
 
     await waitFor(() =>
-      expect(
-        screen.getByTestId("file-explorer-state-empty"),
-      ).toBeInTheDocument(),
+      expect(screen.getByTestId("file-explorer-state-empty")).toBeInTheDocument(),
     );
   });
 
@@ -209,37 +177,23 @@ describe("FileExplorer — state branch integration", () => {
       },
     }));
 
-    render(
-      <FileExplorer datasourceId="ds-state-5" providerStatus="syncing" />,
-    );
+    render(<FileExplorer datasourceId="ds-state-5" providerStatus="syncing" />);
 
     // Wait for the loading flip: the skeleton/syncing state clears and the
     // view-mode switcher renders at least one entry.
     await waitFor(() =>
-      expect(
-        document.querySelectorAll('[data-testid="explorer-row"]').length,
-      ).toBe(1),
+      expect(document.querySelectorAll('[data-testid="explorer-row"]').length).toBe(1),
     );
-    expect(
-      screen.queryByTestId("file-explorer-state-syncing"),
-    ).toBeNull();
+    expect(screen.queryByTestId("file-explorer-state-syncing")).toBeNull();
   });
 
   it("renders Skeleton while loading when providerStatus is NOT syncing", async () => {
     installApi(() => new Promise(() => {}));
 
-    render(
-      <FileExplorer datasourceId="ds-state-6" providerStatus="connected" />,
-    );
+    render(<FileExplorer datasourceId="ds-state-6" providerStatus="connected" />);
 
-    await waitFor(() =>
-      expect(
-        screen.getByTestId("file-explorer-skeleton"),
-      ).toBeInTheDocument(),
-    );
-    expect(
-      screen.queryByTestId("file-explorer-state-syncing"),
-    ).toBeNull();
+    await waitFor(() => expect(screen.getByTestId("file-explorer-skeleton")).toBeInTheDocument());
+    expect(screen.queryByTestId("file-explorer-state-syncing")).toBeNull();
   });
 
   it("renders InvalidDatasourceState when files.list rejects with tag:'invalid-datasource'", async () => {
@@ -259,29 +213,17 @@ describe("FileExplorer — state branch integration", () => {
 
     render(
       <DatasourcesProvider>
-        <FileExplorer
-          datasourceId="ds-state-7"
-          providerId="google-drive"
-          providerStatus="error"
-        />
+        <FileExplorer datasourceId="ds-state-7" providerId="google-drive" providerStatus="error" />
       </DatasourcesProvider>,
     );
 
     await waitFor(() =>
-      expect(
-        screen.getByTestId("file-explorer-state-invalid-datasource"),
-      ).toBeInTheDocument(),
+      expect(screen.getByTestId("file-explorer-state-invalid-datasource")).toBeInTheDocument(),
     );
     // Other state components not present.
-    expect(
-      screen.queryByTestId("file-explorer-state-disconnected"),
-    ).toBeNull();
-    expect(
-      screen.queryByTestId("file-explorer-state-auth-revoked"),
-    ).toBeNull();
+    expect(screen.queryByTestId("file-explorer-state-disconnected")).toBeNull();
+    expect(screen.queryByTestId("file-explorer-state-auth-revoked")).toBeNull();
     expect(screen.queryByTestId("file-explorer-state-empty")).toBeNull();
-    expect(
-      screen.queryByTestId("file-explorer-error"),
-    ).toBeNull();
+    expect(screen.queryByTestId("file-explorer-error")).toBeNull();
   });
 });

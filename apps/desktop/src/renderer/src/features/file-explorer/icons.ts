@@ -28,9 +28,7 @@ const FAMILY_TO_ICON: Record<MimeFamily, IconName> = {
  * kind wins. File entries route through the FAMILY_TO_ICON table. Same
  * input yields the same output, no side effects, no string parsing.
  */
-export function iconForEntry(
-  entry: Pick<FileEntry, "kind" | "mimeFamily">,
-): IconName {
+export function iconForEntry(entry: Pick<FileEntry, "kind" | "mimeFamily">): IconName {
   if (entry.kind === "directory") return "folder";
   return FAMILY_TO_ICON[entry.mimeFamily];
 }

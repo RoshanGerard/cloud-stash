@@ -33,11 +33,7 @@ interface ButtonDef {
 }
 
 export function HistoryButtons({ store }: HistoryButtonsProps) {
-  const state = useSyncExternalStore(
-    store.subscribe,
-    store.getSnapshot,
-    store.getSnapshot,
-  );
+  const state = useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
 
   const canBack = state.history.index > 0;
   const canForward = state.history.index < state.history.stack.length - 1;

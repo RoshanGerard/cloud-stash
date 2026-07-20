@@ -46,11 +46,7 @@ vi.mock("next/navigation", () => ({
 
 import { DatasourceCard } from "../card";
 import { DatasourcesProvider } from "../store";
-import {
-  ensureResizeObserver,
-  installApiMock,
-  type SyncHarness,
-} from "./helpers/sync-harness";
+import { ensureResizeObserver, installApiMock, type SyncHarness } from "./helpers/sync-harness";
 
 let syncHarness: SyncHarness;
 
@@ -58,9 +54,7 @@ function renderWithProvider(ui: ReactNode) {
   return render(<DatasourcesProvider>{ui}</DatasourcesProvider>);
 }
 
-function buildSummary(
-  overrides: Partial<DatasourceSummary> = {},
-): DatasourceSummary {
+function buildSummary(overrides: Partial<DatasourceSummary> = {}): DatasourceSummary {
   return {
     id: "ds-1",
     displayName: "Test Drive",
@@ -133,8 +127,7 @@ describe("DatasourceCard — sync-event state derivation (Decision 13)", () => {
     // (a structural cue used by other card tests) must be present.
     await waitFor(() => {
       const badge = screen.getByTestId("datasource-status");
-      const label =
-        badge.getAttribute("aria-label") ?? badge.textContent ?? "";
+      const label = badge.getAttribute("aria-label") ?? badge.textContent ?? "";
       expect(label.toLowerCase()).toMatch(/syncing/);
     });
     expect(screen.getByTestId("datasource-syncing-dot")).toBeInTheDocument();
@@ -164,8 +157,7 @@ describe("DatasourceCard — sync-event state derivation (Decision 13)", () => {
     // Sanity: starts in syncing.
     await waitFor(() => {
       const badge = screen.getByTestId("datasource-status");
-      const label =
-        badge.getAttribute("aria-label") ?? badge.textContent ?? "";
+      const label = badge.getAttribute("aria-label") ?? badge.textContent ?? "";
       expect(label.toLowerCase()).toMatch(/syncing/);
     });
 
@@ -182,8 +174,7 @@ describe("DatasourceCard — sync-event state derivation (Decision 13)", () => {
     // but the assertion accommodates any RAF the store may use.
     await waitFor(() => {
       const badge = screen.getByTestId("datasource-status");
-      const label =
-        badge.getAttribute("aria-label") ?? badge.textContent ?? "";
+      const label = badge.getAttribute("aria-label") ?? badge.textContent ?? "";
       expect(label.toLowerCase()).toMatch(/connected/);
     });
     expect(screen.queryByTestId("datasource-syncing-dot")).toBeNull();
@@ -220,8 +211,7 @@ describe("DatasourceCard — sync-event state derivation (Decision 13)", () => {
 
     // The badge stays `error`.
     const badge = screen.getByTestId("datasource-status");
-    const label =
-      badge.getAttribute("aria-label") ?? badge.textContent ?? "";
+    const label = badge.getAttribute("aria-label") ?? badge.textContent ?? "";
     expect(label.toLowerCase()).toMatch(/error/);
     expect(label).toMatch(/Token expired/i);
     // And no syncing dot.

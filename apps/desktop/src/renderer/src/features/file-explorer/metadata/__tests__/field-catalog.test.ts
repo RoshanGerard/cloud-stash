@@ -19,14 +19,7 @@ import { seedEntry } from "../../__tests__/test-utils.js";
 // fields: name, type, size, modified, path. The modal adds `created` and
 // the complete provider-metadata dossier.
 
-const REQUIRED_CATALOG_IDS = [
-  "name",
-  "path",
-  "type",
-  "size",
-  "modified",
-  "created",
-] as const;
+const REQUIRED_CATALOG_IDS = ["name", "path", "type", "size", "modified", "created"] as const;
 
 function findField(id: string): FieldDef {
   const f = fieldCatalog.find((x) => x.id === id);
@@ -284,16 +277,12 @@ describe("fieldCatalog — rawSelector (clipboard payload for modal copy afforda
 
   it("modified rawSelector returns the raw ISO string", () => {
     const entry = seedEntry({ modifiedAt: "2026-04-18T10:30:00.000Z" });
-    expect(findField("modified").rawSelector?.(entry)).toBe(
-      "2026-04-18T10:30:00.000Z",
-    );
+    expect(findField("modified").rawSelector?.(entry)).toBe("2026-04-18T10:30:00.000Z");
   });
 
   it("created rawSelector returns the raw ISO string when present", () => {
     const entry = seedEntry({ createdAt: "2026-01-05T00:00:00.000Z" });
-    expect(findField("created").rawSelector?.(entry)).toBe(
-      "2026-01-05T00:00:00.000Z",
-    );
+    expect(findField("created").rawSelector?.(entry)).toBe("2026-01-05T00:00:00.000Z");
   });
 
   it("created rawSelector returns null when createdAt is null", () => {

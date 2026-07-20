@@ -33,9 +33,7 @@ export default defineConfig({
       // runtime resolution to miss. Native modules + electron itself
       // remain externalized — those need to be loaded via host bindings.
       externalizeDepsPlugin({
-        exclude: [
-          "@cloudstash/fs-datasource-engine",
-        ],
+        exclude: ["@cloudstash/fs-datasource-engine"],
       }),
     ],
     build: {
@@ -60,10 +58,7 @@ export default defineConfig({
     // lives at `scripts/preload-bundle.test.ts`.
     plugins: [
       externalizeDepsPlugin({
-        exclude: [
-          "@cloudstash/ipc-contracts",
-          "@cloudstash/ipc-contracts/sync-service-desktop",
-        ],
+        exclude: ["@cloudstash/ipc-contracts", "@cloudstash/ipc-contracts/sync-service-desktop"],
       }),
     ],
     build: {

@@ -203,13 +203,7 @@ function mimeFamilyForKey(key: string): DatasourceMimeFamily {
   if (ext === "mp3" || ext === "wav" || ext === "ogg" || ext === "flac") {
     return "audio";
   }
-  if (
-    ext === "zip" ||
-    ext === "tar" ||
-    ext === "gz" ||
-    ext === "7z" ||
-    ext === "rar"
-  ) {
+  if (ext === "zip" || ext === "tar" || ext === "gz" || ext === "7z" || ext === "rar") {
     return "archive";
   }
   if (
@@ -271,10 +265,7 @@ function buildFileEntry(
 }
 
 /** Build a folder DatasourceFileEntry from a `CommonPrefixes` entry. */
-function buildFolderEntry(
-  bucket: string,
-  prefix: string,
-): DatasourceFileEntry<"amazon-s3"> {
+function buildFolderEntry(bucket: string, prefix: string): DatasourceFileEntry<"amazon-s3"> {
   // Normalise: CommonPrefixes carry a trailing slash; strip for display name.
   const normalised = prefix.endsWith("/") ? prefix.slice(0, -1) : prefix;
   const name = basename(normalised);
@@ -316,8 +307,7 @@ function readCredsFromStored(credentials: StoredCredentials): S3CredsMeta {
       datasourceId: "<init>",
       retryable: false,
       raw: "s3-missing-credentials-fields",
-      message:
-        "S3 credentials must include accessKeyId, secretAccessKey, region, bucket",
+      message: "S3 credentials must include accessKeyId, secretAccessKey, region, bucket",
     });
   }
   const out: S3CredsMeta = {
@@ -413,8 +403,7 @@ export class S3Client extends BaseDatasourceClient<"amazon-s3"> {
             datasourceId: this.datasourceId,
             retryable: false,
             raw: "s3-credentials-form-validation-failed",
-            message:
-              "Missing required field: accessKeyId, secretAccessKey, region, bucket",
+            message: "Missing required field: accessKeyId, secretAccessKey, region, bucket",
           });
         }
         const submitted: S3CredsMeta = {
@@ -482,9 +471,7 @@ export class S3Client extends BaseDatasourceClient<"amazon-s3"> {
         Prefix: prefix,
         Delimiter: "/",
         MaxKeys: clampS3PageSize(options.pageSize),
-        ...(options.cursor !== undefined
-          ? { ContinuationToken: options.cursor }
-          : {}),
+        ...(options.cursor !== undefined ? { ContinuationToken: options.cursor } : {}),
       }),
     );
     for (const cp of resp.CommonPrefixes ?? []) {
@@ -507,9 +494,7 @@ export class S3Client extends BaseDatasourceClient<"amazon-s3"> {
       );
     }
     const nextCursor =
-      resp.IsTruncated && resp.NextContinuationToken
-        ? resp.NextContinuationToken
-        : null;
+      resp.IsTruncated && resp.NextContinuationToken ? resp.NextContinuationToken : null;
     return { entries: out, nextCursor };
   }
 
@@ -525,8 +510,7 @@ export class S3Client extends BaseDatasourceClient<"amazon-s3"> {
     // scope prefix and filter client-side. Large buckets should scope the
     // search (`scope`) to a bounded folder.
     const prefix = scope ? targetToKey(scope) : "";
-    const normalisedPrefix =
-      prefix === "" || prefix.endsWith("/") ? prefix : `${prefix}/`;
+    const normalisedPrefix = prefix === "" || prefix.endsWith("/") ? prefix : `${prefix}/`;
     const q = query.toLowerCase();
     const out: DatasourceFileEntry<"amazon-s3">[] = [];
     let continuationToken: string | undefined;
@@ -536,9 +520,7 @@ export class S3Client extends BaseDatasourceClient<"amazon-s3"> {
           Bucket: this.creds.bucket,
           Prefix: normalisedPrefix,
           // NO Delimiter here — search walks the entire subtree.
-          ...(continuationToken
-            ? { ContinuationToken: continuationToken }
-            : {}),
+          ...(continuationToken ? { ContinuationToken: continuationToken } : {}),
         }),
       );
       for (const obj of resp.Contents ?? []) {
@@ -553,9 +535,7 @@ export class S3Client extends BaseDatasourceClient<"amazon-s3"> {
           }),
         );
       }
-      continuationToken = resp.IsTruncated
-        ? resp.NextContinuationToken
-        : undefined;
+      continuationToken = resp.IsTruncated ? resp.NextContinuationToken : undefined;
     } while (continuationToken);
     return out;
   }
@@ -564,9 +544,7 @@ export class S3Client extends BaseDatasourceClient<"amazon-s3"> {
   // getMetadata — file: HeadObject; folder: synthesize via ListObjectsV2
   // -------------------------------------------------------------------------
 
-  protected override async doGetMetadataImpl(
-    target: Target,
-  ): Promise<FileMetadata<"amazon-s3">> {
+  protected override async doGetMetadataImpl(target: Target): Promise<FileMetadata<"amazon-s3">> {
     const rawKey = targetToKey(target);
     // Folder: caller passed a trailing-slash key; synthesize.
     if (rawKey.endsWith("/")) {
@@ -594,9 +572,7 @@ export class S3Client extends BaseDatasourceClient<"amazon-s3"> {
       new HeadObjectCommand({ Bucket: this.creds.bucket, Key: rawKey }),
     );
     return buildFileEntry(this.creds.bucket, rawKey, {
-      ...(typeof resp.ContentLength === "number"
-        ? { size: resp.ContentLength }
-        : {}),
+      ...(typeof resp.ContentLength === "number" ? { size: resp.ContentLength } : {}),
       ...(resp.LastModified ? { lastModified: resp.LastModified } : {}),
       ...(resp.ETag ? { etag: resp.ETag } : {}),
       ...(resp.StorageClass ? { storageClass: resp.StorageClass } : {}),
@@ -618,9 +594,7 @@ export class S3Client extends BaseDatasourceClient<"amazon-s3"> {
   ): Promise<DatasourceFileEntry<"amazon-s3">> {
     const parentKey = targetToKey(parent);
     const normalisedParent =
-      parentKey === "" || parentKey.endsWith("/")
-        ? parentKey
-        : `${parentKey}/`;
+      parentKey === "" || parentKey.endsWith("/") ? parentKey : `${parentKey}/`;
     const name = file.name ?? basename(file.path);
     const key = `${normalisedParent}${name}`;
     // Pre-compute the total so onProgress gets a stable denominator even if
@@ -684,9 +658,7 @@ export class S3Client extends BaseDatasourceClient<"amazon-s3"> {
 
   protected override async doDeleteFileImpl(target: Target): Promise<void> {
     const key = targetToKey(target);
-    await this.aws.send(
-      new DeleteObjectCommand({ Bucket: this.creds.bucket, Key: key }),
-    );
+    await this.aws.send(new DeleteObjectCommand({ Bucket: this.creds.bucket, Key: key }));
   }
 
   // -------------------------------------------------------------------------
@@ -793,8 +765,7 @@ export class S3Client extends BaseDatasourceClient<"amazon-s3"> {
       let chosenKey: string | null = null;
       let chosenName: string | null = null;
       for (let attempt = 1; attempt <= 99; attempt++) {
-        const candidateName =
-          attempt === 1 ? newName : `${base}-${attempt}${ext}`;
+        const candidateName = attempt === 1 ? newName : `${base}-${attempt}${ext}`;
         const candidateKey = `${parentPrefix}${candidateName}`;
         const exists = await this.headObjectExists(candidateKey);
         if (!exists) {
@@ -882,13 +853,9 @@ export class S3Client extends BaseDatasourceClient<"amazon-s3"> {
    * Non-404 errors from HeadObject (auth, transport) propagate via
    * `normalizeErrorImpl` so the caller surfaces the right taxonomy tag.
    */
-  private async introspectKey(
-    key: string,
-  ): Promise<"file" | "folder" | null> {
+  private async introspectKey(key: string): Promise<"file" | "folder" | null> {
     try {
-      await this.aws.send(
-        new HeadObjectCommand({ Bucket: this.creds.bucket, Key: key }),
-      );
+      await this.aws.send(new HeadObjectCommand({ Bucket: this.creds.bucket, Key: key }));
       return "file";
     } catch (err) {
       const normalized = this.normalizeErrorImpl(err);
@@ -923,9 +890,7 @@ export class S3Client extends BaseDatasourceClient<"amazon-s3"> {
    */
   private async headObjectExists(key: string): Promise<boolean> {
     try {
-      await this.aws.send(
-        new HeadObjectCommand({ Bucket: this.creds.bucket, Key: key }),
-      );
+      await this.aws.send(new HeadObjectCommand({ Bucket: this.creds.bucket, Key: key }));
       return true;
     } catch (err) {
       const normalized = this.normalizeErrorImpl(err);
@@ -984,8 +949,7 @@ export class S3Client extends BaseDatasourceClient<"amazon-s3"> {
     // The SDK's `Body` is `StreamingBlobTypes` — in Node it's a Readable.
     // Cast at the boundary; tests pass a Readable directly via the mock.
     const sourceStream = resp.Body as Readable;
-    const contentLength =
-      typeof resp.ContentLength === "number" ? resp.ContentLength : null;
+    const contentLength = typeof resp.ContentLength === "number" ? resp.ContentLength : null;
     const contentRange = parseContentRangeFromS3(resp.ContentRange);
 
     // Wrap source in a Transform so byte counting is inline with data flow.
@@ -1086,9 +1050,7 @@ export class S3Client extends BaseDatasourceClient<"amazon-s3"> {
         datasourceId: this.datasourceId,
         retryable,
         raw,
-        ...(extra.retryAfterMs !== undefined
-          ? { retryAfterMs: extra.retryAfterMs }
-          : {}),
+        ...(extra.retryAfterMs !== undefined ? { retryAfterMs: extra.retryAfterMs } : {}),
         ...(extra.message ? { message: extra.message } : {}),
       });
 
@@ -1124,20 +1086,13 @@ export class S3Client extends BaseDatasourceClient<"amazon-s3"> {
       return mk("auth-revoked", false);
     }
     // rate-limited
-    if (
-      name === "SlowDown" ||
-      name === "TooManyRequests" ||
-      status === 429 ||
-      status === 503
-    ) {
+    if (name === "SlowDown" || name === "TooManyRequests" || status === 429 || status === 503) {
       const retryAfterHeader = headers["retry-after"] ?? headers["Retry-After"];
       const retryAfterMs = retryAfterHeader
         ? Number.parseInt(retryAfterHeader, 10) * 1000
         : undefined;
       return mk("rate-limited", true, {
-        ...(retryAfterMs !== undefined && !Number.isNaN(retryAfterMs)
-          ? { retryAfterMs }
-          : {}),
+        ...(retryAfterMs !== undefined && !Number.isNaN(retryAfterMs) ? { retryAfterMs } : {}),
       });
     }
     // network-error
@@ -1175,11 +1130,7 @@ export class S3Client extends BaseDatasourceClient<"amazon-s3"> {
  * that cache clients per `(providerId, datasourceId)` MUST evict and rebuild
  * when creds change.
  */
-export const createS3Client: ProviderFactoryFn<"amazon-s3"> = (
-  datasourceId,
-  credentials,
-  ctx,
-) => {
+export const createS3Client: ProviderFactoryFn<"amazon-s3"> = (datasourceId, credentials, ctx) => {
   const creds = readCredsFromStored(credentials);
   return new S3Client({ datasourceId, ctx }, creds);
 };
@@ -1222,10 +1173,7 @@ export const createS3ClientForAuth: PreAuthFactoryFn<"amazon-s3"> = (
  * "invalid-datasource", retryable: false, message: "amazon-s3 credential
  * is missing <field>" })` on the first missing/invalid field.
  */
-export const validateS3CredentialShape: CredentialShapeValidator = (
-  credentials,
-  datasourceId,
-) => {
+export const validateS3CredentialShape: CredentialShapeValidator = (credentials, datasourceId) => {
   const authResult = (credentials as { authResult?: unknown }).authResult;
   if (authResult === null || typeof authResult !== "object") {
     throw new DatasourceError<"amazon-s3">({
@@ -1237,16 +1185,8 @@ export const validateS3CredentialShape: CredentialShapeValidator = (
       message: "amazon-s3 credential is missing authResult",
     });
   }
-  const meta = ((authResult as { meta?: unknown }).meta ?? {}) as Record<
-    string,
-    unknown
-  >;
-  for (const field of [
-    "accessKeyId",
-    "secretAccessKey",
-    "region",
-    "bucket",
-  ] as const) {
+  const meta = ((authResult as { meta?: unknown }).meta ?? {}) as Record<string, unknown>;
+  for (const field of ["accessKeyId", "secretAccessKey", "region", "bucket"] as const) {
     if (typeof meta[field] !== "string" || (meta[field] as string).length === 0) {
       throw new DatasourceError<"amazon-s3">({
         tag: DatasourceErrorTag.InvalidDatasource,

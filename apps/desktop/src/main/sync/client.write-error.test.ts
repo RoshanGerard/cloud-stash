@@ -76,10 +76,9 @@ describe("SyncClient socket.write synchronous throw", () => {
     // first call; subsequent internal writes (unlikely here) would also
     // throw, which is fine for this test's scope.
     const writeError = new Error("destroyed");
-    (socket as unknown as { write: (...args: unknown[]) => boolean }).write =
-      () => {
-        throw writeError;
-      };
+    (socket as unknown as { write: (...args: unknown[]) => boolean }).write = () => {
+      throw writeError;
+    };
 
     const client = new SyncClient(socket, { generateId: () => "wx-1" });
 
@@ -105,10 +104,9 @@ describe("SyncClient socket.write synchronous throw", () => {
     const socket = await connectClient(pipePath);
     sockets.push(socket);
 
-    (socket as unknown as { write: (...args: unknown[]) => boolean }).write =
-      () => {
-        throw new Error("destroyed");
-      };
+    (socket as unknown as { write: (...args: unknown[]) => boolean }).write = () => {
+      throw new Error("destroyed");
+    };
 
     const client = new SyncClient(socket, { generateId: () => "wx-2" });
 
@@ -119,9 +117,9 @@ describe("SyncClient socket.write synchronous throw", () => {
     const onUnhandled = (reason: unknown) => unhandled.push(reason);
     process.on("unhandledRejection", onUnhandled);
     try {
-      await expect(
-        client.request("sync:get-status", {}, { timeoutMs: 50 }),
-      ).rejects.toMatchObject({ message: "destroyed" });
+      await expect(client.request("sync:get-status", {}, { timeoutMs: 50 })).rejects.toMatchObject({
+        message: "destroyed",
+      });
 
       expect(client.pendingCount).toBe(0);
 

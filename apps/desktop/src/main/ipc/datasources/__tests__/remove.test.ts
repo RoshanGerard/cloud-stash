@@ -17,11 +17,7 @@ import { FIXTURE_SUMMARIES } from "./helpers.js";
 
 import { openDatabase, runMigrations } from "../../../db/database.js";
 import { DEFAULT_MIGRATIONS } from "../../../db/migrations.js";
-import {
-  getEngine,
-  initEngine,
-  resetEngineForTests,
-} from "../../../datasources/engine.js";
+import { getEngine, initEngine, resetEngineForTests } from "../../../datasources/engine.js";
 import type { SyncClient } from "../../../sync/client.js";
 import { handleDatasourcesList } from "../list.js";
 import { handleDatasourcesRemove } from "../remove.js";
@@ -39,9 +35,7 @@ describe("handleDatasourcesRemove", () => {
     const { registry } = getEngine();
     for (const summary of FIXTURE_SUMMARIES) {
       const seed =
-        summary.status === "paused"
-          ? { ...summary, status: "connected" as const }
-          : summary;
+        summary.status === "paused" ? { ...summary, status: "connected" as const } : summary;
       registry.add(seed);
       if (summary.status === "paused") {
         registry.setPaused(summary.id, true);
@@ -57,21 +51,14 @@ describe("handleDatasourcesRemove", () => {
   // Minimal SyncClient stub — only `deleteCredentials` is exercised here.
   // Cast via `unknown` so the partial shape type-checks without pretending
   // to implement the full interface.
-  function makeStubClient(
-    deleteCredentials: ReturnType<typeof vi.fn>,
-  ): SyncClient {
+  function makeStubClient(deleteCredentials: ReturnType<typeof vi.fn>): SyncClient {
     return { deleteCredentials } as unknown as SyncClient;
   }
 
   it("removes an existing datasource and returns { ok: true }", async () => {
     const target = handleDatasourcesList().datasources[0]!;
-    const client = makeStubClient(
-      vi.fn(async () => ({ deleted: true })),
-    );
-    const response = await handleDatasourcesRemove(
-      { datasourceId: target.id },
-      client,
-    );
+    const client = makeStubClient(vi.fn(async () => ({ deleted: true })));
+    const response = await handleDatasourcesRemove({ datasourceId: target.id }, client);
     expect(response).toEqual({ ok: true });
     const remaining = handleDatasourcesList().datasources;
     expect(remaining.some((ds) => ds.id === target.id)).toBe(false);
@@ -81,22 +68,15 @@ describe("handleDatasourcesRemove", () => {
     const { registry } = getEngine();
     const spy = vi.spyOn(registry, "remove");
     const target = handleDatasourcesList().datasources[0]!;
-    const client = makeStubClient(
-      vi.fn(async () => ({ deleted: true })),
-    );
+    const client = makeStubClient(vi.fn(async () => ({ deleted: true })));
     await handleDatasourcesRemove({ datasourceId: target.id }, client);
     expect(spy).toHaveBeenCalledWith(target.id);
   });
 
   it("throws for an unknown datasourceId rather than silently no-op-ing", async () => {
-    const client = makeStubClient(
-      vi.fn(async () => ({ deleted: true })),
-    );
+    const client = makeStubClient(vi.fn(async () => ({ deleted: true })));
     await expect(
-      handleDatasourcesRemove(
-        { datasourceId: "ds-does-not-exist" },
-        client,
-      ),
+      handleDatasourcesRemove({ datasourceId: "ds-does-not-exist" }, client),
     ).rejects.toThrow(/not found/i);
   });
 
@@ -104,9 +84,7 @@ describe("handleDatasourcesRemove", () => {
     const { factory } = getEngine();
     const factorySpy = vi.spyOn(factory, "create");
     const target = handleDatasourcesList().datasources[0]!;
-    const client = makeStubClient(
-      vi.fn(async () => ({ deleted: true })),
-    );
+    const client = makeStubClient(vi.fn(async () => ({ deleted: true })));
     await handleDatasourcesRemove({ datasourceId: target.id }, client);
     expect(factorySpy).not.toHaveBeenCalled();
   });
@@ -131,20 +109,18 @@ describe("handleDatasourcesRemove", () => {
   it("calls deleteCredentials AFTER registry.remove (not before)", async () => {
     const { registry } = getEngine();
     const calls: string[] = [];
-    const removeSpy = vi
-      .spyOn(registry, "remove")
-      .mockImplementation((id: string) => {
-        calls.push(`registry.remove(${id})`);
-        // Delegate to the real impl via the spy-restored prototype.
-        // We can't easily call the original here without restoring; use a
-        // direct DB delete to mirror behaviour.
-        const info = (
-          registry as unknown as {
-            removeRowStmt: { run: (id: string) => { changes: number } };
-          }
-        ).removeRowStmt.run(id);
-        return info.changes > 0;
-      });
+    const removeSpy = vi.spyOn(registry, "remove").mockImplementation((id: string) => {
+      calls.push(`registry.remove(${id})`);
+      // Delegate to the real impl via the spy-restored prototype.
+      // We can't easily call the original here without restoring; use a
+      // direct DB delete to mirror behaviour.
+      const info = (
+        registry as unknown as {
+          removeRowStmt: { run: (id: string) => { changes: number } };
+        }
+      ).removeRowStmt.run(id);
+      return info.changes > 0;
+    });
     const deleteCredentials = vi.fn(async (params: { datasourceId: string }) => {
       calls.push(`deleteCredentials(${params.datasourceId})`);
       return { deleted: true };
@@ -154,10 +130,7 @@ describe("handleDatasourcesRemove", () => {
 
     await handleDatasourcesRemove({ datasourceId: target.id }, client);
 
-    expect(calls).toEqual([
-      `registry.remove(${target.id})`,
-      `deleteCredentials(${target.id})`,
-    ]);
+    expect(calls).toEqual([`registry.remove(${target.id})`, `deleteCredentials(${target.id})`]);
     removeSpy.mockRestore();
   });
 
@@ -169,9 +142,9 @@ describe("handleDatasourcesRemove", () => {
     const client = makeStubClient(deleteCredentials);
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
-    await expect(
-      handleDatasourcesRemove({ datasourceId: target.id }, client),
-    ).resolves.toEqual({ ok: true });
+    await expect(handleDatasourcesRemove({ datasourceId: target.id }, client)).resolves.toEqual({
+      ok: true,
+    });
 
     // The local row was still removed (best-effort cleanup MUST NOT block
     // the user-facing remove).
@@ -191,9 +164,9 @@ describe("handleDatasourcesRemove", () => {
     const deleteCredentials = vi.fn(async () => ({ deleted: true }));
     const client = makeStubClient(deleteCredentials);
 
-    await expect(
-      handleDatasourcesRemove({ datasourceId: "ds-missing" }, client),
-    ).rejects.toThrow(/not found/i);
+    await expect(handleDatasourcesRemove({ datasourceId: "ds-missing" }, client)).rejects.toThrow(
+      /not found/i,
+    );
 
     expect(deleteCredentials).not.toHaveBeenCalled();
   });

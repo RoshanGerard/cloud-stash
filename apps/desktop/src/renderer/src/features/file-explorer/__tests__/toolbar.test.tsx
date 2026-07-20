@@ -1,12 +1,6 @@
 /** @vitest-environment jsdom */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  act,
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-} from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 
 import { createExplorerStore } from "../store.js";
@@ -56,12 +50,11 @@ function openMenu(): void {
 describe("Toolbar — View menu", () => {
   beforeEach(() => {
     if (!("ResizeObserver" in window)) {
-      (window as unknown as { ResizeObserver: unknown }).ResizeObserver =
-        class MockResizeObserver {
-          observe() {}
-          unobserve() {}
-          disconnect() {}
-        };
+      (window as unknown as { ResizeObserver: unknown }).ResizeObserver = class MockResizeObserver {
+        observe() {}
+        unobserve() {}
+        disconnect() {}
+      };
     }
     window.localStorage.clear();
   });
@@ -76,8 +69,7 @@ describe("Toolbar — View menu", () => {
     render(<Toolbar store={store} />);
     const trigger = getTrigger();
     expect(trigger).toBeInTheDocument();
-    const label =
-      trigger.getAttribute("aria-label") ?? trigger.textContent ?? "";
+    const label = trigger.getAttribute("aria-label") ?? trigger.textContent ?? "";
     expect(label.toLowerCase()).toMatch(/view/);
   });
 
@@ -106,9 +98,7 @@ describe("Toolbar — View menu", () => {
     openMenu();
 
     const items = await screen.findAllByRole("menuitemradio");
-    const checkedStates = items.map((el) =>
-      el.getAttribute("aria-checked"),
-    );
+    const checkedStates = items.map((el) => el.getAttribute("aria-checked"));
     const detailsIdx = EXPECTED_ITEMS.findIndex((o) => o.value === "details");
     expect(checkedStates[detailsIdx]).toBe("true");
     // All other items are not checked.
@@ -165,8 +155,7 @@ describe("Toolbar — Upload button (task 6.4 / 6.5)", () => {
     const store = makeStore();
     render(<Toolbar store={store} onUploadClick={() => {}} />);
     const upload = screen.getByTestId("file-explorer-upload-trigger");
-    const name =
-      upload.getAttribute("aria-label") ?? upload.textContent ?? "";
+    const name = upload.getAttribute("aria-label") ?? upload.textContent ?? "";
     expect(name.toLowerCase()).toMatch(/upload/);
   });
 
@@ -175,9 +164,7 @@ describe("Toolbar — Upload button (task 6.4 / 6.5)", () => {
     render(<Toolbar store={store} onUploadClick={() => {}} />);
     const toolbar = screen.getByRole("toolbar", { name: /explorer toolbar/i });
     const firstButton = toolbar.querySelector("button");
-    expect(firstButton?.getAttribute("data-testid")).toBe(
-      "file-explorer-upload-trigger",
-    );
+    expect(firstButton?.getAttribute("data-testid")).toBe("file-explorer-upload-trigger");
   });
 
   it("toolbar exposes the full control set (Upload, Delete, Search, View, Details)", () => {
@@ -186,21 +173,11 @@ describe("Toolbar — Upload button (task 6.4 / 6.5)", () => {
     // this assertion checks the shipping surface only.
     const store = makeStore();
     render(<Toolbar store={store} onUploadClick={() => {}} />);
-    expect(
-      screen.getByTestId("file-explorer-upload-trigger"),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByTestId("file-explorer-delete-trigger"),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByTestId("file-explorer-search-trigger"),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByTestId("file-explorer-view-trigger"),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByTestId("file-explorer-details-toggle"),
-    ).toBeInTheDocument();
+    expect(screen.getByTestId("file-explorer-upload-trigger")).toBeInTheDocument();
+    expect(screen.getByTestId("file-explorer-delete-trigger")).toBeInTheDocument();
+    expect(screen.getByTestId("file-explorer-search-trigger")).toBeInTheDocument();
+    expect(screen.getByTestId("file-explorer-view-trigger")).toBeInTheDocument();
+    expect(screen.getByTestId("file-explorer-details-toggle")).toBeInTheDocument();
   });
 
   it("activates onUploadClick when enabled", () => {

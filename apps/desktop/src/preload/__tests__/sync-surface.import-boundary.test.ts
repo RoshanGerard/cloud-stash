@@ -17,11 +17,7 @@ import { describe, expect, it } from "vitest";
 //              wire-format types like RequestFrame / Frame)
 //   FORBIDDEN: `@cloudstash/ipc-contracts/sync-service/<anything>` (sub-paths of the wire)
 
-const PRELOAD_PATH = resolve(
-  __dirname,
-  "..",
-  "index.ts",
-);
+const PRELOAD_PATH = resolve(__dirname, "..", "index.ts");
 
 describe("preload import-boundary: sync-service wire subpath must not be imported", () => {
   it("preload/index.ts does not import from @cloudstash/ipc-contracts/sync-service", () => {

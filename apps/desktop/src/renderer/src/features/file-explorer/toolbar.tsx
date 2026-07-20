@@ -3,10 +3,7 @@
 import { useEffect, useRef, useSyncExternalStore } from "react";
 
 import type { FilesSearchResponse } from "@cloudstash/ipc-contracts";
-import {
-  FILES_PROVIDER_SEARCH_DEFERRED_MESSAGE,
-  FilesErrorTag,
-} from "@cloudstash/ipc-contracts";
+import { FILES_PROVIDER_SEARCH_DEFERRED_MESSAGE, FilesErrorTag } from "@cloudstash/ipc-contracts";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -85,29 +82,14 @@ export function Toolbar({
   onUploadClick,
   uploadBlockedReason,
 }: ToolbarProps) {
-  const state = useSyncExternalStore(
-    store.subscribe,
-    store.getSnapshot,
-    store.getSnapshot,
-  );
+  const state = useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
   return (
-    <div
-      role="toolbar"
-      aria-label="Explorer toolbar"
-      className="flex items-center gap-1"
-    >
+    <div role="toolbar" aria-label="Explorer toolbar" className="flex items-center gap-1">
       {/* Upload leads the toolbar per tasks.md §6.4 ("placed first"). The
           spec's toolbar-controls list (Upload, Delete, Sort, Search, View,
           Details) also reads it first. */}
-      <UploadButton
-        onClick={onUploadClick}
-        blockedReason={uploadBlockedReason ?? null}
-      />
-      {state.search.active ? (
-        <SearchInput store={store} />
-      ) : (
-        <SearchButton store={store} />
-      )}
+      <UploadButton onClick={onUploadClick} blockedReason={uploadBlockedReason ?? null} />
+      {state.search.active ? <SearchInput store={store} /> : <SearchButton store={store} />}
       <DeleteButton store={store} onDelete={onDeleteSelection} />
       <ViewMenu store={store} />
       <DetailsToggle store={store} />
@@ -179,19 +161,21 @@ function SearchInput({ store }: SearchInputProps) {
   const dispatchSearch = async (query: string): Promise<void> => {
     const trimmed = query.trim();
     if (trimmed.length === 0) return;
-    const api = (globalThis as unknown as {
-      window?: {
-        api?: {
-          files?: {
-            search?: (req: {
-              datasourceId: string;
-              query: string;
-              path: string;
-            }) => Promise<FilesSearchResponse>;
+    const api = (
+      globalThis as unknown as {
+        window?: {
+          api?: {
+            files?: {
+              search?: (req: {
+                datasourceId: string;
+                query: string;
+                path: string;
+              }) => Promise<FilesSearchResponse>;
+            };
           };
         };
-      };
-    }).window?.api?.files?.search;
+      }
+    ).window?.api?.files?.search;
     if (api === undefined) return;
     const response = await api({
       datasourceId: store.datasourceId,
@@ -199,11 +183,7 @@ function SearchInput({ store }: SearchInputProps) {
       path: "/",
     });
     if (response.ok) {
-      store.setSearchResults(
-        response.value.entries,
-        response.value.truncated,
-        false,
-      );
+      store.setSearchResults(response.value.entries, response.value.truncated, false);
       return;
     }
     // Provider-native-search-not-wired is encoded as tag:"other" with the
@@ -241,11 +221,7 @@ interface DeleteButtonProps {
 }
 
 function DeleteButton({ store, onDelete }: DeleteButtonProps) {
-  const state = useSyncExternalStore(
-    store.subscribe,
-    store.getSnapshot,
-    store.getSnapshot,
-  );
+  const state = useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
   const disabled = state.selection.size === 0;
   return (
     <Button
@@ -267,11 +243,7 @@ interface DetailsToggleProps {
 }
 
 function DetailsToggle({ store }: DetailsToggleProps) {
-  const state = useSyncExternalStore(
-    store.subscribe,
-    store.getSnapshot,
-    store.getSnapshot,
-  );
+  const state = useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
   const open = state.detailsPaneOpen;
   return (
     <Button
@@ -293,11 +265,7 @@ interface ViewMenuProps {
 }
 
 function ViewMenu({ store }: ViewMenuProps) {
-  const state = useSyncExternalStore(
-    store.subscribe,
-    store.getSnapshot,
-    store.getSnapshot,
-  );
+  const state = useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
 
   return (
     <DropdownMenu>

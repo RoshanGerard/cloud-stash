@@ -36,14 +36,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const repoRoot = path.resolve(__dirname, "..");
 
-const RENDERER_SRC = path.join(
-  repoRoot,
-  "apps",
-  "desktop",
-  "src",
-  "renderer",
-  "src",
-);
+const RENDERER_SRC = path.join(repoRoot, "apps", "desktop", "src", "renderer", "src");
 
 const SCAN_ROOTS = [
   path.join(RENDERER_SRC, "features"),
@@ -61,9 +54,7 @@ const SCAN_ROOTS = [
 // @microsoft/microsoft-graph-client) and scoped-package prefixes (@aws-sdk/*)
 // via the `scopedPrefix` flag. Line-anchored so mentions inside comments or
 // JSX string props can't trigger false positives.
-type ForbiddenSpec =
-  | { kind: "exact"; specifier: string }
-  | { kind: "prefix"; prefix: string };
+type ForbiddenSpec = { kind: "exact"; specifier: string } | { kind: "prefix"; prefix: string };
 
 const FORBIDDEN: ForbiddenSpec[] = [
   { kind: "exact", specifier: "googleapis" },
@@ -81,9 +72,7 @@ function buildImportRegex(spec: ForbiddenSpec): RegExp {
   // is still caught — `@aws-sdk/` resolves to `@aws-sdk/index.js` which is
   // meaningless but the guardrail shouldn't be lenient about near-misses).
   const specPattern =
-    spec.kind === "exact"
-      ? escapeRegex(spec.specifier)
-      : `${escapeRegex(spec.prefix)}[^"'\\s]+`;
+    spec.kind === "exact" ? escapeRegex(spec.specifier) : `${escapeRegex(spec.prefix)}[^"'\\s]+`;
   // `from "<spec>"` (with or without a side-effect-only form).
   return new RegExp(
     `^(?:import\\s+[^'"]+from\\s+["']${specPattern}["']|import\\s+["']${specPattern}["'])`,
@@ -118,10 +107,7 @@ function findViolationsInText(text: string, file: string): Violation[] {
   return violations;
 }
 
-function offsetToLineCol(
-  text: string,
-  offset: number,
-): { line: number; column: number } {
+function offsetToLineCol(text: string, offset: number): { line: number; column: number } {
   let line = 1;
   let column = 1;
   for (let i = 0; i < offset && i < text.length; i++) {
@@ -159,10 +145,7 @@ function walkSource(root: string, out: string[]): void {
 
 describe("provider-sdk forbidden-import guardrail — detection", () => {
   it("flags a named import from googleapis", () => {
-    const v = findViolationsInText(
-      'import { google } from "googleapis";\n',
-      "fake.ts",
-    );
+    const v = findViolationsInText('import { google } from "googleapis";\n', "fake.ts");
     expect(v.length).toBe(1);
     expect(v[0]!.specifier).toBe("googleapis");
     expect(v[0]!.line).toBe(1);
@@ -179,10 +162,7 @@ describe("provider-sdk forbidden-import guardrail — detection", () => {
   });
 
   it("flags a named import from @aws-sdk/client-s3", () => {
-    const v = findViolationsInText(
-      'import { S3Client } from "@aws-sdk/client-s3";\n',
-      "fake.ts",
-    );
+    const v = findViolationsInText('import { S3Client } from "@aws-sdk/client-s3";\n', "fake.ts");
     expect(v.length).toBe(1);
     expect(v[0]!.specifier).toBe("@aws-sdk/*");
   });
@@ -203,51 +183,38 @@ describe("provider-sdk forbidden-import guardrail — detection", () => {
   });
 
   it("flags a single-quoted import specifier", () => {
-    const v = findViolationsInText(
-      "import { S3Client } from '@aws-sdk/client-s3';\n",
-      "fake.ts",
-    );
+    const v = findViolationsInText("import { S3Client } from '@aws-sdk/client-s3';\n", "fake.ts");
     expect(v.length).toBe(1);
     expect(v[0]!.specifier).toBe("@aws-sdk/*");
   });
 
   it("does NOT flag a near-miss like googleapis-common (different specifier)", () => {
-    const v = findViolationsInText(
-      'import { x } from "googleapis-common";\n',
-      "fake.ts",
-    );
+    const v = findViolationsInText('import { x } from "googleapis-common";\n', "fake.ts");
     expect(v).toEqual([]);
   });
 
   it("does NOT flag a near-miss like @microsoft/microsoft-graph (suffix differs)", () => {
-    const v = findViolationsInText(
-      'import { x } from "@microsoft/microsoft-graph";\n',
-      "fake.ts",
-    );
+    const v = findViolationsInText('import { x } from "@microsoft/microsoft-graph";\n', "fake.ts");
     expect(v).toEqual([]);
   });
 
   it("does NOT flag @aws-sdk as a bare package name (no subpath after the slash)", () => {
     // `@aws-sdk` with no slash is not a real package but should not match
     // the `@aws-sdk/` prefix rule either.
-    const v = findViolationsInText(
-      'import { x } from "@aws-sdk";\n',
-      "fake.ts",
-    );
+    const v = findViolationsInText('import { x } from "@aws-sdk";\n', "fake.ts");
     expect(v).toEqual([]);
   });
 
   it("does NOT flag mentions of forbidden package names inside comments", () => {
     const v = findViolationsInText(
-      '// TODO: integrate with googleapis and @aws-sdk/client-s3\nconst x = 1;\n',
+      "// TODO: integrate with googleapis and @aws-sdk/client-s3\nconst x = 1;\n",
       "fake.ts",
     );
     expect(v).toEqual([]);
   });
 
   it("reports accurate line and column for an import on line 3", () => {
-    const text =
-      'const a = 1;\nconst b = 2;\nimport { google } from "googleapis";\n';
+    const text = 'const a = 1;\nconst b = 2;\nimport { google } from "googleapis";\n';
     const v = findViolationsInText(text, "x.ts");
     expect(v.length).toBe(1);
     expect(v[0]!.line).toBe(3);
@@ -261,10 +228,7 @@ describe("provider-sdk forbidden-import guardrail — renderer code is clean", (
     for (const root of SCAN_ROOTS) {
       walkSource(root, files);
     }
-    expect(
-      files.length,
-      "expected at least one renderer source file to scan",
-    ).toBeGreaterThan(0);
+    expect(files.length, "expected at least one renderer source file to scan").toBeGreaterThan(0);
 
     const violations: Violation[] = [];
     for (const file of files) {
@@ -278,10 +242,7 @@ describe("provider-sdk forbidden-import guardrail — renderer code is clean", (
       violations,
       violations.length
         ? `Renderer must not import provider SDKs directly. Route through main via the preload IPC bridge.\n${violations
-            .map(
-              (v) =>
-                `  ${v.file}:${v.line}:${v.column}  [${v.specifier}]  ${v.match}`,
-            )
+            .map((v) => `  ${v.file}:${v.line}:${v.column}  [${v.specifier}]  ${v.match}`)
             .join("\n")}`
         : "",
     ).toEqual([]);

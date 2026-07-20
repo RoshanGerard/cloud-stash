@@ -129,10 +129,7 @@ export interface ToastApi {
       action?: { label: string; onClick: () => void };
     },
   ): string | number;
-  success(
-    message: string,
-    opts?: { id?: string | number; duration?: number },
-  ): string | number;
+  success(message: string, opts?: { id?: string | number; duration?: number }): string | number;
   error(
     message: string,
     opts?: {
@@ -199,21 +196,16 @@ export interface UploadJobToaster extends UploadToaster {
 
 function sonnerAdapter(): ToastApi {
   return {
-    loading: (message, opts) =>
-      sonnerToast.loading(message, opts) as string | number,
-    success: (message, opts) =>
-      sonnerToast.success(message, opts) as string | number,
-    error: (message, opts) =>
-      sonnerToast.error(message, opts) as string | number,
+    loading: (message, opts) => sonnerToast.loading(message, opts) as string | number,
+    success: (message, opts) => sonnerToast.success(message, opts) as string | number,
+    error: (message, opts) => sonnerToast.error(message, opts) as string | number,
     dismiss: (id) => {
       sonnerToast.dismiss(id);
     },
   };
 }
 
-function resolveEventApi(
-  injected: UploadEventApi | undefined,
-): UploadEventApi {
+function resolveEventApi(injected: UploadEventApi | undefined): UploadEventApi {
   if (injected) return injected;
   // Production fallback: subscribe to `window.api.sync.onEvent` and
   // filter to the four upload kinds. The renderer-facing `SyncEvent`
@@ -244,9 +236,7 @@ function resolveEventApi(
       window?: {
         api?: {
           sync?: {
-            onEvent?: (
-              cb: (event: LooseEvent) => void,
-            ) => () => void;
+            onEvent?: (cb: (event: LooseEvent) => void) => () => void;
           };
         };
       };
@@ -267,9 +257,7 @@ function resolveEventApi(
   };
 }
 
-function resolveSyncApi(
-  injected: SyncActionsApi | undefined,
-): SyncActionsApi {
+function resolveSyncApi(injected: SyncActionsApi | undefined): SyncActionsApi {
   if (injected) return injected;
   // Production fallback: pull from the preload bridge. Lazy resolution —
   // we look up `window.api.sync.cancelUpload` at click time so the
@@ -291,9 +279,7 @@ function resolveSyncApi(
         }
       ).window?.api?.sync?.cancelUpload;
       if (typeof fn !== "function") {
-        throw new Error(
-          "createUploadJobToaster: window.api.sync.cancelUpload is unavailable",
-        );
+        throw new Error("createUploadJobToaster: window.api.sync.cancelUpload is unavailable");
       }
       return fn(req);
     },
@@ -314,10 +300,7 @@ function formatProgressMessage(
   bytesTotal: number | null,
 ): string {
   if (bytesTotal !== null && bytesTotal > 0) {
-    const pct = Math.max(
-      0,
-      Math.min(100, Math.round((100 * bytesUploaded) / bytesTotal)),
-    );
+    const pct = Math.max(0, Math.min(100, Math.round((100 * bytesUploaded) / bytesTotal)));
     return `Uploading ${basename} — ${pct}%`;
   }
   return `Uploading ${basename}…`;
@@ -340,9 +323,7 @@ interface ToastEntry {
   readonly terminal?: boolean;
 }
 
-export function createUploadJobToaster(
-  deps?: UploadToasterDeps,
-): UploadJobToaster {
+export function createUploadJobToaster(deps?: UploadToasterDeps): UploadJobToaster {
   const toast: ToastApi = deps?.toast ?? sonnerAdapter();
   const eventApi = resolveEventApi(deps?.eventApi);
   const syncApi = resolveSyncApi(deps?.syncApi);
@@ -379,15 +360,10 @@ export function createUploadJobToaster(
     const existing = tracker.get(uploadJobId);
 
     if (event.kind === "uploading") {
-      const basename =
-        existing?.basename ?? basenameFromPath(event.payload.targetPath);
+      const basename = existing?.basename ?? basenameFromPath(event.payload.targetPath);
       if (existing) {
         toast.loading(
-          formatProgressMessage(
-            basename,
-            event.payload.bytesUploaded,
-            event.payload.bytesTotal,
-          ),
+          formatProgressMessage(basename, event.payload.bytesUploaded, event.payload.bytesTotal),
           {
             id: existing.toastId,
             action: buildCancelAction(uploadJobId),
@@ -399,11 +375,7 @@ export function createUploadJobToaster(
         // onJobDispatched ran out of order). Spawn a fresh toast.
         const initialId = generateToastId();
         const toastId = toast.loading(
-          formatProgressMessage(
-            basename,
-            event.payload.bytesUploaded,
-            event.payload.bytesTotal,
-          ),
+          formatProgressMessage(basename, event.payload.bytesUploaded, event.payload.bytesTotal),
           {
             id: initialId,
             action: buildCancelAction(uploadJobId),
@@ -419,8 +391,7 @@ export function createUploadJobToaster(
       // terminal event, do not re-render. (Defensive — see download
       // toaster's `terminal` docstring for the race window.)
       if (existing?.terminal === true) return;
-      const basename =
-        existing?.basename ?? basenameFromPath(event.payload.targetPath);
+      const basename = existing?.basename ?? basenameFromPath(event.payload.targetPath);
       const toastId = existing?.toastId ?? generateToastId();
       toast.success(`Uploaded ${basename}`, {
         id: toastId,
@@ -433,8 +404,7 @@ export function createUploadJobToaster(
 
     if (event.kind === "upload-failed") {
       if (existing?.terminal === true) return;
-      const basename =
-        existing?.basename ?? basenameFromPath(event.payload.targetPath);
+      const basename = existing?.basename ?? basenameFromPath(event.payload.targetPath);
       const retry = existing?.retry;
       const toastId = existing?.toastId ?? generateToastId();
       const reason = event.payload.message

@@ -13,11 +13,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { openDatabase, runMigrations } from "../db/database.js";
 import { DEFAULT_MIGRATIONS } from "../db/migrations.js";
-import {
-  getEngine,
-  initEngine,
-  resetEngineForTests,
-} from "./engine.js";
+import { getEngine, initEngine, resetEngineForTests } from "./engine.js";
 
 describe("engine singleton (Phase 9c)", () => {
   beforeEach(() => {

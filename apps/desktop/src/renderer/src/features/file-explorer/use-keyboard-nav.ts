@@ -73,13 +73,8 @@ export function useKeyboardNav(
   store: ExplorerStore,
   options: KeyboardNavOptions,
 ): UseKeyboardNavResult {
-  const {
-    entries,
-    onActivate,
-    onRenameRequested,
-    onDeleteRequested,
-    onContextMenuRequested,
-  } = options;
+  const { entries, onActivate, onRenameRequested, onDeleteRequested, onContextMenuRequested } =
+    options;
   const [focusedId, setFocusedIdState] = useState<string | null>(null);
   // Mirror focusedId in a ref so rapid synchronous onKeyDown calls see the
   // updated value without waiting for a re-render. Without this, two
@@ -111,10 +106,7 @@ export function useKeyboardNav(
       // itself implies non-empty entries (focus can only be seeded from
       // within the list). Kept here (ahead of the switch) so they don't
       // tangle with the arrow-key case block below.
-      if (
-        (event.shiftKey && event.key === "F10") ||
-        event.key === "ContextMenu"
-      ) {
+      if ((event.shiftKey && event.key === "F10") || event.key === "ContextMenu") {
         const currentFocus = focusedIdRef.current;
         if (currentFocus === null) return;
         const entry = entries.find((e) => e.id === currentFocus);
@@ -128,9 +120,7 @@ export function useKeyboardNav(
 
       const currentFocus = focusedIdRef.current;
       const currentIdx =
-        currentFocus === null
-          ? -1
-          : entries.findIndex((e) => e.id === currentFocus);
+        currentFocus === null ? -1 : entries.findIndex((e) => e.id === currentFocus);
 
       const focus = (idx: number): void => {
         const target = entries[idx];
@@ -148,16 +138,14 @@ export function useKeyboardNav(
       switch (event.key) {
         case "ArrowDown": {
           event.preventDefault();
-          const nextIdx =
-            currentIdx < 0 ? 0 : Math.min(entries.length - 1, currentIdx + 1);
+          const nextIdx = currentIdx < 0 ? 0 : Math.min(entries.length - 1, currentIdx + 1);
           if (event.shiftKey) extendTo(nextIdx);
           else focus(nextIdx);
           return;
         }
         case "ArrowUp": {
           event.preventDefault();
-          const nextIdx =
-            currentIdx < 0 ? 0 : Math.max(0, currentIdx - 1);
+          const nextIdx = currentIdx < 0 ? 0 : Math.max(0, currentIdx - 1);
           if (event.shiftKey) extendTo(nextIdx);
           else focus(nextIdx);
           return;

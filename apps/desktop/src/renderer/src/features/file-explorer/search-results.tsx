@@ -77,7 +77,8 @@ const PROVIDER_HUMAN_NAME: Record<ProviderKind, string> = {
  * renderer bundle) and degrades to a broken-link-with-visible-text in
  * jsdom, which is fine for the unit tests.
  */
-const DEFERRED_DOCS_HREF = "./openspec/changes/archive/2026-04-21-ui-file-explorer/file-explorer.md#deferred-work";
+const DEFERRED_DOCS_HREF =
+  "./openspec/changes/archive/2026-04-21-ui-file-explorer/file-explorer.md#deferred-work";
 
 export interface SearchResultsProps {
   store: ExplorerStore;
@@ -97,16 +98,8 @@ export interface SearchResultsProps {
   onResultActivate?: (entry: FileEntry) => void;
 }
 
-export function SearchResults({
-  store,
-  providerKind,
-  onResultActivate,
-}: SearchResultsProps) {
-  const state = useSyncExternalStore(
-    store.subscribe,
-    store.getSnapshot,
-    store.getSnapshot,
-  );
+export function SearchResults({ store, providerKind, onResultActivate }: SearchResultsProps) {
+  const state = useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
   const results = state.search.results ?? [];
   const deferred = state.search.providerSearchDeferred === true;
   const providerName = PROVIDER_HUMAN_NAME[providerKind];
@@ -146,15 +139,11 @@ export function SearchResults({
             {`Native search for ${providerName} is not available yet`}
           </p>
           <p className="text-muted-foreground">
-            We&apos;re planning this as part of the provider-search follow-up.
-            In the meantime, browse folders directly or try a different
-            datasource.
+            We&apos;re planning this as part of the provider-search follow-up. In the meantime,
+            browse folders directly or try a different datasource.
           </p>
           <p>
-            <a
-              href={DEFERRED_DOCS_HREF}
-              className="text-foreground underline"
-            >
+            <a href={DEFERRED_DOCS_HREF} className="text-foreground underline">
               See deferred-work docs
             </a>
           </p>
@@ -162,11 +151,7 @@ export function SearchResults({
       ) : (
         <ul className="min-h-0 flex-1 overflow-auto">
           {results.map((entry) => (
-            <SearchResultRow
-              key={entry.id}
-              entry={entry}
-              onActivate={onResultActivate}
-            />
+            <SearchResultRow key={entry.id} entry={entry} onActivate={onResultActivate} />
           ))}
         </ul>
       )}
@@ -208,17 +193,11 @@ function SearchResultRow({ entry, onActivate }: SearchResultRowProps) {
       )}
     >
       <div className="flex w-8 shrink-0 items-center justify-center">
-        <Icon
-          name={iconName}
-          aria-hidden
-          className="text-muted-foreground size-4"
-        />
+        <Icon name={iconName} aria-hidden className="text-muted-foreground size-4" />
       </div>
       <div className="flex min-w-0 flex-1 flex-col">
         <span className="truncate">{entry.name}</span>
-        <span className="text-muted-foreground truncate text-xs">
-          {entry.parentPath}
-        </span>
+        <span className="text-muted-foreground truncate text-xs">{entry.parentPath}</span>
       </div>
     </li>
   );

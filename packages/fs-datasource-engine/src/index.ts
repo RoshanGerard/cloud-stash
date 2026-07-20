@@ -67,10 +67,7 @@ export type { OAuthAppConfig, PreAuthConfig } from "./auth-types.js";
 // suite: `strategies/s3-client.ts`, `strategies/onedrive-client.ts`, and
 // `strategies/googledrive-client.ts`. The integrity validation still
 // applies to any future registration.
-export {
-  createClientFactory,
-  createDefaultProviderRegistry,
-} from "./factory.js";
+export { createClientFactory, createDefaultProviderRegistry } from "./factory.js";
 export type {
   ClientFactory,
   CredentialShapeValidator,

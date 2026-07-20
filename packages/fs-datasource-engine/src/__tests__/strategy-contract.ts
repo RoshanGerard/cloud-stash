@@ -59,9 +59,7 @@ export interface StrategyContractFixture {
    * invoke `client.listDirectory({ kind: "path", path: rootPath })` and
    * expect the returned entries to include at least a file AND a folder.
    */
-  primeListOk(opts: {
-    rootPath: string;
-  }): void;
+  primeListOk(opts: { rootPath: string }): void;
 
   /** Prime `getMetadata` for `targetPath` to reject as 404 / not-found. */
   primeGetMetadata404(targetPath: string): void;
@@ -150,9 +148,7 @@ export interface StrategyContractFixture {
    * The hook is invoked AFTER the user signal aborts and the strategy's
    * promise rejects with `cancelled`.
    */
-  observedFreshCancelCleanup(opts: {
-    userSignal: AbortSignal;
-  }): boolean;
+  observedFreshCancelCleanup(opts: { userSignal: AbortSignal }): boolean;
 
   /** Prime a successful delete. The scenario invokes
    * `client.delete({ kind: "path", path: targetPath }, "file")`. */
@@ -373,9 +369,7 @@ export function runStrategyContractSuite<T extends DatasourceType>(
       // paginated shape — an `entries` array plus an opaque `nextCursor`
       // (`string | null`), never a bare array.
       expect(Array.isArray(result.entries)).toBe(true);
-      expect(
-        result.nextCursor === null || typeof result.nextCursor === "string",
-      ).toBe(true);
+      expect(result.nextCursor === null || typeof result.nextCursor === "string").toBe(true);
       const entries = result.entries as DatasourceFileEntry<T>[];
       expect(entries.length).toBeGreaterThan(0);
       for (const e of entries) {
@@ -401,9 +395,7 @@ export function runStrategyContractSuite<T extends DatasourceType>(
         // handle-form call does not throw.
         fixture.resetMock();
         fixture.primeListOk({ rootPath: "/" });
-        await expect(
-          client.listDirectory({ kind: "handle", handle: "" }),
-        ).resolves.toBeDefined();
+        await expect(client.listDirectory({ kind: "handle", handle: "" })).resolves.toBeDefined();
         return;
       }
       fixture.resetMock();
@@ -413,10 +405,9 @@ export function runStrategyContractSuite<T extends DatasourceType>(
         handle: folder.handle,
       });
       expect(Array.isArray(handleResult.entries)).toBe(true);
-      expect(
-        handleResult.nextCursor === null ||
-          typeof handleResult.nextCursor === "string",
-      ).toBe(true);
+      expect(handleResult.nextCursor === null || typeof handleResult.nextCursor === "string").toBe(
+        true,
+      );
     });
 
     it("uploadFile(parent, { path }) resolves with the entry, drives onProgress monotonically, and (where applicable) populates the strategy's path-handle LRU", async () => {
@@ -458,9 +449,7 @@ export function runStrategyContractSuite<T extends DatasourceType>(
       // those cases the final `loaded` matches `total === 0` trivially.
       expect(progressCalls.length).toBeGreaterThanOrEqual(1);
       for (let i = 1; i < progressCalls.length; i++) {
-        expect(progressCalls[i]!.loaded).toBeGreaterThanOrEqual(
-          progressCalls[i - 1]!.loaded,
-        );
+        expect(progressCalls[i]!.loaded).toBeGreaterThanOrEqual(progressCalls[i - 1]!.loaded);
       }
       const final = progressCalls[progressCalls.length - 1]!;
       expect(final.loaded).toBe(final.total);
@@ -474,9 +463,8 @@ export function runStrategyContractSuite<T extends DatasourceType>(
         // Cache shape differs between Drive (`{ fileId, ambiguousSiblings? }`)
         // and OneDrive (`string`), so we only assert presence — not a
         // particular value shape.
-        const cache = (
-          client as unknown as { pathHandleCache?: Map<string, unknown> }
-        ).pathHandleCache;
+        const cache = (client as unknown as { pathHandleCache?: Map<string, unknown> })
+          .pathHandleCache;
         expect(cache).toBeDefined();
         expect(cache!.has(entry.path)).toBe(true);
       }
@@ -513,8 +501,7 @@ export function runStrategyContractSuite<T extends DatasourceType>(
       // migrate-upload-orchestration-out-of-engine spec scenario
       // "signal forwarded to provider call unblocks promptly on abort".
       await expect(inflight).rejects.toSatisfy(
-        (e: unknown) =>
-          e instanceof DatasourceError && e.tag === DatasourceErrorTag.Cancelled,
+        (e: unknown) => e instanceof DatasourceError && e.tag === DatasourceErrorTag.Cancelled,
       );
 
       // The engine emits no events — cancellation surfaces solely as the
@@ -527,30 +514,22 @@ export function runStrategyContractSuite<T extends DatasourceType>(
       // `upload.abort()`. The fixture's introspection hook returns
       // `true` when it observed cleanup that did NOT couple to the
       // user's signal.
-      expect(
-        fixture.observedFreshCancelCleanup({ userSignal: controller.signal }),
-      ).toBe(true);
+      expect(fixture.observedFreshCancelCleanup({ userSignal: controller.signal })).toBe(true);
     });
 
     it("delete (file) resolves to void", async () => {
       fixture.resetMock();
       fixture.primeDeleteOk("/contract-delete.txt");
       const { client } = makeHarness();
-      const result = await client.delete(
-        { kind: "path", path: "/contract-delete.txt" },
-        "file",
-      );
+      const result = await client.delete({ kind: "path", path: "/contract-delete.txt" }, "file");
       expect(result).toBeUndefined();
     });
 
     it("delete (directory) throws Unsupported immediately", async () => {
       fixture.resetMock();
       const { client } = makeHarness();
-      await expect(
-        client.delete({ kind: "path", path: "/any" }, "directory"),
-      ).rejects.toSatisfy(
-        (e: unknown) =>
-          e instanceof DatasourceError && e.tag === DatasourceErrorTag.Unsupported,
+      await expect(client.delete({ kind: "path", path: "/any" }, "directory")).rejects.toSatisfy(
+        (e: unknown) => e instanceof DatasourceError && e.tag === DatasourceErrorTag.Unsupported,
       );
     });
 
@@ -558,11 +537,8 @@ export function runStrategyContractSuite<T extends DatasourceType>(
       fixture.resetMock();
       fixture.primeGetMetadata404("/missing.txt");
       const { client } = makeHarness();
-      await expect(
-        client.getMetadata({ kind: "path", path: "/missing.txt" }),
-      ).rejects.toSatisfy(
-        (e: unknown) =>
-          e instanceof DatasourceError && e.tag === DatasourceErrorTag.NotFound,
+      await expect(client.getMetadata({ kind: "path", path: "/missing.txt" })).rejects.toSatisfy(
+        (e: unknown) => e instanceof DatasourceError && e.tag === DatasourceErrorTag.NotFound,
       );
     });
 
@@ -580,8 +556,7 @@ export function runStrategyContractSuite<T extends DatasourceType>(
         }
       } else {
         await expect(client.getQuota()).rejects.toSatisfy(
-          (e: unknown) =>
-            e instanceof DatasourceError && e.tag === DatasourceErrorTag.Unsupported,
+          (e: unknown) => e instanceof DatasourceError && e.tag === DatasourceErrorTag.Unsupported,
         );
       }
     });
@@ -590,11 +565,8 @@ export function runStrategyContractSuite<T extends DatasourceType>(
       fixture.resetMock();
       fixture.primeRateLimitOnList();
       const { client } = makeHarness();
-      await expect(
-        client.listDirectory({ kind: "path", path: "/" }),
-      ).rejects.toSatisfy(
-        (e: unknown) =>
-          e instanceof DatasourceError && e.tag === DatasourceErrorTag.RateLimited,
+      await expect(client.listDirectory({ kind: "path", path: "/" })).rejects.toSatisfy(
+        (e: unknown) => e instanceof DatasourceError && e.tag === DatasourceErrorTag.RateLimited,
       );
     });
 
@@ -602,11 +574,8 @@ export function runStrategyContractSuite<T extends DatasourceType>(
       fixture.resetMock();
       fixture.primeAuthFailureOnList();
       const { client } = makeHarness();
-      await expect(
-        client.listDirectory({ kind: "path", path: "/" }),
-      ).rejects.toSatisfy(
-        (e: unknown) =>
-          e instanceof DatasourceError && e.tag === fixture.expectedAuthErrorTag,
+      await expect(client.listDirectory({ kind: "path", path: "/" })).rejects.toSatisfy(
+        (e: unknown) => e instanceof DatasourceError && e.tag === fixture.expectedAuthErrorTag,
       );
     });
 
@@ -670,8 +639,7 @@ export function runStrategyContractSuite<T extends DatasourceType>(
             "fail",
           ),
         ).rejects.toSatisfy(
-          (e: unknown) =>
-            e instanceof DatasourceError && e.tag === DatasourceErrorTag.Unsupported,
+          (e: unknown) => e instanceof DatasourceError && e.tag === DatasourceErrorTag.Unsupported,
         );
       }
     });
@@ -704,9 +672,7 @@ export function runStrategyContractSuite<T extends DatasourceType>(
       expect(Buffer.concat(chunks).equals(fixtureBytes)).toBe(true);
       // onProgress fired ≥1 time and the final loaded equals the byte count.
       expect(progressTicks.length).toBeGreaterThanOrEqual(1);
-      expect(progressTicks[progressTicks.length - 1]!.loaded).toBe(
-        fixtureBytes.length,
-      );
+      expect(progressTicks[progressTicks.length - 1]!.loaded).toBe(fixtureBytes.length);
     });
 
     it("downloadFile mid-flight abort: stream errors after abort; onProgress reports up to firstChunkBytes", async () => {
@@ -726,8 +692,7 @@ export function runStrategyContractSuite<T extends DatasourceType>(
         { kind: "path", path: "/contract-cancel.txt" },
         {
           signal: controller.signal,
-          onProgress: (loaded, total) =>
-            progressTicks.push({ loaded, total }),
+          onProgress: (loaded, total) => progressTicks.push({ loaded, total }),
         },
       );
       let bytesSeen = 0;
@@ -790,9 +755,7 @@ export function runStrategyContractSuite<T extends DatasourceType>(
       });
       expect(Buffer.concat(chunks).equals(exportBytes)).toBe(true);
       expect(progressTicks.length).toBeGreaterThanOrEqual(1);
-      expect(progressTicks[progressTicks.length - 1]!.loaded).toBe(
-        exportBytes.length,
-      );
+      expect(progressTicks[progressTicks.length - 1]!.loaded).toBe(exportBytes.length);
     });
 
     // -----------------------------------------------------------------------
@@ -826,9 +789,8 @@ export function runStrategyContractSuite<T extends DatasourceType>(
       const listed = await client.listDirectory({ kind: "path", path: "/" });
       const file = listed.entries.find((e) => e.kind === "file");
       expect(file).toBeDefined();
-      const cache = (
-        client as unknown as { pathHandleCache?: Map<string, unknown> }
-      ).pathHandleCache;
+      const cache = (client as unknown as { pathHandleCache?: Map<string, unknown> })
+        .pathHandleCache;
       expect(cache).toBeDefined();
       // Precondition: the list populated the cache for the file's path.
       expect(cache!.has(file!.path)).toBe(true);
@@ -851,9 +813,8 @@ export function runStrategyContractSuite<T extends DatasourceType>(
       const listed = await client.listDirectory({ kind: "path", path: "/" });
       const file = listed.entries.find((e) => e.kind === "file");
       expect(file).toBeDefined();
-      const cache = (
-        client as unknown as { pathHandleCache?: Map<string, unknown> }
-      ).pathHandleCache;
+      const cache = (client as unknown as { pathHandleCache?: Map<string, unknown> })
+        .pathHandleCache;
       expect(cache).toBeDefined();
       expect(cache!.has(file!.path)).toBe(true);
 

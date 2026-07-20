@@ -12,27 +12,13 @@
 
 import { describe, expect, it, vi } from "vitest";
 
-import type {
-  DatasourceClient,
-  Target,
-} from "@cloudstash/fs-datasource-engine";
-import type {
-  DatasourceFileEntry,
-  DatasourceType,
-  EventName,
-} from "@cloudstash/ipc-contracts";
-import {
-  DatasourceError,
-  DatasourceErrorTag,
-  FilesErrorTag,
-} from "@cloudstash/ipc-contracts";
+import type { DatasourceClient, Target } from "@cloudstash/fs-datasource-engine";
+import type { DatasourceFileEntry, DatasourceType, EventName } from "@cloudstash/ipc-contracts";
+import { DatasourceError, DatasourceErrorTag, FilesErrorTag } from "@cloudstash/ipc-contracts";
 
 import { createUploadRegistry } from "../../uploads/registry.js";
 import { createEventBus } from "../../events/event-bus.js";
-import {
-  makeFilesUploadHandler,
-  type FilesUploadDeps,
-} from "../files-upload.js";
+import { makeFilesUploadHandler, type FilesUploadDeps } from "../files-upload.js";
 
 // ---------------------------------------------------------------------------
 // Fakes
@@ -55,9 +41,7 @@ function makeFakeClient(
     rename: vi.fn(),
     downloadFile: vi.fn(),
     getQuota: vi.fn(),
-    refreshCredentials: vi
-      .fn()
-      .mockResolvedValue({ accessToken: "new", refreshToken: "r" }),
+    refreshCredentials: vi.fn().mockResolvedValue({ accessToken: "new", refreshToken: "r" }),
     ...overrides,
   } as unknown as DatasourceClient<DatasourceType>;
 }
@@ -94,9 +78,7 @@ const sampleEntry: DatasourceFileEntry<"google-drive"> = {
   providerMetadata: {},
 };
 
-function makeDeps(
-  override: Partial<FilesUploadDeps> = {},
-): FilesUploadDeps {
+function makeDeps(override: Partial<FilesUploadDeps> = {}): FilesUploadDeps {
   const registry = createUploadRegistry();
   const { bus } = captureFsSyncEvents();
   let counter = 0;
@@ -174,9 +156,7 @@ describe("files:upload — happy path (§9.1, §9.6, §9.8)", () => {
       name: "x.jpg",
     });
     // Options carry the AbortSignal and onProgress.
-    const options = callArgs[2] as
-      | { signal?: AbortSignal; onProgress?: unknown }
-      | undefined;
+    const options = callArgs[2] as { signal?: AbortSignal; onProgress?: unknown } | undefined;
     expect(options?.signal).toBeInstanceOf(AbortSignal);
     expect(typeof options?.onProgress).toBe("function");
 
@@ -218,9 +198,7 @@ describe("files:upload — happy path (§9.1, §9.6, §9.8)", () => {
         }),
       )
       .mockResolvedValueOnce(sampleEntry);
-    const refreshCredentials = vi
-      .fn()
-      .mockResolvedValue({ accessToken: "new", refreshToken: "r" });
+    const refreshCredentials = vi.fn().mockResolvedValue({ accessToken: "new", refreshToken: "r" });
     const client = makeFakeClient({ uploadFile, refreshCredentials });
     const handler = makeFilesUploadHandler(
       makeDeps({
@@ -256,15 +234,9 @@ describe("files:upload — happy path (§9.1, §9.6, §9.8)", () => {
     // with bytesUploaded: 0 BEFORE the engine call returns its first
     // onProgress tick.
     const releaseGate = vi.fn();
-    let onProgressCb:
-      | ((loaded: number, total: number) => void)
-      | undefined;
+    let onProgressCb: ((loaded: number, total: number) => void) | undefined;
     const uploadFile = vi.fn(
-      (
-        _parent: Target,
-        _file: unknown,
-        opts?: { onProgress?: (l: number, t: number) => void },
-      ) => {
+      (_parent: Target, _file: unknown, opts?: { onProgress?: (l: number, t: number) => void }) => {
         onProgressCb = opts?.onProgress;
         return new Promise<DatasourceFileEntry<DatasourceType>>((resolve) => {
           // Hang until the test releases.
@@ -321,9 +293,7 @@ describe("files:upload — onProgress throttle (§9.7)", () => {
     // The handler reads `deps.now()`, not `Date.now()`, so we drive
     // time via a closure-scoped `nowMs` rather than vi.useFakeTimers().
     {
-      let onProgressCb:
-        | ((loaded: number, total: number) => void)
-        | undefined;
+      let onProgressCb: ((loaded: number, total: number) => void) | undefined;
       let resolveUpload: (e: DatasourceFileEntry<DatasourceType>) => void = () => undefined;
       const uploadFile = vi.fn(
         (
@@ -421,16 +391,10 @@ describe("files:upload — onProgress throttle (§9.7)", () => {
   });
 
   it("onProgress callback updates registry entry's bytesUploaded and contentLength", async () => {
-    let onProgressCb:
-      | ((loaded: number, total: number) => void)
-      | undefined;
+    let onProgressCb: ((loaded: number, total: number) => void) | undefined;
     let resolveUpload: (e: DatasourceFileEntry<DatasourceType>) => void = () => undefined;
     const uploadFile = vi.fn(
-      (
-        _parent: Target,
-        _file: unknown,
-        opts?: { onProgress?: (l: number, t: number) => void },
-      ) => {
+      (_parent: Target, _file: unknown, opts?: { onProgress?: (l: number, t: number) => void }) => {
         onProgressCb = opts?.onProgress;
         return new Promise<DatasourceFileEntry<DatasourceType>>((resolve) => {
           resolveUpload = resolve;
@@ -538,9 +502,7 @@ describe("files:upload — engine error (§9.10)", () => {
 
 describe("files:upload — cancel (§9.9)", () => {
   it("on engine reject tag === 'cancelled': emits one upload-cancelled; replies cancelled envelope; clears registry", async () => {
-    let onProgressCb:
-      | ((loaded: number, total: number) => void)
-      | undefined;
+    let onProgressCb: ((loaded: number, total: number) => void) | undefined;
     let receivedSignal: AbortSignal | undefined;
     const uploadFile = vi.fn(
       async (
@@ -711,8 +673,7 @@ describe("files:upload — concurrent-target rejection (§9.3, Decision 10)", ()
       }),
     );
 
-    const sourcePath2 =
-      process.platform === "win32" ? "C:\\local\\b.jpg" : "/local/b.jpg";
+    const sourcePath2 = process.platform === "win32" ? "C:\\local\\b.jpg" : "/local/b.jpg";
 
     const inflightFirst = handler(
       {
@@ -793,9 +754,7 @@ describe("files:upload — input validation (§9.2)", () => {
   it("rejects with tag: 'other' when sourcePath is relative", async () => {
     const uploadFile = vi.fn();
     const client = makeFakeClient({ uploadFile });
-    const handler = makeFilesUploadHandler(
-      makeDeps({ resolveClient: async () => client }),
-    );
+    const handler = makeFilesUploadHandler(makeDeps({ resolveClient: async () => client }));
 
     const result = await handler(
       {
@@ -818,9 +777,7 @@ describe("files:upload — input validation (§9.2)", () => {
   it("rejects with tag: 'other' when targetPath is empty / has no filename", async () => {
     const uploadFile = vi.fn();
     const client = makeFakeClient({ uploadFile });
-    const handler = makeFilesUploadHandler(
-      makeDeps({ resolveClient: async () => client }),
-    );
+    const handler = makeFilesUploadHandler(makeDeps({ resolveClient: async () => client }));
 
     const result = await handler(
       {
@@ -842,9 +799,7 @@ describe("files:upload — input validation (§9.2)", () => {
   it("rejects with tag: 'other' when targetPath is not absolute", async () => {
     const uploadFile = vi.fn();
     const client = makeFakeClient({ uploadFile });
-    const handler = makeFilesUploadHandler(
-      makeDeps({ resolveClient: async () => client }),
-    );
+    const handler = makeFilesUploadHandler(makeDeps({ resolveClient: async () => client }));
 
     const result = await handler(
       {

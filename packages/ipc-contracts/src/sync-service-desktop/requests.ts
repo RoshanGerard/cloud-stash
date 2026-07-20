@@ -14,11 +14,7 @@
 // handler (see spec "Main-process IPC proxy translates renderer calls to
 // service commands").
 
-import type {
-  CredentialsSchema,
-  DatasourceSummary,
-  ProviderId,
-} from "../datasources.js";
+import type { CredentialsSchema, DatasourceSummary, ProviderId } from "../datasources.js";
 import type {
   BackoffStrategy,
   ConflictPolicy,

@@ -15,11 +15,7 @@ vi.mock("electron", () => ({
 
 import { contextBridge, ipcRenderer } from "electron";
 
-import {
-  DATASOURCES_CHANNELS,
-  FILES_CHANNELS,
-  WINDOW_CHANNELS,
-} from "@cloudstash/ipc-contracts";
+import { DATASOURCES_CHANNELS, FILES_CHANNELS, WINDOW_CHANNELS } from "@cloudstash/ipc-contracts";
 import { SYNC_CHANNELS } from "@cloudstash/ipc-contracts/sync-service-desktop";
 
 type ExposedApi = {
@@ -48,12 +44,8 @@ type ExposedApi = {
     upload: (req: unknown) => Promise<unknown>;
     openSavedPath: (savedPath: string) => Promise<void>;
     showSavedInFolder: (savedPath: string) => Promise<void>;
-    onActiveDownloadsHydrate: (
-      callback: (jobs: readonly unknown[]) => void,
-    ) => () => void;
-    onActiveUploadsHydrate: (
-      callback: (jobs: readonly unknown[]) => void,
-    ) => () => void;
+    onActiveDownloadsHydrate: (callback: (jobs: readonly unknown[]) => void) => () => void;
+    onActiveUploadsHydrate: (callback: (jobs: readonly unknown[]) => void) => () => void;
   };
   clipboard: {
     writeText: (text: string) => Promise<void>;
@@ -69,9 +61,7 @@ type ExposedApi = {
 
 async function loadExposed(): Promise<ExposedApi> {
   await import("../index");
-  const exposeMock = contextBridge.exposeInMainWorld as unknown as ReturnType<
-    typeof vi.fn
-  >;
+  const exposeMock = contextBridge.exposeInMainWorld as unknown as ReturnType<typeof vi.fn>;
   return exposeMock.mock.calls[0]![1] as ExposedApi;
 }
 
@@ -146,28 +136,15 @@ describe("preload exposed api", () => {
       // migrate-engine-events-to-consumer §4 — `onEvent` is gone. The dead
       // engine `datasources:event` bridge had no production emitter or
       // consumer; datasource-facing events flow on `window.api.sync.onEvent`.
-      const dsForOnEvent = exposed.datasources as unknown as Record<
-        string,
-        unknown
-      >;
+      const dsForOnEvent = exposed.datasources as unknown as Record<string, unknown>;
       expect(dsForOnEvent.onEvent).toBeUndefined();
-      expect(
-        Object.prototype.hasOwnProperty.call(dsForOnEvent, "onEvent"),
-      ).toBe(false);
+      expect(Object.prototype.hasOwnProperty.call(dsForOnEvent, "onEvent")).toBe(false);
       // §7.9 — `onUploadProgress` is gone. The renderer's upload toaster
       // now subscribes to `window.api.sync.onEvent` filtered to the four
       // upload event kinds keyed by service-minted `uploadJobId`.
-      const datasources = exposed.datasources as unknown as Record<
-        string,
-        unknown
-      >;
+      const datasources = exposed.datasources as unknown as Record<string, unknown>;
       expect(datasources.onUploadProgress).toBeUndefined();
-      expect(
-        Object.prototype.hasOwnProperty.call(
-          datasources,
-          "onUploadProgress",
-        ),
-      ).toBe(false);
+      expect(Object.prototype.hasOwnProperty.call(datasources, "onUploadProgress")).toBe(false);
     });
 
     // Spec scenario: "startConsent and cancelConsent are absent from the
@@ -176,30 +153,18 @@ describe("preload exposed api", () => {
     // / `authenticateCancel` per design Decision 3.
     it("does NOT expose datasources.startConsent or datasources.cancelConsent (retired in §19)", async () => {
       const exposed = await loadExposed();
-      const datasources = exposed.datasources as unknown as Record<
-        string,
-        unknown
-      >;
+      const datasources = exposed.datasources as unknown as Record<string, unknown>;
       expect(datasources.startConsent).toBeUndefined();
       expect(datasources.cancelConsent).toBeUndefined();
-      expect(
-        Object.prototype.hasOwnProperty.call(datasources, "startConsent"),
-      ).toBe(false);
-      expect(
-        Object.prototype.hasOwnProperty.call(datasources, "cancelConsent"),
-      ).toBe(false);
+      expect(Object.prototype.hasOwnProperty.call(datasources, "startConsent")).toBe(false);
+      expect(Object.prototype.hasOwnProperty.call(datasources, "cancelConsent")).toBe(false);
     });
 
     it("does NOT expose datasources.upload — the legacy channel is retired in favor of files.upload + datasources.pickFilesToUpload", async () => {
       const exposed = await loadExposed();
-      const datasources = exposed.datasources as unknown as Record<
-        string,
-        unknown
-      >;
+      const datasources = exposed.datasources as unknown as Record<string, unknown>;
       expect(datasources.upload).toBeUndefined();
-      expect(
-        Object.prototype.hasOwnProperty.call(datasources, "upload"),
-      ).toBe(false);
+      expect(Object.prototype.hasOwnProperty.call(datasources, "upload")).toBe(false);
     });
 
     it("list() delegates to ipcRenderer.invoke('datasources:list') and returns the resolved value", async () => {
@@ -239,10 +204,7 @@ describe("preload exposed api", () => {
       const result = await exposed.datasources.remove(req);
 
       expect(invokeMock).toHaveBeenCalledTimes(1);
-      expect(invokeMock.mock.calls[0]).toEqual([
-        DATASOURCES_CHANNELS.remove,
-        req,
-      ]);
+      expect(invokeMock.mock.calls[0]).toEqual([DATASOURCES_CHANNELS.remove, req]);
       expect(result).toBe(response);
     });
 
@@ -256,10 +218,7 @@ describe("preload exposed api", () => {
       const result = await exposed.datasources.action(req);
 
       expect(invokeMock).toHaveBeenCalledTimes(1);
-      expect(invokeMock.mock.calls[0]).toEqual([
-        DATASOURCES_CHANNELS.action,
-        req,
-      ]);
+      expect(invokeMock.mock.calls[0]).toEqual([DATASOURCES_CHANNELS.action, req]);
       expect(result).toBe(response);
     });
 
@@ -278,9 +237,7 @@ describe("preload exposed api", () => {
       // Bare-channel invocation: the DatasourcesPickFilesRequest contract
       // type is `Record<string, never>`, so the preload takes no args and
       // passes only the channel to ipcRenderer.invoke — no empty object.
-      expect(invokeMock.mock.calls[0]).toEqual([
-        DATASOURCES_CHANNELS.pickFilesToUpload,
-      ]);
+      expect(invokeMock.mock.calls[0]).toEqual([DATASOURCES_CHANNELS.pickFilesToUpload]);
       expect(result).toBe(response);
     });
 
@@ -291,7 +248,6 @@ describe("preload exposed api", () => {
     // __tests__/upload-job-toast.test.ts` (toaster filters
     // `sync:event-stream` to the four upload event kinds keyed by
     // `uploadJobId`).
-
   });
 
   describe("files surface", () => {
@@ -430,10 +386,7 @@ describe("preload exposed api", () => {
       await exposed.files.openSavedPath(savedPath);
 
       expect(invokeMock).toHaveBeenCalledTimes(1);
-      expect(invokeMock.mock.calls[0]).toEqual([
-        "files:openSavedPath",
-        savedPath,
-      ]);
+      expect(invokeMock.mock.calls[0]).toEqual(["files:openSavedPath", savedPath]);
     });
 
     // add-engine-rename-download §18.5-§18.6: showSavedInFolder delegates
@@ -448,10 +401,7 @@ describe("preload exposed api", () => {
       await exposed.files.showSavedInFolder(savedPath);
 
       expect(invokeMock).toHaveBeenCalledTimes(1);
-      expect(invokeMock.mock.calls[0]).toEqual([
-        "files:showSavedInFolder",
-        savedPath,
-      ]);
+      expect(invokeMock.mock.calls[0]).toEqual(["files:showSavedInFolder", savedPath]);
     });
 
     // add-engine-rename-download §18.9-§18.10: onActiveDownloadsHydrate is
@@ -462,8 +412,7 @@ describe("preload exposed api", () => {
     // `sync.onEvent` exposure.
     it("onActiveDownloadsHydrate registers a listener on 'files:hydrate-active-downloads' and returns an unsubscribe that removes that listener", async () => {
       const onMock = ipcRenderer.on as unknown as ReturnType<typeof vi.fn>;
-      const removeListenerMock =
-        ipcRenderer.removeListener as unknown as ReturnType<typeof vi.fn>;
+      const removeListenerMock = ipcRenderer.removeListener as unknown as ReturnType<typeof vi.fn>;
 
       const exposed = await loadExposed();
       const callback = vi.fn();
@@ -488,9 +437,7 @@ describe("preload exposed api", () => {
           startedAt: 1700000000000,
         },
       ];
-      (
-        listener as (ev: unknown, payload: readonly unknown[]) => void
-      )({}, sampleJobs);
+      (listener as (ev: unknown, payload: readonly unknown[]) => void)({}, sampleJobs);
       expect(callback).toHaveBeenCalledTimes(1);
       expect(callback).toHaveBeenCalledWith(sampleJobs);
 
@@ -511,8 +458,7 @@ describe("preload exposed api", () => {
     // that removes that listener.
     it("onActiveUploadsHydrate registers a listener on 'files:hydrate-active-uploads' and returns an unsubscribe that removes that listener", async () => {
       const onMock = ipcRenderer.on as unknown as ReturnType<typeof vi.fn>;
-      const removeListenerMock =
-        ipcRenderer.removeListener as unknown as ReturnType<typeof vi.fn>;
+      const removeListenerMock = ipcRenderer.removeListener as unknown as ReturnType<typeof vi.fn>;
 
       const exposed = await loadExposed();
       const callback = vi.fn();
@@ -535,19 +481,14 @@ describe("preload exposed api", () => {
           startedAt: 1700000000000,
         },
       ];
-      (
-        listener as (ev: unknown, payload: readonly unknown[]) => void
-      )({}, sampleJobs);
+      (listener as (ev: unknown, payload: readonly unknown[]) => void)({}, sampleJobs);
       expect(callback).toHaveBeenCalledTimes(1);
       expect(callback).toHaveBeenCalledWith(sampleJobs);
 
       expect(typeof unsubscribe).toBe("function");
       unsubscribe();
       expect(removeListenerMock).toHaveBeenCalledTimes(1);
-      expect(removeListenerMock.mock.calls[0]).toEqual([
-        "files:hydrate-active-uploads",
-        listener,
-      ]);
+      expect(removeListenerMock.mock.calls[0]).toEqual(["files:hydrate-active-uploads", listener]);
     });
   });
 
@@ -566,10 +507,7 @@ describe("preload exposed api", () => {
       await exposed.preferences.setDefaultDownloadsFolder(folder);
 
       expect(invokeMock).toHaveBeenCalledTimes(1);
-      expect(invokeMock.mock.calls[0]).toEqual([
-        "preferences:setDefaultDownloadsFolder",
-        folder,
-      ]);
+      expect(invokeMock.mock.calls[0]).toEqual(["preferences:setDefaultDownloadsFolder", folder]);
     });
 
     it("getDefaultDownloadsFolder() delegates to ipcRenderer.invoke('preferences:getDefaultDownloadsFolder') with no second arg and returns the resolved value", async () => {
@@ -580,9 +518,7 @@ describe("preload exposed api", () => {
       const result = await exposed.preferences.getDefaultDownloadsFolder();
 
       expect(invokeMock).toHaveBeenCalledTimes(1);
-      expect(invokeMock.mock.calls[0]).toEqual([
-        "preferences:getDefaultDownloadsFolder",
-      ]);
+      expect(invokeMock.mock.calls[0]).toEqual(["preferences:getDefaultDownloadsFolder"]);
       expect(result).toBe("/Users/alice/Downloads/CloudStash");
     });
 
@@ -617,10 +553,7 @@ describe("preload exposed api", () => {
       const result = await exposed.dialog.showSaveDialog(opts);
 
       expect(invokeMock).toHaveBeenCalledTimes(1);
-      expect(invokeMock.mock.calls[0]).toEqual([
-        "dialog:showSaveDialog",
-        opts,
-      ]);
+      expect(invokeMock.mock.calls[0]).toEqual(["dialog:showSaveDialog", opts]);
       expect(result).toBe(response);
     });
 
@@ -705,10 +638,7 @@ describe("preload exposed api", () => {
       const result = await sync.clearDownloadHistory(req);
 
       expect(invokeMock).toHaveBeenCalledTimes(1);
-      expect(invokeMock.mock.calls[0]).toEqual([
-        SYNC_CHANNELS.clearDownloadHistory,
-        req,
-      ]);
+      expect(invokeMock.mock.calls[0]).toEqual([SYNC_CHANNELS.clearDownloadHistory, req]);
       expect(result).toBe(response);
     });
   });
@@ -752,9 +682,7 @@ describe("preload window-controls surface (add-frameless-window-chrome)", () => 
 
   it("window.onMaximizeChange(cb) subscribes on maximize-change, unwraps the payload boolean, and disposes its own listener", async () => {
     const onMock = ipcRenderer.on as unknown as ReturnType<typeof vi.fn>;
-    const removeMock = ipcRenderer.removeListener as unknown as ReturnType<
-      typeof vi.fn
-    >;
+    const removeMock = ipcRenderer.removeListener as unknown as ReturnType<typeof vi.fn>;
     const exposed = await loadExposed();
 
     const received: boolean[] = [];

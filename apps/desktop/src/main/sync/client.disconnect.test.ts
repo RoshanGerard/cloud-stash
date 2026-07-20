@@ -17,10 +17,7 @@ import * as net from "node:net";
 import * as os from "node:os";
 import * as path from "node:path";
 
-import type {
-  RequestFrame,
-  ResponseFrame,
-} from "@cloudstash/ipc-contracts/sync-service";
+import type { RequestFrame, ResponseFrame } from "@cloudstash/ipc-contracts/sync-service";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { FramingDecoder, encodeFrame } from "./framing.js";
@@ -41,9 +38,7 @@ interface StubHandle {
   readonly server: net.Server;
   readonly close: () => Promise<void>;
   readonly whenConnected: Promise<void>;
-  send: (
-    frame: ResponseFrame | { kind: "event"; name: string; payload: unknown },
-  ) => void;
+  send: (frame: ResponseFrame | { kind: "event"; name: string; payload: unknown }) => void;
   /** Inject raw bytes (for malformed-event injection). Must include '\n'. */
   sendRaw: (bytes: string) => void;
   /** Forcibly destroy the server-side accepted socket. */
@@ -123,10 +118,7 @@ async function connectClient(pipePath: string): Promise<net.Socket> {
 }
 
 /** Wait until `client.isConnected` flips false or the timeout elapses. */
-async function waitForDisconnect(
-  client: SyncClient,
-  timeoutMs = 1000,
-): Promise<void> {
+async function waitForDisconnect(client: SyncClient, timeoutMs = 1000): Promise<void> {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
     if (!client.isConnected) return;
@@ -240,9 +232,9 @@ describe("SyncClient disconnect handling", () => {
       stub.destroyClientSocket();
       await waitForDisconnect(client);
 
-      await expect(
-        client.request("sync:get-status", {}),
-      ).rejects.toMatchObject({ tag: "service-disconnected" });
+      await expect(client.request("sync:get-status", {})).rejects.toMatchObject({
+        tag: "service-disconnected",
+      });
     },
   );
 
@@ -286,9 +278,7 @@ describe("SyncClient disconnect handling", () => {
 
         // Client must still be usable.
         const result = await client.request("sync:get-status", {});
-        expect((result as unknown as { echoed: string }).echoed).toBe(
-          "survived",
-        );
+        expect((result as unknown as { echoed: string }).echoed).toBe("survived");
         // Settle microtasks before checking unhandled bucket.
         await new Promise((r) => setTimeout(r, 10));
         expect(unhandled).toEqual([]);

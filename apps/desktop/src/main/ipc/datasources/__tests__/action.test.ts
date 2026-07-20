@@ -13,11 +13,7 @@ import { FIXTURE_SUMMARIES } from "./helpers.js";
 
 import { openDatabase, runMigrations } from "../../../db/database.js";
 import { DEFAULT_MIGRATIONS } from "../../../db/migrations.js";
-import {
-  getEngine,
-  initEngine,
-  resetEngineForTests,
-} from "../../../datasources/engine.js";
+import { getEngine, initEngine, resetEngineForTests } from "../../../datasources/engine.js";
 import { handleDatasourcesAction } from "../action.js";
 import { handleDatasourcesList } from "../list.js";
 
@@ -38,9 +34,7 @@ describe("handleDatasourcesAction", () => {
     const { registry } = getEngine();
     for (const summary of FIXTURE_SUMMARIES) {
       const seed =
-        summary.status === "paused"
-          ? { ...summary, status: "connected" as const }
-          : summary;
+        summary.status === "paused" ? { ...summary, status: "connected" as const } : summary;
       registry.add(seed);
       if (summary.status === "paused") {
         registry.setPaused(summary.id, true);

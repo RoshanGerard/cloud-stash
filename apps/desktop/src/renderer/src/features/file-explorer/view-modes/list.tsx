@@ -1,11 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useSyncExternalStore } from "react";
-import type {
-  ComponentPropsWithoutRef,
-  MouseEvent as ReactMouseEvent,
-  Ref,
-} from "react";
+import type { ComponentPropsWithoutRef, MouseEvent as ReactMouseEvent, Ref } from "react";
 
 import type { FileEntry } from "@cloudstash/ipc-contracts";
 
@@ -69,11 +65,7 @@ export function ListView({
   onCopyPath,
   onProperties,
 }: ListViewProps) {
-  const state = useSyncExternalStore(
-    store.subscribe,
-    store.getSnapshot,
-    store.getSnapshot,
-  );
+  const state = useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
   const { selection, onEntryClick } = useSelection(store);
 
   if (state.entries.length === 0) {
@@ -87,11 +79,7 @@ export function ListView({
   }
 
   return (
-    <div
-      role="list"
-      aria-label="Files"
-      className="flex min-h-0 flex-1 flex-col text-sm"
-    >
+    <div role="list" aria-label="Files" className="flex min-h-0 flex-1 flex-col text-sm">
       {state.entries.map((entry) => {
         const isSelected = selection.has(entry.id);
         const pendingOp = entryPendingOp(state, entry);
@@ -187,11 +175,7 @@ function ListRow({
         focused && "ring-ring ring-2 ring-inset",
       )}
     >
-      <Icon
-        name={iconName}
-        aria-hidden
-        className="text-muted-foreground size-4 shrink-0"
-      />
+      <Icon name={iconName} aria-hidden className="text-muted-foreground size-4 shrink-0" />
       <span
         className={cn(
           "flex min-w-0 flex-1 items-center gap-1.5",

@@ -41,11 +41,7 @@ export interface LoadMoreRegionProps {
 }
 
 export function LoadMoreRegion({ store }: LoadMoreRegionProps) {
-  const state = useSyncExternalStore(
-    store.subscribe,
-    store.getSnapshot,
-    store.getSnapshot,
-  );
+  const state = useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
 
   const { nextCursor, loadingMore, loadMoreError } = state;
 
@@ -94,13 +90,7 @@ export function LoadMoreRegion({ store }: LoadMoreRegionProps) {
  * disabled-dim, not an animated glyph. (NB: the guard scans raw text, so this
  * comment deliberately avoids the literal forbidden class token.)
  */
-function LoadMoreButton({
-  isBusy,
-  onClick,
-}: {
-  isBusy: boolean;
-  onClick: () => void;
-}) {
+function LoadMoreButton({ isBusy, onClick }: { isBusy: boolean; onClick: () => void }) {
   return (
     <Button
       type="button"
@@ -148,11 +138,7 @@ function PageLoadFailedRow({
       className="flex min-h-20 w-full flex-col gap-2 border-t border-destructive/20 bg-destructive/8 px-3 py-2.5 text-destructive"
     >
       <div className="flex items-start gap-2">
-        <Icon
-          name="alert-circle"
-          className="mt-0.5 size-4 shrink-0"
-          aria-hidden="true"
-        />
+        <Icon name="alert-circle" className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
         <div className="flex min-w-0 flex-col">
           <span className="text-sm font-medium">Couldn&apos;t load more entries</span>
           <span className="text-xs font-normal opacity-85">

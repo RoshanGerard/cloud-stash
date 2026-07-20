@@ -46,14 +46,10 @@ function delay(ms: number): Promise<void> {
 }
 
 export interface FilesListDeps {
-  readonly resolveClient: (
-    datasourceId: string,
-  ) => Promise<DatasourceClient<DatasourceType>>;
+  readonly resolveClient: (datasourceId: string) => Promise<DatasourceClient<DatasourceType>>;
 }
 
-export function makeFilesListHandler(
-  deps: FilesListDeps,
-): CommandHandler<"files:list"> {
+export function makeFilesListHandler(deps: FilesListDeps): CommandHandler<"files:list"> {
   return async (params) => {
     let client: DatasourceClient<DatasourceType>;
     try {
@@ -77,8 +73,7 @@ export function makeFilesListHandler(
       const options: { cursor?: string; pageSize?: number } = {};
       if (params.cursor !== undefined) options.cursor = params.cursor;
       if (params.pageSize !== undefined) options.pageSize = params.pageSize;
-      const callEngine = () =>
-        withAuthRefresh(client, () => client.listDirectory(target, options));
+      const callEngine = () => withAuthRefresh(client, () => client.listDirectory(target, options));
 
       let attempt = 0;
       for (;;) {
@@ -103,8 +98,7 @@ export function makeFilesListHandler(
           // For rate-limited rejections carrying retryAfterMs, honor
           // max(retryAfterMs, scheduledBackoff) for this attempt.
           const wait =
-            err.tag === DatasourceErrorTag.RateLimited &&
-            typeof err.retryAfterMs === "number"
+            err.tag === DatasourceErrorTag.RateLimited && typeof err.retryAfterMs === "number"
               ? Math.max(err.retryAfterMs, scheduled)
               : scheduled;
           attempt += 1;

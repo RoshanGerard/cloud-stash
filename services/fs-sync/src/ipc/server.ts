@@ -61,9 +61,7 @@ export interface RunningServer {
 
 let nextConnectionId = 1;
 
-export async function startServer(
-  options: StartServerOptions,
-): Promise<RunningServer> {
+export async function startServer(options: StartServerOptions): Promise<RunningServer> {
   // On Unix, unlink any leftover socket from a prior crashed instance so
   // listen() doesn't fail with EADDRINUSE. On Windows (named pipe) this is
   // a no-op — the OS cleans up the pipe when the owning process exits.
@@ -130,11 +128,7 @@ class ConnectionImpl implements Connection {
   private readonly handlers: CommandHandlers;
   private readonly commandSet: Set<string>;
 
-  constructor(
-    socket: net.Socket,
-    handlers: CommandHandlers,
-    commandSet: Set<string>,
-  ) {
+  constructor(socket: net.Socket, handlers: CommandHandlers, commandSet: Set<string>) {
     this.id = nextConnectionId++;
     this.socket = socket;
     this.handlers = handlers;
@@ -205,10 +199,7 @@ class ConnectionImpl implements Connection {
     }
 
     try {
-      const res = await handler(
-        req.params as CommandParams<CommandName>,
-        { connection: this },
-      );
+      const res = await handler(req.params as CommandParams<CommandName>, { connection: this });
       if (res.ok) {
         this.sendResponse({
           id: req.id,
@@ -264,9 +255,5 @@ class ConnectionImpl implements Connection {
 function isRequest(v: unknown): v is RequestFrame {
   if (!v || typeof v !== "object") return false;
   const r = v as Record<string, unknown>;
-  return (
-    r["kind"] === "request" &&
-    typeof r["id"] === "string" &&
-    typeof r["command"] === "string"
-  );
+  return r["kind"] === "request" && typeof r["id"] === "string" && typeof r["command"] === "string";
 }

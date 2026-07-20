@@ -17,11 +17,7 @@
 
 import { describe, expect, it, vi } from "vitest";
 
-import type {
-  AuthResult,
-  CredentialsSchema,
-  ProviderId,
-} from "@cloudstash/ipc-contracts";
+import type { AuthResult, CredentialsSchema, ProviderId } from "@cloudstash/ipc-contracts";
 import type {
   ClientFactory,
   CredentialStore,
@@ -39,9 +35,7 @@ import {
   createAuthCorrelationStore,
   type AuthCorrelationStore,
 } from "../state/auth-correlation-store.js";
-import {
-  ServiceConfigMissingError,
-} from "../config/service-config-store.js";
+import { ServiceConfigMissingError } from "../config/service-config-store.js";
 import type { OAuthLoopbackBroker } from "../oauth/loopback-broker.js";
 import type { Connection } from "../ipc/server.js";
 
@@ -101,16 +95,18 @@ interface SetupResult {
  * returns either an OAuthIntent or a CredentialsFormIntent depending on
  * the requested providerId (mirrors the production strategy dispatch).
  */
-function setup(opts: {
-  /** Make broker.start throw — simulates service-config-missing or
-   *  any other broker-internal failure (since the broker is the one
-   *  that resolves config + builds the engine client in approach b). */
-  brokerStartThrows?: ServiceConfigMissingError | Error;
-  /** Make factory.createForAuth throw — used for the credentials-form
-   *  branch (the OAuth branch goes through the broker which is
-   *  separately stubbed). */
-  factoryThrows?: DatasourceError<"google-drive"> | Error;
-} = {}): SetupResult {
+function setup(
+  opts: {
+    /** Make broker.start throw — simulates service-config-missing or
+     *  any other broker-internal failure (since the broker is the one
+     *  that resolves config + builds the engine client in approach b). */
+    brokerStartThrows?: ServiceConfigMissingError | Error;
+    /** Make factory.createForAuth throw — used for the credentials-form
+     *  branch (the OAuth branch goes through the broker which is
+     *  separately stubbed). */
+    factoryThrows?: DatasourceError<"google-drive"> | Error;
+  } = {},
+): SetupResult {
   const bus = createEventBus();
   const { events } = makeBusSpy(bus);
   const correlationStore = createAuthCorrelationStore();
@@ -133,15 +129,19 @@ function setup(opts: {
     submit: vi.fn(async () => authResult),
   };
 
-  const createForAuth = vi.fn((providerId: ProviderId): {
-    authenticate: () => Promise<AuthIntent>;
-  } => {
-    if (opts.factoryThrows) throw opts.factoryThrows;
-    if (providerId === "amazon-s3") {
-      return { authenticate: async () => formIntent };
-    }
-    return { authenticate: async () => oauthIntent };
-  });
+  const createForAuth = vi.fn(
+    (
+      providerId: ProviderId,
+    ): {
+      authenticate: () => Promise<AuthIntent>;
+    } => {
+      if (opts.factoryThrows) throw opts.factoryThrows;
+      if (providerId === "amazon-s3") {
+        return { authenticate: async () => formIntent };
+      }
+      return { authenticate: async () => oauthIntent };
+    },
+  );
 
   const factory = {
     create: vi.fn(),
@@ -249,10 +249,7 @@ describe("sync:authenticate-start handler — implement-datasource-onboarding §
     const s = setup();
     const handler = buildHandler(s);
 
-    const res = await handler(
-      { providerId: "google-drive", datasourceId: "ds-existing-1" },
-      ctx(),
-    );
+    const res = await handler({ providerId: "google-drive", datasourceId: "ds-existing-1" }, ctx());
     expect(res.ok).toBe(true);
     if (!res.ok) return;
 
@@ -290,9 +287,9 @@ describe("sync:authenticate-start handler — implement-datasource-onboarding §
     // ASSERT: auth-initiated emitted.
     const initiated = s.events.filter((e) => e.name === "auth-initiated");
     expect(initiated).toHaveLength(1);
-    expect(
-      (initiated[0]!.payload as EventPayloadMap["auth-initiated"]).providerId,
-    ).toBe("amazon-s3");
+    expect((initiated[0]!.payload as EventPayloadMap["auth-initiated"]).providerId).toBe(
+      "amazon-s3",
+    );
   });
 
   it("propagates ServiceConfigMissingError as wire error service-config-missing; no auth-initiated emitted", async () => {

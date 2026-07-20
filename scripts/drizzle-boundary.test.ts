@@ -10,13 +10,7 @@
 //           match; both assertions pass.
 //
 // See scripts/lint-forbidden-import.test.ts for the fixture+execSync pattern.
-import {
-  writeFileSync,
-  unlinkSync,
-  existsSync,
-  mkdirSync,
-  rmdirSync,
-} from "node:fs";
+import { writeFileSync, unlinkSync, existsSync, mkdirSync, rmdirSync } from "node:fs";
 import { execSync, spawnSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -95,37 +89,29 @@ function runDrizzleBoundaryGrep(): string {
 }
 
 describe("drizzle-orm boundary check (mirrors CI drizzle-boundary job)", () => {
-  it(
-    "flags a drizzle import outside the allowed service subpaths (bad fixture under scheduler/)",
-    () => {
-      mkdirSync(badFixtureDir, { recursive: true });
-      writeFileSync(badFixturePath, DRIZZLE_IMPORT_LINE);
+  it("flags a drizzle import outside the allowed service subpaths (bad fixture under scheduler/)", () => {
+    mkdirSync(badFixtureDir, { recursive: true });
+    writeFileSync(badFixturePath, DRIZZLE_IMPORT_LINE);
 
-      const output = runDrizzleBoundaryGrep();
+    const output = runDrizzleBoundaryGrep();
 
-      // The bad fixture is NOT under an allowed path, so it must appear.
-      expect(output).toMatch(
-        /services[/\\]fs-sync[/\\]src[/\\]scheduler[/\\]__drizzle_regression__[/\\]bad\.ts/,
-      );
-    },
-    30_000,
-  );
+    // The bad fixture is NOT under an allowed path, so it must appear.
+    expect(output).toMatch(
+      /services[/\\]fs-sync[/\\]src[/\\]scheduler[/\\]__drizzle_regression__[/\\]bad\.ts/,
+    );
+  }, 30_000);
 
-  it(
-    "does NOT flag a drizzle import under the allowed services/fs-sync/src/db/ subpath",
-    () => {
-      mkdirSync(okFixtureDir, { recursive: true });
-      writeFileSync(okFixturePath, DRIZZLE_IMPORT_LINE);
+  it("does NOT flag a drizzle import under the allowed services/fs-sync/src/db/ subpath", () => {
+    mkdirSync(okFixtureDir, { recursive: true });
+    writeFileSync(okFixturePath, DRIZZLE_IMPORT_LINE);
 
-      const output = runDrizzleBoundaryGrep();
+    const output = runDrizzleBoundaryGrep();
 
-      // The ok fixture IS under the allowed db/ subpath, so it must NOT appear.
-      expect(output).not.toMatch(
-        /services[/\\]fs-sync[/\\]src[/\\]db[/\\]__drizzle_regression__[/\\]ok\.ts/,
-      );
-    },
-    30_000,
-  );
+    // The ok fixture IS under the allowed db/ subpath, so it must NOT appear.
+    expect(output).not.toMatch(
+      /services[/\\]fs-sync[/\\]src[/\\]db[/\\]__drizzle_regression__[/\\]ok\.ts/,
+    );
+  }, 30_000);
 
   it("CI workflow keeps the service-scoped allowlist entries", () => {
     // Drift guard: if someone edits .github/workflows/ci.yml without

@@ -111,10 +111,7 @@ describe("recoverRunningJobs", () => {
   it("clears payload_json on recovery (running-only state should not bleed through)", () => {
     insertAt("a");
     // Simulate the executor having stashed running state.
-    db.prepare("UPDATE jobs SET payload_json = ? WHERE id = ?").run(
-      '{"txn":"xyz"}',
-      "a",
-    );
+    db.prepare("UPDATE jobs SET payload_json = ? WHERE id = ?").run('{"txn":"xyz"}', "a");
     repo.transition("a", "running");
 
     recoverRunningJobs(db);

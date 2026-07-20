@@ -47,19 +47,19 @@ describe("openDatabase", () => {
     const file = scratchDbPath();
     // Create a plausible SQLite header then garbage. better-sqlite3's
     // integrity_check will report "non-ok".
-    await fsp.writeFile(file, Buffer.concat([
-      Buffer.from("SQLite format 3\0"),
-      Buffer.alloc(512, 0xff),
-    ]));
+    await fsp.writeFile(
+      file,
+      Buffer.concat([Buffer.from("SQLite format 3\0"), Buffer.alloc(512, 0xff)]),
+    );
     expect(() => openDatabase(file)).toThrow(DatabaseIntegrityError);
   });
 
   it("DatabaseIntegrityError carries the observed string", async () => {
     const file = scratchDbPath();
-    await fsp.writeFile(file, Buffer.concat([
-      Buffer.from("SQLite format 3\0"),
-      Buffer.alloc(512, 0xff),
-    ]));
+    await fsp.writeFile(
+      file,
+      Buffer.concat([Buffer.from("SQLite format 3\0"), Buffer.alloc(512, 0xff)]),
+    );
     try {
       openDatabase(file);
       expect.fail("expected DatabaseIntegrityError");

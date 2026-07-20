@@ -30,9 +30,7 @@ import { DatasourceError, DatasourceErrorTag } from "@cloudstash/ipc-contracts";
  * Strategy bugs (a non-retryable tag marked retryable=true) flow through to
  * terminal because the allowlist excludes them.
  */
-export function isEnvironmentallyRetryable(
-  err: unknown,
-): err is DatasourceError {
+export function isEnvironmentallyRetryable(err: unknown): err is DatasourceError {
   return (
     err instanceof DatasourceError &&
     err.tag !== DatasourceErrorTag.AuthExpired &&

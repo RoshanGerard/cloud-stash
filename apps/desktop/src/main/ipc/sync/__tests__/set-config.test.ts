@@ -52,10 +52,7 @@ describe("handleSyncSetConfig", () => {
       });
     });
 
-    const res = await handleSyncSetConfig(
-      { config: CONFIG },
-      client,
-    );
+    const res = await handleSyncSetConfig({ config: CONFIG }, client);
 
     expect(res).toEqual({
       ok: false,
@@ -69,8 +66,6 @@ describe("handleSyncSetConfig", () => {
       throw err;
     });
 
-    await expect(
-      handleSyncSetConfig({ config: CONFIG }, client),
-    ).rejects.toBe(err);
+    await expect(handleSyncSetConfig({ config: CONFIG }, client)).rejects.toBe(err);
   });
 });

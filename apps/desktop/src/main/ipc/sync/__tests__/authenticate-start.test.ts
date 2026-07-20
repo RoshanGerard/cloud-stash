@@ -16,12 +16,8 @@
 
 import { describe, expect, it, vi } from "vitest";
 
-import type {
-  SyncAuthenticateStartRequest,
-} from "@cloudstash/ipc-contracts/sync-service-desktop";
-import type {
-  SyncAuthenticateStartError,
-} from "@cloudstash/ipc-contracts/sync-service";
+import type { SyncAuthenticateStartRequest } from "@cloudstash/ipc-contracts/sync-service-desktop";
+import type { SyncAuthenticateStartError } from "@cloudstash/ipc-contracts/sync-service";
 
 import type { SyncClient } from "../../../sync/client.js";
 import { SyncCommandError } from "../../../sync/client.js";
@@ -45,9 +41,7 @@ describe("handleSyncAuthenticateStart", () => {
     const req: SyncAuthenticateStartRequest = {
       providerId: "google-drive",
     };
-    const { client, authenticateStart } = makeFakeClient(
-      async () => wireResult,
-    );
+    const { client, authenticateStart } = makeFakeClient(async () => wireResult);
 
     const res = await handleSyncAuthenticateStart(req, client);
 
@@ -66,10 +60,7 @@ describe("handleSyncAuthenticateStart", () => {
     };
     const { client } = makeFakeClient(async () => wireResult);
 
-    const res = await handleSyncAuthenticateStart(
-      { providerId: "amazon-s3" },
-      client,
-    );
+    const res = await handleSyncAuthenticateStart({ providerId: "amazon-s3" }, client);
 
     expect(res).toEqual({ ok: true, result: wireResult });
     if (res.ok) {
@@ -104,10 +95,7 @@ describe("handleSyncAuthenticateStart", () => {
       throw err;
     });
 
-    const res = await handleSyncAuthenticateStart(
-      { providerId: "google-drive" },
-      client,
-    );
+    const res = await handleSyncAuthenticateStart({ providerId: "google-drive" }, client);
 
     expect(res).toEqual({ ok: false, error: wireError });
   });
@@ -122,10 +110,7 @@ describe("handleSyncAuthenticateStart", () => {
       throw err;
     });
 
-    const res = await handleSyncAuthenticateStart(
-      { providerId: "google-drive" },
-      client,
-    );
+    const res = await handleSyncAuthenticateStart({ providerId: "google-drive" }, client);
 
     expect(res.ok).toBe(false);
     if (!res.ok) expect(res.error.tag).toBe("engine-error");
@@ -137,8 +122,8 @@ describe("handleSyncAuthenticateStart", () => {
       throw err;
     });
 
-    await expect(
-      handleSyncAuthenticateStart({ providerId: "amazon-s3" }, client),
-    ).rejects.toBe(err);
+    await expect(handleSyncAuthenticateStart({ providerId: "amazon-s3" }, client)).rejects.toBe(
+      err,
+    );
   });
 });

@@ -23,9 +23,7 @@ function makeFakeClient(
     cancelUpload: vi.fn(),
     delete: vi.fn(),
     getQuota: vi.fn(),
-    refreshCredentials: vi
-      .fn()
-      .mockResolvedValue({ accessToken: "new", refreshToken: "r" }),
+    refreshCredentials: vi.fn().mockResolvedValue({ accessToken: "new", refreshToken: "r" }),
     ...overrides,
   } as DatasourceClient<DatasourceType>;
 }
@@ -54,10 +52,7 @@ describe("files:remove handler", () => {
     });
     // Authoritative addressing: handle, not path. Skips getMetadata.
     // Unified delete(target, entryKind) — a file target passes "file".
-    expect(deleteSpy).toHaveBeenCalledWith(
-      { kind: "handle", handle: "h-a-1" },
-      "file",
-    );
+    expect(deleteSpy).toHaveBeenCalledWith({ kind: "handle", handle: "h-a-1" }, "file");
     expect(client.getMetadata).not.toHaveBeenCalled();
   });
 
@@ -87,10 +82,7 @@ describe("files:remove handler", () => {
       ctx,
     );
 
-    expect(deleteSpy).toHaveBeenCalledWith(
-      { kind: "handle", handle: "h-folder" },
-      "directory",
-    );
+    expect(deleteSpy).toHaveBeenCalledWith({ kind: "handle", handle: "h-folder" }, "directory");
     expect(client.getMetadata).not.toHaveBeenCalled();
     expect(result.ok).toBe(true);
     if (result.ok) {
@@ -99,9 +91,7 @@ describe("files:remove handler", () => {
       expect(r0.ok).toBe(false);
       if (!r0.ok) {
         expect(r0.error.tag).toBe("other");
-        expect(r0.error.message).toBe(
-          "directory delete is disabled for product stability",
-        );
+        expect(r0.error.message).toBe("directory delete is disabled for product stability");
       }
     }
   });
@@ -158,9 +148,7 @@ describe("files:remove handler", () => {
         }),
       )
       .mockResolvedValueOnce(undefined);
-    const refreshCredentials = vi
-      .fn()
-      .mockResolvedValue({ accessToken: "new", refreshToken: "r" });
+    const refreshCredentials = vi.fn().mockResolvedValue({ accessToken: "new", refreshToken: "r" });
     const client = makeFakeClient({ delete: deleteSpy, refreshCredentials });
     const handler = makeFilesRemoveHandler({ resolveClient: async () => client });
 
@@ -174,9 +162,7 @@ describe("files:remove handler", () => {
 
     expect(result.ok).toBe(true);
     if (result.ok) {
-      expect(result.result.results).toEqual([
-        { path: "/a.txt", handle: "h-a", ok: true },
-      ]);
+      expect(result.result.results).toEqual([{ path: "/a.txt", handle: "h-a", ok: true }]);
     }
     expect(refreshCredentials).toHaveBeenCalledTimes(1);
     expect(deleteSpy).toHaveBeenCalledTimes(2);
@@ -284,10 +270,7 @@ describe("files:remove handler", () => {
     const client = makeFakeClient();
     const handler = makeFilesRemoveHandler({ resolveClient: async () => client });
 
-    const result = await handler(
-      { datasourceId: "ds-1", targets: [] },
-      ctx,
-    );
+    const result = await handler({ datasourceId: "ds-1", targets: [] }, ctx);
 
     expect(result).toEqual({ ok: true, result: { results: [] } });
     expect(client.delete).not.toHaveBeenCalled();

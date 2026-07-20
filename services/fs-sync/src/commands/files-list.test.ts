@@ -26,9 +26,7 @@ function makeFakeClient(
     cancelUpload: vi.fn(),
     delete: vi.fn(),
     getQuota: vi.fn(),
-    refreshCredentials: vi
-      .fn()
-      .mockResolvedValue({ accessToken: "new", refreshToken: "r" }),
+    refreshCredentials: vi.fn().mockResolvedValue({ accessToken: "new", refreshToken: "r" }),
     ...overrides,
   } as DatasourceClient<DatasourceType>;
 }
@@ -75,9 +73,7 @@ describe("files:list handler", () => {
       path: "/foo/alpha.txt",
       kind: "file",
     });
-    const listDirectory = vi
-      .fn()
-      .mockResolvedValue(page([engineEntry], "tokA"));
+    const listDirectory = vi.fn().mockResolvedValue(page([engineEntry], "tokA"));
     const client = makeFakeClient({ listDirectory });
     const handler = makeFilesListHandler({
       resolveClient: async () => client,
@@ -110,9 +106,7 @@ describe("files:list handler", () => {
 
   it("next-page request forwards cursor + pageSize; nextCursor null → truncated derived false", async () => {
     const engineEntry = makeEngineEntry({ handle: "h-last", name: "last.txt" });
-    const listDirectory = vi
-      .fn()
-      .mockResolvedValue(page([engineEntry], null));
+    const listDirectory = vi.fn().mockResolvedValue(page([engineEntry], null));
     const client = makeFakeClient({ listDirectory });
     const handler = makeFilesListHandler({ resolveClient: async () => client });
 
@@ -151,9 +145,7 @@ describe("files:list handler", () => {
         }),
       )
       .mockResolvedValueOnce(page([engineEntry], null));
-    const refreshCredentials = vi
-      .fn()
-      .mockResolvedValue({ accessToken: "new", refreshToken: "r" });
+    const refreshCredentials = vi.fn().mockResolvedValue({ accessToken: "new", refreshToken: "r" });
     const client = makeFakeClient({ listDirectory, refreshCredentials });
     const handler = makeFilesListHandler({ resolveClient: async () => client });
 
@@ -234,10 +226,7 @@ describe("files:list handler", () => {
       },
     });
 
-    const result = await handler(
-      { datasourceId: "ds-misconfigured", path: "/" },
-      ctx,
-    );
+    const result = await handler({ datasourceId: "ds-misconfigured", path: "/" }, ctx);
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
@@ -411,10 +400,7 @@ describe("files:list handler", () => {
     const client = makeFakeClient({ listDirectory });
     const handler = makeFilesListHandler({ resolveClient: async () => client });
 
-    const pending = handler(
-      { datasourceId: "ds-1", path: "/", cursor: "not-a-graph-url" },
-      ctx,
-    );
+    const pending = handler({ datasourceId: "ds-1", path: "/", cursor: "not-a-graph-url" }, ctx);
     // Flush any pending timers — there should be none (no back-off scheduled).
     await vi.runAllTimersAsync();
     const result = await pending;

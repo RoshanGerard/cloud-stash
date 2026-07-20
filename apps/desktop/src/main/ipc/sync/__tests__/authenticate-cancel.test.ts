@@ -7,12 +7,8 @@
 
 import { describe, expect, it, vi } from "vitest";
 
-import type {
-  SyncAuthenticateCancelRequest,
-} from "@cloudstash/ipc-contracts/sync-service-desktop";
-import type {
-  SyncAuthenticateCancelError,
-} from "@cloudstash/ipc-contracts/sync-service";
+import type { SyncAuthenticateCancelRequest } from "@cloudstash/ipc-contracts/sync-service-desktop";
+import type { SyncAuthenticateCancelError } from "@cloudstash/ipc-contracts/sync-service";
 
 import type { SyncClient } from "../../../sync/client.js";
 import { SyncCommandError } from "../../../sync/client.js";
@@ -46,10 +42,7 @@ describe("handleSyncAuthenticateCancel", () => {
   it("wraps idempotent {cancelled: false} (already terminal) in success envelope", async () => {
     const { client } = makeFakeClient(async () => ({ cancelled: false }));
 
-    const res = await handleSyncAuthenticateCancel(
-      { correlationId: "corr-already-done" },
-      client,
-    );
+    const res = await handleSyncAuthenticateCancel({ correlationId: "corr-already-done" }, client);
 
     expect(res).toEqual({ ok: true, result: { cancelled: false } });
   });
@@ -64,10 +57,7 @@ describe("handleSyncAuthenticateCancel", () => {
       throw err;
     });
 
-    const res = await handleSyncAuthenticateCancel(
-      { correlationId: "corr-bad" },
-      client,
-    );
+    const res = await handleSyncAuthenticateCancel({ correlationId: "corr-bad" }, client);
 
     expect(res).toEqual({ ok: false, error: wireError });
   });
@@ -78,8 +68,8 @@ describe("handleSyncAuthenticateCancel", () => {
       throw err;
     });
 
-    await expect(
-      handleSyncAuthenticateCancel({ correlationId: "corr-x" }, client),
-    ).rejects.toBe(err);
+    await expect(handleSyncAuthenticateCancel({ correlationId: "corr-x" }, client)).rejects.toBe(
+      err,
+    );
   });
 });

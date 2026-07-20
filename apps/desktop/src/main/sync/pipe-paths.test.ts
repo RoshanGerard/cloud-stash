@@ -46,9 +46,7 @@ describe("resolveSyncPipePath", () => {
         homedir: () => "/home/alice",
         env: {},
       }),
-    ).toBe(
-      path.join("/home/alice", "cloudstash", "sync_app", "dev", "sync-dev.sock"),
-    );
+    ).toBe(path.join("/home/alice", "cloudstash", "sync_app", "dev", "sync-dev.sock"));
   });
 
   it("returns the prod Unix socket path under $HOME/cloudstash/sync_app when platform=darwin and dev=false", () => {
@@ -101,9 +99,7 @@ describe("resolveSyncPipePath", () => {
         homedir: () => "/home/alice",
         env: { CLOUDSTASH_SYNC_DATA_DIR: "" },
       }),
-    ).toBe(
-      path.join("/home/alice", "cloudstash", "sync_app", "dev", "sync-dev.sock"),
-    );
+    ).toBe(path.join("/home/alice", "cloudstash", "sync_app", "dev", "sync-dev.sock"));
   });
 
   it("defaults platform/homedir/env from process/os when omitted (smoke)", () => {

@@ -1,11 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useSyncExternalStore } from "react";
-import type {
-  ComponentPropsWithoutRef,
-  MouseEvent as ReactMouseEvent,
-  Ref,
-} from "react";
+import type { ComponentPropsWithoutRef, MouseEvent as ReactMouseEvent, Ref } from "react";
 
 import type { FileEntry } from "@cloudstash/ipc-contracts";
 
@@ -96,24 +92,12 @@ export function DetailsView({
   onCopyPath,
   onProperties,
 }: DetailsViewProps) {
-  const state = useSyncExternalStore(
-    store.subscribe,
-    store.getSnapshot,
-    store.getSnapshot,
-  );
+  const state = useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
   const { selection, onEntryClick } = useSelection(store);
 
   return (
-    <div
-      role="grid"
-      aria-label="Files"
-      className="flex min-h-0 flex-1 flex-col text-sm"
-    >
-      <HeaderRow
-        sortBy={state.sortBy}
-        sortDir={state.sortDir}
-        onSort={(by) => store.setSort(by)}
-      />
+    <div role="grid" aria-label="Files" className="flex min-h-0 flex-1 flex-col text-sm">
+      <HeaderRow sortBy={state.sortBy} sortDir={state.sortDir} onSort={(by) => store.setSort(by)} />
       {state.entries.length === 0 ? (
         <div
           role="row"
@@ -178,11 +162,7 @@ function HeaderRow({ sortBy, sortDir, onSort }: HeaderRowProps) {
           column so the column count matches the data rows. `aria-label`
           carries a minimal name so assistive tech has something to
           refer to; `getAllByRole('columnheader')` picks it up. */}
-      <div
-        role="columnheader"
-        aria-label="Icon"
-        className={ICON_COLUMN_CLASS}
-      />
+      <div role="columnheader" aria-label="Icon" className={ICON_COLUMN_CLASS} />
       {COLUMNS.map((col) => {
         const isActive = sortBy === col.id;
         const arrow: IconName = sortDir === "asc" ? "chevron-up" : "chevron-down";
@@ -190,9 +170,7 @@ function HeaderRow({ sortBy, sortDir, onSort }: HeaderRowProps) {
           <div
             key={col.id}
             role="columnheader"
-            aria-sort={
-              isActive ? (sortDir === "asc" ? "ascending" : "descending") : "none"
-            }
+            aria-sort={isActive ? (sortDir === "asc" ? "ascending" : "descending") : "none"}
             className={col.className}
           >
             <button
@@ -201,13 +179,7 @@ function HeaderRow({ sortBy, sortDir, onSort }: HeaderRowProps) {
               className="hover:text-foreground focus-visible:border-ring focus-visible:ring-ring/50 inline-flex items-center gap-1 rounded-md px-1 outline-none transition-colors focus-visible:ring-[3px]"
             >
               <span>{col.label}</span>
-              {isActive ? (
-                <Icon
-                  name={arrow}
-                  aria-hidden
-                  className="size-3"
-                />
-              ) : null}
+              {isActive ? <Icon name={arrow} aria-hidden className="size-3" /> : null}
             </button>
           </div>
         );
@@ -287,11 +259,7 @@ function DataRow({
       )}
     >
       <div role="cell" className={ICON_COLUMN_CLASS}>
-        <Icon
-          name={iconName}
-          aria-hidden
-          className="text-muted-foreground size-4"
-        />
+        <Icon name={iconName} aria-hidden className="text-muted-foreground size-4" />
       </div>
       <div
         role="cell"

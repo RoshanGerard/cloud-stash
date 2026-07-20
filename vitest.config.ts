@@ -34,16 +34,10 @@ export default defineConfig({
       // makes the render-budget test self-contained without promoting React
       // to a root devDependency.
       react: fileURLToPath(
-        new URL(
-          "./apps/desktop/src/renderer/node_modules/react",
-          import.meta.url,
-        ),
+        new URL("./apps/desktop/src/renderer/node_modules/react", import.meta.url),
       ),
       "react-dom": fileURLToPath(
-        new URL(
-          "./apps/desktop/src/renderer/node_modules/react-dom",
-          import.meta.url,
-        ),
+        new URL("./apps/desktop/src/renderer/node_modules/react-dom", import.meta.url),
       ),
     },
   },
@@ -58,10 +52,7 @@ export default defineConfig({
     ],
     typecheck: {
       enabled: true,
-      include: [
-        "packages/**/src/**/*.test-d.ts",
-        "apps/**/src/**/*.test-d.ts",
-      ],
+      include: ["packages/**/src/**/*.test-d.ts", "apps/**/src/**/*.test-d.ts"],
       // apps/desktop/tsconfig.json excludes __tests__ directories, so vitest's
       // default tsconfig discovery silently excludes window-api.types.test-d.ts
       // from the tsc program — type assertions pass vacuously. Point at a

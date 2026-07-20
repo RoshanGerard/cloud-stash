@@ -50,24 +50,16 @@ describe("sync-service-desktop SYNC_CHANNELS constants", () => {
 
   it("legacy `enqueueUpload` channel is absent (chunk F removal)", () => {
     type Channels = typeof SYNC_CHANNELS;
-    type HasEnqueueUpload = "enqueueUpload" extends keyof Channels
-      ? true
-      : false;
+    type HasEnqueueUpload = "enqueueUpload" extends keyof Channels ? true : false;
     expectTypeOf<HasEnqueueUpload>().toEqualTypeOf<false>();
-    expect(
-      Object.prototype.hasOwnProperty.call(SYNC_CHANNELS, "enqueueUpload"),
-    ).toBe(false);
+    expect(Object.prototype.hasOwnProperty.call(SYNC_CHANNELS, "enqueueUpload")).toBe(false);
   });
 
   it("retired single-shot `authenticate` channel is absent", () => {
     type Channels = typeof SYNC_CHANNELS;
-    type HasAuthenticate = "authenticate" extends keyof Channels
-      ? true
-      : false;
+    type HasAuthenticate = "authenticate" extends keyof Channels ? true : false;
     expectTypeOf<HasAuthenticate>().toEqualTypeOf<false>();
-    expect(
-      Object.prototype.hasOwnProperty.call(SYNC_CHANNELS, "authenticate"),
-    ).toBe(false);
+    expect(Object.prototype.hasOwnProperty.call(SYNC_CHANNELS, "authenticate")).toBe(false);
   });
 
   it("each channel resolves to its stable string literal", () => {
@@ -81,9 +73,7 @@ describe("sync-service-desktop SYNC_CHANNELS constants", () => {
     expect(SYNC_CHANNELS.clearDownloadHistory).toBe("downloads:clear-history");
     expect(SYNC_CHANNELS.listLeftover).toBe("downloads:list-leftover");
     expect(SYNC_CHANNELS.authenticateStart).toBe("sync:authenticate-start");
-    expect(SYNC_CHANNELS.authenticateComplete).toBe(
-      "sync:authenticate-complete",
-    );
+    expect(SYNC_CHANNELS.authenticateComplete).toBe("sync:authenticate-complete");
     expect(SYNC_CHANNELS.authenticateCancel).toBe("sync:authenticate-cancel");
     expect(SYNC_CHANNELS.getConfig).toBe("sync:get-config");
     expect(SYNC_CHANNELS.setConfig).toBe("sync:set-config");
@@ -95,58 +85,34 @@ describe("sync-service-desktop SYNC_CHANNELS constants", () => {
   });
 
   it("each value is a stable string literal at the TYPE level", () => {
-    expectTypeOf<typeof SYNC_CHANNELS.listJobs>().toEqualTypeOf<
-      "sync:list-jobs"
-    >();
+    expectTypeOf<typeof SYNC_CHANNELS.listJobs>().toEqualTypeOf<"sync:list-jobs">();
     expectTypeOf<typeof SYNC_CHANNELS.getJob>().toEqualTypeOf<"sync:get-job">();
-    expectTypeOf<typeof SYNC_CHANNELS.enqueueMirror>().toEqualTypeOf<
-      "sync:enqueue-mirror"
-    >();
-    expectTypeOf<typeof SYNC_CHANNELS.cancelJob>().toEqualTypeOf<
-      "sync:cancel-job"
-    >();
-    expectTypeOf<typeof SYNC_CHANNELS.cancelDownload>().toEqualTypeOf<
-      "sync:cancel-download"
-    >();
-    expectTypeOf<typeof SYNC_CHANNELS.cancelUpload>().toEqualTypeOf<
-      "sync:cancel-upload"
-    >();
-    expectTypeOf<typeof SYNC_CHANNELS.uploadsListActive>().toEqualTypeOf<
-      "uploads:list-active"
-    >();
-    expectTypeOf<typeof SYNC_CHANNELS.clearDownloadHistory>().toEqualTypeOf<
-      "downloads:clear-history"
-    >();
-    expectTypeOf<typeof SYNC_CHANNELS.listLeftover>().toEqualTypeOf<
-      "downloads:list-leftover"
-    >();
-    expectTypeOf<typeof SYNC_CHANNELS.authenticateStart>().toEqualTypeOf<
-      "sync:authenticate-start"
-    >();
-    expectTypeOf<typeof SYNC_CHANNELS.authenticateComplete>().toEqualTypeOf<
-      "sync:authenticate-complete"
-    >();
-    expectTypeOf<typeof SYNC_CHANNELS.authenticateCancel>().toEqualTypeOf<
-      "sync:authenticate-cancel"
-    >();
-    expectTypeOf<typeof SYNC_CHANNELS.getConfig>().toEqualTypeOf<
-      "sync:get-config"
-    >();
-    expectTypeOf<typeof SYNC_CHANNELS.setConfig>().toEqualTypeOf<
-      "sync:set-config"
-    >();
-    expectTypeOf<typeof SYNC_CHANNELS.deleteCredentials>().toEqualTypeOf<
-      "sync:delete-credentials"
-    >();
-    expectTypeOf<typeof SYNC_CHANNELS.getStatus>().toEqualTypeOf<
-      "sync:get-status"
-    >();
-    expectTypeOf<typeof SYNC_CHANNELS.getRetryPolicy>().toEqualTypeOf<
-      "sync:get-retry-policy"
-    >();
-    expectTypeOf<typeof SYNC_CHANNELS.setRetryPolicy>().toEqualTypeOf<
-      "sync:set-retry-policy"
-    >();
+    expectTypeOf<typeof SYNC_CHANNELS.enqueueMirror>().toEqualTypeOf<"sync:enqueue-mirror">();
+    expectTypeOf<typeof SYNC_CHANNELS.cancelJob>().toEqualTypeOf<"sync:cancel-job">();
+    expectTypeOf<typeof SYNC_CHANNELS.cancelDownload>().toEqualTypeOf<"sync:cancel-download">();
+    expectTypeOf<typeof SYNC_CHANNELS.cancelUpload>().toEqualTypeOf<"sync:cancel-upload">();
+    expectTypeOf<typeof SYNC_CHANNELS.uploadsListActive>().toEqualTypeOf<"uploads:list-active">();
+    expectTypeOf<
+      typeof SYNC_CHANNELS.clearDownloadHistory
+    >().toEqualTypeOf<"downloads:clear-history">();
+    expectTypeOf<typeof SYNC_CHANNELS.listLeftover>().toEqualTypeOf<"downloads:list-leftover">();
+    expectTypeOf<
+      typeof SYNC_CHANNELS.authenticateStart
+    >().toEqualTypeOf<"sync:authenticate-start">();
+    expectTypeOf<
+      typeof SYNC_CHANNELS.authenticateComplete
+    >().toEqualTypeOf<"sync:authenticate-complete">();
+    expectTypeOf<
+      typeof SYNC_CHANNELS.authenticateCancel
+    >().toEqualTypeOf<"sync:authenticate-cancel">();
+    expectTypeOf<typeof SYNC_CHANNELS.getConfig>().toEqualTypeOf<"sync:get-config">();
+    expectTypeOf<typeof SYNC_CHANNELS.setConfig>().toEqualTypeOf<"sync:set-config">();
+    expectTypeOf<
+      typeof SYNC_CHANNELS.deleteCredentials
+    >().toEqualTypeOf<"sync:delete-credentials">();
+    expectTypeOf<typeof SYNC_CHANNELS.getStatus>().toEqualTypeOf<"sync:get-status">();
+    expectTypeOf<typeof SYNC_CHANNELS.getRetryPolicy>().toEqualTypeOf<"sync:get-retry-policy">();
+    expectTypeOf<typeof SYNC_CHANNELS.setRetryPolicy>().toEqualTypeOf<"sync:set-retry-policy">();
     expectTypeOf<typeof SYNC_CHANNELS.event>().toEqualTypeOf<"sync:event">();
   });
 

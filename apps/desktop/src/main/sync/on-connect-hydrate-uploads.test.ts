@@ -52,10 +52,7 @@ describe("hydrateActiveUploadsOnce — fire-once on-supervisor-connect", () => {
     expect(request).toHaveBeenCalledWith("uploads:list-active", {});
 
     expect(sendToRenderer).toHaveBeenCalledTimes(1);
-    expect(sendToRenderer).toHaveBeenCalledWith(
-      "files:hydrate-active-uploads",
-      sampleJobs,
-    );
+    expect(sendToRenderer).toHaveBeenCalledWith("files:hydrate-active-uploads", sampleJobs);
   });
 
   it("forwards an empty array when the registry has no active jobs (still fires exactly once)", async () => {
@@ -66,10 +63,7 @@ describe("hydrateActiveUploadsOnce — fire-once on-supervisor-connect", () => {
 
     expect(request).toHaveBeenCalledTimes(1);
     expect(sendToRenderer).toHaveBeenCalledTimes(1);
-    expect(sendToRenderer).toHaveBeenCalledWith(
-      "files:hydrate-active-uploads",
-      [],
-    );
+    expect(sendToRenderer).toHaveBeenCalledWith("files:hydrate-active-uploads", []);
   });
 
   it("does NOT throw when the request rejects — logs and skips the renderer send", async () => {
@@ -83,9 +77,7 @@ describe("hydrateActiveUploadsOnce — fire-once on-supervisor-connect", () => {
     const sendToRenderer = vi.fn();
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
 
-    await expect(
-      hydrateActiveUploadsOnce({ request }, sendToRenderer),
-    ).resolves.toBeUndefined();
+    await expect(hydrateActiveUploadsOnce({ request }, sendToRenderer)).resolves.toBeUndefined();
 
     expect(sendToRenderer).not.toHaveBeenCalled();
     expect(warn).toHaveBeenCalledTimes(1);

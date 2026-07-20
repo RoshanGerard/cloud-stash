@@ -32,18 +32,12 @@ describe("isEnvironmentallyRetryable (§6.1, Decision 2 four-clause AND)", () =>
     "invalid-datasource",
   ] as const;
 
-  const allowlist = new Set([
-    "network-error",
-    "rate-limited",
-    "provider-error",
-  ]);
+  const allowlist = new Set(["network-error", "rate-limited", "provider-error"]);
 
   for (const tag of tags) {
     for (const retryable of [true, false]) {
       const expected =
-        retryable === true &&
-        tag !== DatasourceErrorTag.AuthExpired &&
-        allowlist.has(tag);
+        retryable === true && tag !== DatasourceErrorTag.AuthExpired && allowlist.has(tag);
       it(`returns ${expected} for DatasourceError { tag: "${tag}", retryable: ${retryable} }`, () => {
         const err = new DatasourceError({
           tag,

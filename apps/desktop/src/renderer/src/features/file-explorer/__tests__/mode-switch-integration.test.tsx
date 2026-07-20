@@ -1,12 +1,6 @@
 /** @vitest-environment jsdom */
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import {
-  act,
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-} from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 
 import type { FileEntry } from "@cloudstash/ipc-contracts";
@@ -115,10 +109,7 @@ function seedTree(): FileEntry[] {
 }
 
 function openViewMenu(): void {
-  fireEvent.pointerDown(
-    screen.getByRole("button", { name: /view/i }),
-    { button: 0 },
-  );
+  fireEvent.pointerDown(screen.getByRole("button", { name: /view/i }), { button: 0 });
 }
 
 async function clickViewOption(label: string): Promise<void> {
@@ -131,12 +122,11 @@ async function clickViewOption(label: string): Promise<void> {
 describe("Mode-switch integration — selection survives toolbar-driven mode changes", () => {
   beforeEach(() => {
     if (!("ResizeObserver" in window)) {
-      (window as unknown as { ResizeObserver: unknown }).ResizeObserver =
-        class MockResizeObserver {
-          observe() {}
-          unobserve() {}
-          disconnect() {}
-        };
+      (window as unknown as { ResizeObserver: unknown }).ResizeObserver = class MockResizeObserver {
+        observe() {}
+        unobserve() {}
+        disconnect() {}
+      };
     }
     window.localStorage.clear();
   });

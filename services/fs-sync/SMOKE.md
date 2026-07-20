@@ -46,7 +46,19 @@ node services/fs-sync/scripts/smoke-client.mjs
 Expected stdout (single line, JSON):
 
 ```json
-{"id":"1","kind":"response","ok":true,"result":{"version":"0.0.0","serviceUuid":"","runningJobs":0,"queuedJobs":0,"waitingNetworkJobs":0,"monitorConnected":false}}
+{
+  "id": "1",
+  "kind": "response",
+  "ok": true,
+  "result": {
+    "version": "0.0.0",
+    "serviceUuid": "",
+    "runningJobs": 0,
+    "queuedJobs": 0,
+    "waitingNetworkJobs": 0,
+    "monitorConnected": false
+  }
+}
 ```
 
 The client exits 0 on a success response, 1 on transport failure, 2 on a 5-second timeout.
@@ -75,6 +87,7 @@ kill -INT "$(cat "$HOME/cloudstash/sync_app/dev/service-dev.pid")"
 **Windows caveat — graceful shutdown is a manual-only step.** Node's `process.kill(pid, "SIGINT")` and `taskkill /F /PID <pid>` both hard-terminate a service running in a different console on Windows. Neither delivers a real SIGINT — [Node docs](https://nodejs.org/api/process.html#processkillpid-signal) state that on Windows "POSIX signals do not exist, the signal argument will be ignored, and the process will be killed forcefully and abruptly (similar to SIGKILL)." Result: `service-dev.pid` is left behind and the next `start` exits 3 (`AlreadyRunningError`) until the stale file is deleted.
 
 Implications:
+
 - The only reliable way to exercise the graceful path on Windows is Ctrl+C in the terminal that launched the service (same-console SIGINT is honored by the Node child).
 - Unit-level coverage for the graceful path lives in `services/fs-sync/src/main/signals.test.ts` — it injects an `EventEmitter` as the signal source, which bypasses the Windows signal-delivery limitation.
 - For Windows CI, plan on either running the service in-band with the runner's shell (Ctrl+C equivalent available via `GenerateConsoleCtrlEvent`) or falling back to `taskkill /F` + an explicit PID-file cleanup step.
@@ -91,12 +104,12 @@ and exits 0 within 5 seconds. The PID file `$HOME/cloudstash/sync_app/dev/servic
 
 ## Observed results (last captured run)
 
-| Step | Expected | Observed |
-| --- | --- | --- |
-| Start | "fs-sync-service started …" on stdout | ✅ `pid=6624, mode=dev, pipe=\\.\pipe\cloudstash-sync-dev` |
-| smoke-client | `ok:true` response frame with `version`, `serviceUuid`, `runningJobs: 0`, `queuedJobs: 0`, `waitingNetworkJobs: 0`, `monitorConnected: false` | ✅ exactly that shape |
-| PID file while running | present, contains the service PID | ✅ `service-dev.pid` contained `6624` |
-| Graceful shutdown | PID file removed | ⚠ not exercised — Windows blocks cross-console SIGINT delivery (see caveat above); signals.test.ts covers the assertion via an injected `EventEmitter` |
+| Step                   | Expected                                                                                                                                      | Observed                                                                                                                                               |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Start                  | "fs-sync-service started …" on stdout                                                                                                         | ✅ `pid=6624, mode=dev, pipe=\\.\pipe\cloudstash-sync-dev`                                                                                             |
+| smoke-client           | `ok:true` response frame with `version`, `serviceUuid`, `runningJobs: 0`, `queuedJobs: 0`, `waitingNetworkJobs: 0`, `monitorConnected: false` | ✅ exactly that shape                                                                                                                                  |
+| PID file while running | present, contains the service PID                                                                                                             | ✅ `service-dev.pid` contained `6624`                                                                                                                  |
+| Graceful shutdown      | PID file removed                                                                                                                              | ⚠ not exercised — Windows blocks cross-console SIGINT delivery (see caveat above); signals.test.ts covers the assertion via an injected `EventEmitter` |
 
 ## CI porting notes
 

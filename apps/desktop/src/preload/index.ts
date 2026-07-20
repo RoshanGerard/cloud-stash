@@ -1,10 +1,6 @@
 import { contextBridge, ipcRenderer, webUtils, type IpcRendererEvent } from "electron";
 
-import {
-  DATASOURCES_CHANNELS,
-  FILES_CHANNELS,
-  WINDOW_CHANNELS,
-} from "@cloudstash/ipc-contracts";
+import { DATASOURCES_CHANNELS, FILES_CHANNELS, WINDOW_CHANNELS } from "@cloudstash/ipc-contracts";
 import type {
   DatasourcesActionRequest,
   DatasourcesActionResponse,
@@ -138,18 +134,11 @@ const api = {
   // call registers its own listener and returns a dispose fn that removes THAT
   // listener, so the maximize control can swap between maximize/restore glyphs.
   window: {
-    minimize: (): Promise<void> =>
-      ipcRenderer.invoke(WINDOW_CHANNELS.minimize),
-    toggleMaximize: (): Promise<void> =>
-      ipcRenderer.invoke(WINDOW_CHANNELS.toggleMaximize),
+    minimize: (): Promise<void> => ipcRenderer.invoke(WINDOW_CHANNELS.minimize),
+    toggleMaximize: (): Promise<void> => ipcRenderer.invoke(WINDOW_CHANNELS.toggleMaximize),
     close: (): Promise<void> => ipcRenderer.invoke(WINDOW_CHANNELS.close),
-    onMaximizeChange: (
-      callback: (maximized: boolean) => void,
-    ): (() => void) => {
-      const listener = (
-        _event: IpcRendererEvent,
-        payload: WindowMaximizeChangePayload,
-      ): void => {
+    onMaximizeChange: (callback: (maximized: boolean) => void): (() => void) => {
+      const listener = (_event: IpcRendererEvent, payload: WindowMaximizeChangePayload): void => {
         callback(payload.maximized);
       };
       ipcRenderer.on(WINDOW_CHANNELS.maximizeChange, listener);
@@ -159,17 +148,12 @@ const api = {
     },
   },
   datasources: {
-    list: (): Promise<DatasourcesListResponse> =>
-      ipcRenderer.invoke(DATASOURCES_CHANNELS.list),
+    list: (): Promise<DatasourcesListResponse> => ipcRenderer.invoke(DATASOURCES_CHANNELS.list),
     add: (req: DatasourcesAddRequest): Promise<DatasourcesAddResponse> =>
       ipcRenderer.invoke(DATASOURCES_CHANNELS.add, req),
-    remove: (
-      req: DatasourcesRemoveRequest,
-    ): Promise<DatasourcesRemoveResponse> =>
+    remove: (req: DatasourcesRemoveRequest): Promise<DatasourcesRemoveResponse> =>
       ipcRenderer.invoke(DATASOURCES_CHANNELS.remove, req),
-    action: (
-      req: DatasourcesActionRequest,
-    ): Promise<DatasourcesActionResponse> =>
+    action: (req: DatasourcesActionRequest): Promise<DatasourcesActionResponse> =>
       ipcRenderer.invoke(DATASOURCES_CHANNELS.action, req),
     // Opens the OS-native multi-select "Open File" dialog in the main
     // process and returns the user's selection. Request type is
@@ -230,21 +214,13 @@ const api = {
     // invocation registers its own listener, the returned dispose
     // function removes that specific
     // listener (not all listeners on the channel).
-    onActiveDownloadsHydrate: (
-      callback: (jobs: readonly DownloadJob[]) => void,
-    ): (() => void) => {
-      const listener = (
-        _event: IpcRendererEvent,
-        payload: readonly DownloadJob[],
-      ): void => {
+    onActiveDownloadsHydrate: (callback: (jobs: readonly DownloadJob[]) => void): (() => void) => {
+      const listener = (_event: IpcRendererEvent, payload: readonly DownloadJob[]): void => {
         callback(payload);
       };
       ipcRenderer.on("files:hydrate-active-downloads", listener);
       return () => {
-        ipcRenderer.removeListener(
-          "files:hydrate-active-downloads",
-          listener,
-        );
+        ipcRenderer.removeListener("files:hydrate-active-downloads", listener);
       };
     },
     // migrate-upload-orchestration-out-of-engine §13.3 — symmetric
@@ -255,21 +231,13 @@ const api = {
     // session do NOT re-fire; the renderer's live `sync:event-stream`
     // subscription (filtered to the four upload kinds) drives in-
     // flight progress instead.
-    onActiveUploadsHydrate: (
-      callback: (jobs: readonly UploadJob[]) => void,
-    ): (() => void) => {
-      const listener = (
-        _event: IpcRendererEvent,
-        payload: readonly UploadJob[],
-      ): void => {
+    onActiveUploadsHydrate: (callback: (jobs: readonly UploadJob[]) => void): (() => void) => {
+      const listener = (_event: IpcRendererEvent, payload: readonly UploadJob[]): void => {
         callback(payload);
       };
       ipcRenderer.on("files:hydrate-active-uploads", listener);
       return () => {
-        ipcRenderer.removeListener(
-          "files:hydrate-active-uploads",
-          listener,
-        );
+        ipcRenderer.removeListener("files:hydrate-active-uploads", listener);
       };
     },
   },
@@ -278,29 +246,20 @@ const api = {
     // flaky under Radix focus-trap in packaged builds — this path always
     // works because Electron's `clipboard` module has no transient-
     // activation requirement.
-    writeText: (text: string): Promise<void> =>
-      ipcRenderer.invoke("clipboard:writeText", text),
+    writeText: (text: string): Promise<void> => ipcRenderer.invoke("clipboard:writeText", text),
   },
   sync: {
-    listJobs: (
-      req: SyncListJobsRequest,
-    ): Promise<SyncListJobsResponse> =>
+    listJobs: (req: SyncListJobsRequest): Promise<SyncListJobsResponse> =>
       ipcRenderer.invoke(SYNC_CHANNELS.listJobs, req),
-    getJob: (
-      req: SyncGetJobRequest,
-    ): Promise<SyncGetJobResponse> =>
+    getJob: (req: SyncGetJobRequest): Promise<SyncGetJobResponse> =>
       ipcRenderer.invoke(SYNC_CHANNELS.getJob, req),
     // migrate-upload-orchestration-out-of-engine §11 / §7.4 — the
     // `enqueueUpload` preload binding was deleted in chunk F. The
     // renderer reaches the upload path via `window.api.files.upload`
     // (the direct-RPC handler at `apps/desktop/src/main/ipc/files/upload.ts`).
-    enqueueMirror: (
-      req: SyncEnqueueMirrorRequest,
-    ): Promise<SyncEnqueueMirrorResponse> =>
+    enqueueMirror: (req: SyncEnqueueMirrorRequest): Promise<SyncEnqueueMirrorResponse> =>
       ipcRenderer.invoke(SYNC_CHANNELS.enqueueMirror, req),
-    cancelJob: (
-      req: SyncCancelJobRequest,
-    ): Promise<SyncCancelJobResponse> =>
+    cancelJob: (req: SyncCancelJobRequest): Promise<SyncCancelJobResponse> =>
       ipcRenderer.invoke(SYNC_CHANNELS.cancelJob, req),
     // add-download-resilience §12.6 (iter-5, Decision 16) — the renderer
     // toaster's Cancel button uses this method, NOT cancelJob. The two
@@ -308,9 +267,7 @@ const api = {
     // targets in-flight downloads ({ downloadJobId }). Pre-iter-5 the
     // toaster collision-routed via cancelJob, which is why this bridge
     // was added.
-    cancelDownload: (
-      req: SyncCancelDownloadRequest,
-    ): Promise<SyncCancelDownloadResponse> =>
+    cancelDownload: (req: SyncCancelDownloadRequest): Promise<SyncCancelDownloadResponse> =>
       ipcRenderer.invoke(SYNC_CHANNELS.cancelDownload, req),
     // migrate-upload-orchestration-out-of-engine §7.3 / §7.9 — renderer
     // toaster's Cancel button on an in-flight upload routes here, NOT
@@ -318,9 +275,7 @@ const api = {
     // job id) and NOT through `cancelDownload` (different id namespace).
     // The bridge is a thin pass-through to the service's
     // `sync:cancel-upload` command; idempotent on unknown `uploadJobId`.
-    cancelUpload: (
-      req: SyncCancelUploadRequest,
-    ): Promise<SyncCancelUploadResponse> =>
+    cancelUpload: (req: SyncCancelUploadRequest): Promise<SyncCancelUploadResponse> =>
       ipcRenderer.invoke(SYNC_CHANNELS.cancelUpload, req),
     authenticateStart: (
       req: SyncAuthenticateStartRequest,
@@ -336,50 +291,35 @@ const api = {
       ipcRenderer.invoke(SYNC_CHANNELS.authenticateCancel, req),
     // `getStatus` has a void request type — invoke with channel only,
     // mirroring the `ping()` pattern above.
-    getStatus: (): Promise<SyncGetStatusResponse> =>
-      ipcRenderer.invoke(SYNC_CHANNELS.getStatus),
+    getStatus: (): Promise<SyncGetStatusResponse> => ipcRenderer.invoke(SYNC_CHANNELS.getStatus),
     // add-download-history-ui §5 — Settings → Downloads config + clear-history.
     // FIRST renderer consumer of the service config (design.md Decision 8);
     // the renderer routes WRITES through a read-modify-write helper that
     // preserves `providers` (Decision 7). `getConfig` has a void request.
-    getConfig: (): Promise<SyncGetConfigResponse> =>
-      ipcRenderer.invoke(SYNC_CHANNELS.getConfig),
-    setConfig: (
-      req: SyncSetConfigRequest,
-    ): Promise<SyncSetConfigResponse> =>
+    getConfig: (): Promise<SyncGetConfigResponse> => ipcRenderer.invoke(SYNC_CHANNELS.getConfig),
+    setConfig: (req: SyncSetConfigRequest): Promise<SyncSetConfigResponse> =>
       ipcRenderer.invoke(SYNC_CHANNELS.setConfig, req),
     clearDownloadHistory: (
       req: SyncClearDownloadHistoryRequest,
     ): Promise<SyncClearDownloadHistoryResponse> =>
       ipcRenderer.invoke(SYNC_CHANNELS.clearDownloadHistory, req),
-    deletePartial: (
-      req: SyncDeletePartialRequest,
-    ): Promise<SyncDeletePartialResponse> =>
+    deletePartial: (req: SyncDeletePartialRequest): Promise<SyncDeletePartialResponse> =>
       ipcRenderer.invoke(SYNC_CHANNELS.deletePartial, req),
     // add-leftover-download-cleanup §2.4 — Settings → "Review leftover files"
     // reads this on open. Void request (channel-only invoke, mirrors
     // getStatus/getConfig); resolves the flat `{ entries }` snapshot.
     listLeftover: (): Promise<SyncListLeftoverResponse> =>
       ipcRenderer.invoke(SYNC_CHANNELS.listLeftover),
-    getRetryPolicy: (
-      req: SyncGetRetryPolicyRequest,
-    ): Promise<SyncGetRetryPolicyResponse> =>
+    getRetryPolicy: (req: SyncGetRetryPolicyRequest): Promise<SyncGetRetryPolicyResponse> =>
       ipcRenderer.invoke(SYNC_CHANNELS.getRetryPolicy, req),
-    setRetryPolicy: (
-      req: SyncSetRetryPolicyRequest,
-    ): Promise<SyncSetRetryPolicyResponse> =>
+    setRetryPolicy: (req: SyncSetRetryPolicyRequest): Promise<SyncSetRetryPolicyResponse> =>
       ipcRenderer.invoke(SYNC_CHANNELS.setRetryPolicy, req),
     // One-way main → renderer event stream. Each invocation registers its
     // own listener, so multiple subscribers can coexist independently; the
     // returned dispose function removes that specific listener (not all
     // listeners on the channel).
-    onEvent: (
-      callback: (event: SyncEvent) => void,
-    ): (() => void) => {
-      const listener = (
-        _event: IpcRendererEvent,
-        payload: SyncEvent,
-      ): void => {
+    onEvent: (callback: (event: SyncEvent) => void): (() => void) => {
+      const listener = (_event: IpcRendererEvent, payload: SyncEvent): void => {
         callback(payload);
       };
       ipcRenderer.on(SYNC_CHANNELS.event, listener);

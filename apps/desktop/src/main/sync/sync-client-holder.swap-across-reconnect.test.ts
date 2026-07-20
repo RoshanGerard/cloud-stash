@@ -20,15 +20,8 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { FramingDecoder, encodeFrame } from "./framing.js";
 import { SyncClient } from "./client.js";
-import {
-  startSupervisor,
-  type SupervisorHandle,
-} from "./supervisor.js";
-import {
-  getSyncClient,
-  setSyncClient,
-  __resetSyncClientForTesting,
-} from "./sync-client-holder.js";
+import { startSupervisor, type SupervisorHandle } from "./supervisor.js";
+import { getSyncClient, setSyncClient, __resetSyncClientForTesting } from "./sync-client-holder.js";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -62,9 +55,23 @@ async function startFakeListener(pipePath: string): Promise<{
         const frame = f as RequestFrame;
         if (frame.kind === "request") {
           if (frame.command === "sync:subscribe-events") {
-            socket.write(encodeFrame({ id: frame.id, kind: "response", ok: true, result: { subscribed: true } } as Parameters<typeof encodeFrame>[0]));
+            socket.write(
+              encodeFrame({
+                id: frame.id,
+                kind: "response",
+                ok: true,
+                result: { subscribed: true },
+              } as Parameters<typeof encodeFrame>[0]),
+            );
           } else if (frame.command === "sync:list-jobs") {
-            socket.write(encodeFrame({ id: frame.id, kind: "response", ok: true, result: { jobs: [] } } as Parameters<typeof encodeFrame>[0]));
+            socket.write(
+              encodeFrame({
+                id: frame.id,
+                kind: "response",
+                ok: true,
+                result: { jobs: [] },
+              } as Parameters<typeof encodeFrame>[0]),
+            );
           }
         }
       },
@@ -120,58 +127,54 @@ afterEach(async () => {
 // ---------------------------------------------------------------------------
 
 describe("sync-client-holder swap across reconnect", () => {
-  it(
-    "handler sees a different SyncClient instance after reconnect (F-5)",
-    async () => {
-      const pipePath = pipeFor("swap-f5");
+  it("handler sees a different SyncClient instance after reconnect (F-5)", async () => {
+    const pipePath = pipeFor("swap-f5");
 
-      const firstListener = await startFakeListener(pipePath);
-      servers.push(firstListener);
+    const firstListener = await startFakeListener(pipePath);
+    servers.push(firstListener);
 
-      // Bootstrap: supervisor connects, set initial client in holder
-      const handle = await startSupervisor({
-        mode: "dev",
-        pipePath,
-        connectTimeoutMs: 500,
-      });
-      handles.push(handle);
+    // Bootstrap: supervisor connects, set initial client in holder
+    const handle = await startSupervisor({
+      mode: "dev",
+      pipePath,
+      connectTimeoutMs: 500,
+    });
+    handles.push(handle);
 
-      // Simulate what main/index.ts does:
-      setSyncClient(handle.getClient());
-      handle.on("reconnect", (newClient) => setSyncClient(newClient));
+    // Simulate what main/index.ts does:
+    setSyncClient(handle.getClient());
+    handle.on("reconnect", (newClient) => setSyncClient(newClient));
 
-      // t=1: capture pre-disconnect client reference
-      const clientA = getSyncClient();
-      expect(clientA).toBeInstanceOf(SyncClient);
-      expect(clientA.isConnected).toBe(true);
+    // t=1: capture pre-disconnect client reference
+    const clientA = getSyncClient();
+    expect(clientA).toBeInstanceOf(SyncClient);
+    expect(clientA.isConnected).toBe(true);
 
-      // t=2: trigger disconnect by closing the first listener
-      await firstListener.close();
-      await new Promise<void>((r) => setTimeout(r, 50));
+    // t=2: trigger disconnect by closing the first listener
+    await firstListener.close();
+    await new Promise<void>((r) => setTimeout(r, 50));
 
-      // After disconnect, clientA should no longer be connected
-      expect(clientA.isConnected).toBe(false);
+    // After disconnect, clientA should no longer be connected
+    expect(clientA.isConnected).toBe(false);
 
-      // Start second listener for reconnect
-      const secondListener = await startFakeListener(pipePath);
-      servers.push(secondListener);
+    // Start second listener for reconnect
+    const secondListener = await startFakeListener(pipePath);
+    servers.push(secondListener);
 
-      // Wait for reconnect
-      await secondListener.whenConnected;
-      await new Promise<void>((r) => setTimeout(r, 100));
+    // Wait for reconnect
+    await secondListener.whenConnected;
+    await new Promise<void>((r) => setTimeout(r, 100));
 
-      // t=3: capture post-reconnect client reference
-      const clientB = getSyncClient();
-      expect(clientB).toBeInstanceOf(SyncClient);
-      expect(clientB.isConnected).toBe(true);
+    // t=3: capture post-reconnect client reference
+    const clientB = getSyncClient();
+    expect(clientB).toBeInstanceOf(SyncClient);
+    expect(clientB.isConnected).toBe(true);
 
-      // The two client references must be DIFFERENT INSTANCES
-      expect(clientA).not.toBe(clientB);
+    // The two client references must be DIFFERENT INSTANCES
+    expect(clientA).not.toBe(clientB);
 
-      // clientB is the post-reconnect one
-      expect(clientA.isConnected).toBe(false);
-      expect(clientB.isConnected).toBe(true);
-    },
-    8000,
-  );
+    // clientB is the post-reconnect one
+    expect(clientA.isConnected).toBe(false);
+    expect(clientB.isConnected).toBe(true);
+  }, 8000);
 });

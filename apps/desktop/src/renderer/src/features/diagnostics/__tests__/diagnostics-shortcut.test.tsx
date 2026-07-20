@@ -18,14 +18,7 @@
 //   - Assert unmount removes the listener (dispatching after unmount MUST NOT
 //     call push again).
 
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-} from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render } from "@testing-library/react";
 
 const pushMock = vi.fn();

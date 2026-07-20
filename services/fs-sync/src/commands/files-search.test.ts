@@ -23,9 +23,7 @@ function makeFakeClient(
     cancelUpload: vi.fn(),
     delete: vi.fn(),
     getQuota: vi.fn(),
-    refreshCredentials: vi
-      .fn()
-      .mockResolvedValue({ accessToken: "new", refreshToken: "r" }),
+    refreshCredentials: vi.fn().mockResolvedValue({ accessToken: "new", refreshToken: "r" }),
     ...overrides,
   } as DatasourceClient<DatasourceType>;
 }
@@ -51,10 +49,7 @@ describe("files:search handler", () => {
       resolveClient: async () => makeFakeClient({ search }),
     });
 
-    const result = await handler(
-      { datasourceId: "ds-1", query: "budget", path: "/projects" },
-      ctx,
-    );
+    const result = await handler({ datasourceId: "ds-1", query: "budget", path: "/projects" }, ctx);
 
     expect(result.ok).toBe(true);
     if (result.ok) {
@@ -94,17 +89,12 @@ describe("files:search handler", () => {
         }),
       )
       .mockResolvedValueOnce([hit]);
-    const refreshCredentials = vi
-      .fn()
-      .mockResolvedValue({ accessToken: "new", refreshToken: "r" });
+    const refreshCredentials = vi.fn().mockResolvedValue({ accessToken: "new", refreshToken: "r" });
     const handler = makeFilesSearchHandler({
       resolveClient: async () => makeFakeClient({ search, refreshCredentials }),
     });
 
-    const result = await handler(
-      { datasourceId: "ds-1", query: "budget", path: "/projects" },
-      ctx,
-    );
+    const result = await handler({ datasourceId: "ds-1", query: "budget", path: "/projects" }, ctx);
 
     expect(result.ok).toBe(true);
     if (result.ok) {
@@ -131,10 +121,7 @@ describe("files:search handler", () => {
         }),
     });
 
-    const result = await handler(
-      { datasourceId: "ds-1", query: "x", path: "/" },
-      ctx,
-    );
+    const result = await handler({ datasourceId: "ds-1", query: "x", path: "/" }, ctx);
 
     expect(result.ok).toBe(false);
     if (!result.ok) {

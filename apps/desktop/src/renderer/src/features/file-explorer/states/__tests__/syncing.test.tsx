@@ -11,9 +11,7 @@ describe("SyncingState", () => {
   it("renders headline, body, spinner icon; no action button", () => {
     render(<SyncingState />);
     expect(screen.getByText("Indexing your files…")).toBeInTheDocument();
-    expect(
-      screen.getByText(/This happens once on first connect/),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/This happens once on first connect/)).toBeInTheDocument();
     expect(screen.queryByRole("button")).toBeNull();
   });
 

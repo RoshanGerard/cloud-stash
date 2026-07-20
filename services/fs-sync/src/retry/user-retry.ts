@@ -26,12 +26,7 @@ export interface DecisionInputs {
   readonly policy: RetryPolicy;
 }
 
-const TERMINAL_TAGS = new Set([
-  "auth-revoked",
-  "not-found",
-  "conflict",
-  "unsupported",
-]);
+const TERMINAL_TAGS = new Set(["auth-revoked", "not-found", "conflict", "unsupported"]);
 
 export function decideUserRetry(inputs: DecisionInputs): UserRetryDecision {
   if (TERMINAL_TAGS.has(inputs.errorTag)) {
@@ -49,10 +44,7 @@ export function decideUserRetry(inputs: DecisionInputs): UserRetryDecision {
   if (inputs.attempt >= inputs.policy.maxAttempts) {
     return { branch: "terminal", reason: "max-attempts" };
   }
-  if (
-    inputs.policy.maxAgeMs != null &&
-    inputs.now - inputs.createdAtMs >= inputs.policy.maxAgeMs
-  ) {
+  if (inputs.policy.maxAgeMs != null && inputs.now - inputs.createdAtMs >= inputs.policy.maxAgeMs) {
     return { branch: "terminal", reason: "max-age" };
   }
 

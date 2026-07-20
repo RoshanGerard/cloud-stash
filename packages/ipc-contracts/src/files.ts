@@ -49,8 +49,7 @@ export const FilesErrorTag = {
   // diagnostic-only and lives in `message`.
   ExhaustedRetries: "exhausted-retries",
 } as const;
-export type FilesErrorTag =
-  (typeof FilesErrorTag)[keyof typeof FilesErrorTag];
+export type FilesErrorTag = (typeof FilesErrorTag)[keyof typeof FilesErrorTag];
 
 export interface FilesErrorEnvelope {
   tag: FilesErrorTag;
@@ -102,9 +101,7 @@ export interface FilesErrorEnvelope {
   authErrorKind?: "scope-insufficient";
 }
 
-export type FilesEnvelope<T> =
-  | { ok: true; value: T }
-  | { ok: false; error: FilesErrorEnvelope };
+export type FilesEnvelope<T> = { ok: true; value: T } | { ok: false; error: FilesErrorEnvelope };
 
 // Per unify-engine-delete-method design.md Decision 3, EntryKind is exposed
 // as an `as const` object + derived type (mirroring `FilesErrorTag`). Net-new
@@ -369,18 +366,15 @@ export const FILES_CHANNELS = {
 // files.export API and are excluded.
 export const GOOGLE_APPS_EXPORT_FORMATS = {
   "application/vnd.google-apps.document": {
-    exportMime:
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    exportMime: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     extension: ".docx",
   },
   "application/vnd.google-apps.spreadsheet": {
-    exportMime:
-      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    exportMime: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     extension: ".xlsx",
   },
   "application/vnd.google-apps.presentation": {
-    exportMime:
-      "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    exportMime: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
     extension: ".pptx",
   },
   "application/vnd.google-apps.drawing": {
@@ -395,5 +389,4 @@ export const GOOGLE_APPS_EXPORT_FORMATS = {
 
 // Derived type for the exportable mime keys — useful for narrowing in
 // `mimeType` checks before looking up the export entry.
-export type GoogleAppsExportableMime =
-  keyof typeof GOOGLE_APPS_EXPORT_FORMATS;
+export type GoogleAppsExportableMime = keyof typeof GOOGLE_APPS_EXPORT_FORMATS;

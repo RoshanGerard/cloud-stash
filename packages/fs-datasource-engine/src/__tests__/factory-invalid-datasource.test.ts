@@ -32,9 +32,7 @@ import {
   type ProviderRegistry,
   type ProviderRegistryEntry,
 } from "../factory.js";
-import {
-  validateGoogleDriveCredentialShape,
-} from "../strategies/googledrive-client.js";
+import { validateGoogleDriveCredentialShape } from "../strategies/googledrive-client.js";
 
 function makeCredentialStore(): CredentialStore {
   return {
@@ -125,12 +123,7 @@ describe("ClientFactory.create — InvalidDatasource (Decision 2)", () => {
     const factory = createClientFactory(registry);
 
     try {
-      factory.create(
-        "dropbox" as unknown as ProviderId,
-        "ds-1",
-        driveCreds,
-        ctx,
-      );
+      factory.create("dropbox" as unknown as ProviderId, "ds-1", driveCreds, ctx);
       throw new Error("expected throw");
     } catch (err) {
       expect(err).toBeInstanceOf(DatasourceError);
@@ -151,12 +144,7 @@ describe("ClientFactory.create — InvalidDatasource (Decision 2)", () => {
     const factory = createClientFactory(registry);
 
     try {
-      factory.create(
-        "dropbox" as unknown as ProviderId,
-        "ds-2",
-        driveCreds,
-        ctx,
-      );
+      factory.create("dropbox" as unknown as ProviderId, "ds-2", driveCreds, ctx);
       throw new Error("expected throw");
     } catch (err) {
       const e = err as DatasourceError;
@@ -221,12 +209,7 @@ describe("ClientFactory.create — wrong-shape credential rejection (§3.5–3.7
     const factory = createClientFactory(registry);
 
     try {
-      factory.create(
-        "google-drive",
-        "ds-4",
-        driveCredsMissingAccessToken,
-        ctx,
-      );
+      factory.create("google-drive", "ds-4", driveCredsMissingAccessToken, ctx);
       throw new Error("expected throw");
     } catch (err) {
       const e = err as DatasourceError;

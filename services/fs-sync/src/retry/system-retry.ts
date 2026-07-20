@@ -27,10 +27,7 @@ export type SystemRetryBranch =
       readonly branch: "terminal";
     };
 
-export function classifySystemRetry(
-  errorTag: string,
-  retryAfterMs?: number,
-): SystemRetryBranch {
+export function classifySystemRetry(errorTag: string, retryAfterMs?: number): SystemRetryBranch {
   if (errorTag === DatasourceErrorTag.NetworkError) {
     return { branch: "waiting-network" };
   }

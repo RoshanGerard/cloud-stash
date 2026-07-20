@@ -30,10 +30,7 @@ import { Icon } from "@/components/icon";
 
 import type { IconName } from "../../components/icon";
 
-export type DropOverlayBlockedReason =
-  | "disconnected"
-  | "auth-revoked"
-  | "syncing";
+export type DropOverlayBlockedReason = "disconnected" | "auth-revoked" | "syncing";
 
 export type DropOverlayProps =
   | { kind: "active"; targetDir: string }
@@ -82,12 +79,8 @@ export function DropOverlay(props: DropOverlayProps): ReactElement {
           strokeWidth={1.5}
           aria-hidden="true"
         />
-        <div className="text-[15px] font-semibold text-amber-700">
-          Drop to upload here
-        </div>
-        <div className="text-[13px] font-normal text-amber-600">
-          {`→ ${props.targetDir}`}
-        </div>
+        <div className="text-[15px] font-semibold text-amber-700">Drop to upload here</div>
+        <div className="text-[13px] font-normal text-amber-600">{`→ ${props.targetDir}`}</div>
       </div>
     );
   }
@@ -109,9 +102,7 @@ export function DropOverlay(props: DropOverlayProps): ReactElement {
         strokeWidth={1.5}
         aria-hidden="true"
       />
-      <div className="text-[15px] font-semibold text-foreground">
-        Can&apos;t upload right now
-      </div>
+      <div className="text-[15px] font-semibold text-foreground">Can&apos;t upload right now</div>
       <div className="max-w-[320px] text-center text-[13px] font-normal text-muted-foreground">
         {copy.body}
       </div>

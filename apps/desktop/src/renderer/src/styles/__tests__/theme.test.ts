@@ -133,9 +133,7 @@ describe("renderer theme tokens (shadcn slate palette, class-driven dark)", () =
       "--muted",
       "--muted-foreground",
     ] as const;
-    const unchanged = LOAD_BEARING_PAIRS.filter(
-      (t) => light.get(t) === dark.get(t),
-    );
+    const unchanged = LOAD_BEARING_PAIRS.filter((t) => light.get(t) === dark.get(t));
     expect(unchanged).toEqual([]);
   });
 });

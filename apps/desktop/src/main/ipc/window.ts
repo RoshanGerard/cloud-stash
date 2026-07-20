@@ -1,7 +1,4 @@
-import {
-  WINDOW_CHANNELS,
-  type WindowMaximizeChangePayload,
-} from "@cloudstash/ipc-contracts";
+import { WINDOW_CHANNELS, type WindowMaximizeChangePayload } from "@cloudstash/ipc-contracts";
 
 // Pure, Electron-free handlers for the window-controls IPC ops (frameless main
 // window, add-frameless-window-chrome). Like `ping.ts`, these take the target
@@ -25,9 +22,7 @@ export function handleWindowMinimize(win: ControllableWindow | null): void {
   win?.minimize();
 }
 
-export function handleWindowToggleMaximize(
-  win: ControllableWindow | null,
-): void {
+export function handleWindowToggleMaximize(win: ControllableWindow | null): void {
   if (!win) return;
   if (win.isMaximized()) win.unmaximize();
   else win.maximize();

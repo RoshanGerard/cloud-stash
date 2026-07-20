@@ -9,10 +9,7 @@ import type {
   FilesStatRequest,
   MimeFamily,
 } from "@cloudstash/ipc-contracts";
-import {
-  FILES_PROVIDER_SEARCH_DEFERRED_MESSAGE,
-  FilesErrorTag,
-} from "@cloudstash/ipc-contracts";
+import { FILES_PROVIDER_SEARCH_DEFERRED_MESSAGE, FilesErrorTag } from "@cloudstash/ipc-contracts";
 
 // -----------------------------------------------------------------------------
 // Constants
@@ -106,11 +103,9 @@ function mimeFamilyFor(name: string): MimeFamily {
 
 const MIME_TYPE_BY_EXT: Record<string, string> = {
   ".pdf": "application/pdf",
-  ".docx":
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
   ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-  ".pptx":
-    "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  ".pptx": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
   ".png": "image/png",
   ".jpg": "image/jpeg",
   ".jpeg": "image/jpeg",
@@ -160,9 +155,7 @@ function makeFileEntry(
   opts: { size: number; modifiedOffsetMs?: number } = { size: 1024 },
 ): FileEntry {
   const path = joinPath(parentPath, name);
-  const modifiedAt = new Date(
-    SEED_EPOCH_MS + (opts.modifiedOffsetMs ?? 0),
-  ).toISOString();
+  const modifiedAt = new Date(SEED_EPOCH_MS + (opts.modifiedOffsetMs ?? 0)).toISOString();
   return {
     id: `${datasourceId}::${path}`,
     kind: "file",
@@ -178,11 +171,7 @@ function makeFileEntry(
   };
 }
 
-function makeDirEntry(
-  datasourceId: string,
-  parentPath: string,
-  name: string,
-): FileEntry {
+function makeDirEntry(datasourceId: string, parentPath: string, name: string): FileEntry {
   const path = joinPath(parentPath, name);
   const modifiedAt = new Date(SEED_EPOCH_MS).toISOString();
   return {
@@ -233,11 +222,7 @@ function addFile(
   return entry;
 }
 
-function appendEntry(
-  tree: DatasourceTree,
-  parentPath: string,
-  entry: FileEntry,
-): void {
+function appendEntry(tree: DatasourceTree, parentPath: string, entry: FileEntry): void {
   const existing = tree.byParent.get(parentPath) ?? [];
   existing.push(entry);
   tree.byParent.set(parentPath, existing);
@@ -270,14 +255,11 @@ function seedDrivePersonal(): DatasourceTree {
       "checklist.md",
       "memo.odt",
     ];
-    docFiles.forEach((n, i) =>
-      addFile(tree, ds, docsPath, n, { size: 40_000 + i * 1_500 }),
-    );
+    docFiles.forEach((n, i) => addFile(tree, ds, docsPath, n, { size: 40_000 + i * 1_500 }));
     addDirectory(tree, ds, docsPath, "2026", (yearPath) => {
       addDirectory(tree, ds, yearPath, "taxes", (taxesPath) => {
-        ["w2.pdf", "1099.pdf", "receipts.xlsx", "summary.docx"].forEach(
-          (n, i) =>
-            addFile(tree, ds, taxesPath, n, { size: 60_000 + i * 4_000 }),
+        ["w2.pdf", "1099.pdf", "receipts.xlsx", "summary.docx"].forEach((n, i) =>
+          addFile(tree, ds, taxesPath, n, { size: 60_000 + i * 4_000 }),
         );
       });
     });
@@ -293,9 +275,7 @@ function seedDrivePersonal(): DatasourceTree {
       "feedback-log.md",
       "launch-plan.docx",
       "release-checklist.md",
-    ].forEach((n, i) =>
-      addFile(tree, ds, projPath, n, { size: 80_000 + i * 2_000 }),
-    );
+    ].forEach((n, i) => addFile(tree, ds, projPath, n, { size: 80_000 + i * 2_000 }));
   });
 
   addDirectory(tree, ds, "/", "presentations", (prPath) => {
@@ -305,9 +285,7 @@ function seedDrivePersonal(): DatasourceTree {
       "board-update.pptx",
       "customer-demo.pptx",
       "sales-kickoff.pptx",
-    ].forEach((n, i) =>
-      addFile(tree, ds, prPath, n, { size: 200_000 + i * 50_000 }),
-    );
+    ].forEach((n, i) => addFile(tree, ds, prPath, n, { size: 200_000 + i * 50_000 }));
   });
 
   addDirectory(tree, ds, "/", "receipts", (rcPath) => {
@@ -331,9 +309,7 @@ function seedOneDriveWork(): DatasourceTree {
     "travel-policy.pdf",
     "expense-guide.md",
     "style-guide.md",
-  ].forEach((n, i) =>
-    addFile(tree, ds, "/", n, { size: 25_000 + i * 1_500 }),
-  );
+  ].forEach((n, i) => addFile(tree, ds, "/", n, { size: 25_000 + i * 1_500 }));
 
   addDirectory(tree, ds, "/", "Shared with Me", (shPath) => {
     for (let i = 0; i < 18; i++) {
@@ -381,9 +357,7 @@ function seedS3Archive(): DatasourceTree {
     "changelog.log",
     "release-notes.txt",
     "architecture.png",
-  ].forEach((n, i) =>
-    addFile(tree, ds, "/", n, { size: 10_000 + i * 500 }),
-  );
+  ].forEach((n, i) => addFile(tree, ds, "/", n, { size: 10_000 + i * 500 }));
 
   addDirectory(tree, ds, "/", "backups", (bkPath) => {
     for (let i = 0; i < 12; i++) {
@@ -452,9 +426,7 @@ function seedDriveTeam(): DatasourceTree {
     "vendor-list.xlsx",
     "announcement.md",
     "faq.md",
-  ].forEach((n, i) =>
-    addFile(tree, ds, "/", n, { size: 30_000 + i * 1_000 }),
-  );
+  ].forEach((n, i) => addFile(tree, ds, "/", n, { size: 30_000 + i * 1_000 }));
 
   return tree;
 }

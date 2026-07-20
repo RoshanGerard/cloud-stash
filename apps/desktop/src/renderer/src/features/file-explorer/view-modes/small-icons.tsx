@@ -1,11 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useSyncExternalStore } from "react";
-import type {
-  ComponentPropsWithoutRef,
-  MouseEvent as ReactMouseEvent,
-  Ref,
-} from "react";
+import type { ComponentPropsWithoutRef, MouseEvent as ReactMouseEvent, Ref } from "react";
 
 import type { FileEntry } from "@cloudstash/ipc-contracts";
 
@@ -61,11 +57,7 @@ export function SmallIconsView({
   onCopyPath,
   onProperties,
 }: SmallIconsViewProps) {
-  const state = useSyncExternalStore(
-    store.subscribe,
-    store.getSnapshot,
-    store.getSnapshot,
-  );
+  const state = useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
   const { selection, onEntryClick } = useSelection(store);
 
   if (state.entries.length === 0) {
@@ -181,18 +173,11 @@ function Cell({
         focused && "ring-ring ring-2 ring-inset",
       )}
     >
-      <Icon
-        name={iconName}
-        aria-hidden
-        className="text-muted-foreground size-4 shrink-0"
-      />
+      <Icon name={iconName} aria-hidden className="text-muted-foreground size-4 shrink-0" />
       <EntryNameCell
         store={store}
         entry={entry}
-        className={cn(
-          "max-w-[10rem] text-sm",
-          pendingKind === "remove" && "line-through",
-        )}
+        className={cn("max-w-[10rem] text-sm", pendingKind === "remove" && "line-through")}
         titleAttr={entry.name}
       />
       {pending ? <PendingOpGlyph /> : null}

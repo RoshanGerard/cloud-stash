@@ -26,17 +26,16 @@ function runGrep(specifier: string): string[] {
   const pattern = `from ['\\"]${specifier}['\\"]`;
   const res = spawnSync(
     "bash",
-    [
-      "-c",
-      `grep -rInE "${pattern}" --include='*.ts' ${JSON.stringify(serviceSrc)} || true`,
-    ],
+    ["-c", `grep -rInE "${pattern}" --include='*.ts' ${JSON.stringify(serviceSrc)} || true`],
     { cwd: repoRoot, encoding: "utf8" },
   );
-  return (res.stdout ?? "")
-    .split("\n")
-    .filter((l) => l.length > 0)
-    // The test file itself lists the specifiers in string literals — skip.
-    .filter((l) => !l.includes("no-sdk-imports.test.ts"));
+  return (
+    (res.stdout ?? "")
+      .split("\n")
+      .filter((l) => l.length > 0)
+      // The test file itself lists the specifiers in string literals — skip.
+      .filter((l) => !l.includes("no-sdk-imports.test.ts"))
+  );
 }
 
 describe("fs-sync service — no provider SDK imports", () => {

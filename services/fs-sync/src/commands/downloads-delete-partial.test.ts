@@ -19,12 +19,7 @@ const ctx = (): { readonly connection: Connection } => ({
   connection: { id: 1, closed: false, sendEvent: () => void 0 },
 });
 
-function seed(
-  db: Database.Database,
-  id: string,
-  status: string,
-  targetPath: string,
-): void {
+function seed(db: Database.Database, id: string, status: string, targetPath: string): void {
   db.prepare(
     `INSERT INTO downloads (
        download_job_id, datasource_id, source_path, target_path,

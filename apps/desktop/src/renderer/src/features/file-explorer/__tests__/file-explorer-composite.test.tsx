@@ -17,23 +17,8 @@
 //   5. Sanity-check that the outer `data-testid="file-explorer-root"`
 //      container is still the stable anchor after a view-mode switch.
 
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-  type Mock,
-} from "vitest";
-import {
-  act,
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-} from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from "vitest";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { FilesErrorTag } from "@cloudstash/ipc-contracts";
 import type { FileEntry } from "@cloudstash/ipc-contracts";
@@ -53,10 +38,7 @@ vi.mock("next/navigation", () => ({
 }));
 
 import { FileExplorer } from "../file-explorer.js";
-import {
-  __resetExplorerStoreCacheForTests,
-  getOrCreateExplorerStore,
-} from "../store.js";
+import { __resetExplorerStoreCacheForTests, getOrCreateExplorerStore } from "../store.js";
 import { seedEntry } from "./test-utils.js";
 import { DatasourcesProvider } from "@/features/datasources/store";
 
@@ -136,9 +118,7 @@ function installApiMock(options: InstallOptions = {}): void {
       }),
       authenticateStart: authenticateStartMock,
       authenticateComplete: vi.fn(),
-      authenticateCancel: vi
-        .fn()
-        .mockResolvedValue({ ok: true, result: { cancelled: true } }),
+      authenticateCancel: vi.fn().mockResolvedValue({ ok: true, result: { cancelled: true } }),
     },
     files: {
       list: filesListMock,
@@ -278,17 +258,13 @@ describe("FileExplorer composite (Subagent P)", () => {
     expect(screen.getByText(/network unreachable/i)).toBeInTheDocument();
 
     // No view-mode container should mount in the error branch.
-    expect(
-      screen.queryByTestId("view-mode-keyboard-container"),
-    ).toBeNull();
+    expect(screen.queryByTestId("view-mode-keyboard-container")).toBeNull();
     // And no data rows.
     expect(document.querySelectorAll('[data-testid="explorer-row"]').length).toBe(0);
   });
 
   it("right-click on a rendered row opens the 6-item FileContextMenu", async () => {
-    const root = [
-      seedEntry({ id: "a", name: "alpha.png", path: "/alpha.png" }),
-    ];
+    const root = [seedEntry({ id: "a", name: "alpha.png", path: "/alpha.png" })];
     installApiMock({
       responses: new Map([["/", { entries: root, nextCursor: null }]]),
     });
@@ -296,9 +272,7 @@ describe("FileExplorer composite (Subagent P)", () => {
     render(<FileExplorer datasourceId="ds-gdrive-personal" />);
 
     const row = await waitFor(() => {
-      const found = document.querySelector<HTMLElement>(
-        '[data-testid="explorer-row"]',
-      );
+      const found = document.querySelector<HTMLElement>('[data-testid="explorer-row"]');
       if (found === null) throw new Error("row not found");
       return found;
     });
@@ -348,9 +322,7 @@ describe("FileExplorer composite (Subagent P)", () => {
     expect(screen.getByTestId("file-explorer-root")).toBeInTheDocument();
     // List mode emits `explorer-list-row` cells — same two entries.
     await waitFor(() => {
-      expect(
-        document.querySelectorAll('[data-testid="explorer-list-row"]').length,
-      ).toBe(2);
+      expect(document.querySelectorAll('[data-testid="explorer-list-row"]').length).toBe(2);
     });
   });
 
@@ -372,9 +344,7 @@ describe("FileExplorer composite (Subagent P)", () => {
         mimeType: null,
       }),
     ];
-    const reports = [
-      seedEntry({ id: "r1", name: "q1.pdf", path: "/reports/q1.pdf" }),
-    ];
+    const reports = [seedEntry({ id: "r1", name: "q1.pdf", path: "/reports/q1.pdf" })];
     installApiMock({
       responses: new Map([
         ["/", { entries: root, nextCursor: null }],
@@ -388,9 +358,7 @@ describe("FileExplorer composite (Subagent P)", () => {
       expect(document.querySelectorAll('[data-testid="explorer-row"]').length).toBe(1);
     });
 
-    const dirRow = document.querySelector(
-      '[data-testid="explorer-row"][data-entry-id="d1"]',
-    );
+    const dirRow = document.querySelector('[data-testid="explorer-row"][data-entry-id="d1"]');
     expect(dirRow).not.toBeNull();
 
     fireEvent.doubleClick(dirRow!);
@@ -407,9 +375,7 @@ describe("FileExplorer composite (Subagent P)", () => {
     await waitFor(() => {
       expect(document.querySelectorAll('[data-testid="explorer-row"]').length).toBe(1);
     });
-    expect(
-      document.querySelector('[data-entry-id="r1"]'),
-    ).not.toBeNull();
+    expect(document.querySelector('[data-entry-id="r1"]')).not.toBeNull();
   });
 
   // §9.2 — invalid-datasource branch round-trip (post §27 migration). The
@@ -455,18 +421,13 @@ describe("FileExplorer composite (Subagent P)", () => {
 
     render(
       <DatasourcesProvider>
-        <FileExplorer
-          datasourceId="ds-invalid-1"
-          providerId="google-drive"
-        />
+        <FileExplorer datasourceId="ds-invalid-1" providerId="google-drive" />
       </DatasourcesProvider>,
     );
 
     // The state component renders.
     await waitFor(() =>
-      expect(
-        screen.getByTestId("file-explorer-state-invalid-datasource"),
-      ).toBeInTheDocument(),
+      expect(screen.getByTestId("file-explorer-state-invalid-datasource")).toBeInTheDocument(),
     );
 
     // Click Reconnect → sync.authenticateStart({providerId, datasourceId}).
@@ -512,14 +473,10 @@ describe("FileExplorer composite (Subagent P)", () => {
     // The state component unmounts and the entry from the second list()
     // response renders.
     await waitFor(() => {
-      expect(
-        screen.queryByTestId("file-explorer-state-invalid-datasource"),
-      ).toBeNull();
+      expect(screen.queryByTestId("file-explorer-state-invalid-datasource")).toBeNull();
     });
     await waitFor(() => {
-      expect(
-        document.querySelectorAll('[data-testid="explorer-row"]').length,
-      ).toBe(1);
+      expect(document.querySelectorAll('[data-testid="explorer-row"]').length).toBe(1);
     });
     expect(document.querySelector('[data-entry-id="x1"]')).not.toBeNull();
   });
@@ -550,19 +507,13 @@ describe("FileExplorer composite (Subagent P)", () => {
     );
 
     await waitFor(() =>
-      expect(
-        screen.getByTestId("file-explorer-state-invalid-datasource"),
-      ).toBeInTheDocument(),
+      expect(screen.getByTestId("file-explorer-state-invalid-datasource")).toBeInTheDocument(),
     );
     // The callout headline (provider-parameterized) + the message-derived detail
     // both render — proving authErrorKind AND message threaded end-to-end.
+    expect(screen.getByText("Google Drive needs full-access permission")).toBeInTheDocument();
     expect(
-      screen.getByText("Google Drive needs full-access permission"),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        "Authentication error: request had insufficient authentication scopes",
-      ),
+      screen.getByText("Authentication error: request had insufficient authentication scopes"),
     ).toBeInTheDocument();
   });
 });

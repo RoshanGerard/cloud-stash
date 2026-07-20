@@ -18,12 +18,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const RENDERER_ROOT = join(__dirname, "..", "..", "..");
 const LAYOUT_PATH = join(RENDERER_ROOT, "src", "app", "layout.tsx");
-const FAVICON_PATH = join(
-  RENDERER_ROOT,
-  "public",
-  "brand",
-  "cloudstash-app-tile-dark.svg",
-);
+const FAVICON_PATH = join(RENDERER_ROOT, "public", "brand", "cloudstash-app-tile-dark.svg");
 const FAVICON_HREF = "/brand/cloudstash-app-tile-dark.svg";
 
 describe("favicon — CloudStash app-tile icon wiring", () => {
@@ -33,7 +28,9 @@ describe("favicon — CloudStash app-tile icon wiring", () => {
 
   it("layout.tsx wires metadata.icons to the app-tile favicon", () => {
     const text = readFileSync(LAYOUT_PATH, "utf8");
-    expect(text).toMatch(/icons\s*:\s*\{[^}]*icon\s*:\s*["']\/brand\/cloudstash-app-tile-dark\.svg["']/);
+    expect(text).toMatch(
+      /icons\s*:\s*\{[^}]*icon\s*:\s*["']\/brand\/cloudstash-app-tile-dark\.svg["']/,
+    );
   });
 
   it("references the favicon by an app://-resolvable root-relative path", () => {

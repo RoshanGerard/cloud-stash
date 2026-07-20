@@ -30,12 +30,13 @@ import { Readable } from "node:stream";
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import type {
-  AuthResult,
-  OAuthIntent,
-  StoredCredentials,
+import type { AuthResult, OAuthIntent, StoredCredentials } from "@cloudstash/ipc-contracts";
+import {
+  DatasourceError,
+  DatasourceErrorTag,
+  GOOGLE_APPS_EXPORT_FORMATS,
+  providers,
 } from "@cloudstash/ipc-contracts";
-import { DatasourceError, DatasourceErrorTag, GOOGLE_APPS_EXPORT_FORMATS, providers } from "@cloudstash/ipc-contracts";
 
 import type { BaseClientContext, CredentialStore } from "../base-client.js";
 import {
@@ -186,9 +187,7 @@ function makeFakeDrive(opts: FakeDriveOptions): {
         // metadata fetch. Stream responders are checked first so a fileId
         // with both flavours can host both responder kinds in the same fake.
         if (params.alt === "media") {
-          const streamMatch = (opts.getStreams ?? []).find(
-            (r) => r.fileId === fileId,
-          );
+          const streamMatch = (opts.getStreams ?? []).find((r) => r.fileId === fileId);
           if (!streamMatch) {
             throw makeGaxiosError(404, "no-get-stream-responder", "notFound", {
               message: `no streaming get responder for fileId=${fileId}`,
@@ -343,8 +342,7 @@ function makeCreds(
       meta: {
         clientId: overrides.clientId ?? "test-client-id",
         clientSecret: overrides.clientSecret ?? "test-client-secret",
-        redirectUri:
-          overrides.redirectUri ?? "http://localhost:3000/oauth/callback",
+        redirectUri: overrides.redirectUri ?? "http://localhost:3000/oauth/callback",
         // All default creds include the full Drive scope so every pre-existing
         // test has a sufficient-scope baseline once the sufficiency check lands.
         scope: "https://www.googleapis.com/auth/drive",
@@ -426,18 +424,11 @@ function makeHarness(options: {
       ? options.drive
       : () => options.drive as GoogleDriveClientLike;
   const resolvedCreds = options.creds ?? makeCreds(options.credsOverrides ?? {});
-  const client = createGoogleDriveClient(
-    "ds-gd-1",
-    resolvedCreds,
-    ctx,
-    {
-      driveFactory,
-      ...(options.fetchImpl ? { fetchImpl: options.fetchImpl } : {}),
-      ...(options.codeVerifierFactory
-        ? { codeVerifierFactory: options.codeVerifierFactory }
-        : {}),
-    },
-  ) as GoogleDriveClient;
+  const client = createGoogleDriveClient("ds-gd-1", resolvedCreds, ctx, {
+    driveFactory,
+    ...(options.fetchImpl ? { fetchImpl: options.fetchImpl } : {}),
+    ...(options.codeVerifierFactory ? { codeVerifierFactory: options.codeVerifierFactory } : {}),
+  }) as GoogleDriveClient;
   createdClients.push(client);
   return { client, store };
 }
@@ -487,9 +478,7 @@ function makeIdToken(payload: Record<string, unknown>): string {
 }
 
 /** A valid Google id_token payload; override `sub`/`email`/`aud`/`iss`/`exp`. */
-function googleIdTokenPayload(
-  overrides: Record<string, unknown> = {},
-): Record<string, unknown> {
+function googleIdTokenPayload(overrides: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     sub: "google-sub-1",
     email: "alice@example.com",
@@ -502,10 +491,7 @@ function googleIdTokenPayload(
 
 /** A 200 token-endpoint Response carrying access/refresh tokens + an
  * id_token. Used to replace bare success mocks once capture is unconditional. */
-function tokenResponseWithIdToken(
-  idToken: string,
-  body: Record<string, unknown> = {},
-): Response {
+function tokenResponseWithIdToken(idToken: string, body: Record<string, unknown> = {}): Response {
   return new Response(
     JSON.stringify({
       access_token: "new-at",
@@ -635,9 +621,7 @@ describe("GoogleDriveClient — listDirectory", () => {
     expect(calls.list.length).toBeGreaterThanOrEqual(3);
     // Every path-resolution call must use orderBy=createdTime asc so
     // "oldest first" is deterministic (required for ambiguity detection).
-    const resolveCalls = calls.list.filter((c) =>
-      String(c.q ?? "").includes("name="),
-    );
+    const resolveCalls = calls.list.filter((c) => String(c.q ?? "").includes("name="));
     expect(resolveCalls.length).toBeGreaterThanOrEqual(2);
     for (const c of resolveCalls) {
       expect(String(c.orderBy ?? "")).toContain("createdTime");
@@ -660,9 +644,7 @@ describe("GoogleDriveClient — listDirectory", () => {
     const h = makeHarness({ drive: client });
     const result = await h.client.listDirectory({ kind: "path", path: "/" });
 
-    const listCall = calls.list.find((c) =>
-      String(c.q ?? "").includes("'root' in parents"),
-    )!;
+    const listCall = calls.list.find((c) => String(c.q ?? "").includes("'root' in parents"))!;
     expect(listCall.pageToken).toBeUndefined();
     // Default page size 1000 when options.pageSize is omitted (Decision 3 —
     // Drive's prior default).
@@ -694,14 +676,9 @@ describe("GoogleDriveClient — listDirectory", () => {
       ],
     });
     const h = makeHarness({ drive: client });
-    await h.client.listDirectory(
-      { kind: "path", path: "/" },
-      { cursor: "DRIVE-PAGE-2" },
-    );
+    await h.client.listDirectory({ kind: "path", path: "/" }, { cursor: "DRIVE-PAGE-2" });
 
-    const listCall = calls.list.find((c) =>
-      String(c.q ?? "").includes("'root' in parents"),
-    )!;
+    const listCall = calls.list.find((c) => String(c.q ?? "").includes("'root' in parents"))!;
     expect(listCall.pageToken).toBe("DRIVE-PAGE-2");
   });
 
@@ -715,14 +692,9 @@ describe("GoogleDriveClient — listDirectory", () => {
       ],
     });
     const h = makeHarness({ drive: client });
-    await h.client.listDirectory(
-      { kind: "path", path: "/" },
-      { pageSize: 5000 },
-    );
+    await h.client.listDirectory({ kind: "path", path: "/" }, { pageSize: 5000 });
 
-    const listCall = calls.list.find((c) =>
-      String(c.q ?? "").includes("'root' in parents"),
-    )!;
+    const listCall = calls.list.find((c) => String(c.q ?? "").includes("'root' in parents"))!;
     expect(listCall.pageSize).toBe(1000);
   });
 
@@ -736,14 +708,9 @@ describe("GoogleDriveClient — listDirectory", () => {
       ],
     });
     const h = makeHarness({ drive: client });
-    await h.client.listDirectory(
-      { kind: "path", path: "/" },
-      { pageSize: 250 },
-    );
+    await h.client.listDirectory({ kind: "path", path: "/" }, { pageSize: 250 });
 
-    const listCall = calls.list.find((c) =>
-      String(c.q ?? "").includes("'root' in parents"),
-    )!;
+    const listCall = calls.list.find((c) => String(c.q ?? "").includes("'root' in parents"))!;
     expect(listCall.pageSize).toBe(250);
   });
 
@@ -783,10 +750,7 @@ describe("GoogleDriveClient — listDirectory", () => {
     // per-entry cachePathHandle call would make THIS assertion fail, unlike
     // the shape-only checks above. (Engine-slice review, 2026-06-07.)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const cache = (h.client as any).pathHandleCache as Map<
-      string,
-      { fileId: string }
-    >;
+    const cache = (h.client as any).pathHandleCache as Map<string, { fileId: string }>;
     expect(cache.get("/docs")?.fileId).toBe("folder-cache-1");
   });
 });
@@ -859,10 +823,7 @@ describe("GoogleDriveClient — path ambiguity surfacing", () => {
     expect(meta.handle).toBe("dup-first");
     // Ambiguity surfaces on the entry's providerMetadata.
     expect(meta.providerMetadata.ambiguous).toBe(true);
-    expect(meta.providerMetadata.ambiguousSiblings).toEqual([
-      "dup-second",
-      "dup-third",
-    ]);
+    expect(meta.providerMetadata.ambiguousSiblings).toEqual(["dup-second", "dup-third"]);
   });
 
   it("cache hit on an ambiguous path re-surfaces ambiguous + ambiguousSiblings on the returned entry (regression — cache previously dropped ambiguity metadata)", async () => {
@@ -1184,9 +1145,7 @@ describe("GoogleDriveClient — getMetadata", () => {
       ],
     });
     const h = makeHarness({ drive: client });
-    await expect(
-      h.client.getMetadata({ kind: "handle", handle: "MISSING" }),
-    ).rejects.toSatisfy(
+    await expect(h.client.getMetadata({ kind: "handle", handle: "MISSING" })).rejects.toSatisfy(
       (e: unknown) => e instanceof DatasourceError && e.tag === DatasourceErrorTag.NotFound,
     );
   });
@@ -1249,14 +1208,12 @@ describe("GoogleDriveClient — delete (file)", () => {
       ],
     });
     const h = makeHarness({ drive: client });
-    const err = await h.client
-      .delete({ kind: "path", path: "/dup.txt" }, "file")
-      .then(
-        () => {
-          throw new Error("expected deleteFile to reject");
-        },
-        (e: unknown) => e,
-      );
+    const err = await h.client.delete({ kind: "path", path: "/dup.txt" }, "file").then(
+      () => {
+        throw new Error("expected deleteFile to reject");
+      },
+      (e: unknown) => e,
+    );
     expect(err).toBeInstanceOf(DatasourceError);
     const de = err as DatasourceError<"google-drive">;
     expect(de.tag).toBe("conflict");
@@ -1420,9 +1377,7 @@ describe("GoogleDriveClient — search", () => {
     // Path round-trip fails to find the file because no root-level
     // /hit.jpg exists — this is the documented trap that the class header
     // warns about. Callers MUST NOT rely on the synthesized path.
-    await expect(
-      h.client.getMetadata({ kind: "path", path: entry.path }),
-    ).rejects.toSatisfy(
+    await expect(h.client.getMetadata({ kind: "path", path: entry.path })).rejects.toSatisfy(
       (e: unknown) => e instanceof DatasourceError && e.tag === DatasourceErrorTag.NotFound,
     );
 
@@ -1468,13 +1423,9 @@ describe("GoogleDriveClient — authenticate", () => {
     });
     const intent = (await h.client.authenticate()) as OAuthIntent;
     expect(intent.kind).toBe("oauth");
-    expect(intent.authorizeUrl).toContain(
-      "https://accounts.google.com/o/oauth2/v2/auth",
-    );
+    expect(intent.authorizeUrl).toContain("https://accounts.google.com/o/oauth2/v2/auth");
     expect(intent.authorizeUrl).toContain("client_id=app-xyz");
-    expect(intent.authorizeUrl).toContain(
-      "redirect_uri=http%3A%2F%2Flocalhost%2Fcallback",
-    );
+    expect(intent.authorizeUrl).toContain("redirect_uri=http%3A%2F%2Flocalhost%2Fcallback");
     // Drive scope — full-access to files the app creates or has been granted.
     expect(intent.authorizeUrl).toContain("scope=");
     expect(intent.authorizeUrl).toContain(
@@ -1494,8 +1445,7 @@ describe("GoogleDriveClient — authenticate", () => {
     const result = await intent.completeWith("auth-code-123");
     expect(result.accessToken).toBe("new-at");
     expect(result.refreshToken).toBe("new-rt");
-    const call = (fetchImpl as unknown as ReturnType<typeof vi.fn>).mock
-      .calls[0]!;
+    const call = (fetchImpl as unknown as ReturnType<typeof vi.fn>).mock.calls[0]!;
     expect(String(call[0])).toMatch(/oauth2\.googleapis\.com\/token$/);
   });
 });
@@ -1577,8 +1527,7 @@ describe("GoogleDriveClient — authenticate (PKCE S256)", () => {
     expect(captured).toHaveLength(1);
     const verifier = captured[0]!;
     await intent.completeWith("auth-code-abc");
-    const call = (fetchImpl as unknown as ReturnType<typeof vi.fn>).mock
-      .calls[0]!;
+    const call = (fetchImpl as unknown as ReturnType<typeof vi.fn>).mock.calls[0]!;
     expect(String(call[0])).toMatch(/oauth2\.googleapis\.com\/token$/);
     const body = String((call[1] as { body: string }).body);
     const form = new URLSearchParams(body);
@@ -1587,9 +1536,7 @@ describe("GoogleDriveClient — authenticate (PKCE S256)", () => {
     // — which in turn matches the authorize URL's challenge.
     expect(codeVerifierValues).toHaveLength(1);
     expect(codeVerifierValues[0]).toBe(verifier);
-    const authorizeChallenge = new URL(intent.authorizeUrl).searchParams.get(
-      "code_challenge",
-    );
+    const authorizeChallenge = new URL(intent.authorizeUrl).searchParams.get("code_challenge");
     expect(authorizeChallenge).toBe(base64urlSha256(verifier));
   });
 
@@ -1601,12 +1548,8 @@ describe("GoogleDriveClient — authenticate (PKCE S256)", () => {
     const intent2 = (await h.client.authenticate()) as OAuthIntent;
     expect(captured).toHaveLength(2);
     expect(captured[0]).not.toBe(captured[1]);
-    const challenge1 = new URL(intent1.authorizeUrl).searchParams.get(
-      "code_challenge",
-    );
-    const challenge2 = new URL(intent2.authorizeUrl).searchParams.get(
-      "code_challenge",
-    );
+    const challenge1 = new URL(intent1.authorizeUrl).searchParams.get("code_challenge");
+    const challenge2 = new URL(intent2.authorizeUrl).searchParams.get("code_challenge");
     expect(challenge1).toBeTruthy();
     expect(challenge2).toBeTruthy();
     expect(challenge1).not.toBe(challenge2);
@@ -1660,22 +1603,22 @@ describe("GoogleDriveClient — authenticate (PKCE S256)", () => {
 describe("GoogleDriveClient — refreshToken", () => {
   it("POSTs grant_type=refresh_token to oauth2.googleapis.com/token", async () => {
     const { client } = makeFakeDrive({});
-    const fetchImpl = vi.fn(async () =>
-      new Response(
-        JSON.stringify({
-          access_token: "refreshed-at",
-          expires_in: 3600,
-        }),
-        { status: 200 },
-      ),
+    const fetchImpl = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            access_token: "refreshed-at",
+            expires_in: 3600,
+          }),
+          { status: 200 },
+        ),
     ) as unknown as typeof fetch;
     const h = makeHarness({ drive: client, fetchImpl });
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const refresh = (h.client as any).refreshTokenImpl.bind(h.client);
     const result = await refresh();
     expect(result.accessToken).toBe("refreshed-at");
-    const call = (fetchImpl as unknown as ReturnType<typeof vi.fn>).mock
-      .calls[0]!;
+    const call = (fetchImpl as unknown as ReturnType<typeof vi.fn>).mock.calls[0]!;
     expect(String(call[0])).toMatch(/oauth2\.googleapis\.com\/token$/);
     const body = (call[1] as { body: string }).body;
     expect(body).toContain("grant_type=refresh_token");
@@ -1684,21 +1627,21 @@ describe("GoogleDriveClient — refreshToken", () => {
 
   it("token endpoint returning invalid_grant throws DatasourceError tag 'auth-revoked'", async () => {
     const { client } = makeFakeDrive({});
-    const fetchImpl = vi.fn(async () =>
-      new Response(
-        JSON.stringify({
-          error: "invalid_grant",
-          error_description: "Token has been revoked",
-        }),
-        { status: 400 },
-      ),
+    const fetchImpl = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            error: "invalid_grant",
+            error_description: "Token has been revoked",
+          }),
+          { status: 400 },
+        ),
     ) as unknown as typeof fetch;
     const h = makeHarness({ drive: client, fetchImpl });
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const refresh = (h.client as any).refreshTokenImpl.bind(h.client);
     await expect(refresh()).rejects.toSatisfy(
-      (e: unknown) =>
-        e instanceof DatasourceError && e.tag === DatasourceErrorTag.AuthRevoked,
+      (e: unknown) => e instanceof DatasourceError && e.tag === DatasourceErrorTag.AuthRevoked,
     );
   });
 });
@@ -1708,10 +1651,7 @@ describe("GoogleDriveClient — refreshToken", () => {
 // ---------------------------------------------------------------------------
 
 describe("GoogleDriveClient — normalizeError taxonomy", () => {
-  function normalize(
-    client: GoogleDriveClient,
-    raw: unknown,
-  ): DatasourceError<"google-drive"> {
+  function normalize(client: GoogleDriveClient, raw: unknown): DatasourceError<"google-drive"> {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return (client as any).normalizeErrorImpl(raw);
   }
@@ -1719,12 +1659,10 @@ describe("GoogleDriveClient — normalizeError taxonomy", () => {
   it("401 → auth-expired", () => {
     const { client } = makeFakeDrive({});
     const h = makeHarness({ drive: client });
-    expect(
-      normalize(h.client, makeGaxiosError(401, "unauth", "authError")).tag,
-    ).toBe("auth-expired");
-    expect(normalize(h.client, { response: { status: 401 } }).tag).toBe(
+    expect(normalize(h.client, makeGaxiosError(401, "unauth", "authError")).tag).toBe(
       "auth-expired",
     );
+    expect(normalize(h.client, { response: { status: 401 } }).tag).toBe("auth-expired");
   });
 
   it("403 rateLimitExceeded / userRateLimitExceeded → rate-limited and reads retry-after", () => {
@@ -1740,10 +1678,7 @@ describe("GoogleDriveClient — normalizeError taxonomy", () => {
     expect(e.retryAfterMs).toBe(5000);
     expect(e.retryable).toBe(true);
 
-    const u = normalize(
-      h.client,
-      makeGaxiosError(403, "rate", "userRateLimitExceeded"),
-    );
+    const u = normalize(h.client, makeGaxiosError(403, "rate", "userRateLimitExceeded"));
     expect(u.tag).toBe("rate-limited");
   });
 
@@ -1751,10 +1686,7 @@ describe("GoogleDriveClient — normalizeError taxonomy", () => {
     const { client } = makeFakeDrive({});
     const h = makeHarness({ drive: client });
     for (const reason of ["authError", "invalidCredentials"]) {
-      const e = normalize(
-        h.client,
-        makeGaxiosError(403, "revoked", reason),
-      );
+      const e = normalize(h.client, makeGaxiosError(403, "revoked", reason));
       expect(e.tag, `reason=${reason}`).toBe("auth-revoked");
       expect(e.retryable).toBe(false);
     }
@@ -1775,10 +1707,9 @@ describe("GoogleDriveClient — normalizeError taxonomy", () => {
       // Negative clause of the spec scenario: a genuine provider-error 403 must
       // NOT carry the scope-insufficient discriminator (the auth reclassification
       // is scoped strictly to insufficientPermissions / ACCESS_TOKEN_SCOPE_INSUFFICIENT).
-      expect(
-        (e.raw as { kind?: string } | undefined)?.kind,
-        `reason=${reason}`,
-      ).not.toBe("scope-insufficient");
+      expect((e.raw as { kind?: string } | undefined)?.kind, `reason=${reason}`).not.toBe(
+        "scope-insufficient",
+      );
     }
   });
 
@@ -1792,46 +1723,31 @@ describe("GoogleDriveClient — normalizeError taxonomy", () => {
     // "Authentication error: <message>" detail line.
     const { client } = makeFakeDrive({});
     const h = makeHarness({ drive: client });
-    for (const reason of [
-      "insufficientPermissions",
-      "ACCESS_TOKEN_SCOPE_INSUFFICIENT",
-    ]) {
+    for (const reason of ["insufficientPermissions", "ACCESS_TOKEN_SCOPE_INSUFFICIENT"]) {
       const e = normalize(
         h.client,
-        makeGaxiosError(
-          403,
-          "request had insufficient authentication scopes",
-          reason,
-        ),
+        makeGaxiosError(403, "request had insufficient authentication scopes", reason),
       );
       expect(e.tag, `reason=${reason}`).toBe("auth-revoked");
       expect(e.retryable, `reason=${reason}`).toBe(false);
       const raw = e.raw as { kind?: string; requiredScope?: string };
       expect(raw?.kind, `reason=${reason}`).toBe("scope-insufficient");
       expect(raw?.requiredScope).toBe("https://www.googleapis.com/auth/drive");
-      expect(e.message, `reason=${reason}`).toBe(
-        "request had insufficient authentication scopes",
-      );
+      expect(e.message, `reason=${reason}`).toBe("request had insufficient authentication scopes");
     }
   });
 
   it("404 → not-found", () => {
     const { client } = makeFakeDrive({});
     const h = makeHarness({ drive: client });
-    expect(normalize(h.client, makeGaxiosError(404, "nf", "notFound")).tag).toBe(
-      "not-found",
-    );
-    expect(normalize(h.client, { response: { status: 404 } }).tag).toBe(
-      "not-found",
-    );
+    expect(normalize(h.client, makeGaxiosError(404, "nf", "notFound")).tag).toBe("not-found");
+    expect(normalize(h.client, { response: { status: 404 } }).tag).toBe("not-found");
   });
 
   it("409 → conflict", () => {
     const { client } = makeFakeDrive({});
     const h = makeHarness({ drive: client });
-    expect(
-      normalize(h.client, makeGaxiosError(409, "dup", "conflict")).tag,
-    ).toBe("conflict");
+    expect(normalize(h.client, makeGaxiosError(409, "dup", "conflict")).tag).toBe("conflict");
   });
 
   it("429 → rate-limited (with retry-after)", () => {
@@ -1851,37 +1767,26 @@ describe("GoogleDriveClient — normalizeError taxonomy", () => {
   it("5xx serviceUnavailable → rate-limited (transient); other 5xx → provider-error", () => {
     const { client } = makeFakeDrive({});
     const h = makeHarness({ drive: client });
-    expect(
-      normalize(
-        h.client,
-        makeGaxiosError(503, "svc", "serviceUnavailable"),
-      ).tag,
-    ).toBe("rate-limited");
-    expect(
-      normalize(h.client, makeGaxiosError(500, "ise", "internalError")).tag,
-    ).toBe("provider-error");
+    expect(normalize(h.client, makeGaxiosError(503, "svc", "serviceUnavailable")).tag).toBe(
+      "rate-limited",
+    );
+    expect(normalize(h.client, makeGaxiosError(500, "ise", "internalError")).tag).toBe(
+      "provider-error",
+    );
   });
 
   it("network errors (ECONNRESET / ETIMEDOUT / ENOTFOUND) → network-error retryable=true", () => {
     const { client } = makeFakeDrive({});
     const h = makeHarness({ drive: client });
-    expect(normalize(h.client, { code: "ECONNRESET" }).tag).toBe(
-      "network-error",
-    );
-    expect(normalize(h.client, { code: "ETIMEDOUT" }).tag).toBe(
-      "network-error",
-    );
-    expect(normalize(h.client, { code: "ENOTFOUND" }).tag).toBe(
-      "network-error",
-    );
+    expect(normalize(h.client, { code: "ECONNRESET" }).tag).toBe("network-error");
+    expect(normalize(h.client, { code: "ETIMEDOUT" }).tag).toBe("network-error");
+    expect(normalize(h.client, { code: "ENOTFOUND" }).tag).toBe("network-error");
   });
 
   it("unknown → provider-error", () => {
     const { client } = makeFakeDrive({});
     const h = makeHarness({ drive: client });
-    expect(normalize(h.client, new Error("no idea")).tag).toBe(
-      "provider-error",
-    );
+    expect(normalize(h.client, new Error("no idea")).tag).toBe("provider-error");
     expect(normalize(h.client, "string").tag).toBe("provider-error");
   });
 });
@@ -1919,31 +1824,29 @@ describe("GoogleDriveClient — upload (resumable, small file)", () => {
     const { client } = makeFakeDrive({});
     const sessionUrl = "https://googleapis.com/upload/session/ABC";
     const fetchCalls: Array<{ url: string; init?: RequestInit }> = [];
-    const fetchImpl = vi.fn(
-      async (url: string | URL | Request, init?: RequestInit) => {
-        fetchCalls.push({ url: String(url), ...(init ? { init } : {}) });
-        // First call: session-init POST returns Location header.
-        if ((init?.method ?? "").toUpperCase() === "POST") {
-          return new Response("", {
-            status: 200,
-            headers: { Location: sessionUrl },
-          });
-        }
-        // Second call: final PUT returns the Drive file JSON.
-        return new Response(
-          JSON.stringify({
-            id: "UP-ID",
-            name: "small.bin",
-            mimeType: "application/octet-stream",
-            parents: ["root"],
-            size: "13",
-            modifiedTime: "2024-06-01T00:00:00Z",
-            createdTime: "2024-01-01T00:00:00Z",
-          }),
-          { status: 200 },
-        );
-      },
-    ) as unknown as typeof fetch;
+    const fetchImpl = vi.fn(async (url: string | URL | Request, init?: RequestInit) => {
+      fetchCalls.push({ url: String(url), ...(init ? { init } : {}) });
+      // First call: session-init POST returns Location header.
+      if ((init?.method ?? "").toUpperCase() === "POST") {
+        return new Response("", {
+          status: 200,
+          headers: { Location: sessionUrl },
+        });
+      }
+      // Second call: final PUT returns the Drive file JSON.
+      return new Response(
+        JSON.stringify({
+          id: "UP-ID",
+          name: "small.bin",
+          mimeType: "application/octet-stream",
+          parents: ["root"],
+          size: "13",
+          modifiedTime: "2024-06-01T00:00:00Z",
+          createdTime: "2024-01-01T00:00:00Z",
+        }),
+        { status: 200 },
+      );
+    }) as unknown as typeof fetch;
 
     const onProgress = vi.fn<(loaded: number, total: number) => void>();
     const h = makeHarness({ drive: client, fetchImpl });
@@ -1955,9 +1858,7 @@ describe("GoogleDriveClient — upload (resumable, small file)", () => {
     expect(entry.handle).toBe("UP-ID");
     // Two fetches: session init (POST) + chunk PUT.
     expect(fetchCalls.length).toBeGreaterThanOrEqual(2);
-    const methods = fetchCalls.map((c) =>
-      (c.init?.method ?? "").toUpperCase(),
-    );
+    const methods = fetchCalls.map((c) => (c.init?.method ?? "").toUpperCase());
     expect(methods).toContain("POST");
     expect(methods).toContain("PUT");
 
@@ -2006,60 +1907,56 @@ describe("GoogleDriveClient — resumable upload multi-chunk (Content-Range + is
       bodyLength: number;
     }> = [];
     let chunkIdx = 0;
-    const fetchImpl = vi.fn(
-      async (url: string | URL | Request, init?: RequestInit) => {
-        const method = (init?.method ?? "").toUpperCase();
-        if (method === "POST") {
-          // session init
-          return new Response("", {
-            status: 200,
-            headers: { Location: sessionUrl },
-          });
-        }
-        // chunk PUT
-        const hdrs = (init?.headers ?? {}) as Record<string, string>;
-        const body = init?.body;
-        const bodyLength =
-          body instanceof Uint8Array ? body.byteLength : 0;
-        fetchCalls.push({
-          url: String(url),
-          method,
-          contentRange: hdrs["Content-Range"] ?? "",
-          contentLength: hdrs["Content-Length"] ?? "",
-          bodyLength,
+    const fetchImpl = vi.fn(async (url: string | URL | Request, init?: RequestInit) => {
+      const method = (init?.method ?? "").toUpperCase();
+      if (method === "POST") {
+        // session init
+        return new Response("", {
+          status: 200,
+          headers: { Location: sessionUrl },
         });
-        const isLast = chunkIdx === chunkCount - 1;
-        chunkIdx += 1;
-        if (!isLast) {
-          // Interim: 308 Resume Incomplete.
-          return new Response("", {
-            status: 308,
-            headers: { Range: `bytes=0-${chunkIdx * CHUNK - 1}` },
-          });
-        }
-        // Final: the DriveItem JSON.
-        return new Response(
-          JSON.stringify({
-            id: "final-id",
-            name: "huge.bin",
-            mimeType: "application/octet-stream",
-            parents: ["root"],
-            size: String(totalBytes),
-            modifiedTime: "2024-06-05T00:00:00Z",
-            createdTime: "2024-01-05T00:00:00Z",
-          }),
-          { status: 200 },
-        );
-      },
-    ) as unknown as typeof fetch;
+      }
+      // chunk PUT
+      const hdrs = (init?.headers ?? {}) as Record<string, string>;
+      const body = init?.body;
+      const bodyLength = body instanceof Uint8Array ? body.byteLength : 0;
+      fetchCalls.push({
+        url: String(url),
+        method,
+        contentRange: hdrs["Content-Range"] ?? "",
+        contentLength: hdrs["Content-Length"] ?? "",
+        bodyLength,
+      });
+      const isLast = chunkIdx === chunkCount - 1;
+      chunkIdx += 1;
+      if (!isLast) {
+        // Interim: 308 Resume Incomplete.
+        return new Response("", {
+          status: 308,
+          headers: { Range: `bytes=0-${chunkIdx * CHUNK - 1}` },
+        });
+      }
+      // Final: the DriveItem JSON.
+      return new Response(
+        JSON.stringify({
+          id: "final-id",
+          name: "huge.bin",
+          mimeType: "application/octet-stream",
+          parents: ["root"],
+          size: String(totalBytes),
+          modifiedTime: "2024-06-05T00:00:00Z",
+          createdTime: "2024-01-05T00:00:00Z",
+        }),
+        { status: 200 },
+      );
+    }) as unknown as typeof fetch;
 
     return { file, client, fetchImpl, fetchCalls, totalBytes };
   }
 
   it("25 MiB → 3 chunks with trailing chunk flushed via post-loop branch; Content-Range headers match exactly", async () => {
     const total = 25 * 1024 * 1024;
-    const { file, client, fetchImpl, fetchCalls, totalBytes } =
-      setupMultiChunkTest(total, 3);
+    const { file, client, fetchImpl, fetchCalls, totalBytes } = setupMultiChunkTest(total, 3);
     try {
       const h = makeHarness({ drive: client, fetchImpl });
       const entry = await h.client.uploadFile(
@@ -2069,12 +1966,8 @@ describe("GoogleDriveClient — resumable upload multi-chunk (Content-Range + is
       expect(entry.handle).toBe("final-id");
       expect(fetchCalls).toHaveLength(3);
 
-      expect(fetchCalls[0]!.contentRange).toBe(
-        `bytes 0-${CHUNK - 1}/${totalBytes}`,
-      );
-      expect(fetchCalls[1]!.contentRange).toBe(
-        `bytes ${CHUNK}-${2 * CHUNK - 1}/${totalBytes}`,
-      );
+      expect(fetchCalls[0]!.contentRange).toBe(`bytes 0-${CHUNK - 1}/${totalBytes}`);
+      expect(fetchCalls[1]!.contentRange).toBe(`bytes ${CHUNK}-${2 * CHUNK - 1}/${totalBytes}`);
       expect(fetchCalls[2]!.contentRange).toBe(
         `bytes ${2 * CHUNK}-${totalBytes - 1}/${totalBytes}`,
       );
@@ -2086,8 +1979,7 @@ describe("GoogleDriveClient — resumable upload multi-chunk (Content-Range + is
 
   it("30 MiB → 3 chunks where the last chunk is exactly UPLOAD_CHUNK_BYTES (inner-loop isLast branch)", async () => {
     const total = 30 * 1024 * 1024;
-    const { file, client, fetchImpl, fetchCalls, totalBytes } =
-      setupMultiChunkTest(total, 3);
+    const { file, client, fetchImpl, fetchCalls, totalBytes } = setupMultiChunkTest(total, 3);
     try {
       const h = makeHarness({ drive: client, fetchImpl });
       const entry = await h.client.uploadFile(
@@ -2130,41 +2022,37 @@ describe("GoogleDriveClient — signal-driven cancel (resumable session)", () =>
       signal?: AbortSignal | null;
     }> = [];
 
-    const fetchImpl = vi.fn(
-      async (url: string | URL | Request, init?: RequestInit) => {
-        const method = (init?.method ?? "GET").toUpperCase();
-        const hdrs = (init?.headers ?? {}) as Record<string, string>;
-        if (method === "POST") {
-          return new Response("", {
-            status: 200,
-            headers: { Location: sessionUrl },
-          });
+    const fetchImpl = vi.fn(async (url: string | URL | Request, init?: RequestInit) => {
+      const method = (init?.method ?? "GET").toUpperCase();
+      const hdrs = (init?.headers ?? {}) as Record<string, string>;
+      if (method === "POST") {
+        return new Response("", {
+          status: 200,
+          headers: { Location: sessionUrl },
+        });
+      }
+      if (method === "DELETE") {
+        deleteCalls.push({
+          url: String(url),
+          method,
+          contentRange: hdrs["Content-Range"] ?? "",
+          signal: init?.signal ?? null,
+        });
+        return new Response(null, { status: 204 });
+      }
+      if (method === "PUT") {
+        const signal = init?.signal;
+        if (signal?.aborted) {
+          throw Object.assign(new Error("aborted"), { name: "AbortError" });
         }
-        if (method === "DELETE") {
-          deleteCalls.push({
-            url: String(url),
-            method,
-            contentRange: hdrs["Content-Range"] ?? "",
-            signal: init?.signal ?? null,
-          });
-          return new Response(null, { status: 204 });
-        }
-        if (method === "PUT") {
-          const signal = init?.signal;
-          if (signal?.aborted) {
-            throw Object.assign(new Error("aborted"), { name: "AbortError" });
-          }
-          return await new Promise<Response>((_resolve, reject) => {
-            signal?.addEventListener("abort", () =>
-              reject(
-                Object.assign(new Error("aborted"), { name: "AbortError" }),
-              ),
-            );
-          });
-        }
-        return new Response("unexpected", { status: 500 });
-      },
-    ) as unknown as typeof fetch;
+        return await new Promise<Response>((_resolve, reject) => {
+          signal?.addEventListener("abort", () =>
+            reject(Object.assign(new Error("aborted"), { name: "AbortError" })),
+          );
+        });
+      }
+      return new Response("unexpected", { status: 500 });
+    }) as unknown as typeof fetch;
 
     try {
       const h = makeHarness({ drive: client, fetchImpl });
@@ -2321,10 +2209,7 @@ describe("GoogleDriveClient — rename cache invalidation", () => {
     const h = makeHarness({ drive: client });
     await h.client.getMetadata({ kind: "path", path: "/old.txt" });
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const cache = (h.client as any).pathHandleCache as Map<
-      string,
-      { fileId: string }
-    >;
+    const cache = (h.client as any).pathHandleCache as Map<string, { fileId: string }>;
     expect(cache.get("/old.txt")?.fileId).toBe("FILE-X");
     await h.client.rename({ kind: "path", path: "/old.txt" }, "new.txt", "fail");
     expect(cache.get("/old.txt")).toBeUndefined();
@@ -2380,10 +2265,7 @@ describe("GoogleDriveClient — rename cache invalidation", () => {
     const h = makeHarness({ drive: client });
     await h.client.listDirectory({ kind: "path", path: "/foo" });
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const cache = (h.client as any).pathHandleCache as Map<
-      string,
-      { fileId: string }
-    >;
+    const cache = (h.client as any).pathHandleCache as Map<string, { fileId: string }>;
     expect(cache.get("/foo/a.txt")?.fileId).toBe("A-ID");
     await h.client.rename({ kind: "path", path: "/foo" }, "bar", "fail");
     expect(cache.get("/foo")).toBeUndefined();
@@ -2465,16 +2347,9 @@ describe("GoogleDriveClient — rename cache invalidation", () => {
     const h = makeHarness({ drive: client });
     await h.client.getMetadata({ kind: "path", path: "/target.txt" });
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const cache = (h.client as any).pathHandleCache as Map<
-      string,
-      { fileId: string }
-    >;
+    const cache = (h.client as any).pathHandleCache as Map<string, { fileId: string }>;
     expect(cache.get("/target.txt")?.fileId).toBe("SIB-ID");
-    await h.client.rename(
-      { kind: "path", path: "/old.txt" },
-      "target.txt",
-      "overwrite",
-    );
+    await h.client.rename({ kind: "path", path: "/old.txt" }, "target.txt", "overwrite");
     expect(cache.get("/target.txt")).toBeUndefined();
   });
 });
@@ -2573,9 +2448,7 @@ describe("GoogleDriveClient — scope drift detection", () => {
     const h = makeHarness({
       drive: driveClient,
       fetchImpl: fakeFetch as unknown as typeof fetch,
-      creds: makeCredsWithScope(
-        "openid email https://www.googleapis.com/auth/drive profile",
-      ),
+      creds: makeCredsWithScope("openid email https://www.googleapis.com/auth/drive profile"),
     });
     await expect(h.client.status()).resolves.toBe("connected");
     expect(fakeFetch).not.toHaveBeenCalled();
@@ -2660,7 +2533,9 @@ describe("GoogleDriveClient — scope drift detection", () => {
     const h = makeHarness({
       drive: client,
       fetchImpl: fakeFetch as unknown as typeof fetch,
-      creds: makeCredsWithScope("https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.readonly"),
+      creds: makeCredsWithScope(
+        "https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.readonly",
+      ),
     });
     await expect(h.client.status()).rejects.toSatisfy((e: unknown) => {
       if (!(e instanceof DatasourceError)) return false;
@@ -2670,7 +2545,8 @@ describe("GoogleDriveClient — scope drift detection", () => {
       return (
         raw?.kind === "scope-insufficient" &&
         raw?.requiredScope === "https://www.googleapis.com/auth/drive" &&
-        raw?.actualScope === "https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.readonly"
+        raw?.actualScope ===
+          "https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.readonly"
       );
     });
     expect(aboutSpy).not.toHaveBeenCalled();
@@ -2681,19 +2557,20 @@ describe("GoogleDriveClient — scope drift detection", () => {
     const { client: drive } = makeFakeDrive({
       about: () => ({ storageQuota: { limit: "100", usage: "1" } }),
     });
-    const fetchImpl = vi.fn(async () =>
-      new Response(
-        JSON.stringify({
-          access_token: "exchanged-at",
-          refresh_token: "exchanged-rt",
-          scope: "https://www.googleapis.com/auth/drive openid email",
-          expires_in: 3599,
-          // Capture-on-exchange is unconditional now — supply an id_token so
-          // the exchange does not fail closed (this test asserts scope copy).
-          id_token: makeIdToken(googleIdTokenPayload()),
-        }),
-        { status: 200, headers: { "Content-Type": "application/json" } },
-      ),
+    const fetchImpl = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            access_token: "exchanged-at",
+            refresh_token: "exchanged-rt",
+            scope: "https://www.googleapis.com/auth/drive openid email",
+            expires_in: 3599,
+            // Capture-on-exchange is unconditional now — supply an id_token so
+            // the exchange does not fail closed (this test asserts scope copy).
+            id_token: makeIdToken(googleIdTokenPayload()),
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } },
+        ),
     ) as unknown as typeof fetch;
     const h = makeHarness({ drive, fetchImpl });
     const intent = (await h.client.authenticate()) as OAuthIntent;
@@ -2710,15 +2587,16 @@ describe("GoogleDriveClient — scope drift detection", () => {
 
   it("refreshToken copies the issued scope from the refresh response onto AuthResult.meta.scope and creds.scope", async () => {
     const { client: drive } = makeFakeDrive({});
-    const fetchImpl = vi.fn(async () =>
-      new Response(
-        JSON.stringify({
-          access_token: "refreshed-at",
-          scope: "https://www.googleapis.com/auth/drive",
-          expires_in: 3599,
-        }),
-        { status: 200, headers: { "Content-Type": "application/json" } },
-      ),
+    const fetchImpl = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            access_token: "refreshed-at",
+            scope: "https://www.googleapis.com/auth/drive",
+            expires_in: 3599,
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } },
+        ),
     ) as unknown as typeof fetch;
     const h = makeHarness({
       drive,
@@ -2737,25 +2615,24 @@ describe("GoogleDriveClient — scope drift detection", () => {
     );
     // The in-memory creds must also reflect the issued scope from the refresh response.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    expect((h.client as any).creds.scope).toBe(
-      "https://www.googleapis.com/auth/drive",
-    );
+    expect((h.client as any).creds.scope).toBe("https://www.googleapis.com/auth/drive");
   });
 
   it("token response without a scope field leaves creds.scope unchanged on the seeded value", async () => {
     const { client: drive } = makeFakeDrive({});
-    const fetchImpl = vi.fn(async () =>
-      new Response(
-        JSON.stringify({
-          access_token: "exchanged-at",
-          refresh_token: "exchanged-rt",
-          expires_in: 3599,
-          // Note: no `scope` field returned
-          // id_token still required — capture-on-exchange is unconditional.
-          id_token: makeIdToken(googleIdTokenPayload()),
-        }),
-        { status: 200, headers: { "Content-Type": "application/json" } },
-      ),
+    const fetchImpl = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            access_token: "exchanged-at",
+            refresh_token: "exchanged-rt",
+            expires_in: 3599,
+            // Note: no `scope` field returned
+            // id_token still required — capture-on-exchange is unconditional.
+            id_token: makeIdToken(googleIdTokenPayload()),
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } },
+        ),
     ) as unknown as typeof fetch;
     const h = makeHarness({
       drive,
@@ -2769,9 +2646,7 @@ describe("GoogleDriveClient — scope drift detection", () => {
     expect((result.meta as Record<string, unknown>).scope).toBeUndefined();
     // The previously-seeded creds.scope must NOT have been overwritten with undefined
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    expect((h.client as any).creds.scope).toBe(
-      "https://www.googleapis.com/auth/drive",
-    );
+    expect((h.client as any).creds.scope).toBe("https://www.googleapis.com/auth/drive");
   });
 
   it("status() with no meta.scope calls tokeninfo, persists the issued scope, then surfaces scope-insufficient when the issued scope is narrow", async () => {
@@ -2813,9 +2688,9 @@ describe("GoogleDriveClient — scope drift detection", () => {
     expect(tokeninfoCalls).toBe(1);
     // The credential store's put was called once with meta.scope set
     expect(puts).toHaveLength(1);
-    expect(
-      (puts[0]!.creds.authResult.meta as Record<string, unknown>).scope,
-    ).toBe("https://www.googleapis.com/auth/drive.file");
+    expect((puts[0]!.creds.authResult.meta as Record<string, unknown>).scope).toBe(
+      "https://www.googleapis.com/auth/drive.file",
+    );
     // about.get NOT called — scope check stops first
     expect(aboutSpy).not.toHaveBeenCalled();
     // Second status(): no tokeninfo, no put — uses cached creds.scope
@@ -2827,18 +2702,22 @@ describe("GoogleDriveClient — scope drift detection", () => {
   it("status() with no meta.scope and invalid_token from tokeninfo rejects with auth-revoked and does not persist", async () => {
     const aboutSpy = vi.fn(() => ({ storageQuota: { limit: "100", usage: "1" } }));
     const { client: drive } = makeFakeDrive({ about: aboutSpy });
-    const fetchImpl = vi.fn(async () =>
-      new Response(
-        JSON.stringify({ error: "invalid_token", error_description: "Invalid Value" }),
-        { status: 400, headers: { "Content-Type": "application/json" } },
-      ),
+    const fetchImpl = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({ error: "invalid_token", error_description: "Invalid Value" }),
+          { status: 400, headers: { "Content-Type": "application/json" } },
+        ),
     ) as unknown as typeof fetch;
     const { store, puts } = makeSpyStore();
     const seedCreds = makeCredsWithScope(undefined);
     store.get = async () => seedCreds;
     const h = makeHarness({ drive, fetchImpl, creds: seedCreds, store });
-    await expect(h.client.status()).rejects.toSatisfy((e: unknown) =>
-      e instanceof DatasourceError && e.tag === DatasourceErrorTag.AuthRevoked && e.retryable === false,
+    await expect(h.client.status()).rejects.toSatisfy(
+      (e: unknown) =>
+        e instanceof DatasourceError &&
+        e.tag === DatasourceErrorTag.AuthRevoked &&
+        e.retryable === false,
     );
     expect(puts).toHaveLength(0);
     expect(aboutSpy).not.toHaveBeenCalled();
@@ -2859,13 +2738,13 @@ describe("GoogleDriveClient — scope drift detection", () => {
     const seedCreds = makeCredsWithScope(undefined);
     store.get = async () => seedCreds;
     const h = makeHarness({ drive, fetchImpl, creds: seedCreds, store });
-    await expect(h.client.status()).rejects.toSatisfy((e: unknown) =>
-      e instanceof DatasourceError && e.tag === DatasourceErrorTag.NetworkError,
+    await expect(h.client.status()).rejects.toSatisfy(
+      (e: unknown) => e instanceof DatasourceError && e.tag === DatasourceErrorTag.NetworkError,
     );
     expect(puts).toHaveLength(0);
     // Next call retries the tokeninfo fetch (no caching of failed backfill)
-    await expect(h.client.status()).rejects.toSatisfy((e: unknown) =>
-      e instanceof DatasourceError && e.tag === DatasourceErrorTag.NetworkError,
+    await expect(h.client.status()).rejects.toSatisfy(
+      (e: unknown) => e instanceof DatasourceError && e.tag === DatasourceErrorTag.NetworkError,
     );
     expect(calls).toBe(2);
   });
@@ -2934,11 +2813,7 @@ describe("GoogleDriveClient — doRenameImpl (files.update, kind via mimeType)",
       ],
     });
     const h = makeHarness({ drive: client });
-    const entry = await h.client.rename(
-      { kind: "path", path: "/old.txt" },
-      "new.txt",
-      "fail",
-    );
+    const entry = await h.client.rename({ kind: "path", path: "/old.txt" }, "new.txt", "fail");
     expect(entry.handle).toBe("FILE-X");
     expect(entry.name).toBe("new.txt");
     expect(entry.kind).toBe("file");
@@ -2985,11 +2860,7 @@ describe("GoogleDriveClient — doRenameImpl (files.update, kind via mimeType)",
       ],
     });
     const h = makeHarness({ drive: client });
-    const entry = await h.client.rename(
-      { kind: "path", path: "/photos" },
-      "pictures",
-      "fail",
-    );
+    const entry = await h.client.rename({ kind: "path", path: "/photos" }, "pictures", "fail");
     expect(entry.kind).toBe("folder");
     expect(entry.mimeFamily).toBe("folder");
     expect(entry.name).toBe("pictures");
@@ -3039,11 +2910,7 @@ describe("GoogleDriveClient — doRenameImpl sibling-collision pre-check on `fai
 
     let caught: unknown;
     try {
-      await h.client.rename(
-        { kind: "path", path: "/foo.txt" },
-        "bar.txt",
-        "fail",
-      );
+      await h.client.rename({ kind: "path", path: "/foo.txt" }, "bar.txt", "fail");
     } catch (e) {
       caught = e;
     }
@@ -3052,9 +2919,7 @@ describe("GoogleDriveClient — doRenameImpl sibling-collision pre-check on `fai
     expect(err.tag).toBe("conflict");
     // raw carries the existingPath so the consumer can populate the
     // FilesErrorEnvelope { existingPath } at the wire layer.
-    expect((err.raw as { existingPath?: string }).existingPath).toBe(
-      "/bar.txt",
-    );
+    expect((err.raw as { existingPath?: string }).existingPath).toBe("/bar.txt");
     // No update issued — pre-check short-circuited the rename.
     expect(calls.update).toHaveLength(0);
   });
@@ -3129,11 +2994,7 @@ describe("GoogleDriveClient — doRenameImpl `overwrite` on a file deletes the c
       ],
     });
     const h = makeHarness({ drive: client });
-    const entry = await h.client.rename(
-      { kind: "path", path: "/old.txt" },
-      "new.txt",
-      "overwrite",
-    );
+    const entry = await h.client.rename({ kind: "path", path: "/old.txt" }, "new.txt", "overwrite");
     expect(entry.handle).toBe("OLD-FILE");
     expect(entry.name).toBe("new.txt");
     expect(calls.delete).toHaveLength(1);
@@ -3176,11 +3037,7 @@ describe("GoogleDriveClient — doRenameImpl directory-overwrite refusal", () =>
 
     let caught: unknown;
     try {
-      await h.client.rename(
-        { kind: "path", path: "/photos" },
-        "pictures",
-        "overwrite",
-      );
+      await h.client.rename({ kind: "path", path: "/photos" }, "pictures", "overwrite");
     } catch (e) {
       caught = e;
     }
@@ -3294,19 +3151,13 @@ describe("GoogleDriveClient — doRenameImpl `keep-both` policy retries with suf
       ],
     });
     const h = makeHarness({ drive: client });
-    const entry = await h.client.rename(
-      { kind: "path", path: "/foo.pdf" },
-      "bar.pdf",
-      "keep-both",
-    );
+    const entry = await h.client.rename({ kind: "path", path: "/foo.pdf" }, "bar.pdf", "keep-both");
     expect(entry.name).toBe("bar-3.pdf");
     expect(entry.handle).toBe("FOO-FILE");
     // Exactly one update call — the loop only fires update on the first
     // collision-free candidate.
     expect(calls.update).toHaveLength(1);
-    expect(
-      (calls.update[0]!.requestBody as { name?: string } | undefined)?.name,
-    ).toBe("bar-3.pdf");
+    expect((calls.update[0]!.requestBody as { name?: string } | undefined)?.name).toBe("bar-3.pdf");
   });
 
   it("after 99 collisions (newName + suffixes 2..99), throws DatasourceError { tag: 'provider-error', message: 'exhausted keep-both attempts' } (wire-layer collapses provider-error → 'other' downstream); no files.update issued", async () => {
@@ -3369,11 +3220,7 @@ describe("GoogleDriveClient — doRenameImpl `keep-both` policy retries with suf
 
     let caught: unknown;
     try {
-      await h.client.rename(
-        { kind: "path", path: "/foo.pdf" },
-        "bar.pdf",
-        "keep-both",
-      );
+      await h.client.rename({ kind: "path", path: "/foo.pdf" }, "bar.pdf", "keep-both");
     } catch (e) {
       caught = e;
     }
@@ -3519,8 +3366,7 @@ describe("GoogleDriveClient — doDownloadFileImpl (files.get alt=media stream)"
         {
           fileId: "RANGE-ID",
           handler: (_params, options) => {
-            const headers =
-              (options?.headers ?? {}) as Record<string, string>;
+            const headers = (options?.headers ?? {}) as Record<string, string>;
             expect(headers.Range).toBe(`bytes=${start}-`);
             const stream = new Readable({
               read() {
@@ -3637,9 +3483,7 @@ describe("GoogleDriveClient — doDownloadFileImpl AbortSignal forwarding", () =
     // the returned stream erroring with a normalized DatasourceError whose
     // tag is `cancelled` (normalizeErrorImpl maps AbortError → cancelled).
     expect(streamError).toBeInstanceOf(DatasourceError);
-    expect((streamError as DatasourceError<"google-drive">).tag).toBe(
-      "cancelled",
-    );
+    expect((streamError as DatasourceError<"google-drive">).tag).toBe("cancelled");
     // onProgress's last loaded value reflects the bytes counted before abort
     // (the single 2048-byte chunk that flowed through the counter).
     expect(onProgress.mock.calls.length).toBeGreaterThanOrEqual(1);
@@ -3673,11 +3517,7 @@ describe("GoogleDriveClient — doDownloadFileImpl mid-stream 401 → auth-expir
             // DatasourceError on its `error` event.
             setImmediate(() => {
               stream.push(Buffer.alloc(512));
-              const err401 = makeGaxiosError(
-                401,
-                "auth-expired-mid-stream",
-                "authError",
-              );
+              const err401 = makeGaxiosError(401, "auth-expired-mid-stream", "authError");
               stream.destroy(err401);
             });
             return {
@@ -3754,7 +3594,7 @@ describe("GoogleDriveClient — doDownloadFileImpl Google Apps export (files.exp
               // stream responseType. No Range header is ever set on export.
               expect(params.mimeType).toBe(exportMime);
               expect(options?.responseType).toBe("stream");
-              expect((options?.headers ?? {})).not.toHaveProperty("Range");
+              expect(options?.headers ?? {}).not.toHaveProperty("Range");
               const stream = new Readable({
                 read() {
                   this.push(fixture);
@@ -3875,12 +3715,9 @@ describe("GoogleDriveClient — doDownloadFileImpl Google Apps export (files.exp
             // Drive returns 403 with reason `exportSizeLimitExceeded` when
             // a Doc is too large to export. The strategy must normalize it
             // via normalizeErrorImpl rather than leak raw provider JSON.
-            throw makeGaxiosError(
-              403,
-              "export-too-large",
-              "exportSizeLimitExceeded",
-              { innerMessage: "This file is too large to be exported." },
-            );
+            throw makeGaxiosError(403, "export-too-large", "exportSizeLimitExceeded", {
+              innerMessage: "This file is too large to be exported.",
+            });
           },
         },
       ],
@@ -3925,9 +3762,7 @@ describe("GoogleDriveClient — doDownloadFileImpl Google Apps export (files.exp
             const stream = new Readable({ read() {} });
             if (sig) {
               sig.addEventListener("abort", () => {
-                stream.destroy(
-                  Object.assign(new Error("aborted"), { name: "AbortError" }),
-                );
+                stream.destroy(Object.assign(new Error("aborted"), { name: "AbortError" }));
               });
             }
             // First chunk lands so byte counts are non-zero at abort time.
@@ -3966,9 +3801,7 @@ describe("GoogleDriveClient — doDownloadFileImpl Google Apps export (files.exp
       result.stream.on("end", () => resolve());
     });
     expect(streamError).toBeInstanceOf(DatasourceError);
-    expect((streamError as DatasourceError<"google-drive">).tag).toBe(
-      "cancelled",
-    );
+    expect((streamError as DatasourceError<"google-drive">).tag).toBe("cancelled");
     // No further bytes flowed after the single pre-abort chunk.
     expect(bytesSeen).toBe(2048);
     expect(onProgress.mock.calls.length).toBeGreaterThanOrEqual(1);
@@ -4002,9 +3835,7 @@ describe("GoogleDriveClient — doDownloadFileImpl Google Apps export (files.exp
             // re-emits the normalized DatasourceError on `error`.
             setImmediate(() => {
               stream.push(Buffer.alloc(512));
-              stream.destroy(
-                makeGaxiosError(500, "mid-export-blip", "backendError"),
-              );
+              stream.destroy(makeGaxiosError(500, "mid-export-blip", "backendError"));
             });
             return {
               stream,
@@ -4161,15 +3992,11 @@ describe("GoogleDriveClient — doDownloadFileImpl non-exportable Google Apps re
 
 describe("appendExtensionIfMissing — Drive title → local filename repair", () => {
   it("appends '.txt' to an extensionless text/plain title", () => {
-    expect(appendExtensionIfMissing("Getting Started", "text/plain")).toBe(
-      "Getting Started.txt",
-    );
+    expect(appendExtensionIfMissing("Getting Started", "text/plain")).toBe("Getting Started.txt");
   });
 
   it("leaves an already-correctly-extensioned name unchanged (no double-append)", () => {
-    expect(appendExtensionIfMissing("Report.txt", "text/plain")).toBe(
-      "Report.txt",
-    );
+    expect(appendExtensionIfMissing("Report.txt", "text/plain")).toBe("Report.txt");
   });
 
   it("appends '.png' to an extensionless image/png title", () => {
@@ -4181,9 +4008,7 @@ describe("appendExtensionIfMissing — Drive title → local filename repair", (
   });
 
   it("returns the name unchanged for an unknown mime (no append, no guess)", () => {
-    expect(
-      appendExtensionIfMissing("mystery", "application/octet-stream"),
-    ).toBe("mystery");
+    expect(appendExtensionIfMissing("mystery", "application/octet-stream")).toBe("mystery");
   });
 
   it("returns the name unchanged for undefined mime (defensive)", () => {
@@ -4197,9 +4022,7 @@ describe("appendExtensionIfMissing — Drive title → local filename repair", (
   it("treats names with a different extension as already-extensioned (preserves provider intent)", () => {
     // Caller said the mime is text/plain but the name is `.dat` — we
     // don't second-guess; `extname()` is non-empty so we leave it.
-    expect(appendExtensionIfMissing("Fixture.dat", "text/plain")).toBe(
-      "Fixture.dat",
-    );
+    expect(appendExtensionIfMissing("Fixture.dat", "text/plain")).toBe("Fixture.dat");
   });
 });
 
@@ -4303,12 +4126,9 @@ describe("GoogleDriveClient — account identity (scope widening)", () => {
     // The widened issued scope (openid + email + Drive) must still pass the
     // inclusion check — sufficiency keys on Drive-scope membership, not exact
     // equality, so existing Drive-only tokens keep working too.
-    const widened =
-      "openid email https://www.googleapis.com/auth/drive";
+    const widened = "openid email https://www.googleapis.com/auth/drive";
     expect(isScopeSufficient(widened)).toBe(true);
-    expect(isScopeSufficient("https://www.googleapis.com/auth/drive")).toBe(
-      true,
-    );
+    expect(isScopeSufficient("https://www.googleapis.com/auth/drive")).toBe(true);
     expect(isScopeSufficient("openid email")).toBe(false);
   });
 });
@@ -4343,9 +4163,7 @@ describe("GoogleDriveClient — account identity (capture on exchange)", () => {
     const { ctx, puts } = makeAuthCtx();
     const fetchImpl = vi.fn(async () =>
       tokenResponseWithIdToken(
-        makeIdToken(
-          googleIdTokenPayload({ sub: "sub-abc", email: "carol@example.com" }),
-        ),
+        makeIdToken(googleIdTokenPayload({ sub: "sub-abc", email: "carol@example.com" })),
       ),
     ) as unknown as typeof fetch;
     const client = new GoogleDriveClient(
@@ -4396,9 +4214,7 @@ describe("GoogleDriveClient — account identity (capture on exchange)", () => {
     const { ctx, puts } = makeAuthCtx();
     const fetchImpl = vi.fn(async () =>
       tokenResponseWithIdToken(
-        makeIdToken(
-          googleIdTokenPayload({ exp: Math.floor(Date.now() / 1000) - 3600 }),
-        ),
+        makeIdToken(googleIdTokenPayload({ exp: Math.floor(Date.now() / 1000) - 3600 })),
       ),
     ) as unknown as typeof fetch;
     const client = new GoogleDriveClient(
@@ -4419,9 +4235,7 @@ describe("GoogleDriveClient — account identity (capture on exchange)", () => {
     const { client: drive } = makeFakeDrive({});
     const { ctx, puts } = makeAuthCtx();
     const fetchImpl = vi.fn(async () =>
-      tokenResponseWithIdToken(
-        makeIdToken(googleIdTokenPayload({ aud: "some-other-client" })),
-      ),
+      tokenResponseWithIdToken(makeIdToken(googleIdTokenPayload({ aud: "some-other-client" }))),
     ) as unknown as typeof fetch;
     const client = new GoogleDriveClient(
       { datasourceId: "ds-gd-badaud", ctx },
@@ -4441,15 +4255,16 @@ describe("GoogleDriveClient — account identity (capture on exchange)", () => {
     const { client: drive } = makeFakeDrive({});
     const { ctx, puts } = makeAuthCtx();
     // 200 with tokens but NO id_token field.
-    const fetchImpl = vi.fn(async () =>
-      new Response(
-        JSON.stringify({
-          access_token: "at",
-          refresh_token: "rt",
-          expires_in: 3600,
-        }),
-        { status: 200, headers: { "Content-Type": "application/json" } },
-      ),
+    const fetchImpl = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            access_token: "at",
+            refresh_token: "rt",
+            expires_in: 3600,
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } },
+        ),
     ) as unknown as typeof fetch;
     const client = new GoogleDriveClient(
       { datasourceId: "ds-gd-noidtoken", ctx },
@@ -4503,9 +4318,7 @@ describe("GoogleDriveClient — account identity (reconnect enforcement)", () =>
     );
     createdClients.push(withAnchor);
     const intent1 = (await withAnchor.authenticate()) as OAuthIntent;
-    expect(new URL(intent1.authorizeUrl).searchParams.get("login_hint")).toBe(
-      "bound@example.com",
-    );
+    expect(new URL(intent1.authorizeUrl).searchParams.get("login_hint")).toBe("bound@example.com");
 
     const withoutAnchor = new GoogleDriveClient(
       { datasourceId: "ds-gd-nohint", ctx },
@@ -4515,9 +4328,7 @@ describe("GoogleDriveClient — account identity (reconnect enforcement)", () =>
     );
     createdClients.push(withoutAnchor);
     const intent2 = (await withoutAnchor.authenticate()) as OAuthIntent;
-    expect(
-      new URL(intent2.authorizeUrl).searchParams.has("login_hint"),
-    ).toBe(false);
+    expect(new URL(intent2.authorizeUrl).searchParams.has("login_hint")).toBe(false);
   });
 
   it("reconnect with a MATCHING sub persists normally and preserves meta.account", async () => {
@@ -4525,9 +4336,7 @@ describe("GoogleDriveClient — account identity (reconnect enforcement)", () =>
     const { ctx, puts } = makeAuthCtx();
     const fetchImpl = vi.fn(async () =>
       tokenResponseWithIdToken(
-        makeIdToken(
-          googleIdTokenPayload({ sub: "same-sub", email: "new-email@example.com" }),
-        ),
+        makeIdToken(googleIdTokenPayload({ sub: "same-sub", email: "new-email@example.com" })),
       ),
     ) as unknown as typeof fetch;
     const client = new GoogleDriveClient(
@@ -4553,9 +4362,7 @@ describe("GoogleDriveClient — account identity (reconnect enforcement)", () =>
     const { ctx, puts } = makeAuthCtx();
     const fetchImpl = vi.fn(async () =>
       tokenResponseWithIdToken(
-        makeIdToken(
-          googleIdTokenPayload({ sub: "intruder-sub", email: "intruder@example.com" }),
-        ),
+        makeIdToken(googleIdTokenPayload({ sub: "intruder-sub", email: "intruder@example.com" })),
       ),
     ) as unknown as typeof fetch;
     const client = new GoogleDriveClient(
@@ -4592,14 +4399,15 @@ describe("GoogleDriveClient — account identity (refresh preserves anchor)", ()
     const { client: drive } = makeFakeDrive({});
     // A refresh response WITHOUT an id_token (Google's refresh grant returns
     // none) — the anchor must survive from the stored creds.
-    const fetchImpl = vi.fn(async () =>
-      new Response(
-        JSON.stringify({
-          access_token: "refreshed-at",
-          expires_in: 3600,
-        }),
-        { status: 200, headers: { "Content-Type": "application/json" } },
-      ),
+    const fetchImpl = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            access_token: "refreshed-at",
+            expires_in: 3600,
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } },
+        ),
     ) as unknown as typeof fetch;
     // Build creds carrying meta.account so readCredsFromStored seeds the anchor.
     const creds: StoredCredentials = {

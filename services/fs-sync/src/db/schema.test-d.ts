@@ -1,12 +1,6 @@
 import { describe, expectTypeOf, it } from "vitest";
 
-import {
-  downloads,
-  jobs,
-  retryPolicies,
-  serviceMeta,
-  syncSnapshot,
-} from "./schema.js";
+import { downloads, jobs, retryPolicies, serviceMeta, syncSnapshot } from "./schema.js";
 
 describe("sync.db Drizzle schema — table+column exposure", () => {
   it("exports all five core tables", () => {
@@ -27,12 +21,7 @@ describe("sync.db Drizzle schema — table+column exposure", () => {
   it("jobs.status is the six-value enum required by the spec", () => {
     type StatusType = typeof jobs.$inferSelect.status;
     expectTypeOf<StatusType>().toEqualTypeOf<
-      | "queued"
-      | "running"
-      | "waiting-network"
-      | "completed"
-      | "failed"
-      | "cancelled"
+      "queued" | "running" | "waiting-network" | "completed" | "failed" | "cancelled"
     >();
   });
 

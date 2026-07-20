@@ -75,26 +75,17 @@ describe("motion keyframes — task 4b.4 (flipped for Motion Safe opt-in)", () =
 
   it("skeleton-shimmer @keyframes is declared at top level (not inside a media block)", () => {
     // Strip every media block; what remains should still contain the keyframe.
-    const stripped = css.replace(
-      /@media\s*\([^)]*\)\s*\{[\s\S]*?\n\}/g,
-      "",
-    );
+    const stripped = css.replace(/@media\s*\([^)]*\)\s*\{[\s\S]*?\n\}/g, "");
     expect(stripped).toMatch(/@keyframes\s+skeleton-shimmer\s*\{/);
   });
 
   it("sync-pulse @keyframes is declared at top level (not inside a media block)", () => {
-    const stripped = css.replace(
-      /@media\s*\([^)]*\)\s*\{[\s\S]*?\n\}/g,
-      "",
-    );
+    const stripped = css.replace(/@media\s*\([^)]*\)\s*\{[\s\S]*?\n\}/g, "");
     expect(stripped).toMatch(/@keyframes\s+sync-pulse\s*\{/);
   });
 
   it("sync-ripple @keyframes is declared at top level (not inside a media block)", () => {
-    const stripped = css.replace(
-      /@media\s*\([^)]*\)\s*\{[\s\S]*?\n\}/g,
-      "",
-    );
+    const stripped = css.replace(/@media\s*\([^)]*\)\s*\{[\s\S]*?\n\}/g, "");
     expect(stripped).toMatch(/@keyframes\s+sync-ripple\s*\{/);
   });
 
@@ -103,18 +94,12 @@ describe("motion keyframes — task 4b.4 (flipped for Motion Safe opt-in)", () =
     // `data-motion="safe"` attribute is set on <html> AND the OS signals
     // reduce-motion. Users who haven't toggled Motion Safe continue to see
     // animations regardless of OS preference.
-    const block = extractMediaBlock(
-      css,
-      /@media\s*\(\s*prefers-reduced-motion\s*:\s*reduce\s*\)/,
-    );
+    const block = extractMediaBlock(css, /@media\s*\(\s*prefers-reduced-motion\s*:\s*reduce\s*\)/);
     expect(block).not.toBeNull();
   });
 
   it("Motion Safe override disables animate-sync-pulse when data-motion='safe' + OS reduce-motion", () => {
-    const block = extractMediaBlock(
-      css,
-      /@media\s*\(\s*prefers-reduced-motion\s*:\s*reduce\s*\)/,
-    );
+    const block = extractMediaBlock(css, /@media\s*\(\s*prefers-reduced-motion\s*:\s*reduce\s*\)/);
     expect(block).not.toBeNull();
     expect(block!).toMatch(
       /html\[data-motion\s*=\s*"safe"\][^{]*\.animate-sync-pulse[^{]*\{[^}]*animation\s*:\s*none/,
@@ -122,10 +107,7 @@ describe("motion keyframes — task 4b.4 (flipped for Motion Safe opt-in)", () =
   });
 
   it("Motion Safe override disables animate-sync-ripple when data-motion='safe' + OS reduce-motion", () => {
-    const block = extractMediaBlock(
-      css,
-      /@media\s*\(\s*prefers-reduced-motion\s*:\s*reduce\s*\)/,
-    );
+    const block = extractMediaBlock(css, /@media\s*\(\s*prefers-reduced-motion\s*:\s*reduce\s*\)/);
     expect(block).not.toBeNull();
     expect(block!).toMatch(
       /html\[data-motion\s*=\s*"safe"\][^{]*\.animate-sync-ripple[^{]*\{[^}]*animation\s*:\s*none/,
@@ -133,10 +115,7 @@ describe("motion keyframes — task 4b.4 (flipped for Motion Safe opt-in)", () =
   });
 
   it("Motion Safe override disables animate-skeleton-shimmer when data-motion='safe' + OS reduce-motion", () => {
-    const block = extractMediaBlock(
-      css,
-      /@media\s*\(\s*prefers-reduced-motion\s*:\s*reduce\s*\)/,
-    );
+    const block = extractMediaBlock(css, /@media\s*\(\s*prefers-reduced-motion\s*:\s*reduce\s*\)/);
     expect(block).not.toBeNull();
     expect(block!).toMatch(
       /html\[data-motion\s*=\s*"safe"\][^{]*\.animate-skeleton-shimmer[^{]*\{[^}]*animation\s*:\s*none/,
@@ -180,8 +159,6 @@ describe("motion keyframes — task 4b.4 (flipped for Motion Safe opt-in)", () =
   it("sync-ripple uses the 1.8s ease-out infinite timing", () => {
     const theme = extractThemeBlock(css);
     expect(theme).not.toBeNull();
-    expect(theme!).toMatch(
-      /--animate-sync-ripple\s*:\s*sync-ripple\s+1\.8s\s+ease-out\s+infinite/,
-    );
+    expect(theme!).toMatch(/--animate-sync-ripple\s*:\s*sync-ripple\s+1\.8s\s+ease-out\s+infinite/);
   });
 });

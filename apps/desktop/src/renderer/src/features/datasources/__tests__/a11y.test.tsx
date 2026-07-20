@@ -25,23 +25,8 @@
 // additional structural assertions for dialog aria-labelledby pairing, Label
 // ↔ Input htmlFor pairing, and keyboard focusability of Back/Close/Connect.
 
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-  type Mock,
-} from "vitest";
-import {
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-  within,
-} from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from "vitest";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import type { DatasourceSummary } from "@cloudstash/ipc-contracts";
 
@@ -130,12 +115,11 @@ beforeEach(() => {
   // Radix DropdownMenu + Dialog rely on ResizeObserver at mount, which jsdom
   // does not implement. Polyfill as a no-op class.
   if (!("ResizeObserver" in window)) {
-    (window as unknown as { ResizeObserver: unknown }).ResizeObserver =
-      class MockResizeObserver {
-        observe() {}
-        unobserve() {}
-        disconnect() {}
-      };
+    (window as unknown as { ResizeObserver: unknown }).ResizeObserver = class MockResizeObserver {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    };
   }
   listMock = vi.fn();
   addMock = vi.fn();
@@ -175,16 +159,12 @@ describe("Dashboard a11y — populated state (task 9.3)", () => {
     );
 
     await waitFor(() => {
-      const cards = document.querySelectorAll<HTMLElement>(
-        "[data-testid='datasource-card']",
-      );
+      const cards = document.querySelectorAll<HTMLElement>("[data-testid='datasource-card']");
       expect(cards.length).toBe(POPULATED_FIXTURE.length);
     });
 
     const cards = Array.from(
-      document.querySelectorAll<HTMLElement>(
-        "[data-testid='datasource-card']",
-      ),
+      document.querySelectorAll<HTMLElement>("[data-testid='datasource-card']"),
     );
     for (const card of cards) {
       const heading = within(card).queryByRole("heading");
@@ -206,9 +186,7 @@ describe("Dashboard a11y — populated state (task 9.3)", () => {
     await screen.findByTestId("datasources-grid");
 
     const badges = Array.from(
-      document.querySelectorAll<HTMLElement>(
-        "[data-testid='datasource-status']",
-      ),
+      document.querySelectorAll<HTMLElement>("[data-testid='datasource-status']"),
     );
     expect(badges.length).toBe(POPULATED_FIXTURE.length);
     for (const badge of badges) {
@@ -244,9 +222,7 @@ describe("Dashboard a11y — populated state (task 9.3)", () => {
     );
     await screen.findByTestId("datasources-grid");
 
-    const badge = document.querySelector<HTMLElement>(
-      "[data-testid='datasource-status']",
-    );
+    const badge = document.querySelector<HTMLElement>("[data-testid='datasource-status']");
     expect(badge).not.toBeNull();
     const label = badge!.getAttribute("aria-label");
     expect(label).toMatch(/^Status: error/);
@@ -307,10 +283,7 @@ describe("AddDatasourceDialog a11y — structural (task 9.3)", () => {
 
     const dialog = await screen.findByRole("dialog");
     const labelledby = dialog.getAttribute("aria-labelledby");
-    expect(
-      labelledby,
-      "dialog must carry aria-labelledby for the WCAG name",
-    ).not.toBeNull();
+    expect(labelledby, "dialog must carry aria-labelledby for the WCAG name").not.toBeNull();
     // The referenced id must resolve to a node with the expected title text.
     // We avoid asserting a specific id value because Radix generates them.
     const title = document.getElementById(labelledby!);
@@ -330,9 +303,7 @@ describe("AddDatasourceDialog a11y — structural (task 9.3)", () => {
     fireEvent.click(screen.getByTestId("add-datasource-trigger"));
 
     const dialog = await screen.findByRole("dialog");
-    fireEvent.click(
-      within(dialog).getByTestId("provider-option-amazon-s3"),
-    );
+    fireEvent.click(within(dialog).getByTestId("provider-option-amazon-s3"));
 
     // All four AWS credential fields must each have an associated label.
     // `getByLabelText` specifically requires the label-input pair (htmlFor
@@ -362,9 +333,7 @@ describe("AddDatasourceDialog a11y — structural (task 9.3)", () => {
     await screen.findByTestId("datasources-empty");
     fireEvent.click(screen.getByTestId("add-datasource-trigger"));
     const dialog = await screen.findByRole("dialog");
-    fireEvent.click(
-      within(dialog).getByTestId("provider-option-amazon-s3"),
-    );
+    fireEvent.click(within(dialog).getByTestId("provider-option-amazon-s3"));
 
     // Fill fields so the Connect button is enabled.
     const accessKey = await within(dialog).findByLabelText(/access key id/i);

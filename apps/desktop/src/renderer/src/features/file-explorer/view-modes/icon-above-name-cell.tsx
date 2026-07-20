@@ -1,11 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import type {
-  ComponentPropsWithoutRef,
-  MouseEvent as ReactMouseEvent,
-  Ref,
-} from "react";
+import type { ComponentPropsWithoutRef, MouseEvent as ReactMouseEvent, Ref } from "react";
 
 import type { FileEntry } from "@cloudstash/ipc-contracts";
 
@@ -39,8 +35,7 @@ import type { ExplorerStore } from "../store";
 
 export type IconAboveNameCellSize = "size-16" | "size-24";
 
-export interface IconAboveNameCellProps
-  extends ComponentPropsWithoutRef<"div"> {
+export interface IconAboveNameCellProps extends ComponentPropsWithoutRef<"div"> {
   /**
    * Optional so existing presentational view-mode tests can still mount
    * without a store; when present, the inline-rename UI activates for
@@ -111,11 +106,7 @@ export function IconAboveNameCell({
         focused && "ring-ring ring-2 ring-inset",
       )}
     >
-      <Icon
-        name={iconName}
-        aria-hidden
-        className={cn("text-muted-foreground", iconSize)}
-      />
+      <Icon name={iconName} aria-hidden className={cn("text-muted-foreground", iconSize)} />
       <div className="flex w-full items-center justify-center gap-1.5">
         {store !== undefined ? (
           <EntryNameCell

@@ -56,12 +56,12 @@ For bugs / fixes / improvements, jump to §13 Reactive workflow.
 
 Pick based on how resolved the request is:
 
-| Situation | Branch | What you type |
-|---|---|---|
+| Situation                                                                                                                                                                                                                                    | Branch               | What you type                                    |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- | ------------------------------------------------ |
 | Stub or unresolved architectural ambiguity — `proposal.md` marked stub, `## Open questions`, `Status: Stub`, embedded TBDs, missing `## What Changes` body, no spec delta yet, no `tasks.md`, OR open architectural questions in the request | **Brainstorm-first** | `Use the brainstorming skill to resolve <topic>` |
-| Everything else — clear requirements, no architectural ambiguity. **Visible-UI work belongs here too** (even when only visual decisions remain) | **Propose-direct** | `/opsx:propose <description>` |
+| Everything else — clear requirements, no architectural ambiguity. **Visible-UI work belongs here too** (even when only visual decisions remain)                                                                                              | **Propose-direct**   | `/opsx:propose <description>`                    |
 
-**Visible UI is not a separate entry point.** It goes through **Propose-direct**, then gets visual refinement automatically *after* propose — Stage 2b (§5), before human review. That does not change where you start.
+**Visible UI is not a separate entry point.** It goes through **Propose-direct**, then gets visual refinement automatically _after_ propose — Stage 2b (§5), before human review. That does not change where you start.
 
 If unsure, default to Brainstorm-first. Wasted brainstorming is cheaper than wasted artifact-rewrites.
 
@@ -80,6 +80,7 @@ What you'll see:
 5. At the end, Claude runs `/opsx:propose` with the resolved approach.
 
 What you type:
+
 - Letters (`A`, `B`, `C`) for multi-choice
 - Free text for "Other" / clarifications
 - `looks good` / `change X to Y` for design-section approvals
@@ -89,6 +90,7 @@ What you type:
 ## 5. Stage 2 — `/opsx:propose <description>`
 
 What you type:
+
 ```
 /opsx:propose <description-or-name>
 ```
@@ -96,6 +98,7 @@ What you type:
 For reactive back-fills (Pattern A / B — see §13), pass the settled `<change-id>` (kebab-case) directly instead of a free-text description.
 
 What Claude does:
+
 1. Creates `openspec/changes/<name>/` (or detects an existing stub).
 2. Generates `proposal.md`, `design.md`, `specs/<cap>/spec.md` deltas, `tasks.md`.
 3. Runs `openspec validate <name>` and reports green.
@@ -111,6 +114,7 @@ What you'll see:
 3. Claude folds your picks into `design.md`'s `## Visual direction` (aesthetic / type / color / spacing / motion / accessibility).
 
 What you type:
+
 - `sure` / `no thanks` to accept or decline the Visual Companion
 - Click your pick in the browser for visual questions
 - `looks good` / `change X to Y` for the proposed visual direction
@@ -133,6 +137,7 @@ Reply `looks good` or specific changes. Claude rewrites and re-validates.
 ## 7. Stage 4 — Pre-apply staleness check
 
 Before Claude runs `/opsx:apply`, it spot-checks `design.md` against the current codebase: file paths, function names, architectural assumptions still match. If the codebase has shifted (different day from the brainstorming session, mid-session merge from main, sibling worktree landed), Claude either:
+
 - Invokes `brainstorming` for parts needing re-resolution
 - Edits `design.md` directly for purely-stale references (file moved, function renamed)
 
@@ -143,6 +148,7 @@ You don't type anything — Claude does this automatically. You'll see the stale
 ## 8. Stage 5 — `/opsx:apply`
 
 What you type:
+
 ```
 /opsx:apply <change-name>
 ```
@@ -162,6 +168,7 @@ What happens:
 6. **`verification-before-completion`** — full test suite + typecheck + lint. All green or it doesn't claim done.
 
 What you do:
+
 - One-word reply on worktree placement
 - Watch for blockers Claude surfaces
 - Answer ambiguities
@@ -196,6 +203,7 @@ You still have manual controls if you want them:
 ```
 
 What Claude does:
+
 1. Lists changes that have delta specs (`openspec list --json`) and asks you to pick (unless name was given).
 2. For each capability under `openspec/changes/<name>/specs/`, reads the delta and the main spec.
 3. Applies ADDED / MODIFIED / REMOVED / RENAMED blocks to the main spec, preserving unrelated existing content (partial scenario adds, etc.).
@@ -230,12 +238,14 @@ The "never edit `openspec/specs/` directly" rule still holds. `/opsx:sync` IS th
 ## 11. Stage 6 — `/opsx:archive` (in the worktree, BEFORE merge)
 
 Pre-archive checklist:
+
 - All `tasks.md` checkboxes checked
 - Full test suite passes (not just new tests)
 - Feature exercised against a running system
 - `openspec validate <name>` is green
 
 What you type, in the worktree branch:
+
 ```
 /opsx:archive <change-name>
 ```
@@ -243,6 +253,7 @@ What you type, in the worktree branch:
 What it does: moves `openspec/changes/<name>/` into `openspec/changes/archive/<YYYY-MM-DD>-<name>/` and folds spec deltas into `openspec/specs/<cap>/spec.md` so canonical specs reflect the new behavior.
 
 If `openspec validate <name>` fails at archive time:
+
 - Fix the violations in the worktree branch and re-run validate
 - Never use any flag to skip validation
 - Never edit `openspec/specs/` directly to make validate happy — fix the spec deltas in the change directory instead
@@ -253,14 +264,15 @@ If `openspec validate <name>` fails at archive time:
 
 ## 12. Stage 7 — Finish the branch (merge / PR / cleanup)
 
-`finishing-a-development-branch` is the **mandatory entry point for every branch handoff** — and completing `/opsx:archive` is **NOT** the finish line. Archive closes the OpenSpec lifecycle; this step closes the *branch*. Run it when all tasks are done, and ALWAYS before any merge-to-base or PR.
+`finishing-a-development-branch` is the **mandatory entry point for every branch handoff** — and completing `/opsx:archive` is **NOT** the finish line. Archive closes the OpenSpec lifecycle; this step closes the _branch_. Run it when all tasks are done, and ALWAYS before any merge-to-base or PR.
 
 What you type:
+
 ```
 Use finishing-a-development-branch
 ```
 
-What Claude does inside the skill: re-verifies the test suite, runs the **pre-handoff backstop** over the whole branch (`git log <base>..HEAD` — see §13) to catch any uncovered Outcome-3 commit, then presents merge / PR / cleanup options for you to pick. Any `gh pr create` or merge happens *inside* this skill — never as a bare command. PR opening is still your call on **whether/when** to hand off; it is never optional **whether** to run the skill.
+What Claude does inside the skill: re-verifies the test suite, runs the **pre-handoff backstop** over the whole branch (`git log <base>..HEAD` — see §13) to catch any uncovered Outcome-3 commit, then presents merge / PR / cleanup options for you to pick. Any `gh pr create` or merge happens _inside_ this skill — never as a bare command. PR opening is still your call on **whether/when** to hand off; it is never optional **whether** to run the skill.
 
 ---
 
@@ -283,11 +295,11 @@ If during investigation you realise this is actually a missing feature rather th
 
 ### Audit gate — three outcomes
 
-| Outcome | What it means | Action |
-|---|---|---|
-| **1. No observable contract change** | Refactor, perf, doc, test, internal-only, or accessibility fix that's already inside WCAG AA | Plain commit, no OpenSpec |
-| **2. Code wrong, spec right** | Fix restores behavior the spec already documents — code defect against an existing requirement | Plain commit + cite the restored requirement in the body (e.g. `Restores: openspec/specs/<cap>/spec.md → Requirement: <name>`) |
-| **3. Contract changed** | Any trigger fires (see checklist below) | Back-fill required — Pattern A / B / C |
+| Outcome                              | What it means                                                                                  | Action                                                                                                                         |
+| ------------------------------------ | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| **1. No observable contract change** | Refactor, perf, doc, test, internal-only, or accessibility fix that's already inside WCAG AA   | Plain commit, no OpenSpec                                                                                                      |
+| **2. Code wrong, spec right**        | Fix restores behavior the spec already documents — code defect against an existing requirement | Plain commit + cite the restored requirement in the body (e.g. `Restores: openspec/specs/<cap>/spec.md → Requirement: <name>`) |
+| **3. Contract changed**              | Any trigger fires (see checklist below)                                                        | Back-fill required — Pattern A / B / C                                                                                         |
 
 If you (or Claude) can't classify confidently, ask Claude to call advisor before deciding.
 
@@ -328,6 +340,7 @@ Multi-capability fixes bundle all spec deltas into ONE change.
 **Pattern B — Forward proposal** — interim partial fix shipped; full contract still being designed.
 
 Standard forward flow:
+
 ```
 You: /opsx:propose <change-id>
 You: looks good
@@ -339,6 +352,7 @@ You: /opsx:archive <change-id>
 **Pattern C — Deferred back-fill** — emergency hotfix or release-branch fix where the full OpenSpec round-trip isn't feasible right now.
 
 Allowed only if you:
+
 - File a tracking ticket (`<TICKET_PREFIX>-*`)
 - Set a deadline (default: before the next merge to `main`)
 
@@ -355,26 +369,26 @@ Cap: at most **ONE open deferred back-fill per branch**. A second one blocks mer
 
 ## 14. Decision cheat sheet
 
-| Situation | Your move |
-|---|---|
-| Vague idea or unresolved architectural questions | Brainstorm-first |
-| Stub with open questions / TBDs / missing `## What Changes` / no spec delta / no `tasks.md` | Brainstorm-first |
-| Clear feature, visuals open | Propose-direct: `/opsx:propose` — visual refinement (Stage 2b) follows automatically |
-| Clear feature, no UI, no architectural ambiguity | Propose-direct: `/opsx:propose <description>` |
-| Pure UI polish | Propose-direct — visual refinement (Stage 2b) follows automatically |
-| Failing test / bug / regression | Reactive workflow (§13) — Claude investigates → fixes → audits → back-fills if needed |
-| Hotfix needs to ship NOW, full OpenSpec round-trip impossible | Reactive Pattern C — file ticket + deadline, cap of one per branch |
-| Fix already shipped, contract changed, need to back-fill | Reactive Pattern A — `/opsx:propose <change-id>` → review → `/opsx:sync` → `/opsx:archive` |
-| Fix is internal-only / refactor / perf / already-AA accessibility | Reactive Outcome 1 — plain commit, no OpenSpec |
-| Fix restores spec-documented behavior | Reactive Outcome 2 — plain commit + cite the restored requirement |
-| Next task builds on this one; want a tighter context | `/compact` (optional — context auto-manages) |
-| Next task is unrelated; want a clean slate | `/clear` (optional — context auto-manages) |
-| Mid-debug | Neither — finish the debug first (hard rule) |
-| Need a second opinion | Tell Claude `call advisor` |
-| All tasks checked off | `/opsx:archive` (in worktree) → then `Use finishing-a-development-branch` (archive is not the finish line) |
-| Validate fails at archive | Fix spec deltas in worktree, re-run validate; never skip |
-| Need merged main specs BEFORE archive (downstream change blocks on them, or Pattern A back-fill chain) | `/opsx:sync <change-name>` (requires `sync` enabled — see §20) |
-| `/opsx:sync` slash command not present | Enable `sync` in your openspec profile (`openspec config profile` → custom) and re-run `openspec update` |
+| Situation                                                                                              | Your move                                                                                                  |
+| ------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------- |
+| Vague idea or unresolved architectural questions                                                       | Brainstorm-first                                                                                           |
+| Stub with open questions / TBDs / missing `## What Changes` / no spec delta / no `tasks.md`            | Brainstorm-first                                                                                           |
+| Clear feature, visuals open                                                                            | Propose-direct: `/opsx:propose` — visual refinement (Stage 2b) follows automatically                       |
+| Clear feature, no UI, no architectural ambiguity                                                       | Propose-direct: `/opsx:propose <description>`                                                              |
+| Pure UI polish                                                                                         | Propose-direct — visual refinement (Stage 2b) follows automatically                                        |
+| Failing test / bug / regression                                                                        | Reactive workflow (§13) — Claude investigates → fixes → audits → back-fills if needed                      |
+| Hotfix needs to ship NOW, full OpenSpec round-trip impossible                                          | Reactive Pattern C — file ticket + deadline, cap of one per branch                                         |
+| Fix already shipped, contract changed, need to back-fill                                               | Reactive Pattern A — `/opsx:propose <change-id>` → review → `/opsx:sync` → `/opsx:archive`                 |
+| Fix is internal-only / refactor / perf / already-AA accessibility                                      | Reactive Outcome 1 — plain commit, no OpenSpec                                                             |
+| Fix restores spec-documented behavior                                                                  | Reactive Outcome 2 — plain commit + cite the restored requirement                                          |
+| Next task builds on this one; want a tighter context                                                   | `/compact` (optional — context auto-manages)                                                               |
+| Next task is unrelated; want a clean slate                                                             | `/clear` (optional — context auto-manages)                                                                 |
+| Mid-debug                                                                                              | Neither — finish the debug first (hard rule)                                                               |
+| Need a second opinion                                                                                  | Tell Claude `call advisor`                                                                                 |
+| All tasks checked off                                                                                  | `/opsx:archive` (in worktree) → then `Use finishing-a-development-branch` (archive is not the finish line) |
+| Validate fails at archive                                                                              | Fix spec deltas in worktree, re-run validate; never skip                                                   |
+| Need merged main specs BEFORE archive (downstream change blocks on them, or Pattern A back-fill chain) | `/opsx:sync <change-name>` (requires `sync` enabled — see §20)                                             |
+| `/opsx:sync` slash command not present                                                                 | Enable `sync` in your openspec profile (`openspec config profile` → custom) and re-run `openspec update`   |
 
 ---
 
@@ -432,7 +446,7 @@ Reactive-specific:
 - **Never use direct git / shell ops on anything under `openspec/changes/`** (`git mv`, `git rm`, `git checkout`, `mv`, `rm`, `cp`, etc.) — all moves go through the OpenSpec lifecycle (`/opsx:propose` · `/opsx:apply` · `/opsx:sync` · `/opsx:archive`)
 - **Never delete a change directory as a shortcut for archiving** — every completed change archives via `/opsx:archive`, even if a stub's `tasks.md` says "delete"
 - **Never merge before `/opsx:archive`** — archive in worktree first
-- **Never run `gh pr create` or merge a branch into its base outside `finishing-a-development-branch`** — the handoff goes *through* the skill (test re-verification + pre-handoff backstop). Completing `/opsx:archive` is not a substitute; it is not the branch finish line
+- **Never run `gh pr create` or merge a branch into its base outside `finishing-a-development-branch`** — the handoff goes _through_ the skill (test re-verification + pre-handoff backstop). Completing `/opsx:archive` is not a substitute; it is not the branch finish line
 - **Never let Claude add a dependency without justifying it in `design.md`**
 - **Never compact mid-debug** — or while a decision lives only in chat; finish the debug or write the decision down first
 - **Never let brainstorming output land in `docs/plans/`** — must go to OpenSpec artifacts
@@ -441,7 +455,7 @@ Reactive-specific:
 - **Never treat `/opsx:sync` as a substitute for `/opsx:archive`** — sync only folds deltas; the change still needs to be archived once implementation is complete
 - **Never skip the reactive audit gate** even for fixes that "feel trivial" — the 30-second checklist is cheaper than a missed contract change
 - **Never ship an Outcome 2 fix without citing the restored requirement** in the commit body — without the cite, the audit isn't auditable post-hoc
-- **Never amend an archived change** — a new back-fill is always a *new* change directory under `openspec/changes/`, even if the impacted requirement was originally added by an archived change
+- **Never amend an archived change** — a new back-fill is always a _new_ change directory under `openspec/changes/`, even if the impacted requirement was originally added by an archived change
 - **Never bundle the impl fix commit with the back-fill commits** — keep the fix as one commit, and the OpenSpec proposal/sync/archive as its own commit chain
 
 ---
@@ -550,26 +564,26 @@ You: Use finishing-a-development-branch
 
 ## 19. Troubleshooting
 
-| Symptom | What to do |
-|---|---|
-| Brainstorming companion URL not loading | Check `http://localhost:<port>` (Claude reports the port). If the server died, ask Claude to restart. Session dir: `.superpowers/brainstorm/<sessionid>/`. |
-| `openspec validate <name>` fails | Don't proceed to `/opsx:apply`. Tell Claude to fix the validation error and re-run. |
-| `openspec validate <name>` fails at ARCHIVE | Fix spec deltas in the worktree, re-run validate. Never skip; never edit `openspec/specs/` directly. |
-| Subagent runs forever (claude-code #11716) | Restart the Claude Code session. Tell Claude to re-run with explicit foreground timeout (`timeout: 300000`). |
-| Claude wants to compact mid-debug | Say `no, finish the debug first`. Hard rule forbids mid-task compaction. |
-| Claude skipped the advisor checkpoint | Ask: `did you call advisor before this commit?` If no, tell Claude to call advisor and reconsider. **Pattern A back-fills**: BOTH advisor checkpoints (before `design.md`, before archive) are mandatory regardless of session history. |
-| `/opsx:apply` started before you approved | Cancel, review artifacts, approve, then re-run. |
-| You spotted an unresolved decision in `design.md` | Don't proceed. Tell Claude to brainstorm the unresolved part. |
-| Code review found a critical issue mid-task | Block on it. Don't move to the next task until resolved. |
-| Implementation found a flaw in a `design.md` decision | Tell Claude to update `design.md` `## Decisions` BEFORE continuing — no silent shipping. |
-| You want to merge before `/opsx:archive` | DON'T. Archive in worktree first. Hard rule. |
-| `/opsx:sync` slash command isn't recognised | The `sync` workflow isn't enabled in your global openspec profile. See §20. |
-| `/opsx:sync` ran but `openspec/specs/<cap>/spec.md` looks unchanged | Re-read Claude's summary — sync only touches capabilities that have a delta under `openspec/changes/<name>/specs/`. If a capability has no delta, it's untouched on purpose. |
-| You want to undo a sync | Sync edits are in git. Revert the `openspec/specs/` changes via your normal git workflow. There's no `/opsx:unsync`. |
-| Claude classified an audit gate as Outcome 1 but you suspect a contract change | Walk through the trigger checklist (§13) with Claude. If any trigger fires, it's Outcome 3 — back-fill needed. When in doubt, ask Claude to escalate to advisor. |
-| You see a fix commit on the branch but no matching change directory | Audit it against the trigger checklist. If Outcome 3, back-fill via Pattern A *before* PR/merge. The pre-handoff backstop should have caught this — flag it. |
-| Two open Pattern C deferred back-fills on the same branch | Hard cap is one. Resolve the older one (back-fill via Pattern A) before merging or starting another deferred fix. |
-| Pattern A back-fill ran but Claude amended an existing archived change | Wrong. Revert. New back-fill = new change directory under `openspec/changes/`. Never amend an archive. |
+| Symptom                                                                        | What to do                                                                                                                                                                                                                              |
+| ------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Brainstorming companion URL not loading                                        | Check `http://localhost:<port>` (Claude reports the port). If the server died, ask Claude to restart. Session dir: `.superpowers/brainstorm/<sessionid>/`.                                                                              |
+| `openspec validate <name>` fails                                               | Don't proceed to `/opsx:apply`. Tell Claude to fix the validation error and re-run.                                                                                                                                                     |
+| `openspec validate <name>` fails at ARCHIVE                                    | Fix spec deltas in the worktree, re-run validate. Never skip; never edit `openspec/specs/` directly.                                                                                                                                    |
+| Subagent runs forever (claude-code #11716)                                     | Restart the Claude Code session. Tell Claude to re-run with explicit foreground timeout (`timeout: 300000`).                                                                                                                            |
+| Claude wants to compact mid-debug                                              | Say `no, finish the debug first`. Hard rule forbids mid-task compaction.                                                                                                                                                                |
+| Claude skipped the advisor checkpoint                                          | Ask: `did you call advisor before this commit?` If no, tell Claude to call advisor and reconsider. **Pattern A back-fills**: BOTH advisor checkpoints (before `design.md`, before archive) are mandatory regardless of session history. |
+| `/opsx:apply` started before you approved                                      | Cancel, review artifacts, approve, then re-run.                                                                                                                                                                                         |
+| You spotted an unresolved decision in `design.md`                              | Don't proceed. Tell Claude to brainstorm the unresolved part.                                                                                                                                                                           |
+| Code review found a critical issue mid-task                                    | Block on it. Don't move to the next task until resolved.                                                                                                                                                                                |
+| Implementation found a flaw in a `design.md` decision                          | Tell Claude to update `design.md` `## Decisions` BEFORE continuing — no silent shipping.                                                                                                                                                |
+| You want to merge before `/opsx:archive`                                       | DON'T. Archive in worktree first. Hard rule.                                                                                                                                                                                            |
+| `/opsx:sync` slash command isn't recognised                                    | The `sync` workflow isn't enabled in your global openspec profile. See §20.                                                                                                                                                             |
+| `/opsx:sync` ran but `openspec/specs/<cap>/spec.md` looks unchanged            | Re-read Claude's summary — sync only touches capabilities that have a delta under `openspec/changes/<name>/specs/`. If a capability has no delta, it's untouched on purpose.                                                            |
+| You want to undo a sync                                                        | Sync edits are in git. Revert the `openspec/specs/` changes via your normal git workflow. There's no `/opsx:unsync`.                                                                                                                    |
+| Claude classified an audit gate as Outcome 1 but you suspect a contract change | Walk through the trigger checklist (§13) with Claude. If any trigger fires, it's Outcome 3 — back-fill needed. When in doubt, ask Claude to escalate to advisor.                                                                        |
+| You see a fix commit on the branch but no matching change directory            | Audit it against the trigger checklist. If Outcome 3, back-fill via Pattern A _before_ PR/merge. The pre-handoff backstop should have caught this — flag it.                                                                            |
+| Two open Pattern C deferred back-fills on the same branch                      | Hard cap is one. Resolve the older one (back-fill via Pattern A) before merging or starting another deferred fix.                                                                                                                       |
+| Pattern A back-fill ran but Claude amended an existing archived change         | Wrong. Revert. New back-fill = new change directory under `openspec/changes/`. Never amend an archive.                                                                                                                                  |
 
 ---
 
@@ -584,6 +598,7 @@ openspec config path                # prints the file location
 ```
 
 Typical paths:
+
 - Windows: `C:\Users\<you>\AppData\Roaming\openspec\config.json`
 - macOS: `~/Library/Application Support/openspec/config.json`
 - Linux: `~/.config/openspec/config.json`
@@ -630,6 +645,7 @@ If interactive prompts are blocked (CI, scripted setup), edit the global config 
 ```
 
 Then verify:
+
 ```
 openspec config get workflows
 # ["propose","explore","apply","sync","archive"]

@@ -116,16 +116,11 @@ export class ConfigFileCredentialStore implements CredentialStore {
       const raw = await fsp.readFile(this.filePath, "utf8");
       const parsed = JSON.parse(raw) as StoredFile;
       if (parsed.schemaVersion !== 1 || typeof parsed.credentials !== "object") {
-        throw new Error(
-          `credentials file ${this.filePath} has unexpected shape; refusing to read`,
-        );
+        throw new Error(`credentials file ${this.filePath} has unexpected shape; refusing to read`);
       }
       return parsed;
     } catch (err) {
-      if (
-        (err as NodeJS.ErrnoException).code === "ENOENT" &&
-        opts.createIfMissing
-      ) {
+      if ((err as NodeJS.ErrnoException).code === "ENOENT" && opts.createIfMissing) {
         return { ...EMPTY, credentials: {} };
       }
       throw err;

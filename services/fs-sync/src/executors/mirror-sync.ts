@@ -3,10 +3,7 @@
 
 import * as path from "node:path";
 
-import type {
-  DatasourceClient,
-  DatasourceError,
-} from "@cloudstash/fs-datasource-engine";
+import type { DatasourceClient, DatasourceError } from "@cloudstash/fs-datasource-engine";
 import { withAuthRefresh } from "@cloudstash/fs-datasource-engine";
 import type { DatasourceType } from "@cloudstash/ipc-contracts";
 import { DatasourceErrorTag, EntryKind } from "@cloudstash/ipc-contracts";
@@ -21,9 +18,7 @@ import { checkSourceHealth } from "./source-health.js";
 
 export interface MirrorSyncDeps {
   readonly db: import("better-sqlite3").Database;
-  readonly resolveClient: (
-    datasourceId: string,
-  ) => Promise<DatasourceClient<DatasourceType>>;
+  readonly resolveClient: (datasourceId: string) => Promise<DatasourceClient<DatasourceType>>;
   /** Test seam for deterministic hashes. Defaults to real streaming sha256. */
   readonly hashFile?: (absPath: string) => Promise<string>;
 }
@@ -103,10 +98,7 @@ export function buildMirrorSyncExecutor(deps: MirrorSyncDeps): Executor {
               { signal },
             ),
           );
-          const sha =
-            op.kind === "upload-new"
-              ? await hashFile(abs)
-              : op.sha256;
+          const sha = op.kind === "upload-new" ? await hashFile(abs) : op.sha256;
           snapshots.upsert(job.datasourceId, {
             relPath: op.relPath,
             size: op.size,
@@ -122,20 +114,13 @@ export function buildMirrorSyncExecutor(deps: MirrorSyncDeps): Executor {
         } else if (op.kind === "skip") {
           skipped++;
         } else if (op.kind === "skip-refresh-mtime") {
-          snapshots.refreshMtime(
-            job.datasourceId,
-            op.relPath,
-            op.newMtimeMs,
-          );
+          snapshots.refreshMtime(job.datasourceId, op.relPath, op.newMtimeMs);
           skipped++;
         } else {
           // delete-remote — same `withAuthRefresh` wrap as the upload path
           // above (Decision 4).
           await withAuthRefresh(client, () =>
-            client.delete(
-              { kind: "handle", handle: op.remoteHandle },
-              EntryKind.File,
-            ),
+            client.delete({ kind: "handle", handle: op.remoteHandle }, EntryKind.File),
           );
           snapshots.delete(job.datasourceId, op.relPath);
           deleted++;

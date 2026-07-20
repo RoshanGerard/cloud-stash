@@ -11,10 +11,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ServiceConfig } from "@cloudstash/ipc-contracts/sync-service";
 
 import { applyMigrations } from "../../db/migrations.js";
-import {
-  createPruneScheduler,
-  PRUNE_INTERVAL_MS,
-} from "../prune-scheduler.js";
+import { createPruneScheduler, PRUNE_INTERVAL_MS } from "../prune-scheduler.js";
 
 const DAY = 86_400_000;
 const NOW = 1_700_000_000_000;
@@ -38,8 +35,7 @@ function seed(
 }
 
 function count(db: Database.Database): number {
-  return (db.prepare(`SELECT COUNT(*) AS c FROM downloads`).get() as { c: number })
-    .c;
+  return (db.prepare(`SELECT COUNT(*) AS c FROM downloads`).get() as { c: number }).c;
 }
 
 /** A `stat` port with no files on disk — every path rejects with ENOENT. */
@@ -77,8 +73,7 @@ describe("download-history prune scheduler", () => {
     seed(db, "new", "completed", NOW - 1 * DAY);
     const sched = createPruneScheduler({
       db,
-      readConfig: async () =>
-        configWith({ autoPrune: true, retentionDays: 90 }),
+      readConfig: async () => configWith({ autoPrune: true, retentionDays: 90 }),
     });
 
     await sched.start();
@@ -91,8 +86,7 @@ describe("download-history prune scheduler", () => {
     seed(db, "ancient", "completed", NOW - 999 * DAY);
     const sched = createPruneScheduler({
       db,
-      readConfig: async () =>
-        configWith({ autoPrune: false, retentionDays: 30 }),
+      readConfig: async () => configWith({ autoPrune: false, retentionDays: 30 }),
     });
 
     await sched.start();
@@ -105,8 +99,7 @@ describe("download-history prune scheduler", () => {
     seed(db, "d40", "completed", NOW - 40 * DAY);
     const sched = createPruneScheduler({
       db,
-      readConfig: async () =>
-        configWith({ autoPrune: true, retentionDays: 30 }),
+      readConfig: async () => configWith({ autoPrune: true, retentionDays: 30 }),
     });
 
     await sched.start();
@@ -118,8 +111,7 @@ describe("download-history prune scheduler", () => {
   it("re-prunes on the 24h tick using the latest table state", async () => {
     const sched = createPruneScheduler({
       db,
-      readConfig: async () =>
-        configWith({ autoPrune: true, retentionDays: 30 }),
+      readConfig: async () => configWith({ autoPrune: true, retentionDays: 30 }),
       fs: goneFs(),
     });
     await sched.start();
@@ -144,8 +136,7 @@ describe("download-history prune scheduler", () => {
     seed(db, "leftover", "failed", NOW - 200 * DAY, "/disk/partial");
     const sched = createPruneScheduler({
       db,
-      readConfig: async () =>
-        configWith({ autoPrune: true, retentionDays: 90 }),
+      readConfig: async () => configWith({ autoPrune: true, retentionDays: 90 }),
       fs: {
         stat: async (p: string) => {
           if (p === "/disk/partial") return { size: 128 };
@@ -165,8 +156,7 @@ describe("download-history prune scheduler", () => {
   it("clears its interval timer on stop — no prune after shutdown", async () => {
     const sched = createPruneScheduler({
       db,
-      readConfig: async () =>
-        configWith({ autoPrune: true, retentionDays: 30 }),
+      readConfig: async () => configWith({ autoPrune: true, retentionDays: 30 }),
     });
     await sched.start();
     sched.stop();

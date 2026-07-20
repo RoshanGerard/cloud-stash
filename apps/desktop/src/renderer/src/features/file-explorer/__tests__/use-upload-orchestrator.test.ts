@@ -116,8 +116,9 @@ describe("createUploadOrchestrator", () => {
     expect(upload).toHaveBeenCalledTimes(3);
     expect(resolver.resolve).not.toHaveBeenCalled();
 
-    const uploadCalls = (upload as unknown as ReturnType<typeof vi.fn>).mock
-      .calls as [FilesUploadRequest][];
+    const uploadCalls = (upload as unknown as ReturnType<typeof vi.fn>).mock.calls as [
+      FilesUploadRequest,
+    ][];
     const uploadedBasenames = uploadCalls
       .map(([req]) => req.targetPath.split("/").pop() ?? "")
       .sort();
@@ -157,8 +158,9 @@ describe("createUploadOrchestrator", () => {
     });
     await orchestrator.start();
 
-    const call = (upload as unknown as ReturnType<typeof vi.fn>).mock
-      .calls[0] as [FilesUploadRequest];
+    const call = (upload as unknown as ReturnType<typeof vi.fn>).mock.calls[0] as [
+      FilesUploadRequest,
+    ];
     expect(call[0].targetPath).toBe("/projects/2026/a.txt");
   });
 
@@ -199,8 +201,9 @@ describe("createUploadOrchestrator", () => {
 
     expect(upload).toHaveBeenCalledTimes(3);
     const byBasename = new Map<string, FilesUploadRequest>();
-    for (const [req] of (upload as unknown as ReturnType<typeof vi.fn>).mock
-      .calls as [FilesUploadRequest][]) {
+    for (const [req] of (upload as unknown as ReturnType<typeof vi.fn>).mock.calls as [
+      FilesUploadRequest,
+    ][]) {
       byBasename.set(req.targetPath.split("/").pop() ?? "", req);
     }
     expect(byBasename.get("a.txt")?.conflictPolicy).toBe("overwrite");
@@ -237,8 +240,9 @@ describe("createUploadOrchestrator", () => {
     await orchestrator.start();
 
     expect(upload).toHaveBeenCalledTimes(1);
-    const call = (upload as unknown as ReturnType<typeof vi.fn>).mock
-      .calls[0] as [FilesUploadRequest];
+    const call = (upload as unknown as ReturnType<typeof vi.fn>).mock.calls[0] as [
+      FilesUploadRequest,
+    ];
     expect(call[0].targetPath).toBe("/projects/2026/b.txt");
     expect(toaster.onJobDispatched).toHaveBeenCalledTimes(1);
   });
@@ -265,8 +269,9 @@ describe("createUploadOrchestrator", () => {
     });
     await orchestrator.start();
 
-    const call = (upload as unknown as ReturnType<typeof vi.fn>).mock
-      .calls[0] as [FilesUploadRequest];
+    const call = (upload as unknown as ReturnType<typeof vi.fn>).mock.calls[0] as [
+      FilesUploadRequest,
+    ];
     expect(call[0].conflictPolicy).toBe("duplicate");
   });
 
@@ -522,8 +527,9 @@ describe("createUploadOrchestrator", () => {
     await firstCall.retry();
 
     expect(upload).toHaveBeenCalledTimes(2);
-    const retriedCall = (upload as unknown as ReturnType<typeof vi.fn>).mock
-      .calls[1] as [FilesUploadRequest];
+    const retriedCall = (upload as unknown as ReturnType<typeof vi.fn>).mock.calls[1] as [
+      FilesUploadRequest,
+    ];
     expect(retriedCall[0].targetPath).toBe("/projects/2026/a.txt");
     expect(retriedCall[0].sourcePath).toBe("C:/local/a.txt");
     expect(retriedCall[0].conflictPolicy).toBe("overwrite");

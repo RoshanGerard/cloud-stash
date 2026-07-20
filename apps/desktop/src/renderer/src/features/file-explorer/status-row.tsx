@@ -40,11 +40,7 @@ export interface StatusRowProps {
 }
 
 export function StatusRow({ store }: StatusRowProps) {
-  const state = useSyncExternalStore(
-    store.subscribe,
-    store.getSnapshot,
-    store.getSnapshot,
-  );
+  const state = useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
 
   return (
     <div
@@ -66,16 +62,13 @@ export function deriveStatusText(state: ExplorerState): ReactNode {
       // Drive / OneDrive v1: no real search yet. Keep the message honest
       // and point at the deferred-work docs. Wording intentionally avoids
       // naming a specific provider so the same row works for both.
-      return (
-        <>Search for this datasource is not yet wired — see the deferred-work docs</>
-      );
+      return <>Search for this datasource is not yet wired — see the deferred-work docs</>;
     }
 
     const count = search.results.length;
     return (
       <>
-        Showing <span className="tabular-nums">{count}</span> results for{" "}
-        {`"${search.query}"`}
+        Showing <span className="tabular-nums">{count}</span> results for {`"${search.query}"`}
         {search.truncated ? (
           <>
             {" · "}

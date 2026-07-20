@@ -75,15 +75,13 @@ export function applyMigrations(
   // callers using a custom migrationsDir (for schema-shape tests) don't
   // trip "no such table" by having service_meta implied.
   const hasServiceMeta = db
-    .prepare(
-      "SELECT name FROM sqlite_master WHERE type='table' AND name='service_meta'",
-    )
+    .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='service_meta'")
     .get();
   if (!hasServiceMeta) return;
 
-  const existing = db
-    .prepare("SELECT id FROM service_meta LIMIT 1")
-    .get() as { id: number } | undefined;
+  const existing = db.prepare("SELECT id FROM service_meta LIMIT 1").get() as
+    | { id: number }
+    | undefined;
   if (!existing) {
     db.prepare(
       "INSERT INTO service_meta (id, schema_version, installed_at, service_uuid) VALUES (?, ?, ?, ?)",

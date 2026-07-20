@@ -120,10 +120,7 @@ afterEach(async () => {
 describe("startSupervisor in prod mode spawns the service when no listener is present", () => {
   it("spawns once with detached+stdio:'ignore', unrefs, and resolves once a retry connects", async () => {
     const pipePath = pipeFor("spawn-then-connect");
-    const nodeBinary =
-      process.platform === "win32"
-        ? "C:\\fake\\node.exe"
-        : "/fake/path/to/node";
+    const nodeBinary = process.platform === "win32" ? "C:\\fake\\node.exe" : "/fake/path/to/node";
     const servicePath = "/fake/path/to/service.js";
 
     // Simulate the spawned service coming online partway through the
@@ -150,9 +147,7 @@ describe("startSupervisor in prod mode spawns the service when no listener is pr
     const [calledCommand, calledArgs, calledOptions] = spawnMock.mock.calls[0]!;
     expect(calledCommand).toBe(nodeBinary);
     expect(calledArgs).toEqual([servicePath]);
-    expect(calledOptions).toEqual(
-      expect.objectContaining({ detached: true, stdio: "ignore" }),
-    );
+    expect(calledOptions).toEqual(expect.objectContaining({ detached: true, stdio: "ignore" }));
 
     expect(spawnedChildren).toHaveLength(1);
     expect(spawnedChildren[0]!.unref).toHaveBeenCalledTimes(1);
@@ -163,10 +158,7 @@ describe("startSupervisor in prod mode spawns the service when no listener is pr
 
   it("rejects with a fatal error after 5 failed retries when the service never comes online", async () => {
     const pipePath = pipeFor("spawn-exhaust");
-    const nodeBinary =
-      process.platform === "win32"
-        ? "C:\\fake\\node.exe"
-        : "/fake/path/to/node";
+    const nodeBinary = process.platform === "win32" ? "C:\\fake\\node.exe" : "/fake/path/to/node";
     const servicePath = "/fake/path/to/service.js";
 
     const started = Date.now();
@@ -197,9 +189,9 @@ describe("startSupervisor in prod mode spawns the service when no listener is pr
   it("rejects with a clear error when the initial connect fails and no nodeBinary/servicePath were provided", async () => {
     const pipePath = pipeFor("spawn-opt-out");
 
-    await expect(
-      startSupervisor({ mode: "prod", pipePath }),
-    ).rejects.toThrow(/nodeBinary|servicePath/);
+    await expect(startSupervisor({ mode: "prod", pipePath })).rejects.toThrow(
+      /nodeBinary|servicePath/,
+    );
 
     expect(spawnMock).not.toHaveBeenCalled();
   });

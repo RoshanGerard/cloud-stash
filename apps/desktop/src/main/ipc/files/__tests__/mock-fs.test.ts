@@ -39,9 +39,7 @@ const SEEDED_DATASOURCE_IDS = [
 function expectListOk(req: FilesListRequest): FilesListValue {
   const r = list(req);
   if (!r.ok) {
-    throw new Error(
-      `list() returned error envelope: ${r.error.tag} ${r.error.message}`,
-    );
+    throw new Error(`list() returned error envelope: ${r.error.tag} ${r.error.message}`);
   }
   return r.value;
 }
@@ -49,9 +47,7 @@ function expectListOk(req: FilesListRequest): FilesListValue {
 function expectSearchOk(req: FilesSearchRequest): FilesSearchValue {
   const r = search(req);
   if (!r.ok) {
-    throw new Error(
-      `search() returned error envelope: ${r.error.tag} ${r.error.message}`,
-    );
+    throw new Error(`search() returned error envelope: ${r.error.tag} ${r.error.message}`);
   }
   return r.value;
 }
@@ -59,9 +55,7 @@ function expectSearchOk(req: FilesSearchRequest): FilesSearchValue {
 function expectRemoveOk(req: FilesRemoveRequest): FilesRemoveValue {
   const r = remove(req);
   if (!r.ok) {
-    throw new Error(
-      `remove() returned error envelope: ${r.error.tag} ${r.error.message}`,
-    );
+    throw new Error(`remove() returned error envelope: ${r.error.tag} ${r.error.message}`);
   }
   return r.value;
 }
@@ -102,9 +96,7 @@ describe("mock-fs: list", () => {
       expect(entry.parentPath).toBe("/");
     }
     // nested directory: /documents
-    const doc = value.entries.find(
-      (e) => e.name === "documents" && e.kind === "directory",
-    );
+    const doc = value.entries.find((e) => e.name === "documents" && e.kind === "directory");
     expect(doc, "expected /documents directory under root").toBeTruthy();
     const nested = expectListOk({
       datasourceId: "ds-gdrive-personal",
@@ -171,10 +163,7 @@ describe("mock-fs: remove (partial failure)", () => {
     // Find a locked file somewhere in the seeded tree.
     const sizes = enumerateSeededDirectorySizes();
     const lockedDir = sizes.find(({ path }) => path.startsWith("/_locked"));
-    expect(
-      lockedDir,
-      "fixture must include at least one /_locked/* directory",
-    ).toBeTruthy();
+    expect(lockedDir, "fixture must include at least one /_locked/* directory").toBeTruthy();
     const lockedListing = expectListOk({
       datasourceId: lockedDir!.datasourceId,
       path: lockedDir!.path,
@@ -200,9 +189,7 @@ describe("mock-fs: remove (partial failure)", () => {
       ],
     });
 
-    const regularResult = value.results.find(
-      (r) => r.path === regularFile.path,
-    )!;
+    const regularResult = value.results.find((r) => r.path === regularFile.path)!;
     const lockedResult = value.results.find((r) => r.path === lockedFile.path)!;
     expect(regularResult.ok).toBe(true);
     expect(lockedResult.ok).toBe(false);
@@ -325,10 +312,7 @@ describe("mock-fs: mimeFamily derivation via seeded entries", () => {
         if (entry.kind === "file") {
           seen.add(entry.mimeFamily);
         } else {
-          walk(
-            expectListOk({ datasourceId: "ds-s3-archive", path: entry.path })
-              .entries,
-          );
+          walk(expectListOk({ datasourceId: "ds-s3-archive", path: entry.path }).entries);
         }
       }
     };

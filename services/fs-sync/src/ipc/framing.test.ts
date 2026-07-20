@@ -1,12 +1,7 @@
 import type { Frame } from "@cloudstash/ipc-contracts/sync-service";
 import { describe, expect, it } from "vitest";
 
-import {
-  FrameParseError,
-  FrameTooLargeError,
-  FramingDecoder,
-  encodeFrame,
-} from "./framing.js";
+import { FrameParseError, FrameTooLargeError, FramingDecoder, encodeFrame } from "./framing.js";
 
 function captures() {
   const frames: Frame[] = [];
@@ -28,10 +23,7 @@ describe("FramingDecoder", () => {
     const a = encodeFrame({ kind: "event", name: "a", payload: 1 });
     const b = encodeFrame({ kind: "event", name: "b", payload: 2 });
     dec.push(a + b);
-    expect(c.frames.map((f) => (f as { name: string }).name)).toEqual([
-      "a",
-      "b",
-    ]);
+    expect(c.frames.map((f) => (f as { name: string }).name)).toEqual(["a", "b"]);
     expect(c.errors).toHaveLength(0);
   });
 
@@ -57,10 +49,7 @@ describe("FramingDecoder", () => {
     dec.push(combined.slice(0, third));
     dec.push(combined.slice(third, 2 * third));
     dec.push(combined.slice(2 * third));
-    expect(c.frames.map((f) => (f as { name: string }).name)).toEqual([
-      "a",
-      "b",
-    ]);
+    expect(c.frames.map((f) => (f as { name: string }).name)).toEqual(["a", "b"]);
   });
 
   it("surfaces FrameParseError on malformed JSON, continues decoding the next frame", () => {
@@ -112,8 +101,6 @@ describe("encodeFrame", () => {
   it("does not silently encode a circular reference", () => {
     const cycle: Record<string, unknown> = {};
     cycle["self"] = cycle;
-    expect(() =>
-      encodeFrame({ kind: "event", name: "x", payload: cycle }),
-    ).toThrow();
+    expect(() => encodeFrame({ kind: "event", name: "x", payload: cycle })).toThrow();
   });
 });

@@ -33,10 +33,7 @@ export function Skeleton({ mode }: SkeletonProps) {
       >
         {rows.map((i) => (
           <div key={i} className="flex flex-col items-center gap-2">
-            <div
-              className={`rounded ${SHIMMER}`}
-              style={{ width: size, height: size }}
-            />
+            <div className={`rounded ${SHIMMER}`} style={{ width: size, height: size }} />
             <div className={`h-[10px] w-[70%] rounded ${SHIMMER}`} />
           </div>
         ))}
@@ -72,10 +69,7 @@ export function Skeleton({ mode }: SkeletonProps) {
       className="px-4 py-2"
     >
       {rows.map((i) => (
-        <div
-          key={i}
-          className="flex items-center gap-[10px] py-[8px]"
-        >
+        <div key={i} className="flex items-center gap-[10px] py-[8px]">
           <div className={`h-[14px] w-[14px] rounded ${SHIMMER}`} />
           <div
             className={`h-[10px] rounded ${SHIMMER}`}

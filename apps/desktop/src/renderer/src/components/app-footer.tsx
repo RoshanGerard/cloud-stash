@@ -28,9 +28,7 @@ export function AppFooter({ className, ...rest }: AppFooterProps) {
       )}
       {...rest}
     >
-      <p className="text-muted-foreground text-xs">
-        © {year} CloudStash. All rights reserved.
-      </p>
+      <p className="text-muted-foreground text-xs">© {year} CloudStash. All rights reserved.</p>
     </footer>
   );
 }

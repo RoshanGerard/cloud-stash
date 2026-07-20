@@ -13,11 +13,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
-import {
-  fieldCatalog,
-  modalFields,
-  providerMetadataFields,
-} from "./metadata/field-catalog";
+import { fieldCatalog, modalFields, providerMetadataFields } from "./metadata/field-catalog";
 import { FieldRowWithCopy } from "./metadata/render-primitives";
 import type { ExplorerStore } from "./store";
 
@@ -30,11 +26,7 @@ export interface PropertiesModalProps {
 }
 
 export function PropertiesModal({ store }: PropertiesModalProps) {
-  const state = useSyncExternalStore(
-    store.subscribe,
-    store.getSnapshot,
-    store.getSnapshot,
-  );
+  const state = useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
   const entry = state.propertiesEntry;
   const open = entry !== null;
 
@@ -113,7 +105,7 @@ function PropertiesBody({ entry }: { entry: FileEntry }) {
               numeric={typeof row.value === "number"}
               rawValue={row.value}
               onCopied={onCopied}
-            onCopyError={onCopyError}
+              onCopyError={onCopyError}
             />
           ))}
         </div>

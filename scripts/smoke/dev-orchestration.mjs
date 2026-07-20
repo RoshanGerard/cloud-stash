@@ -106,15 +106,9 @@ function resolvePidPath({ dev }) {
     // On Windows the PID file still lives under the data dir (named pipe
     // path is not a filesystem path; PID file uses resolveDataDir as on
     // Unix). Mirrors paths.ts resolvePidPath.
-    return path.join(
-      resolveDataDir({ dev }),
-      dev ? "service-dev.pid" : "service.pid",
-    );
+    return path.join(resolveDataDir({ dev }), dev ? "service-dev.pid" : "service.pid");
   }
-  return path.join(
-    resolveDataDir({ dev }),
-    dev ? "service-dev.pid" : "service.pid",
-  );
+  return path.join(resolveDataDir({ dev }), dev ? "service-dev.pid" : "service.pid");
 }
 
 // ---- IPC framing helpers (newline-delimited JSON, mirrors framing.ts) ----
@@ -144,11 +138,7 @@ function makeFrameDecoder(onFrame) {
 
 // ---- subprocess helpers ----
 
-const repoRoot = path.resolve(
-  path.dirname(fileURLToPath(import.meta.url)),
-  "..",
-  "..",
-);
+const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -230,11 +220,10 @@ function killProcessTree(child) {
     // We omit /F because the brief calls for "graceful then force": we
     // try without /F and rely on the 10 s teardown timeout to escalate.
     return new Promise((resolve) => {
-      const killer = spawn(
-        "taskkill",
-        ["/PID", String(child.pid), "/T"],
-        { stdio: "ignore", shell: false },
-      );
+      const killer = spawn("taskkill", ["/PID", String(child.pid), "/T"], {
+        stdio: "ignore",
+        shell: false,
+      });
       killer.once("exit", () => resolve());
       killer.once("error", () => resolve());
     });
@@ -246,7 +235,9 @@ function killProcessTree(child) {
     process.kill(-child.pid, "SIGINT");
   } catch (err) {
     // Fall back to direct child if the pgid lookup failed.
-    logErr(`process.kill(-${child.pid}, SIGINT) failed: ${String(err)} — falling back to direct kill`);
+    logErr(
+      `process.kill(-${child.pid}, SIGINT) failed: ${String(err)} — falling back to direct kill`,
+    );
     try {
       child.kill("SIGINT");
     } catch (err2) {
@@ -259,11 +250,10 @@ function killProcessTree(child) {
 async function escalateKill(child) {
   if (IS_WIN) {
     return new Promise((resolve) => {
-      const killer = spawn(
-        "taskkill",
-        ["/PID", String(child.pid), "/T", "/F"],
-        { stdio: "ignore", shell: false },
-      );
+      const killer = spawn("taskkill", ["/PID", String(child.pid), "/T", "/F"], {
+        stdio: "ignore",
+        shell: false,
+      });
       killer.once("exit", () => resolve());
       killer.once("error", () => resolve());
     });
@@ -341,7 +331,9 @@ async function main() {
 
   // Hard upper bound: if anything hangs the whole script past 60 s, bail.
   const hardTimer = setTimeout(() => {
-    logErr(`hard upper-bound (${TIMEOUTS.hardUpperMs}ms) hit — escalating kill and exiting non-zero`);
+    logErr(
+      `hard upper-bound (${TIMEOUTS.hardUpperMs}ms) hit — escalating kill and exiting non-zero`,
+    );
     void escalateKill(child).then(() => process.exit(4));
   }, TIMEOUTS.hardUpperMs);
   hardTimer.unref();
@@ -405,7 +397,9 @@ async function main() {
 
     const exitResult = await waitForExit(child, TIMEOUTS.teardownMs);
     if (!exitResult.exited) {
-      logErr(`pnpm dev did not exit within ${TIMEOUTS.teardownMs}ms — escalating to ${IS_WIN ? "taskkill /F" : "SIGKILL"}`);
+      logErr(
+        `pnpm dev did not exit within ${TIMEOUTS.teardownMs}ms — escalating to ${IS_WIN ? "taskkill /F" : "SIGKILL"}`,
+      );
       await escalateKill(child);
       const second = await waitForExit(child, 5_000);
       if (!second.exited) {

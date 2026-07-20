@@ -19,9 +19,7 @@ export class FrameTooLargeError extends Error {
   readonly observedBytes: number;
   readonly limitBytes: number;
   constructor(observedBytes: number, limitBytes: number) {
-    super(
-      `incoming frame exceeds max size (${observedBytes} > ${limitBytes})`,
-    );
+    super(`incoming frame exceeds max size (${observedBytes} > ${limitBytes})`);
     this.name = "FrameTooLargeError";
     this.observedBytes = observedBytes;
     this.limitBytes = limitBytes;
@@ -31,11 +29,7 @@ export class FrameTooLargeError extends Error {
 export class FrameParseError extends Error {
   readonly raw: string;
   constructor(raw: string, cause: unknown) {
-    super(
-      `frame parse failed: ${
-        cause instanceof Error ? cause.message : String(cause)
-      }`,
-    );
+    super(`frame parse failed: ${cause instanceof Error ? cause.message : String(cause)}`);
     this.name = "FrameParseError";
     this.raw = raw;
   }
@@ -51,10 +45,7 @@ export class FramingDecoder {
   private readonly maxFrameBytes: number;
   private readonly events: FramingDecoderEvents;
 
-  constructor(
-    events: FramingDecoderEvents,
-    options: { readonly maxFrameBytes?: number } = {},
-  ) {
+  constructor(events: FramingDecoderEvents, options: { readonly maxFrameBytes?: number } = {}) {
     this.events = events;
     this.maxFrameBytes = options.maxFrameBytes ?? DEFAULT_MAX_FRAME_BYTES;
   }
@@ -81,9 +72,7 @@ export class FramingDecoder {
       if (line.length === 0) continue; // tolerate blank lines
 
       if (line.length > this.maxFrameBytes) {
-        this.events.onError(
-          new FrameTooLargeError(line.length, this.maxFrameBytes),
-        );
+        this.events.onError(new FrameTooLargeError(line.length, this.maxFrameBytes));
         continue;
       }
 

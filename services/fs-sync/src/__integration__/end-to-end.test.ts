@@ -99,9 +99,7 @@ function fakeClient() {
     // Required on DatasourceClient after migrate-engine-retry-policy-to-consumer;
     // the mirror executor wraps engine calls in `withAuthRefresh`, which calls
     // this only on `auth-expired` (no such path here) — stubbed for runtime-safety.
-    refreshCredentials: vi
-      .fn()
-      .mockResolvedValue({ accessToken: "new", refreshToken: "r" }),
+    refreshCredentials: vi.fn().mockResolvedValue({ accessToken: "new", refreshToken: "r" }),
   };
 }
 
@@ -145,14 +143,26 @@ async function wireService(opts: {
     ...baseHandlers,
     "sync:subscribe-events": async (
       _params: unknown,
-      ctx: { connection: { id: number; closed: boolean; sendEvent: (e: { name: string; payload: unknown }) => void } },
+      ctx: {
+        connection: {
+          id: number;
+          closed: boolean;
+          sendEvent: (e: { name: string; payload: unknown }) => void;
+        };
+      },
     ) => {
       registry.subscribe(ctx.connection);
       return { ok: true as const, result: { subscribed: true as const } };
     },
     "sync:unsubscribe-events": async (
       _params: unknown,
-      ctx: { connection: { id: number; closed: boolean; sendEvent: (e: { name: string; payload: unknown }) => void } },
+      ctx: {
+        connection: {
+          id: number;
+          closed: boolean;
+          sendEvent: (e: { name: string; payload: unknown }) => void;
+        };
+      },
     ) => {
       registry.unsubscribe(ctx.connection);
       return { ok: true as const, result: { unsubscribed: true as const } };
@@ -179,7 +189,10 @@ interface RoundTrip {
   readonly socket: net.Socket;
   send(frame: RequestFrame): void;
   waitFor(id: string, timeoutMs?: number): Promise<ResponseFrame>;
-  events(names: ReadonlyArray<string>, timeoutMs?: number): Promise<ReadonlyArray<{ name: string; payload: unknown }>>;
+  events(
+    names: ReadonlyArray<string>,
+    timeoutMs?: number,
+  ): Promise<ReadonlyArray<{ name: string; payload: unknown }>>;
   close(): void;
 }
 

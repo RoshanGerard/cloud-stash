@@ -77,10 +77,7 @@ type Violation = {
   match: string;
 };
 
-function offsetToLineCol(
-  text: string,
-  offset: number,
-): { line: number; column: number } {
+function offsetToLineCol(text: string, offset: number): { line: number; column: number } {
   let line = 1;
   let column = 1;
   for (let i = 0; i < offset && i < text.length; i++) {
@@ -121,10 +118,7 @@ function walkScoped(root: string, out: string[]): void {
     const full = path.join(root, entry.name);
     if (entry.isDirectory()) {
       walkScoped(full, out);
-    } else if (
-      entry.isFile() &&
-      (entry.name.endsWith(".ts") || entry.name.endsWith(".tsx"))
-    ) {
+    } else if (entry.isFile() && (entry.name.endsWith(".ts") || entry.name.endsWith(".tsx"))) {
       out.push(full);
     }
   }
@@ -132,10 +126,7 @@ function walkScoped(root: string, out: string[]): void {
 
 describe("no extension-parsing in file-explorer — detection", () => {
   it("flags `name.split('.').pop()`", () => {
-    const v = findViolationsInText(
-      'const ext = name.split(".").pop();\n',
-      "fake.ts",
-    );
+    const v = findViolationsInText('const ext = name.split(".").pop();\n', "fake.ts");
     expect(v.length).toBe(1);
   });
 
@@ -148,34 +139,22 @@ describe("no extension-parsing in file-explorer — detection", () => {
   });
 
   it("flags `name.lastIndexOf('.')`", () => {
-    const v = findViolationsInText(
-      'const at = name.lastIndexOf(".");\n',
-      "fake.ts",
-    );
+    const v = findViolationsInText('const at = name.lastIndexOf(".");\n', "fake.ts");
     expect(v.length).toBe(1);
   });
 
   it("flags `.match(/\\.jpg$/i)`", () => {
-    const v = findViolationsInText(
-      "const m = name.match(/\\.jpg$/i);\n",
-      "fake.ts",
-    );
+    const v = findViolationsInText("const m = name.match(/\\.jpg$/i);\n", "fake.ts");
     expect(v.length).toBeGreaterThanOrEqual(1);
   });
 
   it("flags a bare `/\\.png$/` regex literal", () => {
-    const v = findViolationsInText(
-      "const isPng = /\\.png$/.test(name);\n",
-      "fake.ts",
-    );
+    const v = findViolationsInText("const isPng = /\\.png$/.test(name);\n", "fake.ts");
     expect(v.length).toBeGreaterThanOrEqual(1);
   });
 
   it("does NOT flag unrelated `.split(',')` calls", () => {
-    const v = findViolationsInText(
-      'const parts = csv.split(",");\n',
-      "fake.ts",
-    );
+    const v = findViolationsInText('const parts = csv.split(",");\n', "fake.ts");
     expect(v).toEqual([]);
   });
 });
@@ -201,10 +180,7 @@ describe("no extension-parsing in file-explorer — feature code is clean", () =
       violations,
       violations.length
         ? `Extension-parsing detected in file-explorer feature code (use iconForEntry instead):\n${violations
-            .map(
-              (v) =>
-                `  ${v.file}:${v.line}:${v.column}  [${v.pattern}]  ${v.match}`,
-            )
+            .map((v) => `  ${v.file}:${v.line}:${v.column}  [${v.pattern}]  ${v.match}`)
             .join("\n")}`
         : "",
     ).toEqual([]);

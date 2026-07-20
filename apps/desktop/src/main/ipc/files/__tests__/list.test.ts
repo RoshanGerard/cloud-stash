@@ -12,10 +12,7 @@ type FakeSyncClient = {
   request: ReturnType<typeof vi.fn>;
 };
 
-function makeFakeClient(opts?: {
-  resolve?: unknown;
-  reject?: unknown;
-}): FakeSyncClient {
+function makeFakeClient(opts?: { resolve?: unknown; reject?: unknown }): FakeSyncClient {
   const fn = vi.fn();
   if (opts?.resolve !== undefined) fn.mockResolvedValue(opts.resolve);
   else if (opts?.reject !== undefined) fn.mockRejectedValue(opts.reject);

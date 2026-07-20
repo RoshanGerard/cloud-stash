@@ -24,11 +24,7 @@
 
 import { describe, expect, it } from "vitest";
 
-import type {
-  CredentialsFormIntent,
-  OAuthIntent,
-  ProviderId,
-} from "@cloudstash/ipc-contracts";
+import type { CredentialsFormIntent, OAuthIntent, ProviderId } from "@cloudstash/ipc-contracts";
 import { DatasourceError, DatasourceErrorTag } from "@cloudstash/ipc-contracts";
 
 import type { OAuthAppConfig } from "../auth-types.js";
@@ -85,13 +81,9 @@ describe("ClientFactory.createForAuth — OAuth provider (§3.1)", () => {
 
     const intent = (await client.authenticate()) as OAuthIntent;
     expect(intent.kind).toBe("oauth");
-    expect(intent.authorizeUrl).toContain(
-      `client_id=${sampleOAuthConfig.clientId}`,
-    );
+    expect(intent.authorizeUrl).toContain(`client_id=${sampleOAuthConfig.clientId}`);
     // Encoded redirect_uri.
-    expect(intent.authorizeUrl).toContain(
-      "redirect_uri=http%3A%2F%2F127.0.0.1%3A55555%2Fcallback",
-    );
+    expect(intent.authorizeUrl).toContain("redirect_uri=http%3A%2F%2F127.0.0.1%3A55555%2Fcallback");
     // PKCE parameters MUST be present on the authorize URL.
     expect(intent.authorizeUrl).toContain("code_challenge=");
     expect(intent.authorizeUrl).toContain("code_challenge_method=S256");
@@ -141,12 +133,7 @@ describe("ClientFactory.createForAuth — credentials-form provider (§3.2)", ()
     const ctx = makeContext();
     const factory = createClientFactory(createDefaultProviderRegistry());
 
-    const client = factory.createForAuth(
-      "amazon-s3",
-      null,
-      ctx,
-      "ds-create-for-auth-s3",
-    );
+    const client = factory.createForAuth("amazon-s3", null, ctx, "ds-create-for-auth-s3");
 
     expect(client).toBeInstanceOf(S3Client);
 
@@ -190,12 +177,7 @@ describe("ClientFactory.createForAuth — rejection arms (§3.3)", () => {
 
     let caught: unknown;
     try {
-      factory.createForAuth(
-        "amazon-s3",
-        sampleOAuthConfig,
-        ctx,
-        "ds-misuse",
-      );
+      factory.createForAuth("amazon-s3", sampleOAuthConfig, ctx, "ds-misuse");
       throw new Error("expected throw");
     } catch (err) {
       caught = err;

@@ -15,10 +15,7 @@ import type Database from "better-sqlite3";
 
 import type { CommandHandler } from "../ipc/server.js";
 
-import {
-  clearDownloadHistory,
-  type ClearHistoryFs,
-} from "../downloads/clear-history.js";
+import { clearDownloadHistory, type ClearHistoryFs } from "../downloads/clear-history.js";
 
 export interface ClearDownloadHistoryDeps {
   readonly db: Database.Database;

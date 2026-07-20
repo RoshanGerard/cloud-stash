@@ -29,9 +29,7 @@ export interface ConflictPrompt {
    * should apply to all remaining conflicts, or `{ kind: "cancel" }` to
    * abort the whole batch.
    */
-  ask(
-    conflict: ConflictInfo,
-  ): Promise<
+  ask(conflict: ConflictInfo): Promise<
     | {
         readonly kind: "choice";
         readonly choice: ConflictChoice;
@@ -50,10 +48,7 @@ export interface ConflictPrompt {
 export async function resolveConflicts(
   conflicts: readonly ConflictInfo[],
   prompt: ConflictPrompt,
-): Promise<
-  | { aborted: false; choices: readonly ConflictChoice[] }
-  | { aborted: true }
-> {
+): Promise<{ aborted: false; choices: readonly ConflictChoice[] } | { aborted: true }> {
   const choices: ConflictChoice[] = [];
   let autoApply: ConflictChoice | null = null;
   for (const conflict of conflicts) {

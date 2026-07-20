@@ -8,13 +8,7 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ReactNode } from "react";
-import {
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-  within,
-} from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import type { DatasourceSummary } from "@cloudstash/ipc-contracts";
 import { providers } from "@cloudstash/ipc-contracts";
@@ -50,9 +44,7 @@ function renderWithProvider(ui: ReactNode) {
   return render(<DatasourcesProvider>{ui}</DatasourcesProvider>);
 }
 
-function buildSummary(
-  overrides: Partial<DatasourceSummary> = {},
-): DatasourceSummary {
+function buildSummary(overrides: Partial<DatasourceSummary> = {}): DatasourceSummary {
   return {
     id: "ds-test",
     displayName: "Test Drive",
@@ -70,12 +62,11 @@ function buildSummary(
 // window.api so <DatasourcesProvider> can mount without throwing.
 beforeEach(() => {
   if (!("ResizeObserver" in window)) {
-    (window as unknown as { ResizeObserver: unknown }).ResizeObserver =
-      class MockResizeObserver {
-        observe() {}
-        unobserve() {}
-        disconnect() {}
-      };
+    (window as unknown as { ResizeObserver: unknown }).ResizeObserver = class MockResizeObserver {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    };
   }
   (window as unknown as { api: unknown }).api = {
     ping: vi.fn().mockResolvedValue({ ok: true, ts: 1 }),
@@ -113,18 +104,13 @@ describe("DatasourceCard — spec scenarios", () => {
     // The provider registry maps google-drive → "cloud"; the rendered SVG
     // should be attributed with the matching data-icon so the icon is
     // queryable independent of the lucide internals.
-    const providerIcon = document.querySelector(
-      "[data-testid='datasource-provider-icon']",
-    );
+    const providerIcon = document.querySelector("[data-testid='datasource-provider-icon']");
     expect(providerIcon).not.toBeNull();
-    expect(providerIcon!.getAttribute("data-icon")).toBe(
-      providers["google-drive"].icon,
-    );
+    expect(providerIcon!.getAttribute("data-icon")).toBe(providers["google-drive"].icon);
 
     // Status badge — accessible name contains the status word.
     const badge = screen.getByTestId("datasource-status");
-    const badgeLabel =
-      badge.getAttribute("aria-label") ?? badge.textContent ?? "";
+    const badgeLabel = badge.getAttribute("aria-label") ?? badge.textContent ?? "";
     expect(badgeLabel.toLowerCase()).toMatch(/connected/);
 
     // Last-sync text.
@@ -236,8 +222,7 @@ describe("DatasourceCard — spec scenarios", () => {
     expect(container.textContent).toMatch(/Token expired/i);
 
     const badge = screen.getByTestId("datasource-status");
-    const label =
-      badge.getAttribute("aria-label") ?? badge.textContent ?? "";
+    const label = badge.getAttribute("aria-label") ?? badge.textContent ?? "";
     expect(label.toLowerCase()).toMatch(/error/);
     expect(label).toMatch(/Token expired/i);
   });
@@ -323,31 +308,21 @@ describe("DatasourceCard — provider registry integration", () => {
     const { unmount: unmountGdrive } = renderWithProvider(
       <DatasourceCard summary={buildSummary({ providerId: "google-drive" })} />,
     );
-    const gdriveIcon = document.querySelector(
-      "[data-testid='datasource-provider-icon']",
-    );
-    expect(gdriveIcon!.getAttribute("data-icon")).toBe(
-      providers["google-drive"].icon,
-    );
+    const gdriveIcon = document.querySelector("[data-testid='datasource-provider-icon']");
+    expect(gdriveIcon!.getAttribute("data-icon")).toBe(providers["google-drive"].icon);
     unmountGdrive();
 
     // onedrive → "cloud"
     const { unmount: unmountOnedrive } = renderWithProvider(
       <DatasourceCard summary={buildSummary({ providerId: "onedrive" })} />,
     );
-    const onedriveIcon = document.querySelector(
-      "[data-testid='datasource-provider-icon']",
-    );
-    expect(onedriveIcon!.getAttribute("data-icon")).toBe(
-      providers.onedrive.icon,
-    );
+    const onedriveIcon = document.querySelector("[data-testid='datasource-provider-icon']");
+    expect(onedriveIcon!.getAttribute("data-icon")).toBe(providers.onedrive.icon);
     unmountOnedrive();
 
     // amazon-s3 → "database"
     renderWithProvider(<DatasourceCard summary={buildSummary({ providerId: "amazon-s3" })} />);
-    const s3Icon = document.querySelector(
-      "[data-testid='datasource-provider-icon']",
-    );
+    const s3Icon = document.querySelector("[data-testid='datasource-provider-icon']");
     expect(s3Icon!.getAttribute("data-icon")).toBe(providers["amazon-s3"].icon);
   });
 });
@@ -449,17 +424,13 @@ describe("DatasourceCard — Explore quick-action (task 8.1)", () => {
     fireEvent.pointerDown(trigger, { button: 0 });
 
     const items = await screen.findAllByRole("menuitem");
-    const exploreItem = items.find((i) =>
-      /explore/i.test((i.textContent ?? "").trim()),
-    );
+    const exploreItem = items.find((i) => /explore/i.test((i.textContent ?? "").trim()));
     expect(exploreItem, "Explore menu item must be present").toBeTruthy();
 
     // Radix DropdownMenuItem reacts to pointerUp→click for selection.
     fireEvent.click(exploreItem!);
 
     expect(pushMock).toHaveBeenCalledTimes(1);
-    expect(pushMock).toHaveBeenCalledWith(
-      "/datasources/explore?id=ds-explore-3",
-    );
+    expect(pushMock).toHaveBeenCalledWith("/datasources/explore?id=ds-explore-3");
   });
 });

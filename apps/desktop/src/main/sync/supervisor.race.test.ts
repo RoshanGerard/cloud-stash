@@ -133,80 +133,73 @@ afterEach(async () => {
 });
 
 describe("startSupervisor race-tolerance at startup", () => {
-  it(
-    "two parallel supervisors both resolve when one spawned child loses the PID race and exits code 3",
-    async () => {
-      const pipePath = pipeFor("parallel-spawn");
-      const nodeBinary =
-        process.platform === "win32"
-          ? "C:\\fake\\node.exe"
-          : "/fake/path/to/node";
-      const servicePath = "/fake/path/to/service.js";
+  it("two parallel supervisors both resolve when one spawned child loses the PID race and exits code 3", async () => {
+    const pipePath = pipeFor("parallel-spawn");
+    const nodeBinary = process.platform === "win32" ? "C:\\fake\\node.exe" : "/fake/path/to/node";
+    const servicePath = "/fake/path/to/service.js";
 
-      // Simulate the PID-winner binding its listener partway through
-      // the retry schedule (25/50/100/200/400 ms cumulative 25/75/175/
-      // 375/775). At t=80 ms both supervisors are mid-retry. Also
-      // emit `'exit'` code 3 on the second spawned fake child — the
-      // PID-loser dying. The supervisor's retry loop must NOT react
-      // to the child exit; it must keep polling the pipe and succeed.
-      setTimeout(() => {
-        void startFakeService(pipePath).then((s) => servers.push(s));
-        // Trigger exit on the loser. Use a nextTick so the server-bind
-        // has strictly started before the exit emission, mirroring the
-        // real PID-guard sequence (winner begins binding, loser hits
-        // the guard and exits).
-        queueMicrotask(() => {
-          const loser = spawnedChildren[1];
-          if (loser) loser.emit("exit", 3, null);
-        });
-      }, 80);
+    // Simulate the PID-winner binding its listener partway through
+    // the retry schedule (25/50/100/200/400 ms cumulative 25/75/175/
+    // 375/775). At t=80 ms both supervisors are mid-retry. Also
+    // emit `'exit'` code 3 on the second spawned fake child — the
+    // PID-loser dying. The supervisor's retry loop must NOT react
+    // to the child exit; it must keep polling the pipe and succeed.
+    setTimeout(() => {
+      void startFakeService(pipePath).then((s) => servers.push(s));
+      // Trigger exit on the loser. Use a nextTick so the server-bind
+      // has strictly started before the exit emission, mirroring the
+      // real PID-guard sequence (winner begins binding, loser hits
+      // the guard and exits).
+      queueMicrotask(() => {
+        const loser = spawnedChildren[1];
+        if (loser) loser.emit("exit", 3, null);
+      });
+    }, 80);
 
-      // Decision 12: startSupervisor now returns SupervisorHandle.
-      const [handleA, handleB] = await Promise.all([
-        startSupervisor({
-          mode: "prod",
-          pipePath,
-          nodeBinary,
-          servicePath,
-        }),
-        startSupervisor({
-          mode: "prod",
-          pipePath,
-          nodeBinary,
-          servicePath,
-        }),
-      ]);
-      handles.push(handleA, handleB);
+    // Decision 12: startSupervisor now returns SupervisorHandle.
+    const [handleA, handleB] = await Promise.all([
+      startSupervisor({
+        mode: "prod",
+        pipePath,
+        nodeBinary,
+        servicePath,
+      }),
+      startSupervisor({
+        mode: "prod",
+        pipePath,
+        nodeBinary,
+        servicePath,
+      }),
+    ]);
+    handles.push(handleA, handleB);
 
-      const clientA = handleA.getClient();
-      const clientB = handleB.getClient();
+    const clientA = handleA.getClient();
+    const clientB = handleB.getClient();
 
-      // Both supervisors resolved with working clients pointing at the
-      // (single) winning listener. This is the core race invariant.
-      expect(clientA).toBeInstanceOf(SyncClient);
-      expect(clientB).toBeInstanceOf(SyncClient);
-      expect(clientA.isConnected).toBe(true);
-      expect(clientB.isConnected).toBe(true);
+    // Both supervisors resolved with working clients pointing at the
+    // (single) winning listener. This is the core race invariant.
+    expect(clientA).toBeInstanceOf(SyncClient);
+    expect(clientB).toBeInstanceOf(SyncClient);
+    expect(clientA.isConnected).toBe(true);
+    expect(clientB.isConnected).toBe(true);
 
-      // Both supervisors independently hit the spawn branch — the test
-      // wouldn't be exercising the race mechanic otherwise.
-      expect(spawnMock).toHaveBeenCalledTimes(2);
-      expect(spawnedChildren).toHaveLength(2);
+    // Both supervisors independently hit the spawn branch — the test
+    // wouldn't be exercising the race mechanic otherwise.
+    expect(spawnMock).toHaveBeenCalledTimes(2);
+    expect(spawnedChildren).toHaveLength(2);
 
-      // Exactly one real server came up (the PID-winner). The loser's
-      // spawn stub never bound anything because we only call
-      // `startFakeService` once above.
-      expect(servers).toHaveLength(1);
+    // Exactly one real server came up (the PID-winner). The loser's
+    // spawn stub never bound anything because we only call
+    // `startFakeService` once above.
+    expect(servers).toHaveLength(1);
 
-      // The loser's fake-child exit fired without the supervisor
-      // treating it as fatal — confirmed transitively by the resolved
-      // Promise.all above, but make the child state assertion explicit
-      // to lock the "supervisor never killed/tracked its child" invariant.
-      expect(spawnedChildren[0]!.killed).toBe(false);
-      expect(spawnedChildren[1]!.killed).toBe(false);
-      expect(spawnedChildren[0]!.unref).toHaveBeenCalledTimes(1);
-      expect(spawnedChildren[1]!.unref).toHaveBeenCalledTimes(1);
-    },
-    5000,
-  );
+    // The loser's fake-child exit fired without the supervisor
+    // treating it as fatal — confirmed transitively by the resolved
+    // Promise.all above, but make the child state assertion explicit
+    // to lock the "supervisor never killed/tracked its child" invariant.
+    expect(spawnedChildren[0]!.killed).toBe(false);
+    expect(spawnedChildren[1]!.killed).toBe(false);
+    expect(spawnedChildren[0]!.unref).toHaveBeenCalledTimes(1);
+    expect(spawnedChildren[1]!.unref).toHaveBeenCalledTimes(1);
+  }, 5000);
 });

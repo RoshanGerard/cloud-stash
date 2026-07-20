@@ -116,28 +116,28 @@ Gotchas:
 Approximate shape for task 4.4 (GREEN). 24 lines.
 
 ```ts
-import path from 'node:path'
+import path from "node:path";
 
 export function resolveServiceNodeBinary(opts: { isPackaged: boolean; appPath: string }): string {
   if (!opts.isPackaged) {
     throw new Error(
-      'resolveServiceNodeBinary is production-only; in dev the service is started by `pnpm dev`.',
-    )
+      "resolveServiceNodeBinary is production-only; in dev the service is started by `pnpm dev`.",
+    );
   }
-  const arch = process.arch
-  if (arch !== 'x64' && arch !== 'arm64') {
-    throw new Error(`Unsupported arch for bundled Node: ${arch}`)
+  const arch = process.arch;
+  if (arch !== "x64" && arch !== "arm64") {
+    throw new Error(`Unsupported arch for bundled Node: ${arch}`);
   }
-  const resourcesRoot = path.join(opts.appPath, '..', 'node')
+  const resourcesRoot = path.join(opts.appPath, "..", "node");
   switch (process.platform) {
-    case 'win32':
-      return path.join(resourcesRoot, `win-${arch}`, 'node.exe')
-    case 'darwin':
-      return path.join(resourcesRoot, `darwin-${arch}`, 'bin', 'node')
-    case 'linux':
-      return path.join(resourcesRoot, `linux-${arch}`, 'bin', 'node')
+    case "win32":
+      return path.join(resourcesRoot, `win-${arch}`, "node.exe");
+    case "darwin":
+      return path.join(resourcesRoot, `darwin-${arch}`, "bin", "node");
+    case "linux":
+      return path.join(resourcesRoot, `linux-${arch}`, "bin", "node");
     default:
-      throw new Error(`Unsupported platform for bundled Node: ${process.platform}`)
+      throw new Error(`Unsupported platform for bundled Node: ${process.platform}`);
   }
 }
 ```

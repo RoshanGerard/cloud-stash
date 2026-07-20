@@ -7,22 +7,8 @@
 // with the chosen `{ status?, olderThanMs? }` and toasts the `{ deleted }`
 // count. Copy MUST state that on-disk files are not deleted.
 
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-  type Mock,
-} from "vitest";
-import {
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-} from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from "vitest";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 
 const { toastSuccess, toastDefault, toastError } = vi.hoisted(() => ({
@@ -31,13 +17,10 @@ const { toastSuccess, toastDefault, toastError } = vi.hoisted(() => ({
   toastError: vi.fn(),
 }));
 vi.mock("sonner", () => ({
-  toast: Object.assign(
-    (...args: unknown[]) => toastDefault(...args),
-    {
-      success: (...args: unknown[]) => toastSuccess(...args),
-      error: (...args: unknown[]) => toastError(...args),
-    },
-  ),
+  toast: Object.assign((...args: unknown[]) => toastDefault(...args), {
+    success: (...args: unknown[]) => toastSuccess(...args),
+    error: (...args: unknown[]) => toastError(...args),
+  }),
 }));
 
 import { ClearHistoryDialog } from "../clear-history-dialog";
@@ -46,12 +29,11 @@ let clearMock: Mock;
 
 beforeEach(() => {
   if (!("ResizeObserver" in window)) {
-    (window as unknown as { ResizeObserver: unknown }).ResizeObserver =
-      class {
-        observe() {}
-        unobserve() {}
-        disconnect() {}
-      };
+    (window as unknown as { ResizeObserver: unknown }).ResizeObserver = class {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    };
   }
   clearMock = vi.fn().mockResolvedValue({ deleted: 3 });
   (window as unknown as { api: unknown }).api = {
@@ -94,9 +76,7 @@ describe("ClearHistoryDialog", () => {
 
     await waitFor(() => expect(clearMock).toHaveBeenCalledTimes(1));
     expect(clearMock).toHaveBeenCalledWith({});
-    await waitFor(() =>
-      expect(toastSuccess).toHaveBeenCalledWith("Cleared 3 download records"),
-    );
+    await waitFor(() => expect(toastSuccess).toHaveBeenCalledWith("Cleared 3 download records"));
     expect(onOpenChange).toHaveBeenCalledWith(false);
   });
 
@@ -157,9 +137,7 @@ describe("ClearHistoryDialog", () => {
       fireEvent.click(screen.getByRole("button", { name: label }));
     }
 
-    expect(
-      screen.getByRole("button", { name: /clear records/i }),
-    ).toBeDisabled();
+    expect(screen.getByRole("button", { name: /clear records/i })).toBeDisabled();
   });
 
   it("toasts 'No matching records to clear' when deleted is 0", async () => {
@@ -168,8 +146,6 @@ describe("ClearHistoryDialog", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /clear records/i }));
 
-    await waitFor(() =>
-      expect(toastDefault).toHaveBeenCalledWith("No matching records to clear"),
-    );
+    await waitFor(() => expect(toastDefault).toHaveBeenCalledWith("No matching records to clear"));
   });
 });

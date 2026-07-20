@@ -90,9 +90,7 @@ describe("sync-service event contract", () => {
   });
 
   it("credential-store-permission-violation payload carries observed mode", () => {
-    expectTypeOf<
-      EventPayloadMap["credential-store-permission-violation"]
-    >().toEqualTypeOf<{
+    expectTypeOf<EventPayloadMap["credential-store-permission-violation"]>().toEqualTypeOf<{
       readonly path: string;
       readonly mode: string;
       readonly observedAt: number;

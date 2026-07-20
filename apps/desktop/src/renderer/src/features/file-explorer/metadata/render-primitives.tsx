@@ -68,11 +68,13 @@ export function FieldRowWithCopy({
     // focused document, which Radix's Dialog focus-trap doesn't always
     // propagate reliably in packaged Electron — the main-process bridge
     // always works. Guard against missing api in test envs.
-    const api = (globalThis as unknown as {
-      window?: {
-        api?: { clipboard?: { writeText?: (s: string) => Promise<void> } };
-      };
-    }).window?.api?.clipboard;
+    const api = (
+      globalThis as unknown as {
+        window?: {
+          api?: { clipboard?: { writeText?: (s: string) => Promise<void> } };
+        };
+      }
+    ).window?.api?.clipboard;
     if (api?.writeText === undefined) {
       onCopyError?.(new Error("Clipboard bridge unavailable"));
       return;

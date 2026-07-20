@@ -25,6 +25,7 @@ gap that blocked the following entries below:
 The OAuth app config no longer lives at `apps/desktop/.env.local` (build-time inlined). It now lives at `~/cloudstash/sync_app/config.json` (service-owned, manual copy + edit).
 
 Updated steps:
+
 1. Register a "Desktop app" OAuth 2.0 client in the org-owned GCP project + the equivalent in Azure for OneDrive (full step-by-step in `README.md` § "Provider OAuth registration (one-time setup)").
 2. `cp services/fs-sync/config.example.json ~/cloudstash/sync_app/config.json` (or PowerShell equivalent on Windows; full command in `README.md`).
 3. Edit the file and populate `clientId` + `clientSecret` for each provider intended to be used.
@@ -106,6 +107,7 @@ this feature, or to be folded into the broader manual-QA suite.
 
 **Status:** PENDING — manual smoke confirmation deferred. The component
 implementations have been verified through unit + composite tests:
+
 - shadcn primitives (Dialog, Button, Checkbox) handle focus-trap +
   Escape-to-close out of the box.
 - `aria-label` / `role="status"` / `aria-live="polite"` are present on
@@ -373,6 +375,7 @@ real credentials, the `factory.create` shape-validator is exercised
 via unit tests but not against the live JSON-on-disk path.
 
 Unit coverage for the Remove path:
+
 - `apps/desktop/src/renderer/src/features/datasources/__tests__/confirm-remove-dialog.test.tsx`
   — 10 tests: visibility, copy, destructive Remove focus on open,
   Escape cancels, click Cancel/Remove → onCancel/onConfirm.
@@ -443,13 +446,14 @@ loop.
 (HUMAN ops: real GCP OAuth client, Actions secrets,
 `apps/desktop/.env.local` populated) per the existing PENDING_TC entry
 above titled "add-drive-oauth-browser-consent — §1 GCP OAuth client
-+ Actions secrets + `.env.local` (HUMAN prerequisite)". Both also
-benefit from `implement-datasource-onboarding` to close the
-credential-persistence gap referenced in the §12.1 / §12.2 entries
-above; without that follow-up, even a successful Reconnect lands the
-credentials in `noopCredentialStore` and the next list call re-enters
-the invalid-datasource state. §13.3's dashboard-banner flow inherits
-the same dependencies because it shares the consent path with §13.1.
+
+- Actions secrets + `.env.local` (HUMAN prerequisite)". Both also
+  benefit from `implement-datasource-onboarding` to close the
+  credential-persistence gap referenced in the §12.1 / §12.2 entries
+  above; without that follow-up, even a successful Reconnect lands the
+  credentials in `noopCredentialStore` and the next list call re-enters
+  the invalid-datasource state. §13.3's dashboard-banner flow inherits
+  the same dependencies because it shares the consent path with §13.1.
 
 ---
 
@@ -469,24 +473,24 @@ full-repo tests passing on commit `c021fba`.
   by:** `packages/fs-datasource-engine/src/strategies/googledrive-client.test.ts`
   (§7.1–§7.12) + `packages/fs-datasource-engine/src/strategies/googledrive-client.contract.test.ts`
   (§10.1) + `services/fs-sync/src/commands/files-rename.test.ts` (§12.1)
-  + `services/fs-sync/src/commands/__tests__/files-download.test.ts` (§13)
-  + `apps/desktop/src/renderer/src/features/file-explorer/__tests__/use-download-orchestrator.test.ts`
-  (§23) and `download-job-toast.test.ts` (§24) for the Open / Show in
-  folder Sonner CTAs.
+  - `services/fs-sync/src/commands/__tests__/files-download.test.ts` (§13)
+  - `apps/desktop/src/renderer/src/features/file-explorer/__tests__/use-download-orchestrator.test.ts`
+    (§23) and `download-job-toast.test.ts` (§24) for the Open / Show in
+    folder Sonner CTAs.
 - **§27.2** Same flow with a real OneDrive datasource. **Covered in
   isolation by:** `packages/fs-datasource-engine/src/strategies/onedrive-client.test.ts`
-  + `packages/fs-datasource-engine/src/strategies/onedrive-client.contract.test.ts`
-  (§8.x parity arms — rename via PATCH, download via `/content` GET with
-  Range) + the same `files-rename.test.ts` / `files-download.test.ts`
-  service handlers (provider-agnostic: they resolve via the engine factory).
+  - `packages/fs-datasource-engine/src/strategies/onedrive-client.contract.test.ts`
+    (§8.x parity arms — rename via PATCH, download via `/content` GET with
+    Range) + the same `files-rename.test.ts` / `files-download.test.ts`
+    service handlers (provider-agnostic: they resolve via the engine factory).
 - **§27.3** Same flow with a real S3 datasource (file rename uses
   copy+delete; folder rename surfaces the disabled tooltip). **Covered
   in isolation by:** `packages/fs-datasource-engine/src/strategies/s3-client.test.ts`
-  + `packages/fs-datasource-engine/src/strategies/s3-client.contract.test.ts`
-  (§9.x — file rename via `CopyObject` + `DeleteObject`, folder rename
-  rejects with `tag:"unsupported"`); renderer-side disabled-tooltip arm
-  in `apps/desktop/src/renderer/src/features/file-explorer/__tests__/context-menu.test.tsx`
-  (§22 S3-folder-rename branch).
+  - `packages/fs-datasource-engine/src/strategies/s3-client.contract.test.ts`
+    (§9.x — file rename via `CopyObject` + `DeleteObject`, folder rename
+    rejects with `tag:"unsupported"`); renderer-side disabled-tooltip arm
+    in `apps/desktop/src/renderer/src/features/file-explorer/__tests__/context-menu.test.tsx`
+    (§22 S3-folder-rename branch).
 - **§27.4** Boot the dev build, start a download against a large
   fixture, close the app mid-download; reopen the app; verify the toast
   hydrates and the download completes. **Covered in isolation by:**
@@ -701,10 +705,12 @@ Expect:
   (10 tests asserting the toast lifecycle).
 
 **Re-verification command:**
+
 ```bash
 cd <worktree-root>
 pnpm -F @cloudstash/desktop dev
 ```
+
 Drag a file onto the file-explorer for each provider; confirm the
 toast lifecycle and the remote file's existence.
 
@@ -753,8 +759,8 @@ it to finish, attempt a SECOND upload to the same
 
 1. Second upload's dispatch call rejects synchronously at the
    service boundary with `{ tag: "conflict", message: "An upload
-   to this path is already in progress", existingUploadJobId,
-   existingPath }`.
+to this path is already in progress", existingUploadJobId,
+existingPath }`.
 2. The renderer surfaces a Sonner error toast with the message; the
    IN-FLIGHT upload's toast is unaffected.
 3. The first upload completes normally to the original target.
@@ -924,6 +930,7 @@ single-flight `refreshCredentials()`). Every automated test drives
 provider access-token lifecycle.
 
 **Verify against a live datasource (Drive / OneDrive / S3-STS):**
+
 1. **Read/mutate ops across a real token expiry** — let the access token
    expire, then invoke list / stat / search / rename / remove / upload. Expect:
    fs-sync's `withAuthRefresh` calls `refreshCredentials()` once, the op
@@ -931,10 +938,10 @@ provider access-token lifecycle.
    to the renderer.
 2. **Download across a mid-stream token expiry** — start a large download,
    force expiry mid-stream. Expect: ONE handler-driven `refreshCredentials()`
-   + resume from bytes-on-disk (206 Partial Content), completes + integrity
-   passes. Bound: at most ONE mid-stream re-auth per download — a SECOND expiry
-   surfaces `auth-revoked` (pre-existing limit, design.md Risks "[One auth
-   refresh per download cycle]").
+   - resume from bytes-on-disk (206 Partial Content), completes + integrity
+     passes. Bound: at most ONE mid-stream re-auth per download — a SECOND expiry
+     surfaces `auth-revoked` (pre-existing limit, design.md Risks "[One auth
+     refresh per download cycle]").
 3. **Dead refresh token → `auth-revoked`** — revoke the refresh token, invoke
    any op. Expect: `refreshCredentials()` (or the re-issued GET) fails and the
    op surfaces wire `tag: "auth-revoked"` (not a silent hang, not
@@ -1143,7 +1150,7 @@ untested. Add a rejecting-`get` broker test.
 **Owner:** unassigned.
 
 **Surfaced a bug (2026-06-29):** the first real attempt at scenario 3 (wrong
-account) on Google Drive hit Google's *Testing*-mode `access_denied` 403 — a
+account) on Google Drive hit Google's _Testing_-mode `access_denied` 403 — a
 browser dead-end that preempts the token exchange the account-mismatch check
 depends on — and stranded the reconnect view on a greyed-out "Connecting…"
 button with no recovery. Filed as the stub
@@ -1164,9 +1171,11 @@ against a running system") is therefore DEFERRED here (same real-credential
 gate as `add-drive-oauth-browser-consent §1`).
 
 ### §6.1 — per-subtype export happy-path (real Drive)
+
 **Scenario:** dev build against a real Drive datasource. Download one of each
 exportable subtype and confirm the file saves with the right extension and
 opens in the target app:
+
 - Google Doc → `<title>.docx` (Word)
 - Google Sheet → `<title>.xlsx` (Excel)
 - Google Slides → `<title>.pptx` (PowerPoint)
@@ -1178,6 +1187,7 @@ extension-shaped (e.g. a Doc literally named `Notes.txt` → saves as
 `Notes.txt.docx`).
 
 **Covered in isolation by:**
+
 - `packages/fs-datasource-engine/src/strategies/googledrive-client.test.ts` —
   "doDownloadFileImpl Google Apps export (files.export)" describe: the
   const-driven `it.each` over `GOOGLE_APPS_EXPORT_FORMATS` (export call issued
@@ -1195,6 +1205,7 @@ extension-shaped (e.g. a Doc literally named `Notes.txt` → saves as
   pins the exact 5-key table shape.
 
 ### §6.2 — Google Form refusal still friendly (real Drive)
+
 **Scenario:** download a Google Form (and, if available, a Jamboard / Site)
 against the dev build → confirm the friendly `tag:"unsupported"` toast ("Google
 Drive documents download not supported") still appears (Forms/Jamboard/Sites are
@@ -1232,7 +1243,7 @@ NOT a clean SIGINT). Restart the service and confirm:
 
 1. The previously `in-flight` row is now `status='interrupted'` with a
    non-null `ended_at` (inspect with `sqlite3 ~/cloudstash/sync_app/sync.db
-   "SELECT download_job_id, status, ended_at FROM downloads;"`).
+"SELECT download_job_id, status, ended_at FROM downloads;"`).
 2. The partial file at the row's `target_path` is STILL on disk, untouched
    (the sweep is bookkeeping only — no replay, no file deletion).
 3. A download that had completed before the kill keeps `status='completed'`
@@ -1241,6 +1252,7 @@ NOT a clean SIGINT). Restart the service and confirm:
    `count` when ≥1 row was terminalized.
 
 **Covered in isolation by:**
+
 - `services/fs-sync/src/downloads/__tests__/sweep-interrupted.test.ts`
   (in-flight→interrupted + bytes preserved; terminal rows untouched; empty-db
   no-op; on-disk partial survives).
@@ -1275,7 +1287,7 @@ holds at least one OAuth provider entry (real or fixture `clientId` /
    Toggle the Switch off → the retention selector dims and becomes
    non-interactive; pick `180`; re-open Settings and confirm both values
    persisted to `config.json` (`downloadHistory: { autoPrune: false,
-   retentionDays: 180 }`).
+retentionDays: 180 }`).
 2. **CRITICAL — providers survive a download-history write.** After the write
    in (1), inspect `config.json` and confirm the `providers` block (the OAuth
    `clientId` / `clientSecret`) is byte-for-byte unchanged and `schemaVersion`
@@ -1298,6 +1310,7 @@ holds at least one OAuth provider entry (real or fixture `clientId` /
    synchronously at boot, after `sweepInterruptedDownloads`).
 
 **Covered in isolation by:**
+
 - `apps/desktop/src/renderer/src/features/settings/__tests__/download-history-config.test.ts`
   (read-modify-write preserves `providers` + `schemaVersion`; aborts the write
   on a failed read so secrets are never wiped; fresh-read-before-write).
@@ -1334,7 +1347,7 @@ build, same `sync.db`).
 
 **Scenario:** In a live Electron build, Explore a Google Drive datasource that
 needs reconnect → click **Reconnect** → in the browser pick a wrong /
-non-allowlisted Google account so Google's *Testing*-mode `Error 403:
+non-allowlisted Google account so Google's _Testing_-mode `Error 403:
 access_denied` dead-ends (the browser never calls back the loopback
 `redirect_uri`, so the broker session stays `pending`). Confirm:
 
@@ -1352,6 +1365,7 @@ access_denied` dead-ends (the browser never calls back the loopback
    loopback session (the unmount-cancel effect fires `authenticateCancel`).
 
 **Covered in isolation by:**
+
 - `apps/desktop/src/renderer/src/features/file-explorer/states/__tests__/invalid-datasource.test.tsx`
   — pending status-line + enabled Cancel + NO disabled primary; live Cancel →
   `authenticateCancel({correlationId})` once + reset to "Try Again"; unmount
@@ -1363,7 +1377,7 @@ access_denied` dead-ends (the browser never calls back the loopback
 non-allowlisted Google account to reproduce the no-callback `access_denied`
 dead-end — not configurable in this environment. The state machine is
 automated-green (24/24 unit + 14/14 real-`useAuthSession` integration), but the
-*real* no-loopback-callback path and the live 5-minute `auth-timeout` backstop
+_real_ no-loopback-callback path and the live 5-minute `auth-timeout` backstop
 (3) have never been exercised end-to-end.
 
 **Nice-to-have follow-up (non-blocking, from adversarial review):** restore
@@ -1381,7 +1395,7 @@ control is tab-reachable); purely a keyboard-flow polish.
 **Scenario (real GCP OAuth, Testing-mode):** authenticate a Google Drive
 datasource with the **correct** account but grant a NARROW scope (de-select the
 Drive permission on Google's granular-consent screen, or use a `drive.file` /
-`drive.readonly`-only client). Then *Explore* it. Confirm:
+`drive.readonly`-only client). Then _Explore_ it. Confirm:
 
 1. The folder load fails with a runtime 403 (`insufficientPermissions` /
    `ACCESS_TOKEN_SCOPE_INSUFFICIENT`) and the explorer routes to the **reconnect
@@ -1413,6 +1427,7 @@ classify→route→callout→overwrite flow is automated-green but never exercis
 against a real provider.
 
 **Follow-ups (non-blocking):**
+
 - **OneDrive equivalent — INVESTIGATED + DEFERRED 2026-06-29 (do NOT build
   speculatively).** Full rationale in `docs/design_limitations.md` → "OneDrive
   has no insufficient-scope recovery". Summary: Graph has NO clean insufficient-
@@ -1444,6 +1459,7 @@ against a real provider.
 KEEP-disposition terminal cause (e.g. environmental-budget/wall-time exhaustion,
 `auth-revoked` after ≥1 byte, or byte-count-mismatch) so a partial file is left
 on disk. Confirm:
+
 1. The failure toast renders the red custom card with **"Delete partial"** beside
    **"Retry"** (VD1–VD3), NOT the single-action `toast.error`.
 2. Clicking **Delete partial** unlinks the partial at its `target_path` and
@@ -1460,6 +1476,7 @@ reproducible in this environment (same class as
 `wire-packaged-build-download-resilience`).
 
 **Unit/integration coverage proving the path in isolation:**
+
 - Backend handler: `services/fs-sync/src/commands/downloads-delete-partial.test.ts`
   (recorded+terminal unlink; ENOENT→success; unknown→no-op; in-flight refuse;
   EACCES→error) + `handlers.test.ts` dispatcher-registration.
@@ -1488,7 +1505,8 @@ removed") and the "all cleaned up" empty state. Separately: confirm the manual
 "Clear download history" now ALSO removes on-disk KEEP-eligible partials while
 completed saved files remain; and that the headless 24h auto-prune RETAINS an
 aged on-disk leftover row (does not delete its file) while pruning aged completed
-+ already-gone rows.
+
+- already-gone rows.
 
 **Why deferred.** Requires a live service + real orphaned partials from prior
 sessions (a KEEP-disposition mid-stream failure leaving a real partial) — not
@@ -1497,6 +1515,7 @@ reproducible in this environment (same class as
 `wire-packaged-build-download-resilience`).
 
 **Unit/integration coverage proving the paths in isolation:**
+
 - Read command: `services/fs-sync/src/commands/downloads-list-leftover.test.ts`
   (KEEP-eligible + on-disk only; ENOENT/any-stat-error excluded; completed/in-flight
   excluded; `ended_at` DESC; empty result; never throws) + `handlers.test.ts` registration.
@@ -1543,7 +1562,7 @@ any tray icon.
 `out/brand/…` and `<link rel="icon" href="/brand/cloudstash-app-tile-dark.svg">`
 emitted). Only the packaged OS icons are deferred.
 
-**Why deferred.** Only visible in a *packaged* build (installer / exe / dock /
+**Why deferred.** Only visible in a _packaged_ build (installer / exe / dock /
 taskbar), which is out of this dev cycle's verification scope; needs a rasteriser
 dependency (e.g. `sharp` / `electron-icon-builder`) + a packaged build to verify.
 Same class as `wire-packaged-build-download-resilience`. The SVG sources ship in the
@@ -1576,10 +1595,11 @@ reload).
 running fs-sync service + config) — same class as the other running-system smokes in
 this file. The underlying guarantees are unit-tested: `no-fouc.test.tsx` proves the
 pre-paint bootstrap sets `.dark` before React mounts; `monochrome-identity.test.ts`
-+ `contrast.test.ts` guard the palette + AA; `cloudstash-logo.test.tsx` guards the
-`.dark`-variant mark swap; `typography.test.ts` + the renderer build prove the font
-is self-hosted with zero runtime fetch. The monochrome look itself was visually
-validated in the approved visual-refinement mockup before implementation.
+
+- `contrast.test.ts` guard the palette + AA; `cloudstash-logo.test.tsx` guards the
+  `.dark`-variant mark swap; `typography.test.ts` + the renderer build prove the font
+  is self-hosted with zero runtime fetch. The monochrome look itself was visually
+  validated in the approved visual-refinement mockup before implementation.
 
 **Owner:** unassigned (HUMAN). To do during the next environment-loop / packaged pass.
 

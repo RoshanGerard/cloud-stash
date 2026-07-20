@@ -5,10 +5,7 @@
 // Spec: "Event subscription semantics" — per-client opt-in, cleanup on
 // disconnect, no cross-client leakage.
 
-import type {
-  EventName,
-  EventPayloadMap,
-} from "@cloudstash/ipc-contracts/sync-service";
+import type { EventName, EventPayloadMap } from "@cloudstash/ipc-contracts/sync-service";
 
 import type { EventBus } from "../events/event-bus.js";
 
@@ -44,23 +41,21 @@ export function createSubscriptionRegistry(): SubscriptionRegistry {
       return subscribed.size;
     },
     attachBus(bus) {
-      return bus.subscribe(
-        <N extends EventName>(name: N, payload: EventPayloadMap[N]) => {
-          for (const conn of subscribed) {
-            if (conn.closed) {
-              subscribed.delete(conn);
-              continue;
-            }
-            try {
-              conn.sendEvent({ name, payload });
-            } catch {
-              // Connection.sendEvent already swallows write errors;
-              // defensive catch in case a listener further along throws.
-              subscribed.delete(conn);
-            }
+      return bus.subscribe(<N extends EventName>(name: N, payload: EventPayloadMap[N]) => {
+        for (const conn of subscribed) {
+          if (conn.closed) {
+            subscribed.delete(conn);
+            continue;
           }
-        },
-      );
+          try {
+            conn.sendEvent({ name, payload });
+          } catch {
+            // Connection.sendEvent already swallows write errors;
+            // defensive catch in case a listener further along throws.
+            subscribed.delete(conn);
+          }
+        }
+      });
     },
   };
 }

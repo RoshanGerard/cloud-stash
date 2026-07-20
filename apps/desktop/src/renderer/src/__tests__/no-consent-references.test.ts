@@ -20,10 +20,7 @@ import * as path from "node:path";
 
 import { describe, expect, it } from "vitest";
 
-const RENDERER_SRC = path.resolve(
-  __dirname,
-  "..",
-);
+const RENDERER_SRC = path.resolve(__dirname, "..");
 
 interface OffendingMatch {
   readonly file: string;
@@ -56,10 +53,7 @@ function* walkProductionFiles(dir: string): Generator<string> {
       continue;
     }
     if (!entry.isFile()) continue;
-    if (
-      !entry.name.endsWith(".ts") &&
-      !entry.name.endsWith(".tsx")
-    ) {
+    if (!entry.name.endsWith(".ts") && !entry.name.endsWith(".tsx")) {
       continue;
     }
     if (

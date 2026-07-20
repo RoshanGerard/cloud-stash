@@ -22,9 +22,7 @@ export interface ResolveClientDeps {
   readonly factory: ClientFactory;
 }
 
-export type ResolveClient = (
-  datasourceId: string,
-) => Promise<DatasourceClient<DatasourceType>>;
+export type ResolveClient = (datasourceId: string) => Promise<DatasourceClient<DatasourceType>>;
 
 export function createResolveClient(deps: ResolveClientDeps): ResolveClient {
   return async (datasourceId) => {
@@ -48,11 +46,8 @@ export function createResolveClient(deps: ResolveClientDeps): ResolveClient {
         message: "Credentials are missing — reconnect this datasource",
       });
     }
-    return deps.factory.create(
-      creds.providerId as ProviderId,
-      datasourceId,
-      creds,
-      { credentialStore: deps.credentialStore },
-    ) as DatasourceClient<DatasourceType>;
+    return deps.factory.create(creds.providerId as ProviderId, datasourceId, creds, {
+      credentialStore: deps.credentialStore,
+    }) as DatasourceClient<DatasourceType>;
   };
 }

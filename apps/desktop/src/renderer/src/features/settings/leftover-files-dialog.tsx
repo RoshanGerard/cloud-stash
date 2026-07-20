@@ -49,9 +49,7 @@ export interface LeftoverFilesDialogProps {
 // undefined `method` throws a TypeError. `?.()` short-circuits instead.
 type LeftoverSyncApi = {
   listLeftover?: () => Promise<{ readonly entries: readonly LeftoverEntry[] }>;
-  deletePartial?: (req: {
-    downloadJobId: string;
-  }) => Promise<{ readonly deleted: boolean }>;
+  deletePartial?: (req: { downloadJobId: string }) => Promise<{ readonly deleted: boolean }>;
 };
 
 function syncApi(): LeftoverSyncApi | undefined {
@@ -189,8 +187,8 @@ export function LeftoverFilesDialog({
           <DialogHeader>
             <DialogTitle>Leftover download files</DialogTitle>
             <DialogDescription>
-              Incomplete files left on disk by past failed downloads. Deleting
-              one removes it from your computer.
+              Incomplete files left on disk by past failed downloads. Deleting one removes it from
+              your computer.
             </DialogDescription>
           </DialogHeader>
 
@@ -207,11 +205,7 @@ export function LeftoverFilesDialog({
                 const name = basename(e.targetPath);
                 const rowError = rowErrors[e.downloadJobId];
                 return (
-                  <div
-                    key={e.downloadJobId}
-                    role="listitem"
-                    className="flex flex-col gap-1 p-3"
-                  >
+                  <div key={e.downloadJobId} role="listitem" className="flex flex-col gap-1 p-3">
                     <div className="flex items-center gap-2">
                       <Icon
                         name="file"
@@ -238,14 +232,9 @@ export function LeftoverFilesDialog({
                         Delete
                       </Button>
                     </div>
-                    <p className="text-muted-foreground pl-6 text-xs">
-                      {reasonLine(e)}
-                    </p>
+                    <p className="text-muted-foreground pl-6 text-xs">{reasonLine(e)}</p>
                     {rowError !== undefined && (
-                      <p
-                        role="alert"
-                        className="text-destructive pl-6 text-xs"
-                      >
+                      <p role="alert" className="text-destructive pl-6 text-xs">
                         Couldn&rsquo;t delete: {rowError}
                       </p>
                     )}
@@ -267,11 +256,7 @@ export function LeftoverFilesDialog({
             >
               Delete all
             </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-            >
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Close
             </Button>
           </DialogFooter>
@@ -292,20 +277,13 @@ export function LeftoverFilesDialog({
           }}
         >
           <DialogHeader>
-            <DialogTitle>
-              Delete all {entries.length} leftover files?
-            </DialogTitle>
+            <DialogTitle>Delete all {entries.length} leftover files?</DialogTitle>
             <DialogDescription>
-              These incomplete files will be removed from your computer. This
-              can&rsquo;t be undone.
+              These incomplete files will be removed from your computer. This can&rsquo;t be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setConfirmOpen(false)}
-            >
+            <Button type="button" variant="outline" onClick={() => setConfirmOpen(false)}>
               Cancel
             </Button>
             <Button

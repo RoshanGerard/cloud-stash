@@ -22,19 +22,10 @@
 //
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  act,
-  cleanup,
-  fireEvent,
-  render,
-  within,
-} from "@testing-library/react";
+import { act, cleanup, fireEvent, render, within } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 
-import {
-  createExplorerStore,
-  __resetExplorerStoreCacheForTests,
-} from "../store.js";
+import { createExplorerStore, __resetExplorerStoreCacheForTests } from "../store.js";
 import type { ExplorerStore } from "../store.js";
 import { SearchResults } from "../search-results.js";
 import { seedEntry } from "./test-utils.js";
@@ -77,9 +68,7 @@ function seedSearchResults(store: ExplorerStore) {
 
 function getResultRows(): HTMLElement[] {
   return Array.from(
-    document.querySelectorAll<HTMLElement>(
-      '[data-testid="file-explorer-search-result"]',
-    ),
+    document.querySelectorAll<HTMLElement>('[data-testid="file-explorer-search-result"]'),
   );
 }
 
@@ -149,16 +138,12 @@ describe("SearchResults — presentation (7.3)", () => {
     const firstSvg = rows[0]!.querySelector("svg");
     expect(firstSvg).not.toBeNull();
     // readme.md has mimeFamily "text" → iconForEntry returns "file-text".
-    expect(firstSvg!.getAttribute("class") ?? "").toMatch(
-      /\blucide-file-text\b/,
-    );
+    expect(firstSvg!.getAttribute("class") ?? "").toMatch(/\blucide-file-text\b/);
 
     const secondSvg = rows[1]!.querySelector("svg");
     expect(secondSvg).not.toBeNull();
     // hero.png has mimeFamily "image" → iconForEntry returns "file-image".
-    expect(secondSvg!.getAttribute("class") ?? "").toMatch(
-      /\blucide-file-image\b/,
-    );
+    expect(secondSvg!.getAttribute("class") ?? "").toMatch(/\blucide-file-image\b/);
   });
 
   it("clicking a result calls onResultActivate exactly once with that result's FileEntry", () => {
@@ -205,10 +190,7 @@ describe("SearchResults — presentation (7.3)", () => {
 // type; `@ts-expect-error` comments mark those lines so the RED state
 // is semantic-only (not a parse failure that crashes the whole file).
 //
-function seedDeferredSearch(
-  store: ExplorerStore,
-  query: string,
-): void {
+function seedDeferredSearch(store: ExplorerStore, query: string): void {
   act(() => {
     store.startSearch();
     store.setSearchQuery(query);
@@ -220,9 +202,7 @@ function seedDeferredSearch(
 }
 
 function getDeferredSurface(): HTMLElement | null {
-  return document.querySelector<HTMLElement>(
-    '[data-testid="file-explorer-search-deferred"]',
-  );
+  return document.querySelector<HTMLElement>('[data-testid="file-explorer-search-deferred"]');
 }
 
 describe("SearchResults — deferred state (7.7)", () => {
@@ -253,13 +233,9 @@ describe("SearchResults — deferred state (7.7)", () => {
 
     // Provider-named copy — the full spec message must appear somewhere
     // inside the deferred surface.
+    expect(within(deferred!).getByText(/Google Drive/i)).toBeInTheDocument();
     expect(
-      within(deferred!).getByText(/Google Drive/i),
-    ).toBeInTheDocument();
-    expect(
-      within(deferred!).getByText(
-        /Native search for Google Drive is not available yet/i,
-      ),
+      within(deferred!).getByText(/Native search for Google Drive is not available yet/i),
     ).toBeInTheDocument();
 
     // Docs link — don't hardcode the URL; assert a meaningful anchor
@@ -287,13 +263,9 @@ describe("SearchResults — deferred state (7.7)", () => {
     const deferred = getDeferredSurface();
     expect(deferred).not.toBeNull();
 
+    expect(within(deferred!).getByText(/OneDrive/i)).toBeInTheDocument();
     expect(
-      within(deferred!).getByText(/OneDrive/i),
-    ).toBeInTheDocument();
-    expect(
-      within(deferred!).getByText(
-        /Native search for OneDrive is not available yet/i,
-      ),
+      within(deferred!).getByText(/Native search for OneDrive is not available yet/i),
     ).toBeInTheDocument();
 
     const anchors = within(deferred!).queryAllByRole("link");

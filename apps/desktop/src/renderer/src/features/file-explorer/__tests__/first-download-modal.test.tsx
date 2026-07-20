@@ -17,42 +17,24 @@
 //   - window.api.preferences.setDefaultDownloadsFolder stubbed (the
 //     mirror call from `setDefaultFolder` per §20).
 
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-  type Mock,
-} from "vitest";
-import {
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-} from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from "vitest";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 
 import { useState } from "react";
 
 import { FirstDownloadModal } from "../first-download-modal.js";
-import {
-  DOWNLOADS_DEFAULT_FOLDER_KEY,
-  getDefaultFolder,
-} from "../../settings/downloads-store.js";
+import { DOWNLOADS_DEFAULT_FOLDER_KEY, getDefaultFolder } from "../../settings/downloads-store.js";
 
 // Radix Dialog needs ResizeObserver at mount, mirroring the polyfill in
 // settings-dialog.test / add-dialog.test.
 beforeEach(() => {
   if (!("ResizeObserver" in window)) {
-    (window as unknown as { ResizeObserver: unknown }).ResizeObserver =
-      class MockResizeObserver {
-        observe() {}
-        unobserve() {}
-        disconnect() {}
-      };
+    (window as unknown as { ResizeObserver: unknown }).ResizeObserver = class MockResizeObserver {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    };
   }
   localStorage.clear();
 });
@@ -113,9 +95,7 @@ describe("FirstDownloadModal — first-run defaults collection", () => {
     installApiMock();
     render(<FirstDownloadModal open={true} onCommit={() => {}} />);
 
-    const input = screen.getByLabelText(
-      /downloads folder/i,
-    ) as HTMLInputElement;
+    const input = screen.getByLabelText(/downloads folder/i) as HTMLInputElement;
     expect(input).toBeInTheDocument();
     // Post-archive bug fix: the modal resolves the real OS default via
     // `window.api.preferences.getOSDefaultDownloadsFolder` and appends
@@ -137,14 +117,10 @@ describe("FirstDownloadModal — first-run defaults collection", () => {
     // host-aware joiner picks `\` as the separator. The TS string
     // literal uses doubled backslashes so the runtime value is
     // `C:\Users\dev2\Downloads`.
-    getOSDefaultDownloadsFolderMock.mockResolvedValueOnce(
-      "C:\\Users\\dev2\\Downloads",
-    );
+    getOSDefaultDownloadsFolderMock.mockResolvedValueOnce("C:\\Users\\dev2\\Downloads");
     render(<FirstDownloadModal open={true} onCommit={() => {}} />);
 
-    const input = screen.getByLabelText(
-      /downloads folder/i,
-    ) as HTMLInputElement;
+    const input = screen.getByLabelText(/downloads folder/i) as HTMLInputElement;
     await waitFor(() => {
       expect(input.value).toBe("C:\\Users\\dev2\\Downloads\\CloudStash");
     });
@@ -162,9 +138,7 @@ describe("FirstDownloadModal — first-run defaults collection", () => {
     );
     render(<FirstDownloadModal open={true} onCommit={() => {}} />);
 
-    const input = screen.getByLabelText(
-      /downloads folder/i,
-    ) as HTMLInputElement;
+    const input = screen.getByLabelText(/downloads folder/i) as HTMLInputElement;
     expect(input.value).toBe("");
     const cta = screen.getByRole("button", { name: /use this folder/i });
     expect(cta).toBeDisabled();
@@ -178,12 +152,8 @@ describe("FirstDownloadModal — first-run defaults collection", () => {
     installApiMock();
     render(<FirstDownloadModal open={true} onCommit={() => {}} />);
 
-    expect(
-      screen.getByRole("button", { name: /browse/i }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: /use this folder/i }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /browse/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /use this folder/i })).toBeInTheDocument();
   });
 
   it("does NOT render an X close button (no Skip / Close affordance)", () => {
@@ -193,64 +163,40 @@ describe("FirstDownloadModal — first-run defaults collection", () => {
     // The shadcn Dialog renders an X close affordance by default. Per
     // the spec (§ "Modal cannot be dismissed without commit"), it must
     // be hidden — `showCloseButton={false}` on DialogContent.
-    expect(
-      screen.queryByRole("button", { name: /^close$/i }),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^close$/i })).not.toBeInTheDocument();
   });
 
   it("suppresses Escape-key dismissal", () => {
     installApiMock();
     const onCommit = vi.fn();
     const onOpenChange = vi.fn();
-    render(
-      <FirstDownloadModal
-        open={true}
-        onCommit={onCommit}
-        onOpenChange={onOpenChange}
-      />,
-    );
+    render(<FirstDownloadModal open={true} onCommit={onCommit} onOpenChange={onOpenChange} />);
 
     fireEvent.keyDown(document, { key: "Escape", code: "Escape" });
     // Modal must not close — neither the commit path nor the
     // open-change path should fire with `false`.
     expect(onCommit).not.toHaveBeenCalled();
-    expect(
-      onOpenChange.mock.calls.some(([open]) => open === false),
-    ).toBe(false);
+    expect(onOpenChange.mock.calls.some(([open]) => open === false)).toBe(false);
     // CTA still mounted.
-    expect(
-      screen.getByRole("button", { name: /use this folder/i }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /use this folder/i })).toBeInTheDocument();
   });
 
   it("suppresses pointer-down-outside (backdrop click) dismissal", () => {
     installApiMock();
     const onCommit = vi.fn();
     const onOpenChange = vi.fn();
-    render(
-      <FirstDownloadModal
-        open={true}
-        onCommit={onCommit}
-        onOpenChange={onOpenChange}
-      />,
-    );
+    render(<FirstDownloadModal open={true} onCommit={onCommit} onOpenChange={onOpenChange} />);
 
     // The Radix Dialog overlay receives backdrop pointer events.
     // Locate the backdrop via its data-slot attribute.
-    const overlay = document.querySelector(
-      '[data-slot="dialog-overlay"]',
-    );
+    const overlay = document.querySelector('[data-slot="dialog-overlay"]');
     expect(overlay).not.toBeNull();
     fireEvent.pointerDown(overlay as Element);
     fireEvent.mouseDown(overlay as Element);
 
     expect(onCommit).not.toHaveBeenCalled();
-    expect(
-      onOpenChange.mock.calls.some(([open]) => open === false),
-    ).toBe(false);
-    expect(
-      screen.getByRole("button", { name: /use this folder/i }),
-    ).toBeInTheDocument();
+    expect(onOpenChange.mock.calls.some(([open]) => open === false)).toBe(false);
+    expect(screen.getByRole("button", { name: /use this folder/i })).toBeInTheDocument();
   });
 
   it("on Browse click, invokes window.api.dialog.showOpenDialog with the directory-pick properties", async () => {
@@ -284,9 +230,7 @@ describe("FirstDownloadModal — first-run defaults collection", () => {
     fireEvent.click(screen.getByRole("button", { name: /browse/i }));
 
     await waitFor(() => {
-      const input = screen.getByLabelText(
-        /downloads folder/i,
-      ) as HTMLInputElement;
+      const input = screen.getByLabelText(/downloads folder/i) as HTMLInputElement;
       expect(input.value).toBe("/Users/alice/cloud-files");
     });
   });
@@ -300,9 +244,7 @@ describe("FirstDownloadModal — first-run defaults collection", () => {
     render(<FirstDownloadModal open={true} onCommit={() => {}} />);
 
     // Wait for the OS-default-folder pre-fill before clicking Browse.
-    const input = screen.getByLabelText(
-      /downloads folder/i,
-    ) as HTMLInputElement;
+    const input = screen.getByLabelText(/downloads folder/i) as HTMLInputElement;
     await waitFor(() => expect(input.value).toBe(EXPECTED_PREFILL));
 
     fireEvent.click(screen.getByRole("button", { name: /browse/i }));
@@ -320,18 +262,12 @@ describe("FirstDownloadModal — first-run defaults collection", () => {
     // Wait for the OS-default-folder pre-fill to land in the input
     // before clicking the CTA — the CTA is disabled until the bridge
     // resolves, so a synchronous click would be a no-op.
-    const input = screen.getByLabelText(
-      /downloads folder/i,
-    ) as HTMLInputElement;
+    const input = screen.getByLabelText(/downloads folder/i) as HTMLInputElement;
     await waitFor(() => expect(input.value).toBe(EXPECTED_PREFILL));
 
-    fireEvent.click(
-      screen.getByRole("button", { name: /use this folder/i }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: /use this folder/i }));
 
-    expect(localStorage.getItem(DOWNLOADS_DEFAULT_FOLDER_KEY)).toBe(
-      EXPECTED_PREFILL,
-    );
+    expect(localStorage.getItem(DOWNLOADS_DEFAULT_FOLDER_KEY)).toBe(EXPECTED_PREFILL);
     expect(getDefaultFolder()).toBe(EXPECTED_PREFILL);
     expect(onCommit).toHaveBeenCalledTimes(1);
     expect(onCommit).toHaveBeenCalledWith(EXPECTED_PREFILL);
@@ -346,11 +282,7 @@ describe("FirstDownloadModal — first-run defaults collection", () => {
 //   2. opens the modal because getDefaultFolder() is null,
 //   3. flushes the queued dispatch on modal commit.
 describe("FirstDownloadModal — integration with deferred download trigger", () => {
-  function TriggerHarness({
-    onDispatch,
-  }: {
-    onDispatch: (folder: string) => void;
-  }) {
+  function TriggerHarness({ onDispatch }: { onDispatch: (folder: string) => void }) {
     const [open, setOpen] = useState(false);
     const [pendingFile, setPending] = useState<string | null>(null);
 
@@ -374,10 +306,7 @@ describe("FirstDownloadModal — integration with deferred download trigger", ()
 
     return (
       <>
-        <button
-          type="button"
-          onClick={() => handleDownload("welcome.pdf")}
-        >
+        <button type="button" onClick={() => handleDownload("welcome.pdf")}>
           Trigger download
         </button>
         <FirstDownloadModal open={open} onCommit={handleCommit} />
@@ -396,9 +325,7 @@ describe("FirstDownloadModal — integration with deferred download trigger", ()
       }),
     ).not.toBeInTheDocument();
 
-    fireEvent.click(
-      screen.getByRole("button", { name: /trigger download/i }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: /trigger download/i }));
 
     expect(
       screen.getByRole("heading", {
@@ -414,9 +341,7 @@ describe("FirstDownloadModal — integration with deferred download trigger", ()
     const onDispatch = vi.fn();
     render(<TriggerHarness onDispatch={onDispatch} />);
 
-    fireEvent.click(
-      screen.getByRole("button", { name: /trigger download/i }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: /trigger download/i }));
     // Wait for the modal's OS-default-folder pre-fill to land before
     // committing — the post-archive bug fix gates the CTA on a non-empty
     // folder string so the user can't ship the placeholder.

@@ -11,63 +11,43 @@ import { iconForEntry } from "../icons.js";
 
 describe("iconForEntry — design.md Decision 8 mapping", () => {
   it("renders `folder` for a directory with mimeFamily=unknown", () => {
-    expect(
-      iconForEntry({ kind: "directory", mimeFamily: "unknown" }),
-    ).toBe("folder");
+    expect(iconForEntry({ kind: "directory", mimeFamily: "unknown" })).toBe("folder");
   });
 
   it("renders `folder` for a directory even when mimeFamily is a file family (kind wins)", () => {
-    expect(
-      iconForEntry({ kind: "directory", mimeFamily: "image" }),
-    ).toBe("folder");
+    expect(iconForEntry({ kind: "directory", mimeFamily: "image" })).toBe("folder");
   });
 
   it("renders `file-image` for a file with mimeFamily=image", () => {
-    expect(
-      iconForEntry({ kind: "file", mimeFamily: "image" }),
-    ).toBe("file-image");
+    expect(iconForEntry({ kind: "file", mimeFamily: "image" })).toBe("file-image");
   });
 
   it("renders `file-video` for a file with mimeFamily=video", () => {
-    expect(
-      iconForEntry({ kind: "file", mimeFamily: "video" }),
-    ).toBe("file-video");
+    expect(iconForEntry({ kind: "file", mimeFamily: "video" })).toBe("file-video");
   });
 
   it("renders `file-audio` for a file with mimeFamily=audio", () => {
-    expect(
-      iconForEntry({ kind: "file", mimeFamily: "audio" }),
-    ).toBe("file-audio");
+    expect(iconForEntry({ kind: "file", mimeFamily: "audio" })).toBe("file-audio");
   });
 
   it("renders `file-text` for a file with mimeFamily=document", () => {
-    expect(
-      iconForEntry({ kind: "file", mimeFamily: "document" }),
-    ).toBe("file-text");
+    expect(iconForEntry({ kind: "file", mimeFamily: "document" })).toBe("file-text");
   });
 
   it("renders `file-archive` for a file with mimeFamily=archive", () => {
-    expect(
-      iconForEntry({ kind: "file", mimeFamily: "archive" }),
-    ).toBe("file-archive");
+    expect(iconForEntry({ kind: "file", mimeFamily: "archive" })).toBe("file-archive");
   });
 
   it("renders `file-code` for a file with mimeFamily=code", () => {
-    expect(
-      iconForEntry({ kind: "file", mimeFamily: "code" }),
-    ).toBe("file-code");
+    expect(iconForEntry({ kind: "file", mimeFamily: "code" })).toBe("file-code");
   });
 
   it("renders `file-text` for a file with mimeFamily=text", () => {
-    expect(
-      iconForEntry({ kind: "file", mimeFamily: "text" }),
-    ).toBe("file-text");
+    expect(iconForEntry({ kind: "file", mimeFamily: "text" })).toBe("file-text");
   });
 
   it("renders `file` for a file with mimeFamily=unknown", () => {
-    expect(
-      iconForEntry({ kind: "file", mimeFamily: "unknown" }),
-    ).toBe("file");
+    expect(iconForEntry({ kind: "file", mimeFamily: "unknown" })).toBe("file");
   });
 });
 

@@ -13,15 +13,7 @@
 // integration: provider mounts → subscribes once via window.api.sync.onEvent
 // → dispatches per kind.
 
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-  type Mock,
-} from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from "vitest";
 import { act, cleanup, render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import type { SyncEvent } from "@cloudstash/ipc-contracts/sync-service-desktop";
@@ -45,14 +37,12 @@ const FIXTURE_SUMMARY = {
 };
 
 function installApiMock() {
-  syncOnEventMock = vi
-    .fn()
-    .mockImplementation((cb: (e: SyncEvent) => void) => {
-      syncOnEventCapture = cb;
-      return () => {
-        syncOnEventCapture = null;
-      };
-    });
+  syncOnEventMock = vi.fn().mockImplementation((cb: (e: SyncEvent) => void) => {
+    syncOnEventCapture = cb;
+    return () => {
+      syncOnEventCapture = null;
+    };
+  });
   listMock = vi.fn().mockResolvedValue({ datasources: [] });
 
   (window as unknown as { api: unknown }).api = {
@@ -140,9 +130,7 @@ describe("store auth-* slice — sync.onEvent integration", () => {
     });
 
     expect(screen.getByTestId("status").textContent).toBe("completed");
-    expect(screen.getByTestId("datasource-id").textContent).toBe(
-      "ds-google-drive-abc123",
-    );
+    expect(screen.getByTestId("datasource-id").textContent).toBe("ds-google-drive-abc123");
   });
 
   it("transitions to status='cancelled' on auth-cancelled", async () => {
@@ -185,9 +173,7 @@ describe("store auth-* slice — sync.onEvent integration", () => {
 
     expect(screen.getByTestId("status").textContent).toBe("failed");
     expect(screen.getByTestId("tag").textContent).toBe("auth-revoked");
-    expect(screen.getByTestId("message").textContent).toBe(
-      "Token was revoked by the user",
-    );
+    expect(screen.getByTestId("message").textContent).toBe("Token was revoked by the user");
   });
 
   it("surfaces expectedEmail + actualEmail on an account-mismatch auth-failed (enforce-oauth-reconnect-account-match)", async () => {
@@ -214,12 +200,8 @@ describe("store auth-* slice — sync.onEvent integration", () => {
 
     expect(screen.getByTestId("status").textContent).toBe("failed");
     expect(screen.getByTestId("tag").textContent).toBe("account-mismatch");
-    expect(screen.getByTestId("expected-email").textContent).toBe(
-      "owner@example.com",
-    );
-    expect(screen.getByTestId("actual-email").textContent).toBe(
-      "intruder@example.com",
-    );
+    expect(screen.getByTestId("expected-email").textContent).toBe("owner@example.com");
+    expect(screen.getByTestId("actual-email").textContent).toBe("intruder@example.com");
   });
 
   it("omits the email fields for a non-account-mismatch failed session", async () => {

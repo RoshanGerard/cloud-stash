@@ -27,10 +27,7 @@
 
 import { describe, expectTypeOf, it } from "vitest";
 
-import type {
-  DatasourceSummary,
-  ProviderId,
-} from "../datasources.js";
+import type { DatasourceSummary, ProviderId } from "../datasources.js";
 import type {
   AuthCancelledPayload,
   AuthCompletedPayload,
@@ -65,9 +62,7 @@ describe("sync-service auth-* event taxonomy — implement-datasource-onboarding
       readonly providerId: ProviderId;
       readonly datasourceId?: string;
     }>();
-    expectTypeOf<EventPayloadMap["auth-initiated"]>().toEqualTypeOf<
-      AuthInitiatedPayload
-    >();
+    expectTypeOf<EventPayloadMap["auth-initiated"]>().toEqualTypeOf<AuthInitiatedPayload>();
   });
 
   it("auth-completed payload is { correlationId, datasourceId, summary }", () => {
@@ -76,18 +71,14 @@ describe("sync-service auth-* event taxonomy — implement-datasource-onboarding
       readonly datasourceId: string;
       readonly summary: DatasourceSummary;
     }>();
-    expectTypeOf<EventPayloadMap["auth-completed"]>().toEqualTypeOf<
-      AuthCompletedPayload
-    >();
+    expectTypeOf<EventPayloadMap["auth-completed"]>().toEqualTypeOf<AuthCompletedPayload>();
   });
 
   it("auth-cancelled payload is { correlationId }", () => {
     expectTypeOf<AuthCancelledPayload>().toEqualTypeOf<{
       readonly correlationId: string;
     }>();
-    expectTypeOf<EventPayloadMap["auth-cancelled"]>().toEqualTypeOf<
-      AuthCancelledPayload
-    >();
+    expectTypeOf<EventPayloadMap["auth-cancelled"]>().toEqualTypeOf<AuthCancelledPayload>();
   });
 
   it("auth-failed payload is { correlationId, tag, message?, expectedEmail?, actualEmail? }", () => {
@@ -102,9 +93,7 @@ describe("sync-service auth-* event taxonomy — implement-datasource-onboarding
       readonly expectedEmail?: string;
       readonly actualEmail?: string;
     }>();
-    expectTypeOf<EventPayloadMap["auth-failed"]>().toEqualTypeOf<
-      AuthFailedPayload
-    >();
+    expectTypeOf<EventPayloadMap["auth-failed"]>().toEqualTypeOf<AuthFailedPayload>();
   });
 
   it("auth-failed payload exposes optional account-mismatch email fields", () => {
@@ -112,12 +101,8 @@ describe("sync-service auth-* event taxonomy — implement-datasource-onboarding
     // as equal, so assert the fields concretely exist and are `string?`.
     expectTypeOf<AuthFailedPayload>().toHaveProperty("expectedEmail");
     expectTypeOf<AuthFailedPayload>().toHaveProperty("actualEmail");
-    expectTypeOf<AuthFailedPayload["expectedEmail"]>().toEqualTypeOf<
-      string | undefined
-    >();
-    expectTypeOf<AuthFailedPayload["actualEmail"]>().toEqualTypeOf<
-      string | undefined
-    >();
+    expectTypeOf<AuthFailedPayload["expectedEmail"]>().toEqualTypeOf<string | undefined>();
+    expectTypeOf<AuthFailedPayload["actualEmail"]>().toEqualTypeOf<string | undefined>();
   });
 
   it("AuthFailedTag union contains at least auth-revoked + provider-error", () => {
@@ -133,9 +118,7 @@ describe("sync-service auth-* event taxonomy — implement-datasource-onboarding
     expectTypeOf<AuthTimeoutPayload>().toEqualTypeOf<{
       readonly correlationId: string;
     }>();
-    expectTypeOf<EventPayloadMap["auth-timeout"]>().toEqualTypeOf<
-      AuthTimeoutPayload
-    >();
+    expectTypeOf<EventPayloadMap["auth-timeout"]>().toEqualTypeOf<AuthTimeoutPayload>();
   });
 
   it("oauth-open-url payload is { correlationId, authorizeUrl }", () => {
@@ -143,9 +126,7 @@ describe("sync-service auth-* event taxonomy — implement-datasource-onboarding
       readonly correlationId: string;
       readonly authorizeUrl: string;
     }>();
-    expectTypeOf<EventPayloadMap["oauth-open-url"]>().toEqualTypeOf<
-      OAuthOpenUrlPayload
-    >();
+    expectTypeOf<EventPayloadMap["oauth-open-url"]>().toEqualTypeOf<OAuthOpenUrlPayload>();
   });
 
   it("credential-persisted payload is { correlationId, datasourceId, summary }", () => {
@@ -154,9 +135,9 @@ describe("sync-service auth-* event taxonomy — implement-datasource-onboarding
       readonly datasourceId: string;
       readonly summary: DatasourceSummary;
     }>();
-    expectTypeOf<EventPayloadMap["credential-persisted"]>().toEqualTypeOf<
-      CredentialPersistedPayload
-    >();
+    expectTypeOf<
+      EventPayloadMap["credential-persisted"]
+    >().toEqualTypeOf<CredentialPersistedPayload>();
   });
 
   it("ServiceEvent narrows correctly under switch on `name` for new variants", () => {

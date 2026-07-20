@@ -26,13 +26,7 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ReactNode } from "react";
-import {
-  cleanup,
-  render,
-  screen,
-  waitFor,
-  within,
-} from "@testing-library/react";
+import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import type { DatasourceSummary } from "@cloudstash/ipc-contracts";
 import type {
@@ -57,11 +51,7 @@ vi.mock("next/navigation", () => ({
 
 import { DatasourceCard } from "../card";
 import { DatasourcesProvider } from "../store";
-import {
-  ensureResizeObserver,
-  installApiMock,
-  type SyncHarness,
-} from "./helpers/sync-harness";
+import { ensureResizeObserver, installApiMock, type SyncHarness } from "./helpers/sync-harness";
 
 let syncHarness: SyncHarness;
 
@@ -69,9 +59,7 @@ function renderWithProvider(ui: ReactNode) {
   return render(<DatasourcesProvider>{ui}</DatasourcesProvider>);
 }
 
-function buildSummary(
-  overrides: Partial<DatasourceSummary> = {},
-): DatasourceSummary {
+function buildSummary(overrides: Partial<DatasourceSummary> = {}): DatasourceSummary {
   return {
     id: "ds-1",
     displayName: "Test Drive",
@@ -108,11 +96,7 @@ function buildJobSummary(overrides: Partial<JobSummary> = {}): JobSummary {
  * status. Today's reducer has no event that mutates an existing job's status
  * to `waiting-network`; a fresh seed is the cleanest path.
  */
-function seedWaitingNetwork(
-  harness: SyncHarness,
-  jobId: string,
-  datasourceId: string,
-): void {
+function seedWaitingNetwork(harness: SyncHarness, jobId: string, datasourceId: string): void {
   const payload: SyncStateSeedPayload = {
     jobs: [
       buildJobSummary({
@@ -153,9 +137,7 @@ describe("DatasourceCard — waiting-network visual variant (Decision 13)", () =
     // glyph identity, not the rendered SVG geometry.
     await waitFor(() => {
       const badge = screen.getByTestId("datasource-status");
-      const icon = within(badge).getByTestId(
-        "datasource-waiting-network-icon",
-      );
+      const icon = within(badge).getByTestId("datasource-waiting-network-icon");
       expect(icon).toHaveAttribute("data-icon", "wifi-off");
     });
   });
@@ -257,9 +239,7 @@ describe("DatasourceCard — waiting-network visual variant (Decision 13)", () =
       const polite = document.querySelector('[aria-live="polite"]');
       expect(polite).not.toBeNull();
       const reflection =
-        (polite?.getAttribute("aria-label") ?? "") +
-        " " +
-        (polite?.textContent ?? "");
+        (polite?.getAttribute("aria-label") ?? "") + " " + (polite?.textContent ?? "");
       expect(reflection.toLowerCase()).toMatch(/waiting/);
     });
   });
@@ -296,8 +276,6 @@ describe("DatasourceCard — waiting-network visual variant (Decision 13)", () =
       expect(text.toLowerCase()).toMatch(/syncing/);
     });
 
-    expect(
-      screen.queryByTestId("datasource-waiting-network-icon"),
-    ).toBeNull();
+    expect(screen.queryByTestId("datasource-waiting-network-icon")).toBeNull();
   });
 });

@@ -41,8 +41,7 @@ function resolveSettings(config: ServiceConfig): DownloadHistorySettings {
     candidate !== null &&
     typeof candidate === "object" &&
     typeof (candidate as { autoPrune?: unknown }).autoPrune === "boolean" &&
-    typeof (candidate as { retentionDays?: unknown }).retentionDays ===
-      "number" &&
+    typeof (candidate as { retentionDays?: unknown }).retentionDays === "number" &&
     (RETENTION_DAY_OPTIONS as readonly number[]).includes(
       (candidate as { retentionDays: number }).retentionDays,
     )

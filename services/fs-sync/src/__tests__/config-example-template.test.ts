@@ -24,12 +24,7 @@ import { describe, expect, it } from "vitest";
 
 // __dirname is `services/fs-sync/src/__tests__`; the committed template
 // lives at `services/fs-sync/config.example.json` — three levels up.
-const TEMPLATE_PATH = path.resolve(
-  __dirname,
-  "..",
-  "..",
-  "config.example.json",
-);
+const TEMPLATE_PATH = path.resolve(__dirname, "..", "..", "config.example.json");
 
 describe("services/fs-sync/config.example.json template", () => {
   it("exists at the documented path", async () => {

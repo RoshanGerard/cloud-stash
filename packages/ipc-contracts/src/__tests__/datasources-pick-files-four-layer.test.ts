@@ -14,12 +14,7 @@
 //   (4) Renderer call:   at least one file under `apps/desktop/src/renderer/`
 //                        (excluding `__tests__/`) calls `.pickFilesToUpload(`.
 
-import {
-  existsSync,
-  readFileSync,
-  readdirSync,
-  statSync,
-} from "node:fs";
+import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
@@ -34,25 +29,18 @@ describe("datasources.pickFilesToUpload four-layer wiring", () => {
   });
 
   it("(1) contract declares the channel literal AND exports the types", () => {
-    const contractPath = path.join(
-      repoRoot,
-      "packages/ipc-contracts/src/datasources.ts",
-    );
+    const contractPath = path.join(repoRoot, "packages/ipc-contracts/src/datasources.ts");
     const contents = readFileSync(contractPath, "utf8");
     expect(
       contents.includes(`"datasources:pick-files-to-upload"`),
       `datasources.ts must declare the channel literal "datasources:pick-files-to-upload"`,
     ).toBe(true);
     expect(
-      /export\s+(?:interface|type)\s+DatasourcesPickFilesRequest\b/.test(
-        contents,
-      ),
+      /export\s+(?:interface|type)\s+DatasourcesPickFilesRequest\b/.test(contents),
       `datasources.ts must export type DatasourcesPickFilesRequest`,
     ).toBe(true);
     expect(
-      /export\s+(?:interface|type)\s+DatasourcesPickFilesResponse\b/.test(
-        contents,
-      ),
+      /export\s+(?:interface|type)\s+DatasourcesPickFilesResponse\b/.test(contents),
       `datasources.ts must export type DatasourcesPickFilesResponse`,
     ).toBe(true);
   });
@@ -62,17 +50,11 @@ describe("datasources.pickFilesToUpload four-layer wiring", () => {
       repoRoot,
       "apps/desktop/src/main/ipc/datasources/pick-files-to-upload.ts",
     );
-    expect(
-      existsSync(handlerPath),
-      `expected handler file at ${handlerPath}`,
-    ).toBe(true);
+    expect(existsSync(handlerPath), `expected handler file at ${handlerPath}`).toBe(true);
   });
 
   it("(3) preload exposes pickFilesToUpload on the datasources namespace", () => {
-    const preloadPath = path.join(
-      repoRoot,
-      "apps/desktop/src/preload/index.ts",
-    );
+    const preloadPath = path.join(repoRoot, "apps/desktop/src/preload/index.ts");
     const contents = readFileSync(preloadPath, "utf8");
     expect(
       contents.includes("DATASOURCES_CHANNELS.pickFilesToUpload") ||

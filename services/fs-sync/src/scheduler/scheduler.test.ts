@@ -63,10 +63,7 @@ function enqueueN(n: number): string[] {
   return ids;
 }
 
-async function waitUntil(
-  predicate: () => boolean,
-  timeoutMs = 2000,
-): Promise<void> {
+async function waitUntil(predicate: () => boolean, timeoutMs = 2000): Promise<void> {
   const t0 = Date.now();
   while (!predicate()) {
     if (Date.now() - t0 > timeoutMs) {
@@ -183,10 +180,7 @@ describe("Scheduler — no-executor fallback", () => {
     });
     sched.start();
     try {
-      await waitUntil(
-        () => repo.getById("job-0")?.status === "failed",
-        2000,
-      );
+      await waitUntil(() => repo.getById("job-0")?.status === "failed", 2000);
       const job = repo.getById("job-0")!;
       expect(job.lastErrorTag).toBe("unsupported");
     } finally {
@@ -217,9 +211,7 @@ describe("Scheduler — failure → failed transition and job-failed event", () 
       await waitUntil(() => repo.getById("job-0")?.status === "failed", 2000);
       const failed = emitted.find((e) => e.name === "job-failed");
       expect(failed).toBeTruthy();
-      expect(
-        (failed?.payload as { errorTag: string }).errorTag,
-      ).toBe("provider-error");
+      expect((failed?.payload as { errorTag: string }).errorTag).toBe("provider-error");
     } finally {
       await sched.stop();
     }

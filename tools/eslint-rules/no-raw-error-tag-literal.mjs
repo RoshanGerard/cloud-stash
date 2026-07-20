@@ -41,11 +41,7 @@ function fieldNameOf(node) {
   // (optional) MemberExpression. Without this the rule misses the common
   // `x?.tag === "..."` / `switch (x?.tag)` error-handling shapes.
   if (node.type === "ChainExpression") node = node.expression;
-  if (
-    node.type === "MemberExpression" &&
-    !node.computed &&
-    node.property.type === "Identifier"
-  ) {
+  if (node.type === "MemberExpression" && !node.computed && node.property.type === "Identifier") {
     return node.property.name;
   }
   if (node.type === "Identifier") return node.name;
@@ -55,10 +51,7 @@ function fieldNameOf(node) {
 /** True if `node` is a string Literal whose value is a known tag value. */
 function isTagLiteral(node) {
   return (
-    node &&
-    node.type === "Literal" &&
-    typeof node.value === "string" &&
-    TAG_SET.has(node.value)
+    node && node.type === "Literal" && typeof node.value === "string" && TAG_SET.has(node.value)
   );
 }
 
@@ -135,9 +128,7 @@ export default {
         d.specifiers.some((s) => s.type === "ImportSpecifier"),
       );
       if (targetImport) {
-        const specs = targetImport.specifiers.filter(
-          (s) => s.type === "ImportSpecifier",
-        );
+        const specs = targetImport.specifiers.filter((s) => s.type === "ImportSpecifier");
         const last = specs[specs.length - 1];
         return [fixer.insertTextAfter(last, `, ${enumName}`)];
       }
@@ -157,10 +148,7 @@ export default {
         data: { ref },
         fix(fixer) {
           const enumName = ref.slice(0, ref.indexOf("."));
-          return [
-            fixer.replaceText(literalNode, ref),
-            ...ensureImportFixes(fixer, enumName),
-          ];
+          return [fixer.replaceText(literalNode, ref), ...ensureImportFixes(fixer, enumName)];
         },
       }));
     }

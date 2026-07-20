@@ -31,10 +31,7 @@ const repoRoot = path.resolve(__dirname, "..");
 // sandbox can resolve it). Everything else — workspace packages, third-
 // party deps — MUST be bundled into the emitted CJS.
 
-const PRELOAD_PATH = path.resolve(
-  repoRoot,
-  "apps/desktop/dist/preload/index.js",
-);
+const PRELOAD_PATH = path.resolve(repoRoot, "apps/desktop/dist/preload/index.js");
 
 const ALLOWED_REQUIRE_SPECIFIERS = new Set<string>(["electron"]);
 
@@ -43,29 +40,26 @@ const REQUIRE_CALL_RE = /require\(\s*(["'])([^"']+)\1\s*\)/g;
 describe("preload bundle forbids runtime requires of workspace deps", () => {
   const fileExists = existsSync(PRELOAD_PATH);
 
-  it.skipIf(!fileExists)(
-    "compiled preload only requires allowed specifiers",
-    () => {
-      const source = readFileSync(PRELOAD_PATH, "utf8");
-      const forbidden: string[] = [];
-      let match: RegExpExecArray | null;
-      REQUIRE_CALL_RE.lastIndex = 0;
-      while ((match = REQUIRE_CALL_RE.exec(source)) !== null) {
-        const specifier = match[2]!;
-        if (!ALLOWED_REQUIRE_SPECIFIERS.has(specifier)) {
-          forbidden.push(specifier);
-        }
+  it.skipIf(!fileExists)("compiled preload only requires allowed specifiers", () => {
+    const source = readFileSync(PRELOAD_PATH, "utf8");
+    const forbidden: string[] = [];
+    let match: RegExpExecArray | null;
+    REQUIRE_CALL_RE.lastIndex = 0;
+    while ((match = REQUIRE_CALL_RE.exec(source)) !== null) {
+      const specifier = match[2]!;
+      if (!ALLOWED_REQUIRE_SPECIFIERS.has(specifier)) {
+        forbidden.push(specifier);
       }
-      expect(
-        forbidden,
-        `compiled preload must not contain runtime require() calls for ` +
-          `non-allowed specifiers. Found: ${forbidden.join(", ")}. ` +
-          `Fix: add the specifier to externalizeDepsPlugin's exclude list ` +
-          `in apps/desktop/electron.vite.config.ts so it's bundled into ` +
-          `the preload output.`,
-      ).toEqual([]);
-    },
-  );
+    }
+    expect(
+      forbidden,
+      `compiled preload must not contain runtime require() calls for ` +
+        `non-allowed specifiers. Found: ${forbidden.join(", ")}. ` +
+        `Fix: add the specifier to externalizeDepsPlugin's exclude list ` +
+        `in apps/desktop/electron.vite.config.ts so it's bundled into ` +
+        `the preload output.`,
+    ).toEqual([]);
+  });
 
   it("records the Electron sandbox constraint as a durable test intent", () => {
     expect(ALLOWED_REQUIRE_SPECIFIERS.has("electron")).toBe(true);
@@ -84,10 +78,7 @@ describe("preload bundle forbids runtime requires of workspace deps", () => {
 // emit declarations only and leave the `dist/**/*.js` bundles to electron-vite.
 describe("desktop tsc emit must not clobber the electron-vite bundle", () => {
   it("apps/desktop/tsconfig.json sets emitDeclarationOnly", () => {
-    const raw = readFileSync(
-      path.resolve(repoRoot, "apps/desktop/tsconfig.json"),
-      "utf8",
-    );
+    const raw = readFileSync(path.resolve(repoRoot, "apps/desktop/tsconfig.json"), "utf8");
     // Strip `//` line comments (the tsconfig is JSONC; no string value here
     // contains `//`) so JSON.parse can read the actual compiler options.
     const parsed = JSON.parse(raw.replace(/\/\/.*$/gm, ""));

@@ -127,10 +127,7 @@ interface PickFilesApi {
 }
 
 interface FilesListApi {
-  readonly list: (req: {
-    readonly datasourceId: string;
-    readonly path: string;
-  }) => Promise<
+  readonly list: (req: { readonly datasourceId: string; readonly path: string }) => Promise<
     | {
         readonly ok: true;
         readonly value: { readonly entries: readonly FileEntry[] };
@@ -176,9 +173,7 @@ export function UploadDialog(props: UploadDialogProps): ReactElement {
   const [files, setFiles] = useState<readonly UploadFileItem[]>([]);
   // Currently-displayed destination folder — ALSO the destination (no
   // separate row-selection state per design Decision 5).
-  const [currentDestination, setCurrentDestination] = useState<string>(
-    initialDestination,
-  );
+  const [currentDestination, setCurrentDestination] = useState<string>(initialDestination);
   // Directory-only entries for the currently-displayed destination.
   const [directories, setDirectories] = useState<readonly FileEntry[]>([]);
 
@@ -213,9 +208,7 @@ export function UploadDialog(props: UploadDialogProps): ReactElement {
         setDirectories([]);
         return;
       }
-      const entries = response.value.entries.filter(
-        (e) => e.kind === "directory",
-      );
+      const entries = response.value.entries.filter((e) => e.kind === "directory");
       setDirectories(entries);
     })();
     return () => {
@@ -223,10 +216,7 @@ export function UploadDialog(props: UploadDialogProps): ReactElement {
     };
   }, [open, datasourceId, currentDestination]);
 
-  const breadcrumbSegments = useMemo(
-    () => segmentsFor(currentDestination),
-    [currentDestination],
-  );
+  const breadcrumbSegments = useMemo(() => segmentsFor(currentDestination), [currentDestination]);
 
   const handleAddFiles = useCallback(async () => {
     const api = getPickFilesApi();
@@ -274,14 +264,7 @@ export function UploadDialog(props: UploadDialogProps): ReactElement {
     // dispatch".
     void orchestrator.start();
     onOpenChange(false);
-  }, [
-    conflictResolver,
-    currentDestination,
-    datasourceId,
-    files,
-    onOpenChange,
-    toaster,
-  ]);
+  }, [conflictResolver, currentDestination, datasourceId, files, onOpenChange, toaster]);
 
   const submitDisabled = files.length === 0;
 
@@ -321,9 +304,7 @@ export function UploadDialog(props: UploadDialogProps): ReactElement {
                   <Icon name="file" aria-hidden className="size-4 shrink-0" />
                   <span className="flex-1 truncate">{f.basename}</span>
                   <span className="text-muted-foreground tabular-nums text-xs">
-                    {f.sizeBytes !== undefined && f.sizeBytes > 0
-                      ? formatBytes(f.sizeBytes)
-                      : ""}
+                    {f.sizeBytes !== undefined && f.sizeBytes > 0 ? formatBytes(f.sizeBytes) : ""}
                   </span>
                   <Button
                     type="button"
@@ -383,10 +364,7 @@ export function UploadDialog(props: UploadDialogProps): ReactElement {
                       />
                     ) : null}
                     {isLast ? (
-                      <span
-                        aria-current="page"
-                        className="text-foreground truncate px-1"
-                      >
+                      <span aria-current="page" className="text-foreground truncate px-1">
                         {seg.name}
                       </span>
                     ) : (
@@ -405,10 +383,7 @@ export function UploadDialog(props: UploadDialogProps): ReactElement {
           </nav>
           {/* Directory list — max-h 140px, scrollable (no ScrollArea
               dependency; a plain div with overflow-y-auto is enough). */}
-          <div
-            className="max-h-[140px] overflow-y-auto"
-            data-testid="upload-dialog-directory-list"
-          >
+          <div className="max-h-[140px] overflow-y-auto" data-testid="upload-dialog-directory-list">
             <ul className="flex flex-col gap-1">
               {currentDestination !== "/" ? (
                 <li>

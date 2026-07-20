@@ -26,9 +26,7 @@ import { DATASOURCES_CHANNELS, providers } from "../datasources.js";
 
 describe("ipc-contracts datasources status and usage types", () => {
   it("DatasourceStatus is exactly four values", () => {
-    expectTypeOf<DatasourceStatus>().toEqualTypeOf<
-      "connected" | "syncing" | "paused" | "error"
-    >();
+    expectTypeOf<DatasourceStatus>().toEqualTypeOf<"connected" | "syncing" | "paused" | "error">();
   });
 
   it("DatasourceUsage is { used: number; quota: number }", () => {
@@ -72,9 +70,7 @@ describe("ipc-contracts datasources status and usage types", () => {
 
 describe("ipc-contracts provider descriptor and registry", () => {
   it("CredentialsSchema is exactly three values", () => {
-    expectTypeOf<CredentialsSchema>().toEqualTypeOf<
-      "oauth" | "aws-access-key" | "custom"
-    >();
+    expectTypeOf<CredentialsSchema>().toEqualTypeOf<"oauth" | "aws-access-key" | "custom">();
   });
 
   it("ProviderCapabilities is three boolean flags", () => {
@@ -109,9 +105,7 @@ describe("ipc-contracts provider descriptor and registry", () => {
       expect(typeof descriptor.capabilities.quota).toBe("boolean");
       expect(typeof descriptor.capabilities.oauth).toBe("boolean");
       expect(typeof descriptor.capabilities.directUpload).toBe("boolean");
-      expect(["oauth", "aws-access-key", "custom"]).toContain(
-        descriptor.credentialsSchema,
-      );
+      expect(["oauth", "aws-access-key", "custom"]).toContain(descriptor.credentialsSchema);
     }
   });
 
@@ -174,9 +168,7 @@ describe("ipc-contracts datasources request/response pairs", () => {
   });
 
   it("action: { datasourceId, action }, returns updated datasource", () => {
-    expectTypeOf<DatasourceAction>().toEqualTypeOf<
-      "pause" | "resume" | "sync-now"
-    >();
+    expectTypeOf<DatasourceAction>().toEqualTypeOf<"pause" | "resume" | "sync-now">();
     const req: DatasourcesActionRequest = {
       datasourceId: "ds-1",
       action: "sync-now",
@@ -205,16 +197,11 @@ describe("ipc-contracts datasources request/response pairs", () => {
     // desktop `event-bridge.ts` and the `datasources:upload:progress`
     // channel are both gone.
     type Channels = typeof DATASOURCES_CHANNELS;
-    type HasUploadProgress = "uploadProgress" extends keyof Channels
-      ? true
-      : never;
+    type HasUploadProgress = "uploadProgress" extends keyof Channels ? true : never;
     expectTypeOf<HasUploadProgress>().toEqualTypeOf<never>();
-    expect(
-      Object.prototype.hasOwnProperty.call(
-        DATASOURCES_CHANNELS,
-        "uploadProgress",
-      ),
-    ).toBe(false);
+    expect(Object.prototype.hasOwnProperty.call(DATASOURCES_CHANNELS, "uploadProgress")).toBe(
+      false,
+    );
   });
 
   it("pickFilesToUpload: empty-object request, { filePaths, canceled } response", () => {
@@ -236,9 +223,7 @@ describe("ipc-contracts datasources request/response pairs", () => {
     expect(picked.filePaths).toHaveLength(2);
     expect(dismissed.canceled).toBe(true);
 
-    expectTypeOf<DatasourcesPickFilesRequest>().toEqualTypeOf<
-      Record<string, never>
-    >();
+    expectTypeOf<DatasourcesPickFilesRequest>().toEqualTypeOf<Record<string, never>>();
     expectTypeOf<DatasourcesPickFilesResponse>().toEqualTypeOf<{
       filePaths: readonly string[];
       canceled: boolean;
@@ -266,60 +251,40 @@ describe("ipc-contracts datasources channel names", () => {
     expect(DATASOURCES_CHANNELS.add).toBe("datasources:add");
     expect(DATASOURCES_CHANNELS.remove).toBe("datasources:remove");
     expect(DATASOURCES_CHANNELS.action).toBe("datasources:action");
-    expect(DATASOURCES_CHANNELS.pickFilesToUpload).toBe(
-      "datasources:pick-files-to-upload",
-    );
+    expect(DATASOURCES_CHANNELS.pickFilesToUpload).toBe("datasources:pick-files-to-upload");
     expect(Object.keys(DATASOURCES_CHANNELS).sort()).toEqual(
-      [
-        "action",
-        "add",
-        "list",
-        "pickFilesToUpload",
-        "remove",
-      ].sort(),
+      ["action", "add", "list", "pickFilesToUpload", "remove"].sort(),
     );
     // Removed members MUST NOT reappear on the channel surface.
-    for (const removed of [
-      "upload",
-      "startConsent",
-      "cancelConsent",
-      "uploadProgress",
-      "event",
-    ]) {
-      expect(
-        Object.prototype.hasOwnProperty.call(DATASOURCES_CHANNELS, removed),
-      ).toBe(false);
+    for (const removed of ["upload", "startConsent", "cancelConsent", "uploadProgress", "event"]) {
+      expect(Object.prototype.hasOwnProperty.call(DATASOURCES_CHANNELS, removed)).toBe(false);
     }
   });
 
   it("DATASOURCES_CHANNELS key set (type-level) excludes 'upload', 'startConsent', 'cancelConsent', 'uploadProgress', 'event'", () => {
     // Type-level guard: removed keys must NOT be assignable to the key union.
-    type HasUpload = "upload" extends keyof typeof DATASOURCES_CHANNELS
-      ? true
-      : never;
+    type HasUpload = "upload" extends keyof typeof DATASOURCES_CHANNELS ? true : never;
     expectTypeOf<HasUpload>().toEqualTypeOf<never>();
 
-    type HasEvent = "event" extends keyof typeof DATASOURCES_CHANNELS
-      ? true
-      : never;
+    type HasEvent = "event" extends keyof typeof DATASOURCES_CHANNELS ? true : never;
     expectTypeOf<HasEvent>().toEqualTypeOf<never>();
 
-    type HasStartConsent =
-      "startConsent" extends keyof typeof DATASOURCES_CHANNELS ? true : never;
+    type HasStartConsent = "startConsent" extends keyof typeof DATASOURCES_CHANNELS ? true : never;
     expectTypeOf<HasStartConsent>().toEqualTypeOf<never>();
 
-    type HasCancelConsent =
-      "cancelConsent" extends keyof typeof DATASOURCES_CHANNELS ? true : never;
+    type HasCancelConsent = "cancelConsent" extends keyof typeof DATASOURCES_CHANNELS
+      ? true
+      : never;
     expectTypeOf<HasCancelConsent>().toEqualTypeOf<never>();
 
-    type HasUploadProgress =
-      "uploadProgress" extends keyof typeof DATASOURCES_CHANNELS ? true : never;
+    type HasUploadProgress = "uploadProgress" extends keyof typeof DATASOURCES_CHANNELS
+      ? true
+      : never;
     expectTypeOf<HasUploadProgress>().toEqualTypeOf<never>();
 
-    type HasPickFilesToUpload =
-      "pickFilesToUpload" extends keyof typeof DATASOURCES_CHANNELS
-        ? true
-        : never;
+    type HasPickFilesToUpload = "pickFilesToUpload" extends keyof typeof DATASOURCES_CHANNELS
+      ? true
+      : never;
     expectTypeOf<HasPickFilesToUpload>().toEqualTypeOf<true>();
   });
 });
@@ -340,9 +305,7 @@ describe("ipc-contracts datasources channel names", () => {
 
 describe("ipc-contracts DatasourceSummary.errorKind (task 2.4)", () => {
   it("errorKind is a required field typed as DatasourceErrorTag | null", () => {
-    expectTypeOf<DatasourceSummary["errorKind"]>().toEqualTypeOf<
-      DatasourceErrorTag | null
-    >();
+    expectTypeOf<DatasourceSummary["errorKind"]>().toEqualTypeOf<DatasourceErrorTag | null>();
     // Required: key must be present in the resolved type.
     type Keys = keyof DatasourceSummary;
     expectTypeOf<"errorKind" extends Keys ? true : false>().toEqualTypeOf<true>();
@@ -350,9 +313,7 @@ describe("ipc-contracts DatasourceSummary.errorKind (task 2.4)", () => {
 
   it("ErroredDatasourceSummary narrows errorKind to non-null DatasourceErrorTag", () => {
     expectTypeOf<ErroredDatasourceSummary["status"]>().toEqualTypeOf<"error">();
-    expectTypeOf<ErroredDatasourceSummary["errorKind"]>().toEqualTypeOf<
-      DatasourceErrorTag
-    >();
+    expectTypeOf<ErroredDatasourceSummary["errorKind"]>().toEqualTypeOf<DatasourceErrorTag>();
     // Narrowed variant is assignable back to the base summary (structural
     // compatibility is the whole point — the renderer can hand an
     // `ErroredDatasourceSummary` to any code that expects `DatasourceSummary`).

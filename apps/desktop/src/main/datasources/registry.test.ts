@@ -75,9 +75,7 @@ describe("DatasourceRegistry (Phase 9b)", () => {
     });
     const after = Date.now();
     const row = db
-      .prepare(
-        "SELECT created_at, updated_at FROM datasources WHERE id = ?",
-      )
+      .prepare("SELECT created_at, updated_at FROM datasources WHERE id = ?")
       .get("ds-1") as { created_at: number; updated_at: number };
     expect(row.created_at).toBeGreaterThanOrEqual(before);
     expect(row.created_at).toBeLessThanOrEqual(after);
@@ -121,9 +119,10 @@ describe("DatasourceRegistry (Phase 9b)", () => {
     expect(summary.status).toBe("paused");
 
     // But the status column retains its pre-pause value.
-    const row = db
-      .prepare("SELECT status, paused FROM datasources WHERE id = ?")
-      .get("ds-1") as { status: string; paused: number };
+    const row = db.prepare("SELECT status, paused FROM datasources WHERE id = ?").get("ds-1") as {
+      status: string;
+      paused: number;
+    };
     expect(row.status).toBe("connected");
     expect(row.paused).toBe(1);
   });
@@ -159,9 +158,7 @@ describe("DatasourceRegistry (Phase 9b)", () => {
     registry.setStatus("ds-1", "error", "auth token expired");
 
     const row = db
-      .prepare(
-        "SELECT status, error_reason, paused FROM datasources WHERE id = ?",
-      )
+      .prepare("SELECT status, error_reason, paused FROM datasources WHERE id = ?")
       .get("ds-1") as {
       status: string;
       error_reason: string;
@@ -184,9 +181,9 @@ describe("DatasourceRegistry (Phase 9b)", () => {
       errorKind: null,
     });
     registry.setStatus("ds-1", "connected");
-    const row = db
-      .prepare("SELECT error_reason FROM datasources WHERE id = ?")
-      .get("ds-1") as { error_reason: string | null };
+    const row = db.prepare("SELECT error_reason FROM datasources WHERE id = ?").get("ds-1") as {
+      error_reason: string | null;
+    };
     expect(row.error_reason).toBeNull();
   });
 

@@ -30,10 +30,7 @@
 import { createHash } from "node:crypto";
 import { createReadStream } from "node:fs";
 
-import type {
-  HashComputer,
-  IntegrityAlgo,
-} from "../commands/files-download.js";
+import type { HashComputer, IntegrityAlgo } from "../commands/files-download.js";
 
 /**
  * Default `HashComputer` implementation. Streams the file at `path`

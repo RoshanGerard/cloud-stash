@@ -8,15 +8,7 @@
 // `{ schemaVersion: 1, providers: {}, downloadHistory }` write would WIPE the
 // secrets because `sync:set-config` overwrites config.json wholesale.
 
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-  type Mock,
-} from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from "vitest";
 
 import {
   DOWNLOAD_HISTORY_DEFAULT,

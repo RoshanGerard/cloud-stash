@@ -27,10 +27,7 @@ import { buildCommandHandlers } from "../commands/handlers.js";
 import type { CommandHandlers } from "../ipc/server.js";
 import { applyMigrations } from "../db/migrations.js";
 import { createEventBus, type EventBus } from "../events/event-bus.js";
-import {
-  createDownloadRegistry,
-  type DownloadRegistry,
-} from "../downloads/registry.js";
+import { createDownloadRegistry, type DownloadRegistry } from "../downloads/registry.js";
 
 const ctx = {
   connection: { id: 1, closed: false, sendEvent: () => undefined },
@@ -134,9 +131,7 @@ describe("files:download conflict gate — integration through buildCommandHandl
     await fsp.writeFile(toPath, "ORIGINAL CONTENT");
 
     const handler = handlers["files:download"];
-    expect(handler, "files:download must be wired into the handler map").toBeTypeOf(
-      "function",
-    );
+    expect(handler, "files:download must be wired into the handler map").toBeTypeOf("function");
 
     const res = await handler!(
       { datasourceId: "ds-1", path: SOURCE_PATH, toPath, conflictPolicy: "fail" },

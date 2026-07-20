@@ -38,9 +38,7 @@ describe("sync-service downloads:list-leftover command contract", () => {
   });
 
   it("downloads:list-leftover params are empty (Record<string, never>)", () => {
-    expectTypeOf<CommandParams<"downloads:list-leftover">>().toEqualTypeOf<
-      Record<string, never>
-    >();
+    expectTypeOf<CommandParams<"downloads:list-leftover">>().toEqualTypeOf<Record<string, never>>();
   });
 
   it("downloads:list-leftover result is { entries: readonly LeftoverEntry[] }", () => {
@@ -50,15 +48,11 @@ describe("sync-service downloads:list-leftover command contract", () => {
   });
 
   it("downloads:list-leftover error carries the FilesCommandErrorShape", () => {
-    expectTypeOf<
-      CommandError<"downloads:list-leftover">
-    >().toEqualTypeOf<FilesCommandErrorShape>();
+    expectTypeOf<CommandError<"downloads:list-leftover">>().toEqualTypeOf<FilesCommandErrorShape>();
   });
 
   it("DownloadsListLeftoverRequest and DownloadsListLeftoverResponse alias the envelope shape", () => {
-    expectTypeOf<DownloadsListLeftoverRequest>().toEqualTypeOf<
-      Record<string, never>
-    >();
+    expectTypeOf<DownloadsListLeftoverRequest>().toEqualTypeOf<Record<string, never>>();
 
     type ResponseOk = Extract<DownloadsListLeftoverResponse, { ok: true }>;
     type ResponseErr = Extract<DownloadsListLeftoverResponse, { ok: false }>;
@@ -89,9 +83,7 @@ describe("LeftoverEntry shape", () => {
 
   it("failureTag / failureMessage / endedAt are nullable stored row values", () => {
     expectTypeOf<LeftoverEntry["failureTag"]>().toEqualTypeOf<string | null>();
-    expectTypeOf<LeftoverEntry["failureMessage"]>().toEqualTypeOf<
-      string | null
-    >();
+    expectTypeOf<LeftoverEntry["failureMessage"]>().toEqualTypeOf<string | null>();
     expectTypeOf<LeftoverEntry["endedAt"]>().toEqualTypeOf<number | null>();
   });
 });

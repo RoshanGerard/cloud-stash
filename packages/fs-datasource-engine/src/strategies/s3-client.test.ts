@@ -30,10 +30,7 @@ import {
 import { mockClient } from "aws-sdk-client-mock";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import type {
-  CredentialsFormIntent,
-  StoredCredentials,
-} from "@cloudstash/ipc-contracts";
+import type { CredentialsFormIntent, StoredCredentials } from "@cloudstash/ipc-contracts";
 import { DatasourceError, DatasourceErrorTag, providers } from "@cloudstash/ipc-contracts";
 
 import type { BaseClientContext, CredentialStore } from "../base-client.js";
@@ -63,9 +60,7 @@ function makeCreds(
         secretAccessKey: overrides.secretAccessKey ?? "SK/fake",
         region: overrides.region ?? "us-east-1",
         bucket: overrides.bucket ?? "test-bucket",
-        ...(overrides.sessionToken
-          ? { sessionToken: overrides.sessionToken }
-          : {}),
+        ...(overrides.sessionToken ? { sessionToken: overrides.sessionToken } : {}),
       },
     },
     createdAt: 0,
@@ -247,10 +242,7 @@ describe("S3Client — listDirectory", () => {
       IsTruncated: false,
     });
     const { client } = makeHarness();
-    await client.listDirectory(
-      { kind: "path", path: "/photos" },
-      { pageSize: 5000 },
-    );
+    await client.listDirectory({ kind: "path", path: "/photos" }, { pageSize: 5000 });
 
     const input = s3Mock.commandCalls(ListObjectsV2Command)[0]!.args[0].input;
     expect(input.MaxKeys).toBe(1000);
@@ -263,10 +255,7 @@ describe("S3Client — listDirectory", () => {
       IsTruncated: false,
     });
     const { client } = makeHarness();
-    await client.listDirectory(
-      { kind: "path", path: "/photos" },
-      { pageSize: 250 },
-    );
+    await client.listDirectory({ kind: "path", path: "/photos" }, { pageSize: 250 });
 
     const input = s3Mock.commandCalls(ListObjectsV2Command)[0]!.args[0].input;
     expect(input.MaxKeys).toBe(250);
@@ -312,11 +301,8 @@ describe("S3Client — getMetadata", () => {
     s3Mock.on(HeadObjectCommand).rejects(err);
 
     const { client } = makeHarness();
-    await expect(
-      client.getMetadata({ kind: "path", path: "/nope.txt" }),
-    ).rejects.toSatisfy(
-      (e: unknown) =>
-        e instanceof DatasourceError && e.tag === DatasourceErrorTag.NotFound,
+    await expect(client.getMetadata({ kind: "path", path: "/nope.txt" })).rejects.toSatisfy(
+      (e: unknown) => e instanceof DatasourceError && e.tag === DatasourceErrorTag.NotFound,
     );
   });
 });
@@ -429,17 +415,14 @@ describe("S3Client — authenticate", () => {
         bucket: "x",
       }),
     ).rejects.toSatisfy(
-      (e: unknown) =>
-        e instanceof DatasourceError && e.tag === DatasourceErrorTag.AuthRevoked,
+      (e: unknown) => e instanceof DatasourceError && e.tag === DatasourceErrorTag.AuthRevoked,
     );
   });
 
   it("submit with missing required field rejects with provider-error", async () => {
     const { client } = makeHarness();
     const intent = (await client.authenticate()) as CredentialsFormIntent;
-    await expect(
-      intent.submit({ accessKeyId: "AK" }),
-    ).rejects.toBeInstanceOf(DatasourceError);
+    await expect(intent.submit({ accessKeyId: "AK" })).rejects.toBeInstanceOf(DatasourceError);
   });
 });
 
@@ -456,8 +439,7 @@ describe("S3Client — refreshToken", () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const refreshImpl = (client as any).refreshTokenImpl.bind(client);
     await expect(refreshImpl()).rejects.toSatisfy(
-      (e: unknown) =>
-        e instanceof DatasourceError && e.tag === DatasourceErrorTag.AuthRevoked,
+      (e: unknown) => e instanceof DatasourceError && e.tag === DatasourceErrorTag.AuthRevoked,
     );
   });
 });
@@ -477,28 +459,22 @@ describe("S3Client — normalizeError taxonomy", () => {
     expect(normalize(client, { name: "NoSuchKey", $metadata: { httpStatusCode: 404 } }).tag).toBe(
       "not-found",
     );
-    expect(normalize(client, { $metadata: { httpStatusCode: 404 } }).tag).toBe(
-      "not-found",
-    );
+    expect(normalize(client, { $metadata: { httpStatusCode: 404 } }).tag).toBe("not-found");
   });
 
   it("403 / AccessDenied / InvalidAccessKeyId / SignatureDoesNotMatch → auth-revoked", () => {
     const { client } = makeHarness();
-    expect(normalize(client, { name: "AccessDenied", $metadata: { httpStatusCode: 403 } }).tag).toBe(
-      "auth-revoked",
-    );
+    expect(
+      normalize(client, { name: "AccessDenied", $metadata: { httpStatusCode: 403 } }).tag,
+    ).toBe("auth-revoked");
     expect(normalize(client, { name: "InvalidAccessKeyId" }).tag).toBe("auth-revoked");
-    expect(normalize(client, { name: "SignatureDoesNotMatch" }).tag).toBe(
-      "auth-revoked",
-    );
+    expect(normalize(client, { name: "SignatureDoesNotMatch" }).tag).toBe("auth-revoked");
   });
 
   it("SlowDown / TooManyRequests / 503 → rate-limited, carries retryAfterMs when Retry-After header present", () => {
     const { client } = makeHarness();
     expect(normalize(client, { name: "SlowDown" }).tag).toBe("rate-limited");
-    expect(
-      normalize(client, { name: "TooManyRequests" }).tag,
-    ).toBe("rate-limited");
+    expect(normalize(client, { name: "TooManyRequests" }).tag).toBe("rate-limited");
     const with503 = normalize(client, {
       $metadata: {
         httpStatusCode: 503,
@@ -540,8 +516,7 @@ describe("S3Client — getQuota", () => {
   it("throws Unsupported (capability quota=false short-circuits in the base)", async () => {
     const { client } = makeHarness();
     await expect(client.getQuota()).rejects.toSatisfy(
-      (e: unknown) =>
-        e instanceof DatasourceError && e.tag === DatasourceErrorTag.Unsupported,
+      (e: unknown) => e instanceof DatasourceError && e.tag === DatasourceErrorTag.Unsupported,
     );
   });
 });
@@ -682,11 +657,7 @@ describe("S3Client — doRenameImpl introspection (file vs virtual-folder vs not
     });
     s3Mock.on(DeleteObjectCommand).resolves({});
     const { client } = makeHarness();
-    const entry = await client.rename(
-      { kind: "path", path: "/old.txt" },
-      "new.txt",
-      "fail",
-    );
+    const entry = await client.rename({ kind: "path", path: "/old.txt" }, "new.txt", "fail");
     expect(entry.kind).toBe("file");
     expect(entry.handle).toBe("new.txt");
     expect(entry.path).toBe("/new.txt");
@@ -740,11 +711,7 @@ describe("S3Client — doRenameImpl file-rename CopyObject + DeleteObject", () =
     });
     s3Mock.on(DeleteObjectCommand).resolves({});
     const { client } = makeHarness();
-    const entry = await client.rename(
-      { kind: "path", path: "/docs/old.pdf" },
-      "new.pdf",
-      "fail",
-    );
+    const entry = await client.rename({ kind: "path", path: "/docs/old.pdf" }, "new.pdf", "fail");
     expect(entry.handle).toBe("docs/new.pdf");
     expect(entry.path).toBe("/docs/new.pdf");
     expect(entry.name).toBe("new.pdf");
@@ -783,11 +750,7 @@ describe("S3Client — doRenameImpl orphan-tolerance on DeleteObject failure", (
     // DeleteObject fails after the copy lands (orphan scenario).
     s3Mock.on(DeleteObjectCommand).rejects(new Error("delete-blew-up"));
     const { client } = makeHarness();
-    const entry = await client.rename(
-      { kind: "path", path: "/old.txt" },
-      "new.txt",
-      "fail",
-    );
+    const entry = await client.rename({ kind: "path", path: "/old.txt" }, "new.txt", "fail");
     expect(entry.handle).toBe("new.txt");
     expect(entry.kind).toBe("file");
     // The failed DeleteObject does not surface to the caller; the rename
@@ -809,11 +772,7 @@ describe("S3Client — doRenameImpl folder refusal (no CopyObject / DeleteObject
     const { client } = makeHarness();
     let caught: unknown;
     try {
-      await client.rename(
-        { kind: "path", path: "/albums" },
-        "newAlbums",
-        "fail",
-      );
+      await client.rename({ kind: "path", path: "/albums" }, "newAlbums", "fail");
     } catch (e) {
       caught = e;
     }
@@ -850,9 +809,7 @@ describe("S3Client — doRenameImpl sibling-collision pre-check on `fail`", () =
     expect(caught).toBeInstanceOf(DatasourceError);
     const err = caught as DatasourceError<"amazon-s3">;
     expect(err.tag).toBe("conflict");
-    expect((err.raw as { existingPath?: string }).existingPath).toBe(
-      "/bar.txt",
-    );
+    expect((err.raw as { existingPath?: string }).existingPath).toBe("/bar.txt");
     expect(s3Mock.commandCalls(CopyObjectCommand)).toHaveLength(0);
     expect(s3Mock.commandCalls(DeleteObjectCommand)).toHaveLength(0);
   });
@@ -868,11 +825,7 @@ describe("S3Client — doRenameImpl sibling-collision pre-check on `fail`", () =
     });
     s3Mock.on(DeleteObjectCommand).resolves({});
     const { client } = makeHarness();
-    const entry = await client.rename(
-      { kind: "path", path: "/foo.txt" },
-      "bar.txt",
-      "fail",
-    );
+    const entry = await client.rename({ kind: "path", path: "/foo.txt" }, "bar.txt", "fail");
     expect(entry.handle).toBe("bar.txt");
     expect(s3Mock.commandCalls(CopyObjectCommand)).toHaveLength(1);
   });
@@ -898,11 +851,7 @@ describe("S3Client — doRenameImpl overwrite on file (S3 natural overwrite via 
     });
     s3Mock.on(DeleteObjectCommand).resolves({});
     const { client } = makeHarness();
-    const entry = await client.rename(
-      { kind: "path", path: "/old.txt" },
-      "new.txt",
-      "overwrite",
-    );
+    const entry = await client.rename({ kind: "path", path: "/old.txt" }, "new.txt", "overwrite");
     expect(entry.handle).toBe("new.txt");
     // Exactly one CopyObject; exactly one DeleteObject (for the original).
     expect(s3Mock.commandCalls(CopyObjectCommand)).toHaveLength(1);
@@ -925,11 +874,7 @@ describe("S3Client — doRenameImpl directory-overwrite refusal", () => {
     const { client } = makeHarness();
     let caught: unknown;
     try {
-      await client.rename(
-        { kind: "path", path: "/dir" },
-        "newDir",
-        "overwrite",
-      );
+      await client.rename({ kind: "path", path: "/dir" }, "newDir", "overwrite");
     } catch (e) {
       caught = e;
     }
@@ -962,10 +907,7 @@ describe("S3Client — doDownloadFileImpl (GetObject stream + Range + abortSigna
     });
     const onProgress = vi.fn<(loaded: number, total: number | null) => void>();
     const { client } = makeHarness();
-    const result = await client.downloadFile(
-      { kind: "path", path: "/hello.txt" },
-      { onProgress },
-    );
+    const result = await client.downloadFile({ kind: "path", path: "/hello.txt" }, { onProgress });
     expect(result.contentLength).toBe(fixture.length);
     expect(result.contentRange).toBeUndefined();
     const chunks: Buffer[] = [];
@@ -1041,9 +983,7 @@ describe("S3Client — doDownloadFileImpl AbortSignal forwarding", () => {
     controller.signal.addEventListener(
       "abort",
       () => {
-        body.destroy(
-          Object.assign(new Error("aborted"), { name: "AbortError" }),
-        );
+        body.destroy(Object.assign(new Error("aborted"), { name: "AbortError" }));
       },
       { once: true },
     );
@@ -1184,11 +1124,7 @@ describe("S3Client — doRenameImpl keep-both suffix retry", () => {
     });
     s3Mock.on(DeleteObjectCommand).resolves({});
     const { client } = makeHarness();
-    const entry = await client.rename(
-      { kind: "path", path: "/foo.pdf" },
-      "bar.pdf",
-      "keep-both",
-    );
+    const entry = await client.rename({ kind: "path", path: "/foo.pdf" }, "bar.pdf", "keep-both");
     expect(entry.name).toBe("bar-3.pdf");
     expect(entry.handle).toBe("bar-3.pdf");
     // CopyObject issued exactly once with the chosen name.
@@ -1212,11 +1148,7 @@ describe("S3Client — doRenameImpl keep-both suffix retry", () => {
     const { client } = makeHarness();
     let caught: unknown;
     try {
-      await client.rename(
-        { kind: "path", path: "/foo.pdf" },
-        "bar.pdf",
-        "keep-both",
-      );
+      await client.rename({ kind: "path", path: "/foo.pdf" }, "bar.pdf", "keep-both");
     } catch (e) {
       caught = e;
     }

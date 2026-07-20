@@ -1,12 +1,6 @@
 import { describe, expectTypeOf, it } from "vitest";
 
-import type {
-  ErrorShape,
-  EventFrame,
-  Frame,
-  RequestFrame,
-  ResponseFrame,
-} from "./frames.js";
+import type { ErrorShape, EventFrame, Frame, RequestFrame, ResponseFrame } from "./frames.js";
 
 describe("sync-service frames", () => {
   it("RequestFrame has the documented shape", () => {
@@ -44,9 +38,7 @@ describe("sync-service frames", () => {
   });
 
   it("Frame is the union of the three frame kinds discriminated by `kind`", () => {
-    expectTypeOf<Frame>().toEqualTypeOf<
-      RequestFrame | ResponseFrame | EventFrame
-    >();
+    expectTypeOf<Frame>().toEqualTypeOf<RequestFrame | ResponseFrame | EventFrame>();
   });
 
   it("ErrorShape has the documented shape", () => {

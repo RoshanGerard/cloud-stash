@@ -13,12 +13,8 @@
 import { describe, expect, it, vi } from "vitest";
 
 import type { DatasourceSummary } from "@cloudstash/ipc-contracts";
-import type {
-  SyncAuthenticateCompleteRequest,
-} from "@cloudstash/ipc-contracts/sync-service-desktop";
-import type {
-  SyncAuthenticateCompleteError,
-} from "@cloudstash/ipc-contracts/sync-service";
+import type { SyncAuthenticateCompleteRequest } from "@cloudstash/ipc-contracts/sync-service-desktop";
+import type { SyncAuthenticateCompleteError } from "@cloudstash/ipc-contracts/sync-service";
 
 import type { SyncClient } from "../../../sync/client.js";
 import { SyncCommandError } from "../../../sync/client.js";
@@ -61,9 +57,7 @@ describe("handleSyncAuthenticateComplete", () => {
         },
       },
     };
-    const { client, authenticateComplete } = makeFakeClient(
-      async () => wireResult,
-    );
+    const { client, authenticateComplete } = makeFakeClient(async () => wireResult);
 
     const res = await handleSyncAuthenticateComplete(req, client);
 

@@ -52,9 +52,7 @@ const ISSUERS = [ISSUER, "https://login.microsoftonline.com/common/v2.0"];
 const NOW_MS = 1_700_000_000_000;
 const NOW_S = Math.floor(NOW_MS / 1000);
 
-function validPayload(
-  overrides: Record<string, unknown> = {},
-): Record<string, unknown> {
+function validPayload(overrides: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     sub: "1234567890",
     email: "alice@example.com",
@@ -82,9 +80,7 @@ describe("parseIdToken — valid token", () => {
   });
 
   it("accepts aud when it is an array containing clientId", () => {
-    const token = makeJwt(
-      validPayload({ aud: ["someone-else", CLIENT_ID, "third"] }),
-    );
+    const token = makeJwt(validPayload({ aud: ["someone-else", CLIENT_ID, "third"] }));
     const identity = parseIdToken(token, {
       clientId: CLIENT_ID,
       issuers: ISSUERS,
@@ -93,7 +89,7 @@ describe("parseIdToken — valid token", () => {
     expect(identity.sub).toBe("1234567890");
   });
 
-  it("defaults email to \"\" when the claim is absent (email is display-only)", () => {
+  it('defaults email to "" when the claim is absent (email is display-only)', () => {
     const payload = validPayload();
     delete payload.email;
     const token = makeJwt(payload);

@@ -50,8 +50,7 @@ function rowToSummary(row: DatasourceRow): DatasourceSummary {
   // Effective status: when paused=1, report "paused" to the UI regardless
   // of the underlying column. The underlying column is preserved so resume
   // can restore "connected" / "syncing" / "error" verbatim.
-  const effectiveStatus: DatasourceStatus =
-    row.paused === 1 ? "paused" : row.status;
+  const effectiveStatus: DatasourceStatus = row.paused === 1 ? "paused" : row.status;
   const summary: DatasourceSummary = {
     id: row.id,
     displayName: row.display_name,
@@ -98,17 +97,15 @@ export class DatasourceRegistry {
     // a safe upsert; the bridge subscriber (§16) can ignore the
     // distinction between first-create and re-emit without orphaning state.
     this.insertStmt = db.prepare(
-      "INSERT INTO datasources (id, provider_id, display_name, item_count, last_sync_at, status, error_reason, error_kind, paused, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?) "
-        + "ON CONFLICT(id) DO UPDATE SET "
-        + "display_name = excluded.display_name, "
-        + "status = excluded.status, "
-        + "error_reason = excluded.error_reason, "
-        + "error_kind = excluded.error_kind, "
-        + "updated_at = excluded.updated_at",
+      "INSERT INTO datasources (id, provider_id, display_name, item_count, last_sync_at, status, error_reason, error_kind, paused, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?) " +
+        "ON CONFLICT(id) DO UPDATE SET " +
+        "display_name = excluded.display_name, " +
+        "status = excluded.status, " +
+        "error_reason = excluded.error_reason, " +
+        "error_kind = excluded.error_kind, " +
+        "updated_at = excluded.updated_at",
     );
-    this.removeRowStmt = db.prepare(
-      "DELETE FROM datasources WHERE id = ?",
-    );
+    this.removeRowStmt = db.prepare("DELETE FROM datasources WHERE id = ?");
     this.setPausedStmt = db.prepare(
       "UPDATE datasources SET paused = ?, updated_at = ? WHERE id = ?",
     );
@@ -118,9 +115,7 @@ export class DatasourceRegistry {
     this.touchLastSyncStmt = db.prepare(
       "UPDATE datasources SET last_sync_at = ?, updated_at = ? WHERE id = ?",
     );
-    this.getProviderStmt = db.prepare(
-      "SELECT provider_id FROM datasources WHERE id = ?",
-    );
+    this.getProviderStmt = db.prepare("SELECT provider_id FROM datasources WHERE id = ?");
   }
 
   list(): DatasourceSummary[] {
@@ -189,13 +184,7 @@ export class DatasourceRegistry {
     errorReason?: string | null,
     errorKind?: DatasourceErrorTag | null,
   ): void {
-    this.setStatusStmt.run(
-      status,
-      errorReason ?? null,
-      errorKind ?? null,
-      Date.now(),
-      id,
-    );
+    this.setStatusStmt.run(status, errorReason ?? null, errorKind ?? null, Date.now(), id);
   }
 
   /**
@@ -213,9 +202,7 @@ export class DatasourceRegistry {
    * `ClientFactory.create(providerId, ...)` use this as the first step.
    */
   getProviderId(id: string): string | null {
-    const row = this.getProviderStmt.get(id) as
-      | { provider_id: string }
-      | undefined;
+    const row = this.getProviderStmt.get(id) as { provider_id: string } | undefined;
     return row?.provider_id ?? null;
   }
 }

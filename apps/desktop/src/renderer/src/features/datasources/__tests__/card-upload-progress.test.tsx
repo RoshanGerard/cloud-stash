@@ -58,11 +58,7 @@ vi.mock("next/navigation", () => ({
 
 import { DatasourceCard } from "../card";
 import { DatasourcesProvider } from "../store";
-import {
-  ensureResizeObserver,
-  installApiMock,
-  type SyncHarness,
-} from "./helpers/sync-harness";
+import { ensureResizeObserver, installApiMock, type SyncHarness } from "./helpers/sync-harness";
 
 let syncHarness: SyncHarness;
 
@@ -70,9 +66,7 @@ function renderWithProvider(ui: ReactNode) {
   return render(<DatasourcesProvider>{ui}</DatasourcesProvider>);
 }
 
-function buildSummary(
-  overrides: Partial<DatasourceSummary> = {},
-): DatasourceSummary {
+function buildSummary(overrides: Partial<DatasourceSummary> = {}): DatasourceSummary {
   // Default datasource id for this file is `ds-2` (per task 10.3 wording),
   // distinguishing it from card-sync-state.test.tsx's `ds-1` so any cross-
   // test bleed via shared module state would surface as a clear mismatch.
@@ -148,9 +142,7 @@ describe("DatasourceCard — upload-progress bar (Decision 13)", () => {
     syncHarness.emit({ kind: "sync-state-seed", payload: seed });
 
     // No bar yet — no upload jobs in flight.
-    expect(
-      screen.queryByTestId("datasource-upload-progress"),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByTestId("datasource-upload-progress")).not.toBeInTheDocument();
 
     // Enqueue + start the upload job. After job-started the bar must be
     // present even though no progress tick has arrived yet (the design
@@ -159,9 +151,7 @@ describe("DatasourceCard — upload-progress bar (Decision 13)", () => {
     syncHarness.emit({ kind: "job-started", payload: startedPayload() });
 
     await waitFor(() => {
-      expect(
-        screen.getByTestId("datasource-upload-progress"),
-      ).toBeInTheDocument();
+      expect(screen.getByTestId("datasource-upload-progress")).toBeInTheDocument();
     });
   });
 
@@ -181,9 +171,7 @@ describe("DatasourceCard — upload-progress bar (Decision 13)", () => {
     syncHarness.emit({ kind: "job-started", payload: startedPayload() });
 
     await waitFor(() => {
-      expect(
-        screen.getByTestId("datasource-upload-progress"),
-      ).toBeInTheDocument();
+      expect(screen.getByTestId("datasource-upload-progress")).toBeInTheDocument();
     });
 
     // Radix Progress sets `aria-valuenow` on the role="progressbar" root —
@@ -224,9 +212,7 @@ describe("DatasourceCard — upload-progress bar (Decision 13)", () => {
     });
 
     await waitFor(() => {
-      expect(
-        screen.getByTestId("datasource-upload-progress"),
-      ).toBeInTheDocument();
+      expect(screen.getByTestId("datasource-upload-progress")).toBeInTheDocument();
     });
 
     // Fire job-completed — the job leaves jobsByDatasource per 10.2's
@@ -239,9 +225,7 @@ describe("DatasourceCard — upload-progress bar (Decision 13)", () => {
     });
 
     await waitFor(() => {
-      expect(
-        screen.queryByTestId("datasource-upload-progress"),
-      ).not.toBeInTheDocument();
+      expect(screen.queryByTestId("datasource-upload-progress")).not.toBeInTheDocument();
     });
   });
 
@@ -257,8 +241,7 @@ describe("DatasourceCard — upload-progress bar (Decision 13)", () => {
     // that upload-kind jobs do NOT contribute to the status precedence rule.
     function expectBadgeConnected() {
       const badge = screen.getByTestId("datasource-status");
-      const label =
-        badge.getAttribute("aria-label") ?? badge.textContent ?? "";
+      const label = badge.getAttribute("aria-label") ?? badge.textContent ?? "";
       expect(label.toLowerCase()).toMatch(/connected/);
       // No syncing dot — that cue is reserved for sync-kind in-flight jobs.
       expect(screen.queryByTestId("datasource-syncing-dot")).toBeNull();

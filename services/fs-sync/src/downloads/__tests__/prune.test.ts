@@ -39,9 +39,9 @@ function seed(
 
 function ids(db: Database.Database): string[] {
   return (
-    db
-      .prepare(`SELECT download_job_id FROM downloads ORDER BY download_job_id`)
-      .all() as Array<{ download_job_id: string }>
+    db.prepare(`SELECT download_job_id FROM downloads ORDER BY download_job_id`).all() as Array<{
+      download_job_id: string;
+    }>
   ).map((r) => r.download_job_id);
 }
 
@@ -58,9 +58,7 @@ function statFs(present: Record<string, number>): PruneFs {
       if (Object.prototype.hasOwnProperty.call(present, p)) {
         return { size: present[p]! };
       }
-      const err = new Error(
-        `ENOENT: no such file, stat '${p}'`,
-      ) as NodeJS.ErrnoException;
+      const err = new Error(`ENOENT: no such file, stat '${p}'`) as NodeJS.ErrnoException;
       err.code = "ENOENT";
       throw err;
     }),
@@ -88,11 +86,7 @@ describe("pruneDownloadHistory", () => {
     seed(db, "old-cancelled", "cancelled", NOW - 200 * DAY);
     seed(db, "live", "in-flight", null);
 
-    const deleted = await pruneDownloadHistory(
-      db,
-      { maxAgeMs: 90 * DAY },
-      statFs({}),
-    );
+    const deleted = await pruneDownloadHistory(db, { maxAgeMs: 90 * DAY }, statFs({}));
 
     expect(deleted).toBe(2);
     expect(ids(db)).toEqual(["live", "new-failed"]);
@@ -102,11 +96,7 @@ describe("pruneDownloadHistory", () => {
     seed(db, "exactly-at-cutoff", "completed", NOW - 90 * DAY);
     seed(db, "just-older", "completed", NOW - 90 * DAY - 1);
 
-    const deleted = await pruneDownloadHistory(
-      db,
-      { maxAgeMs: 90 * DAY },
-      statFs({}),
-    );
+    const deleted = await pruneDownloadHistory(db, { maxAgeMs: 90 * DAY }, statFs({}));
 
     expect(deleted).toBe(1);
     expect(ids(db)).toEqual(["exactly-at-cutoff"]);
@@ -127,17 +117,13 @@ describe("pruneDownloadHistory", () => {
     seed(db, "x", "cancelled", NOW - 100 * DAY);
     seed(db, "i", "interrupted", NOW - 100 * DAY);
 
-    expect(
-      await pruneDownloadHistory(db, { maxAgeMs: 90 * DAY }, statFs({})),
-    ).toBe(4);
+    expect(await pruneDownloadHistory(db, { maxAgeMs: 90 * DAY }, statFs({}))).toBe(4);
     expect(ids(db)).toEqual([]);
   });
 
   it("returns 0 when nothing matches", async () => {
     seed(db, "fresh", "completed", NOW - 1 * DAY);
-    expect(
-      await pruneDownloadHistory(db, { maxAgeMs: 90 * DAY }, statFs({})),
-    ).toBe(0);
+    expect(await pruneDownloadHistory(db, { maxAgeMs: 90 * DAY }, statFs({}))).toBe(0);
     expect(ids(db)).toEqual(["fresh"]);
   });
 
@@ -181,9 +167,7 @@ describe("pruneDownloadHistory", () => {
     seed(db, "err", "failed", NOW - 200 * DAY, "/disk/err");
     const fs: PruneFs = {
       stat: vi.fn(async () => {
-        const e = new Error(
-          "EACCES: permission denied",
-        ) as NodeJS.ErrnoException;
+        const e = new Error("EACCES: permission denied") as NodeJS.ErrnoException;
         e.code = "EACCES";
         throw e;
       }),

@@ -40,9 +40,7 @@ export class ServiceConfigMissingError extends Error {
   readonly path: string;
   readonly providerId: ProviderId;
   constructor(filePath: string, providerId: ProviderId, reason: string) {
-    super(
-      `OAuth app config missing for ${providerId} at ${filePath}: ${reason}`,
-    );
+    super(`OAuth app config missing for ${providerId} at ${filePath}: ${reason}`);
     this.name = "ServiceConfigMissingError";
     this.path = filePath;
     this.providerId = providerId;
@@ -72,10 +70,7 @@ export class ServiceConfigStore {
    * when the file is absent, unparseable, missing the requested provider, or
    * the entry has empty `clientId`/`clientSecret`.
    */
-  async getOAuthAppConfig(
-    providerId: ProviderId,
-    redirectUri: string,
-  ): Promise<OAuthAppConfig> {
+  async getOAuthAppConfig(providerId: ProviderId, redirectUri: string): Promise<OAuthAppConfig> {
     let config: ServiceConfig;
     try {
       config = await this.read();
@@ -112,18 +107,10 @@ export class ServiceConfigStore {
       );
     }
     if (entry.clientId === "") {
-      throw new ServiceConfigMissingError(
-        this.filePath,
-        providerId,
-        "clientId is empty",
-      );
+      throw new ServiceConfigMissingError(this.filePath, providerId, "clientId is empty");
     }
     if (entry.clientSecret === "") {
-      throw new ServiceConfigMissingError(
-        this.filePath,
-        providerId,
-        "clientSecret is empty",
-      );
+      throw new ServiceConfigMissingError(this.filePath, providerId, "clientSecret is empty");
     }
     return {
       clientId: entry.clientId,
@@ -160,19 +147,14 @@ export class ServiceConfigStore {
    */
   async setRaw(next: ServiceConfig): Promise<void> {
     if (next.schemaVersion !== 1) {
-      throw new Error(
-        `service config schemaVersion must be 1, got ${String(next.schemaVersion)}`,
-      );
+      throw new Error(`service config schemaVersion must be 1, got ${String(next.schemaVersion)}`);
     }
     // add-download-history-ui §2.3 — when present, `downloadHistory` MUST be a
     // valid retention policy (boolean `autoPrune`, `retentionDays` in
     // 30/90/180/365). Validate BEFORE any disk write so an out-of-contract
     // value leaves config.json untouched; the handler maps the throw to
     // `io-error`. An absent field stays valid (additive, optional).
-    if (
-      next.downloadHistory !== undefined &&
-      !isValidDownloadHistory(next.downloadHistory)
-    ) {
+    if (next.downloadHistory !== undefined && !isValidDownloadHistory(next.downloadHistory)) {
       throw new Error(
         "service config downloadHistory is invalid; autoPrune must be a boolean and retentionDays one of 30/90/180/365",
       );

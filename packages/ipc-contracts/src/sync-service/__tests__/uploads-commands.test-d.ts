@@ -52,9 +52,7 @@ describe("sync-service uploads:list-active command contract", () => {
   });
 
   it("uploads:list-active params are an empty object", () => {
-    expectTypeOf<
-      CommandParams<"uploads:list-active">
-    >().toEqualTypeOf<Record<string, never>>();
+    expectTypeOf<CommandParams<"uploads:list-active">>().toEqualTypeOf<Record<string, never>>();
   });
 
   it("UploadJob carries the documented fields", () => {
@@ -85,16 +83,12 @@ describe("sync-service uploads:list-active command contract", () => {
   });
 
   it("uploads:list-active error carries the FilesCommandErrorShape", () => {
-    expectTypeOf<
-      CommandError<"uploads:list-active">
-    >().toEqualTypeOf<FilesCommandErrorShape>();
+    expectTypeOf<CommandError<"uploads:list-active">>().toEqualTypeOf<FilesCommandErrorShape>();
   });
 
   it("UploadsListActiveRequest and UploadsListActiveResponse alias the envelope shape", () => {
     // Request alias is the params shape (empty object on the wire).
-    expectTypeOf<UploadsListActiveRequest>().toEqualTypeOf<
-      Record<string, never>
-    >();
+    expectTypeOf<UploadsListActiveRequest>().toEqualTypeOf<Record<string, never>>();
 
     // Response alias is the standard tagged envelope used across the
     // sync-service surface — `{ ok: true, value }` on success,
@@ -136,8 +130,6 @@ describe("sync-service sync:cancel-upload command contract", () => {
   });
 
   it("sync:cancel-upload error is ValidationErrorShape (mirrors sync:cancel-download)", () => {
-    expectTypeOf<
-      CommandError<"sync:cancel-upload">
-    >().toEqualTypeOf<ValidationErrorShape>();
+    expectTypeOf<CommandError<"sync:cancel-upload">>().toEqualTypeOf<ValidationErrorShape>();
   });
 });

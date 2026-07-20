@@ -185,7 +185,7 @@ ruleTester.run("no-raw-error-tag-literal", rule, {
     },
     // --- case arm scoped to a `.tag` discriminant (shared value → 2) ---
     {
-      code: "switch (e.tag) { case \"conflict\": break; }",
+      code: 'switch (e.tag) { case "conflict": break; }',
       errors: [
         {
           messageId: "raw",

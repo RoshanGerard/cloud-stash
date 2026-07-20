@@ -11,13 +11,7 @@
 //   downloads        PK download_job_id — durable download-lifecycle mirror
 //                    (memory-authoritative registry write-through; D6 v2)
 
-import {
-  index,
-  integer,
-  primaryKey,
-  sqliteTable,
-  text,
-} from "drizzle-orm/sqlite-core";
+import { index, integer, primaryKey, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 export const serviceMeta = sqliteTable("service_meta", {
   id: integer("id").primaryKey(),
@@ -36,14 +30,7 @@ export const jobs = sqliteTable("jobs", {
     enum: ["overwrite", "duplicate", "skip"],
   }).notNull(),
   status: text("status", {
-    enum: [
-      "queued",
-      "running",
-      "waiting-network",
-      "completed",
-      "failed",
-      "cancelled",
-    ],
+    enum: ["queued", "running", "waiting-network", "completed", "failed", "cancelled"],
   }).notNull(),
   attempt: integer("attempt").notNull().default(0),
   lastErrorTag: text("last_error_tag"),
@@ -103,13 +90,7 @@ export const downloads = sqliteTable(
     bytesDownloaded: integer("bytes_downloaded").notNull().default(0),
     contentLength: integer("content_length"),
     status: text("status", {
-      enum: [
-        "in-flight",
-        "completed",
-        "failed",
-        "cancelled",
-        "interrupted",
-      ],
+      enum: ["in-flight", "completed", "failed", "cancelled", "interrupted"],
     }).notNull(),
     failureTag: text("failure_tag"),
     failureMessage: text("failure_message"),

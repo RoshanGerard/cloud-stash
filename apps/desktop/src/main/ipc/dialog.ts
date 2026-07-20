@@ -53,9 +53,7 @@ export async function handleDialogShowSaveDialog(
   // Normalize "" → undefined so renderer-side `!filePath` checks behave
   // consistently across platforms.
   const filePath =
-    result.filePath !== undefined && result.filePath.length > 0
-      ? result.filePath
-      : undefined;
+    result.filePath !== undefined && result.filePath.length > 0 ? result.filePath : undefined;
   return {
     canceled: result.canceled,
     ...(filePath !== undefined ? { filePath } : {}),

@@ -130,10 +130,7 @@ export function WindowControls() {
         type="button"
         aria-label="Close"
         onClick={() => controls()?.close()}
-        className={cn(
-          CAP_BASE,
-          "hover:bg-destructive hover:text-destructive-foreground",
-        )}
+        className={cn(CAP_BASE, "hover:bg-destructive hover:text-destructive-foreground")}
       >
         <CloseGlyph />
       </button>
