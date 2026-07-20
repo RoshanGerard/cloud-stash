@@ -136,6 +136,14 @@ const WIRE_LITERAL_ALLOWLIST = new Set<string>([
   // there is no FilesErrorTag.NetworkError to migrate to. Left raw.
   'apps/desktop/src/renderer/src/features/file-explorer/__tests__/store.test.ts|||tag: "network-error",',
   'apps/desktop/src/renderer/src/features/file-explorer/__tests__/store.test.ts|||error: { tag: "network-error" as const, message: "boom", retryable: true },',
+  // Guard false-positive on a test *title* string, not a value reference: the
+  // `it(...)` description happens to contain the prose `tag: "conflict"`. The
+  // test BODY references the tag correctly via FilesErrorTag.Conflict. The
+  // repo-wide Prettier normalization rewrote the title from double-quoted-with-
+  // \"escapes\" to single-quoted (escape-minimization), un-escaping the inner
+  // quotes and newly exposing the substring to this line scanner. Same category
+  // as the `case "other"` entry above — a shared-word match, not a real literal.
+  "packages/ipc-contracts/src/__tests__/files.test-d.ts|||it('FilesErrorEnvelope optionally carries existingPath alongside tag: \"conflict\"', () => {",
 ]);
 
 const VAL = `(?:${TAG_VALUES.join("|")})`;
