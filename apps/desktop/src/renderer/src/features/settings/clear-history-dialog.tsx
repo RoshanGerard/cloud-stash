@@ -37,16 +37,22 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Icon } from "@/components/icon";
 
+import { DOWNLOAD_STATUS_LABELS } from "./download-status-labels";
+
 const DAY_MS = 86_400_000;
 
+// Order is this dialog's own (completed first — the most-cleared category);
+// the LABELS are shared with `LeftoverFilesDialog` so the two Settings dialogs
+// cannot name the same status differently (add-leftover-entry-status
+// Decision 6).
 const STATUS_OPTIONS: ReadonlyArray<{
   value: DownloadTerminalStatus;
   label: string;
 }> = [
-  { value: "completed", label: "Completed" },
-  { value: "failed", label: "Failed" },
-  { value: "cancelled", label: "Cancelled" },
-  { value: "interrupted", label: "Interrupted" },
+  { value: "completed", label: DOWNLOAD_STATUS_LABELS.completed },
+  { value: "failed", label: DOWNLOAD_STATUS_LABELS.failed },
+  { value: "cancelled", label: DOWNLOAD_STATUS_LABELS.cancelled },
+  { value: "interrupted", label: DOWNLOAD_STATUS_LABELS.interrupted },
 ];
 
 const AGE_OPTIONS: ReadonlyArray<{

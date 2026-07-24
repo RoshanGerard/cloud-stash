@@ -9,6 +9,13 @@
 // stat is NOT surfaced as an error envelope. Completed / in-flight rows are
 // excluded. Entries are ordered by `ended_at` descending. The filesystem
 // `stat` is injected so tests stay hermetic.
+//
+// `add-leftover-entry-status` adds `status` to the projection: the row's own
+// terminal disposition, which the query already filters on but never returned.
+// The tests below pin that each entry reports ITS OWN stored status (not a
+// constant, and not one inferred from `failure_tag`) — including for cancelled
+// / interrupted rows, which typically store neither a tag nor a message and so
+// are indistinguishable without it.
 
 import Database from "better-sqlite3";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -140,11 +147,59 @@ describe("downloads:list-leftover handler", () => {
         sourcePath: "/remote/x.bin",
         targetPath: "/dl/x.part",
         sizeOnDisk: 8080,
+        status: "failed",
         failureTag: "network",
         failureMessage: "boom",
         endedAt: 4242,
       },
     ]);
+  });
+
+  it("projects each row's OWN terminal status, not a constant", async () => {
+    seed(db, "job-fail", "failed", "/dl/fail.part", 3000);
+    seed(db, "job-cx", "cancelled", "/dl/cx.part", 2000);
+    seed(db, "job-int", "interrupted", "/dl/int.part", 1000);
+    const fs = fakeFs({
+      "/dl/fail.part": 1,
+      "/dl/cx.part": 2,
+      "/dl/int.part": 3,
+    });
+
+    const res = await makeListLeftoverHandler({ db, fs })({}, ctx());
+
+    expect(res.ok).toBe(true);
+    if (!res.ok) return;
+    expect(res.result.entries.map((e) => [e.downloadJobId, e.status])).toEqual([
+      ["job-fail", "failed"],
+      ["job-cx", "cancelled"],
+      ["job-int", "interrupted"],
+    ]);
+  });
+
+  it("carries status on a cancelled row with NULL failure_tag AND NULL failure_message", async () => {
+    // The bug this change fixes: a cancelled row records neither a tag nor a
+    // message, so a consumer with only those two fields has nothing to branch
+    // on and calls it a failure. `status` must be present regardless — it is
+    // required, never omitted, and never inferred from the null fields.
+    seed(db, "job-cx", "cancelled", "/dl/cx.part", 1234, {
+      failureTag: null,
+      failureMessage: null,
+    });
+    const fs = fakeFs({ "/dl/cx.part": 64 });
+
+    const res = await makeListLeftoverHandler({ db, fs })({}, ctx());
+
+    expect(res.ok).toBe(true);
+    if (!res.ok) return;
+    expect(res.result.entries).toHaveLength(1);
+    const [entry] = res.result.entries;
+    expect(entry).toMatchObject({
+      downloadJobId: "job-cx",
+      status: "cancelled",
+      failureTag: null,
+      failureMessage: null,
+    });
+    expect(entry).toHaveProperty("status");
   });
 
   it("excludes a KEEP-eligible row whose stat rejects with ENOENT (file gone) — never throws", async () => {

@@ -36,11 +36,21 @@ function entry(over: Partial<LeftoverEntry> & { downloadJobId: string }): Leftov
     sourcePath: "/remote/file.bin",
     targetPath: `/Users/alice/Downloads/${over.downloadJobId}.bin`,
     sizeOnDisk: 12_400_000,
+    status: "failed",
     failureTag: "exhausted-retries",
     failureMessage: "ran out of retries",
     endedAt: Date.now() - 3 * 86_400_000,
     ...over,
   };
+}
+
+/**
+ * A leftover the user themselves ended — cancelled or interrupted. Such rows
+ * record NEITHER a `failureTag` nor a `failureMessage`, which is precisely why
+ * `status` is the only thing that can tell them apart.
+ */
+function endedEntry(downloadJobId: string, status: LeftoverEntry["status"]): LeftoverEntry {
+  return entry({ downloadJobId, status, failureTag: null, failureMessage: null });
 }
 
 function installApi(entries: LeftoverEntry[]): void {
@@ -94,6 +104,67 @@ describe("LeftoverFilesDialog", () => {
     expect(screen.getByText(/network dropped/i)).toBeInTheDocument();
     // On-disk size rendered via the shared formatSize (binary units → MB).
     expect(screen.getAllByText(/\bMB\b/).length).toBeGreaterThan(0);
+  });
+
+  // ---- add-leftover-entry-status: the row reason names the real disposition
+  //
+  // Before this change every row read "Download failed", because a cancelled
+  // or interrupted row carries no tag and no message and `reasonLine` fell
+  // through its `??` chain to that hard-coded string.
+
+  it("does NOT call a cancelled row a failure (bug reproduction)", async () => {
+    installApi([endedEntry("movie", "cancelled")]);
+    render(<LeftoverFilesDialog open onOpenChange={() => {}} />);
+
+    const item = (await screen.findAllByRole("listitem"))[0]!;
+    expect(item).toHaveTextContent(/cancelled/i);
+    expect(item).not.toHaveTextContent(/download failed/i);
+  });
+
+  it("distinguishes an interrupted row from a cancelled one", async () => {
+    installApi([endedEntry("movie", "cancelled"), endedEntry("archive", "interrupted")]);
+    render(<LeftoverFilesDialog open onOpenChange={() => {}} />);
+
+    const items = await screen.findAllByRole("listitem");
+    expect(items).toHaveLength(2);
+    const reason = (item: HTMLElement): string =>
+      item.querySelector("p")?.textContent?.trim() ?? "";
+    const [cancelled, interrupted] = [reason(items[0]!), reason(items[1]!)];
+
+    expect(cancelled).toMatch(/cancelled/i);
+    expect(interrupted).toMatch(/interrupted/i);
+    // The whole point: two rows with identical null tag/message must not read
+    // the same. Guards against a fix that hard-codes one new generic label.
+    expect(cancelled).not.toEqual(interrupted);
+    expect(cancelled).not.toMatch(/interrupted/i);
+  });
+
+  it("identifies a failed row as failed AND keeps its recorded detail", async () => {
+    installApi([
+      entry({
+        downloadJobId: "report",
+        status: "failed",
+        failureMessage: "ran out of retries",
+      }),
+    ]);
+    render(<LeftoverFilesDialog open onOpenChange={() => {}} />);
+
+    const item = (await screen.findAllByRole("listitem"))[0]!;
+    expect(item).toHaveTextContent(/failed/i);
+    expect(item).toHaveTextContent(/ran out of retries/i);
+  });
+
+  it("never renders a doubled separator when a stored detail is an empty string", async () => {
+    // `??` only falls through on null, so an empty `failureMessage` survives
+    // as a segment. The reason line joins its segments, so an empty one would
+    // surface as "Failed ·  · 3 days ago".
+    installApi([entry({ downloadJobId: "report", status: "failed", failureMessage: "" })]);
+    render(<LeftoverFilesDialog open onOpenChange={() => {}} />);
+
+    const item = (await screen.findAllByRole("listitem"))[0]!;
+    const reason = item.querySelector("p")?.textContent?.trim() ?? "";
+    expect(reason).toMatch(/^Failed · /);
+    expect(reason).not.toMatch(/· +·/);
   });
 
   it("shows the empty state when the fetched list is empty", async () => {

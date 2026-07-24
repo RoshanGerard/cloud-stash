@@ -16,6 +16,13 @@
 // partial). Entries are ordered by `ended_at` descending (most recently ended
 // first) and the response is NOT paginated.
 //
+// Each entry also reports its own `status` — the terminal disposition the
+// WHERE clause selects on (add-leftover-entry-status). Without it the renderer
+// cannot tell the three dispositions apart: a cancelled or interrupted row
+// records neither a `failure_tag` nor a `failure_message`, so every such row
+// was being labelled a failure. The value is projected raw, never composed
+// into prose — display text belongs to the renderer.
+//
 // See:
 // - openspec/changes/add-leftover-download-cleanup/specs/fs-sync-service/spec.md
 //   "Requirement: `downloads:list-leftover` RPC returns KEEP-eligible rows
@@ -25,7 +32,7 @@ import { stat as nodeStat } from "node:fs/promises";
 
 import type Database from "better-sqlite3";
 
-import type { LeftoverEntry } from "@cloudstash/ipc-contracts/sync-service";
+import type { LeftoverEntry, LeftoverStatus } from "@cloudstash/ipc-contracts/sync-service";
 
 import type { CommandHandler } from "../ipc/server.js";
 
@@ -49,6 +56,12 @@ interface LeftoverRow {
   readonly datasource_id: string;
   readonly source_path: string;
   readonly target_path: string;
+  /**
+   * Typed as the untyped SQLite TEXT column it is, NOT as `LeftoverStatus`.
+   * Narrowing happens once, at the projection site below, where the comment
+   * can cite the guarantee that makes it sound.
+   */
+  readonly status: string;
   readonly failure_tag: string | null;
   readonly failure_message: string | null;
   readonly ended_at: number | null;
@@ -59,7 +72,7 @@ export function makeListLeftoverHandler(
 ): CommandHandler<"downloads:list-leftover"> {
   const fs: ListLeftoverFs = deps.fs ?? { stat: (p) => nodeStat(p) };
   const select = deps.db.prepare(
-    `SELECT download_job_id, datasource_id, source_path, target_path,
+    `SELECT download_job_id, datasource_id, source_path, target_path, status,
             failure_tag, failure_message, ended_at
        FROM downloads
       WHERE status IN ('failed', 'cancelled', 'interrupted')
@@ -85,6 +98,16 @@ export function makeListLeftoverHandler(
         sourcePath: row.source_path,
         targetPath: row.target_path,
         sizeOnDisk: size,
+        // Sound by construction: the `WHERE status IN ('failed', 'cancelled',
+        // 'interrupted')` clause two lines above the SELECT is the exact set
+        // of `LeftoverStatus`, so any row reaching here already holds one of
+        // those three values. The two clauses live in one prepared statement
+        // and cannot drift independently — widening the WHERE without
+        // widening `LeftoverStatus` is the only way to invalidate this, and
+        // it would be a single-line edit with both clauses in view. A runtime
+        // guard here would be a branch over a SQL-guaranteed invariant, i.e.
+        // unreachable code (design.md Decision 4).
+        status: row.status as LeftoverStatus,
         failureTag: row.failure_tag,
         failureMessage: row.failure_message,
         endedAt: row.ended_at,

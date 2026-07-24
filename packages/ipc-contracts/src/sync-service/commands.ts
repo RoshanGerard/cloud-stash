@@ -747,6 +747,10 @@ interface DownloadsListActiveCommand {
  * (which also includes the live `in-flight`) confined to the database;
  * `in-flight` is deliberately excluded here — a live download is never
  * clearable.
+ *
+ * Dependent type: `LeftoverStatus` (declared in the `downloads:list-leftover`
+ * section below) is derived from this union, so widening or renaming a member
+ * here propagates there automatically — check both call sites when editing.
  */
 export type DownloadTerminalStatus = "completed" | "failed" | "cancelled" | "interrupted";
 
@@ -833,12 +837,34 @@ interface DeletePartialCommand {
 // UNCHANGED.
 
 /**
+ * The terminal disposition a leftover partial can have — the three
+ * KEEP-eligible statuses `downloads:list-leftover` filters on, promoted to
+ * the wire by `add-leftover-entry-status` so each row can state accurately
+ * why it is there.
+ *
+ * DERIVED, not declared independently (design.md Decision 2). Reusing
+ * `DownloadTerminalStatus` whole would be wider than reality — `completed`
+ * is unrepresentable on this wire, since a completed download leaves no
+ * partial behind — forcing consumers to carry a branch for an impossible
+ * case. Writing out `"failed" | "cancelled" | "interrupted"` would be
+ * equally narrow but would duplicate three literals that already exist,
+ * letting the two vocabularies drift apart silently. `Exclude` gets both:
+ * one source of truth, and a type exactly as narrow as the data.
+ */
+export type LeftoverStatus = Exclude<DownloadTerminalStatus, "completed">;
+
+/**
  * One leftover partial file, projected from a KEEP-eligible terminal
  * `downloads` row whose `target_path` still exists on disk. `sizeOnDisk` is
  * the byte size reported by the service-side `stat` (the bytes actually on
- * disk now, which may be less than the download's intended size). `failureTag`
- * / `failureMessage` / `endedAt` are the row's stored values and are `null`
- * when the row never recorded them.
+ * disk now, which may be less than the download's intended size). `status` is
+ * the row's terminal disposition and is always present — every `downloads`
+ * row has one, so consumers need no fallback for an unlabelled entry.
+ * `failureTag` / `failureMessage` / `endedAt` are the row's stored values and
+ * are `null` when the row never recorded them; in particular a `cancelled` or
+ * `interrupted` row usually carries neither a tag nor a message, which is why
+ * `status` — not the absence of a tag — is the only sound way to tell the
+ * three dispositions apart.
  */
 export interface LeftoverEntry {
   readonly downloadJobId: string;
@@ -846,6 +872,7 @@ export interface LeftoverEntry {
   readonly sourcePath: string;
   readonly targetPath: string;
   readonly sizeOnDisk: number;
+  readonly status: LeftoverStatus;
   readonly failureTag: string | null;
   readonly failureMessage: string | null;
   readonly endedAt: number | null;

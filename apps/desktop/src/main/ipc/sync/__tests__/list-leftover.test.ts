@@ -6,6 +6,11 @@
 // (mirrors `handleSyncGetStatus`). The flat `{ entries }` result passes
 // through verbatim — no field projection. A transport failure re-throws and
 // surfaces to the renderer as an IPC invoke rejection.
+//
+// `add-leftover-entry-status` adds `status` to `LeftoverEntry`. Because this
+// bridge projects no fields, that required no handler change — the test below
+// pins the passthrough so a future refactor that DOES start projecting fields
+// cannot silently drop `status` on the way to the renderer.
 
 import { describe, expect, it, vi } from "vitest";
 
@@ -32,9 +37,28 @@ const ENTRY: LeftoverEntry = {
   sourcePath: "/remote/report.pdf",
   targetPath: "/downloads/report.pdf",
   sizeOnDisk: 1024,
+  status: "failed",
   failureTag: "network-error",
   failureMessage: "connection reset",
   endedAt: 1_700_000_000_000,
+};
+
+/**
+ * A cancelled leftover: the disposition the renderer previously could not
+ * detect, since a cancelled row records neither a tag nor a message. If
+ * `status` did not survive this hop, this entry would be indistinguishable
+ * from an interrupted one on the far side.
+ */
+const CANCELLED_ENTRY: LeftoverEntry = {
+  downloadJobId: "job-B",
+  datasourceId: "ds-1",
+  sourcePath: "/remote/movie.mkv",
+  targetPath: "/downloads/movie.mkv.part",
+  sizeOnDisk: 4096,
+  status: "cancelled",
+  failureTag: null,
+  failureMessage: null,
+  endedAt: 1_700_000_100_000,
 };
 
 describe("handleListLeftover", () => {
@@ -47,6 +71,19 @@ describe("handleListLeftover", () => {
     expect(listLeftover).toHaveBeenCalledTimes(1);
     expect(listLeftover).toHaveBeenCalledWith({});
     expect(res).toBe(wireResult);
+  });
+
+  it("carries each entry's status through to the renderer-facing response", async () => {
+    const { client } = makeFakeClient(async () => ({
+      entries: [ENTRY, CANCELLED_ENTRY],
+    }));
+
+    const res = await handleListLeftover(undefined, client);
+
+    expect(res.entries.map((e) => [e.downloadJobId, e.status])).toEqual([
+      ["job-A", "failed"],
+      ["job-B", "cancelled"],
+    ]);
   });
 
   it("passes through an empty result ({ entries: [] })", async () => {
