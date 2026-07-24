@@ -1,58 +1,71 @@
-> **STATUS: STUB — not yet designed.** Follow-up surfaced by the advisor during
-> `add-leftover-download-cleanup` (Phase 2, merged 2026-07-04). Resolve the open
-> questions below via `superpowers:brainstorming` before `/opsx:propose`. No
-> `design.md`, spec delta, or `tasks.md` yet — this file captures intent only.
-
 ## Why
 
-The `downloads:list-leftover` "Review leftover files" dialog shipped in
-`add-leftover-download-cleanup` renders **"Download failed"** as the reason for
-EVERY leftover, even a user-**cancelled** or **interrupted** one. Cause: the
-`LeftoverEntry` wire shape carries no terminal `status`, and a cancelled row's
-`failureTag` / `failureMessage` are typically `null`, so the renderer's
-`reasonLine` falls through to the generic "Download failed" label — which is
-factually wrong for a cancel (the list explicitly includes `cancelled` and
-`interrupted` rows, not just `failed`).
+The "Review leftover files" dialog shipped in `add-leftover-download-cleanup`
+labels **every** leftover row "Download failed" — including files the user
+deliberately **cancelled** and downloads that were **interrupted**. That is
+factually wrong, and it is wrong in the one place where the user is deciding
+whether a file is safe to delete.
+
+The cause is a wire gap, not a rendering bug. `downloads:list-leftover` filters
+to KEEP-eligible terminal rows (`failed` / `cancelled` / `interrupted`) but never
+projects which one a row actually is. The renderer therefore has nothing to
+branch on: a cancelled row's `failureTag` / `failureMessage` are both `null`, so
+`reasonLine` falls through its `??` chain to the hard-coded "Download failed"
+string. The disposition already exists service-side — it is used in the query's
+`WHERE` clause — it just never reaches the client.
 
 ## What Changes
 
-- Surface the terminal disposition to the renderer so each leftover row shows an
-  accurate reason (e.g. "Cancelled", "Interrupted", or the specific failure).
-  The list already filters to `failed` / `cancelled` / `interrupted`, so the
-  information exists service-side — it just isn't on the wire.
-- Additive (NOT breaking): a new field on `LeftoverEntry` + a small renderer
-  `reasonLine` change. No change to the delete paths.
+- Surface the terminal disposition on the wire: `LeftoverEntry` gains a required
+  `status` field so each leftover row can state accurately why it is there.
+- Introduce `LeftoverStatus`, derived as `Exclude<DownloadTerminalStatus,
+  "completed">`, reusing the existing wire vocabulary rather than minting a
+  parallel enum. Deriving (rather than reusing `DownloadTerminalStatus` whole)
+  keeps the type exactly as narrow as reality: a leftover row can never be
+  `completed`, so the renderer gets an exhaustive three-case match with no
+  unreachable branch.
+- Rewrite the dialog's per-row reason line to lead with the disposition
+  (`<status> · [detail] · <when>`), giving every row a uniform, scannable
+  shape. The generic "Download failed" fallback is removed outright — with
+  `status` required, no row can be unlabelled.
+- Correct the dialog's own description, which likewise claims the list holds
+  files "left on disk by past **failed** downloads" while in fact it includes
+  cancelled and interrupted ones.
+- Additive, NOT breaking: one field is added, none removed, no existing field's
+  type narrowed, and no request shape changes. Delete paths are untouched.
 
 ## Capabilities
 
 ### New Capabilities
-<!-- none -->
+
+None. Both affected capabilities already exist.
 
 ### Modified Capabilities
-- `fs-sync-service`: MODIFY the `downloads:list-leftover` RPC / `LeftoverEntry`
-  shape to carry the terminal disposition (see Open Questions for exact form).
-  The handler already selects only KEEP-eligible rows — it just needs to project
-  the `status` column it currently reads for filtering.
-- `file-explorer`: MODIFY the Review-leftover-files dialog's `reasonLine` so a
-  cancelled / interrupted row reads accurately instead of "Download failed".
 
-## Open Questions (resolve in brainstorming)
-
-1. **Field shape:** add the raw `status` enum (`failed | cancelled | interrupted`)
-   to `LeftoverEntry` and let the renderer humanize it, OR add a pre-computed
-   `reason` string the service composes? (Raw `status` keeps the wire minimal and
-   matches how `DownloadTerminalStatus` is already a wire type; a `reason` string
-   centralizes copy but bakes presentation into the service.)
-2. **`reasonLine` composition:** how do `status` + `failureMessage` combine — e.g.
-   "Cancelled · 3 days ago" for a cancel (no failure detail) vs
-   "Failed · ran out of retries · 3 days ago" for a failure with a message?
-3. Any existing wire vocabulary to reuse (`DownloadTerminalStatus` from
-   `@cloudstash/ipc-contracts/sync-service`) rather than a new enum?
+- `fs-sync-service`: MODIFY the `downloads:list-leftover` RPC requirement so the
+  documented `LeftoverEntry` field list includes `status`, and define its
+  vocabulary as the three KEEP-eligible terminal statuses.
+- `file-explorer`: MODIFY the Review-leftover-files affordance requirement so
+  the per-row reason is required to reflect the row's actual terminal
+  disposition, rather than presenting every row as a failure.
 
 ## Impact
 
-- `packages/ipc-contracts` — `LeftoverEntry` (+ its desktop re-export).
-- `services/fs-sync` — `downloads-list-leftover.ts` (project the new field; the
-  SELECT already needs `status` for the WHERE filter).
-- `apps/desktop/src/renderer/.../leftover-files-dialog.tsx` — `reasonLine`.
-- Tests across the same four layers.
+- `packages/ipc-contracts` — `LeftoverEntry` and the new `LeftoverStatus` in
+  `sync-service/commands.ts`, threaded through the existing export chain
+  (`sync-service/index.ts` → `sync-service-desktop/requests.ts` →
+  `sync-service-desktop/index.ts`).
+- `services/fs-sync` — `commands/downloads-list-leftover.ts`: add `status` to the
+  `SELECT` column list (today it appears only in the `WHERE`) and project it onto
+  the entry. Filtering, ordering, the `stat`-skip behaviour, and the
+  never-throws contract are unchanged.
+- `apps/desktop` — `features/settings/leftover-files-dialog.tsx`: `reasonLine`
+  composition and the dialog description copy. Additionally, the status→label
+  strings are lifted into one shared lookup that both this dialog and the
+  existing `clear-history-dialog.tsx` read, so the two adjacent Settings dialogs
+  cannot drift into naming the same state differently. This is the only existing
+  working file the change modifies rather than extends.
+- Tests at all four existing layers for this RPC: the contract type test, the
+  service handler test, the main-process IPC test, and the renderer dialog test.
+- No dependency changes. No database schema change — the `downloads.status`
+  column already exists and is already read by this query.
