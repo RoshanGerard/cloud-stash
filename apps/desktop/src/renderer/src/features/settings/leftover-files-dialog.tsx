@@ -2,8 +2,11 @@
 
 // add-leftover-download-cleanup §6.3/§6.4 (design.md ## Visual direction,
 // VD2–VD5) — the "Review leftover files" dialog. Opened from the Settings →
-// Downloads button, it surfaces orphaned KEPT partial files from past download
-// failures and lets the user delete them per-row or in bulk.
+// Downloads button, it surfaces orphaned KEPT partial files from downloads
+// that didn't finish — failed, cancelled, OR interrupted — and lets the user
+// delete them per-row or in bulk. Each row names its own disposition
+// (add-leftover-entry-status); nothing here is described as a failure unless
+// its `status` says so.
 //
 // Data flow: on open it fetches its OWN fresh list via `downloads:list-leftover`
 // (freshness after a prior session's deletions). Per-row Delete and bulk
@@ -35,6 +38,8 @@ import {
 import { Icon } from "@/components/icon";
 
 import { formatSize } from "../file-explorer/view-modes/details-format";
+
+import { DOWNLOAD_STATUS_LABELS } from "./download-status-labels";
 
 export interface LeftoverFilesDialogProps {
   open: boolean;
@@ -83,16 +88,35 @@ function formatRelative(endedAt: number): string {
   return `${yr} year${yr === 1 ? "" : "s"} ago`;
 }
 
-// Second-line "failure reason · date" text. Reason prefers the stored
-// `failureMessage`, falls back to a humanized `failureTag`, else a generic
-// label; the date is a relative time from `endedAt` (omitted when null).
+// Second-line reason text, composed as `<status label> · [detail] · <when>`
+// (add-leftover-entry-status, design.md Decision 3 / VD2).
+//
+// The status label ALWAYS leads and is always present — every row has a
+// terminal disposition, so there is no generic-fallback case. This used to
+// read `failureMessage ?? failureTag ?? "Download failed"`, which labelled
+// every cancelled and interrupted row a failure: those rows record neither a
+// tag nor a message, so both `??` arms fell through to the hard-coded string.
+//
+// The detail segment is the row's recorded diagnostic (preferring the stored
+// message, else a humanized tag) and appears only when one exists. It is NOT
+// suppressed when it reads redundantly against the label ("Failed · integrity
+// failed") — string-matching the UI against stored diagnostic values would
+// hide information the user may need for a mild cosmetic gain (VD3). The
+// relative time is omitted when `endedAt` is null, as before.
 function reasonLine(e: LeftoverEntry): string {
-  const reason =
-    e.failureMessage ??
-    (e.failureTag !== null ? e.failureTag.replace(/-/g, " ") : null) ??
-    "Download failed";
+  // Total lookup indexed by a strict subset of its key type — sound without a
+  // fallback, and a new terminal status would fail to compile at the lookup's
+  // declaration rather than render blank here.
+  const label = DOWNLOAD_STATUS_LABELS[e.status];
+  const detail =
+    e.failureMessage ?? (e.failureTag !== null ? e.failureTag.replace(/-/g, " ") : null);
   const when = e.endedAt !== null ? formatRelative(e.endedAt) : null;
-  return when !== null ? `${reason} · ${when}` : reason;
+  // Drop empty segments as well as absent ones. `??` only falls through on
+  // null, so a row storing `failure_message = ''` would otherwise contribute
+  // an empty segment and render a doubled separator ("Failed ·  · 3 days
+  // ago") — a defect this joined composition could introduce that the old
+  // single-`reason` form could not.
+  return [label, detail, when].filter((s): s is string => s !== null && s !== "").join(" · ");
 }
 
 export function LeftoverFilesDialog({
@@ -186,9 +210,13 @@ export function LeftoverFilesDialog({
         >
           <DialogHeader>
             <DialogTitle>Leftover download files</DialogTitle>
+            {/* "downloads that didn't finish", not "failed downloads" — the
+                list deliberately spans failed, cancelled, AND interrupted rows
+                (design.md Decision 5 / VD4). Deliberately does not enumerate
+                the three; each row states its own one line below. */}
             <DialogDescription>
-              Incomplete files left on disk by past failed downloads. Deleting one removes it from
-              your computer.
+              Incomplete files left on disk by downloads that didn&rsquo;t finish. Deleting one
+              removes it from your computer.
             </DialogDescription>
           </DialogHeader>
 

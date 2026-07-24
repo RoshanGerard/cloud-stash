@@ -7,6 +7,14 @@
 //   `downloads:*` read commands (`downloads:list-active`). Each
 //   `LeftoverEntry` carries the durable `downloads` row values plus a
 //   service-side `sizeOnDisk` from a `stat` of the partial's `target_path`.
+//
+// `add-leftover-entry-status` adds the required `status` field and the
+// `LeftoverStatus` vocabulary typing it — the row's actual terminal
+// disposition, which the handler's query already filters on but never
+// projected. The assertions below pin that it is REQUIRED (no row may be
+// unlabelled, so the renderer needs no generic fallback) and that it is
+// derived as `DownloadTerminalStatus` minus `completed`, giving the renderer
+// an exhaustive three-case match with no unreachable branch.
 
 import { describe, expectTypeOf, it } from "vitest";
 
@@ -19,8 +27,10 @@ import type {
   CommandResult,
   DownloadsListLeftoverRequest,
   DownloadsListLeftoverResponse,
+  DownloadTerminalStatus,
   FilesCommandErrorShape,
   LeftoverEntry,
+  LeftoverStatus,
 } from "../commands.js";
 
 describe("sync-service downloads:list-leftover command contract", () => {
@@ -64,13 +74,14 @@ describe("sync-service downloads:list-leftover command contract", () => {
 });
 
 describe("LeftoverEntry shape", () => {
-  it("has exactly the eight documented readonly fields with the stated types", () => {
+  it("has exactly the nine documented readonly fields with the stated types", () => {
     expectTypeOf<LeftoverEntry>().toEqualTypeOf<{
       readonly downloadJobId: string;
       readonly datasourceId: string;
       readonly sourcePath: string;
       readonly targetPath: string;
       readonly sizeOnDisk: number;
+      readonly status: LeftoverStatus;
       readonly failureTag: string | null;
       readonly failureMessage: string | null;
       readonly endedAt: number | null;
@@ -81,9 +92,41 @@ describe("LeftoverEntry shape", () => {
     expectTypeOf<LeftoverEntry["sizeOnDisk"]>().toEqualTypeOf<number>();
   });
 
+  it("status is required and NOT nullable — every row has a terminal disposition", () => {
+    expectTypeOf<LeftoverEntry["status"]>().toEqualTypeOf<LeftoverStatus>();
+    expectTypeOf<LeftoverEntry>().toHaveProperty("status");
+    expectTypeOf<null>().not.toMatchTypeOf<LeftoverEntry["status"]>();
+    expectTypeOf<undefined>().not.toMatchTypeOf<LeftoverEntry["status"]>();
+  });
+
   it("failureTag / failureMessage / endedAt are nullable stored row values", () => {
     expectTypeOf<LeftoverEntry["failureTag"]>().toEqualTypeOf<string | null>();
     expectTypeOf<LeftoverEntry["failureMessage"]>().toEqualTypeOf<string | null>();
     expectTypeOf<LeftoverEntry["endedAt"]>().toEqualTypeOf<number | null>();
+  });
+});
+
+describe("LeftoverStatus wire vocabulary (add-leftover-entry-status Decision 2)", () => {
+  it("is exactly the three KEEP-eligible terminal statuses", () => {
+    expectTypeOf<LeftoverStatus>().toEqualTypeOf<"failed" | "cancelled" | "interrupted">();
+  });
+
+  it("each KEEP-eligible value is assignable", () => {
+    expectTypeOf<"failed">().toMatchTypeOf<LeftoverStatus>();
+    expectTypeOf<"cancelled">().toMatchTypeOf<LeftoverStatus>();
+    expectTypeOf<"interrupted">().toMatchTypeOf<LeftoverStatus>();
+  });
+
+  it('excludes "completed" — a completed download leaves no leftover partial', () => {
+    expectTypeOf<"completed">().not.toMatchTypeOf<LeftoverStatus>();
+  });
+
+  it('excludes the live "in-flight" status, which never crosses this wire', () => {
+    expectTypeOf<"in-flight">().not.toMatchTypeOf<LeftoverStatus>();
+  });
+
+  it("is derived from DownloadTerminalStatus, so it stays a strict subset of it", () => {
+    expectTypeOf<LeftoverStatus>().toMatchTypeOf<DownloadTerminalStatus>();
+    expectTypeOf<LeftoverStatus>().toEqualTypeOf<Exclude<DownloadTerminalStatus, "completed">>();
   });
 });

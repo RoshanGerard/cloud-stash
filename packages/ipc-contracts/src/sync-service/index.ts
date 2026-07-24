@@ -30,6 +30,7 @@ export type {
   JobStatus,
   JobSummary,
   LeftoverEntry,
+  LeftoverStatus,
   NotCancelableErrorShape,
   NotFoundErrorShape,
   RetryPolicy,

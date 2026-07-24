@@ -18,6 +18,10 @@ export type {
   // Review-leftover dialog imports it from the renderer-facing barrel rather
   // than reaching into the wire subpath.
   LeftoverEntry,
+  // add-leftover-entry-status §1.4 — the vocabulary of `LeftoverEntry.status`.
+  // The dialog indexes its status→label lookup with this type, so it needs the
+  // name, not just the field.
+  LeftoverStatus,
 } from "../sync-service/commands.js";
 
 export type {
