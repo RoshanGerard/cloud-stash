@@ -40,9 +40,9 @@
 
 ## 6. Cross-platform verification checklist
 
-- [ ] 6.1 Write a manual verification checklist for macOS and Linux packaged builds, covering at minimum: that the notarized/signed `.app` can spawn `process.execPath` detached from within itself; that the spawned service survives quitting the app; that the native module loads at Electron's ABI; and that the Linux AppImage and deb both behave (design.md Decision 6).
-- [ ] 6.2 Record in the checklist that a future Electron upgrade can skew the service's Node version away from `engines.node` — today both are 24.14.1 — and that the symptom would be a loud native-module ABI error at service start.
-- [ ] 6.3 State plainly in the change's documentation that only Windows was verified automatically, so no cross-platform claim is implied by this change.
+- [x] 6.1 Write a manual verification checklist for macOS and Linux packaged builds, covering at minimum: that the notarized/signed `.app` can spawn `process.execPath` detached from within itself; that the spawned service survives quitting the app; that the native module loads at Electron's ABI; and that the Linux AppImage and deb both behave (design.md Decision 6). — Written to `apps/desktop/docs/packaged-build-verification.md`, including the open question about whether a packaged app exits cleanly while its service runs.
+- [x] 6.2 Record in the checklist that a future Electron upgrade can skew the service's Node version away from `engines.node` — today both are 24.14.1 — and that the symptom would be a loud native-module ABI error at service start. — Recorded, with the current values (Electron 41.2.1 ships Node 24.14.1 = `engines.node`, zero skew).
+- [x] 6.3 State plainly in the change's documentation that only Windows was verified automatically, so no cross-platform claim is implied by this change. — Stated in the checklist's opening paragraph: macOS and Linux have NO automated packaged coverage and every row there is unverified until a human runs it.
 
 ## 7. Verification and close-out
 
