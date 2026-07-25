@@ -544,8 +544,13 @@ export function SettingsDialog({ open, onOpenChange, returnFocusTo }: SettingsDi
                 <div className="flex items-center gap-3">
                   <div className="flex min-w-0 flex-1 flex-col gap-1">
                     <span className="text-xs font-medium">Review leftover files</span>
+                    {/* "downloads that didn't finish", not "failed downloads".
+                        file-explorer's Review-leftover-files requirement governs
+                        collection-level copy across the WHOLE affordance — this
+                        row as well as the dialog's own description — because the
+                        list spans failed, cancelled, AND interrupted rows. */}
                     <span className="text-muted-foreground text-xs">
-                      Incomplete files left on disk by past failed downloads.
+                      Incomplete files left on disk by downloads that didn&rsquo;t finish.
                     </span>
                   </div>
                   <Button
