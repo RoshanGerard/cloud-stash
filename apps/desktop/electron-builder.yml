@@ -12,6 +12,19 @@ files:
   # `@aws-sdk/client-s3` under `@cloudstash/fs-datasource-engine`) fail to resolve
   # at runtime with `Cannot find module '@smithy/util-buffer-from'`.
   - node_modules/**/*
+  # wire-packaged-build-fs-sync-service Decision 8 — the service's SQL
+  # migrations are runtime ASSETS, not code, so bundling its JS does not carry
+  # them. `migrations.ts` locates them by walking two levels up from its own
+  # module directory ("drizzle/ is a sibling of src/"), which from the bundled
+  # `<asar>/dist/service/index.js` lands at `<asar>/drizzle`. Copying them
+  # there makes the packaged layout satisfy the contract the service already
+  # documents, so no schema-critical code has to change. Without this the
+  # service dies during bootstrap with `ENOENT: scandir ...\drizzle` and never
+  # binds its pipe.
+  - from: ../../services/fs-sync/drizzle
+    to: drizzle
+    filter:
+      - "**/*.sql"
 extraResources:
   - from: src/renderer/out
     to: renderer

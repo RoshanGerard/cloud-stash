@@ -14,7 +14,7 @@ import { createSyncEventBridge } from "./sync/event-bridge.js";
 import { hydrateActiveDownloadsOnce } from "./sync/on-connect-hydrate-downloads.js";
 import { hydrateActiveUploadsOnce } from "./sync/on-connect-hydrate-uploads.js";
 import { resolveSyncPipePath } from "./sync/pipe-paths.js";
-import { resolveServiceNodeBinary } from "./sync/node-binary-resolver.js";
+import { resolveServiceSpawnTarget } from "./sync/service-spawn-target.js";
 import { getSyncClient, setSyncClient } from "./sync/sync-client-holder.js";
 import type { SyncEventBridgeHandle } from "./sync/event-bridge.js";
 
@@ -196,22 +196,25 @@ async function bootstrap(): Promise<void> {
 
     let nodeBinary: string | undefined;
     let servicePath: string | undefined;
+    let serviceEnv: NodeJS.ProcessEnv | undefined;
     if (!isDev) {
-      // `resolveServiceNodeBinary` can throw on unsupported arch/platform.
-      // Keeping the call inside the try block so a bad packaged target
-      // degrades the same as a supervisor failure — logged, skipped, and
-      // bootstrap continues rather than leaving a blank BrowserWindow.
-      nodeBinary = resolveServiceNodeBinary({
-        isPackaged: true,
+      // wire-packaged-build-fs-sync-service — the packaged app spawns its OWN
+      // executable as a plain Node runtime and loads the service from INSIDE
+      // the bundle. Previously this resolved a vendored node.exe and a
+      // `resources/fs-sync/` directory, neither of which was ever shipped, so
+      // a packaged build had no working sync at all.
+      //
+      // This is the composition root: it is the only place that knows the app
+      // is packaged, which is why the runtime choice is made here and handed to
+      // the supervisor as `env` rather than assembled inside it.
+      const target = resolveServiceSpawnTarget({
         appPath: app.getAppPath(),
+        execPath: process.execPath,
+        baseEnv: process.env,
       });
-      // electron-builder copies services/fs-sync/dist → resources/fs-sync
-      // (see node-binary-resolver.spike.md §4). fs-sync's entry is
-      // dist/main/index.js per its package.json `main`, so the packaged
-      // layout is resources/fs-sync/main/index.js. app.getAppPath() ends
-      // in resources/app.asar (or resources/app), so `..` strips that
-      // off and we land in resources/.
-      servicePath = path.join(app.getAppPath(), "..", "fs-sync", "main", "index.js");
+      nodeBinary = target.command;
+      servicePath = target.servicePath;
+      serviceEnv = target.env;
     }
 
     // Decision 12: startSupervisor now returns SupervisorHandle.
@@ -220,6 +223,7 @@ async function bootstrap(): Promise<void> {
       pipePath,
       ...(nodeBinary !== undefined ? { nodeBinary } : {}),
       ...(servicePath !== undefined ? { servicePath } : {}),
+      ...(serviceEnv !== undefined ? { env: serviceEnv } : {}),
     });
     setSyncClient(syncHandle.getClient());
     syncHandle.on("reconnect", (newClient) => setSyncClient(newClient));

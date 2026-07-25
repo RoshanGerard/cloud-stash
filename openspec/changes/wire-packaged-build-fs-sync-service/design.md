@@ -164,6 +164,62 @@ not referenced by any requirement in `openspec/specs/`, so removal needs no
 REMOVED delta. The spike is kept because the rejected alternative and its
 reasoning are exactly what a future reader re-litigating Decision 1 needs.
 
+### Decision 8 — Runtime ASSETS ship too, by making the packaged layout satisfy the service's existing expectation
+
+*Added during implementation. Decision 2 was incomplete.*
+
+Decision 2 reasoned entirely about JavaScript module resolution and concluded
+that placing the service inside the asar solved it. It did — but the service
+also reads **non-JS runtime assets**, which bundling does not carry. The
+service's SQL migrations live as loose files under `services/fs-sync/drizzle/`
+and are located at runtime by walking up from the module's own directory:
+
+```ts
+const MIGRATIONS_DIR = path.resolve(__dirname, "..", "..", "drizzle");
+```
+
+From `services/fs-sync/dist/db/migrations.js` that resolves correctly. From the
+bundled `apps/desktop/dist/service/index.js` it resolves to
+`apps/desktop/drizzle`, which does not exist, and the service dies during
+`bootstrap()` before it ever binds its pipe:
+
+```
+fs-sync-service: fatal error during startup
+Error: ENOENT: no such file or directory, scandir '...\apps\desktop\drizzle'
+    at applyMigrations (...\dist\service\index.js:2602:31)
+```
+
+**The fix is to make the packaged layout match the layout the service already
+documents**, rather than to change how migrations are found. The service's own
+comment states the contract: "drizzle/ is a sibling of src/ … walk up two
+levels". Emitted at `<asar>/dist/service/index.js`, walking up two levels lands
+at `<asar>/drizzle` — so electron-builder copies `services/fs-sync/drizzle` to
+the archive root via a `files` mapping. Nothing about migration application
+changes.
+
+*Why not the alternatives.* Passing a `migrationsDir` through a new
+`CLOUDSTASH_MIGRATIONS_DIR` environment variable would be explicit and would
+mirror the existing `CLOUDSTASH_SYNC_DATA_DIR` convention, but it adds runtime
+contract surface to the service to solve a problem that is purely about where a
+packager puts files. Inlining the two SQL files (~2.7 kB total) into the bundle
+would make the service self-contained forever and is genuinely tempting, but it
+duplicates the source of truth that `drizzle-kit generate` writes, and the
+duplicate would silently rot unless guarded by a further test — a lot of
+machinery, added to schema-critical code, for a packaging concern. Probing
+several candidate directories at runtime was rejected outright: "try paths until
+one works" hides layout mistakes instead of failing on them.
+
+*Accepted consequence.* The loose local `apps/desktop/dist/service/index.js` is
+an intermediate packaging artifact and is NOT independently runnable — its
+migrations directory only exists once electron-builder has assembled the
+archive. Dev mode is unaffected; it runs `services/fs-sync/dist` directly, where
+the original resolution holds.
+
+*How this was found.* Not by review — by running the emitted bundle. A build
+that succeeds and a bundle that greps clean both looked healthy; executing it
+was what surfaced the defect. Task 2.5 exists so that check happens before
+packaging rather than after.
+
 ### Decision 6 — Windows is automated; macOS and Linux get a written checklist
 
 The packaged smoke runs on Windows in this change. macOS and Linux get a
@@ -207,6 +263,12 @@ settled during implementation by measurement, not by the current comment.
 - **The desktop build now depends on the service's build output.** A stale
   `services/fs-sync/dist` would package a stale service. Mitigated by putting
   the build into `prebuild` so it cannot be skipped in the normal path.
+- **Other non-JS runtime assets could be hiding behind the same blind spot as
+  the migrations (Decision 8).** The migrations were found by executing the
+  bundle; anything else the service reads from disk relative to its own module
+  would fail the same way and just as invisibly. Mitigated by task 2.5 running
+  the bundled service to a bound pipe before packaging — a service that reaches
+  "listening" has completed bootstrap, which is where such reads happen.
 - **The asar is read-only.** The service writes only to its data directory
   (`CLOUDSTASH_SYNC_DATA_DIR` or the home-relative default), never beside its
   own entry point, so this is a non-issue — noted because it is the obvious
