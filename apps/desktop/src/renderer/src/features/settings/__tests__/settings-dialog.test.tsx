@@ -632,6 +632,7 @@ describe("SettingsDialog — Review leftover files button (add-leftover-download
     sourcePath: string;
     targetPath: string;
     sizeOnDisk: number;
+    status: "failed" | "cancelled" | "interrupted";
     failureTag: string | null;
     failureMessage: string | null;
     endedAt: number | null;
@@ -644,6 +645,7 @@ describe("SettingsDialog — Review leftover files button (add-leftover-download
       sourcePath: `/remote/${id}.bin`,
       targetPath: `/Users/alice/Downloads/${id}.bin`,
       sizeOnDisk: 5_000_000,
+      status: "failed",
       failureTag: "exhausted-retries",
       failureMessage: "ran out of retries",
       endedAt: Date.now() - 86_400_000,
@@ -694,5 +696,25 @@ describe("SettingsDialog — Review leftover files button (add-leftover-download
     expect(
       await screen.findByRole("heading", { name: /leftover download files/i }),
     ).toBeInTheDocument();
+  });
+
+  // add-leftover-entry-status — the affordance spans the Settings row AND the
+  // dialog, and file-explorer's requirement governs BOTH: any copy that
+  // characterizes the collection as a whole must describe it as downloads that
+  // did not finish, never as failed downloads. The dialog's description was
+  // corrected; this row's helper text was missed.
+  it("the Review-leftover-files row copy does not characterize the list as failed downloads", async () => {
+    installLeftoverApi([stub("a")]);
+    render(<SettingsDialog open={true} onOpenChange={() => {}} />);
+
+    await screen.findByRole("button", { name: /review leftover files \(1\)/i });
+
+    // Assert on the helper text element itself, NOT an ancestor — the enclosing
+    // Download-history section also contains the retention row's "How long
+    // completed and failed downloads stay in the list", which is accurate and
+    // is about a different collection (history records, not leftover files).
+    const helper = screen.getByText(/incomplete files left on disk/i);
+    expect(helper.textContent ?? "").not.toMatch(/failed downloads/i);
+    expect(helper.textContent ?? "").toMatch(/didn.t finish/i);
   });
 });
