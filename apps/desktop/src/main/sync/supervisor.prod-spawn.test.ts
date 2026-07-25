@@ -186,6 +186,68 @@ describe("startSupervisor in prod mode spawns the service when no listener is pr
     expect(spawnedChildren[0]!.killed).toBe(false);
   });
 
+  // wire-packaged-build-fs-sync-service §1 — the packaged app spawns its own
+  // executable as a plain Node runtime, which requires ELECTRON_RUN_AS_NODE in
+  // the child's environment. The supervisor carries an `env` through to
+  // `spawn` rather than reading `process.env` itself, so the choice of runtime
+  // stays at the composition root that already knows `isPackaged`
+  // (design.md Decision 4).
+
+  it("forwards a supplied env to spawn alongside detached + stdio:'ignore'", async () => {
+    const pipePath = pipeFor("spawn-env");
+    const nodeBinary = process.platform === "win32" ? "C:\\fake\\node.exe" : "/fake/path/to/node";
+    const servicePath = "/fake/path/to/service.js";
+    const env = { ...process.env, ELECTRON_RUN_AS_NODE: "1" };
+
+    setTimeout(() => {
+      void startFakeService(pipePath).then((s) => servers.push(s));
+    }, 120);
+
+    const handle = await startSupervisor({
+      mode: "prod",
+      pipePath,
+      nodeBinary,
+      servicePath,
+      env,
+    });
+    handles.push(handle);
+
+    expect(spawnMock).toHaveBeenCalledTimes(1);
+    const [, , calledOptions] = spawnMock.mock.calls[0]!;
+    expect(calledOptions).toEqual(
+      expect.objectContaining({
+        detached: true,
+        stdio: "ignore",
+        env: expect.objectContaining({ ELECTRON_RUN_AS_NODE: "1" }),
+      }),
+    );
+  });
+
+  it("omits env entirely when none is supplied, so the child inherits process.env", async () => {
+    const pipePath = pipeFor("spawn-no-env");
+    const nodeBinary = process.platform === "win32" ? "C:\\fake\\node.exe" : "/fake/path/to/node";
+    const servicePath = "/fake/path/to/service.js";
+
+    setTimeout(() => {
+      void startFakeService(pipePath).then((s) => servers.push(s));
+    }, 120);
+
+    const handle = await startSupervisor({
+      mode: "prod",
+      pipePath,
+      nodeBinary,
+      servicePath,
+    });
+    handles.push(handle);
+
+    expect(spawnMock).toHaveBeenCalledTimes(1);
+    const [, , calledOptions] = spawnMock.mock.calls[0]!;
+    // Not `env: undefined` — the key must be ABSENT. Passing an explicit
+    // undefined is equivalent here, but asserting absence pins that the
+    // pre-existing inherit-everything behaviour is untouched.
+    expect(Object.hasOwn(calledOptions as object, "env")).toBe(false);
+  });
+
   it("rejects with a clear error when the initial connect fails and no nodeBinary/servicePath were provided", async () => {
     const pipePath = pipeFor("spawn-opt-out");
 

@@ -6,11 +6,11 @@
   "main": "dist/main/index.js",
   "scripts": {
     "postinstall": "electron-rebuild",
-    "prebuild": "pnpm --filter @cloudstash/ipc-contracts build",
+    "prebuild": "pnpm --filter @cloudstash/ipc-contracts build && pnpm --filter @cloudstash/fs-sync-service build",
     "build": "electron-vite build",
     "build:renderer": "pnpm --filter @cloudstash/renderer build",
     "build:desktop": "electron-vite build",
-    "prebuild:all": "pnpm --filter @cloudstash/ipc-contracts build",
+    "prebuild:all": "pnpm --filter @cloudstash/ipc-contracts build && pnpm --filter @cloudstash/fs-sync-service build",
     "build:all": "pnpm build:renderer && pnpm build:desktop",
     "predev": "pnpm build:renderer",
     "dev": "electron-vite dev",

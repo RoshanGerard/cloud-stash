@@ -1,9 +1,9 @@
 ## 1. Supervisor accepts a spawn environment
 
-- [ ] 1.1 (test, watch it fail) In `apps/desktop/src/main/sync/supervisor.prod-spawn.test.ts` — the supervisor suite is split by branch across `supervisor.prod-spawn`, `supervisor.prod-connect`, `supervisor.dev-no-spawn`, and `supervisor.race`; the spawn branch is the one under change — assert that when `env` is supplied, `child_process.spawn` receives it in its options alongside the existing `detached: true, stdio: "ignore"`.
-- [ ] 1.2 (test) Assert the existing spawn behaviour is unchanged when `env` is omitted — no `env` key is added, so the child inherits `process.env` exactly as today.
-- [ ] 1.3 In `supervisor.ts`, add `readonly env?: NodeJS.ProcessEnv` to `StartSupervisorOptions` and forward it into the `spawn` options, documenting that the runtime choice belongs to the composition root (design.md Decision 4).
-- [ ] 1.4 Confirm the other three supervisor test files pass untouched — connect-first, the dev no-spawn branch, `unref()`, the retry schedule, the PID-guard race, and the never-signal-on-quit guarantee are all unchanged.
+- [x] 1.1 (test, watch it fail) In `apps/desktop/src/main/sync/supervisor.prod-spawn.test.ts` — the supervisor suite is split by branch across `supervisor.prod-spawn`, `supervisor.prod-connect`, `supervisor.dev-no-spawn`, and `supervisor.race`; the spawn branch is the one under change — assert that when `env` is supplied, `child_process.spawn` receives it in its options alongside the existing `detached: true, stdio: "ignore"`.
+- [x] 1.2 (test) Assert the existing spawn behaviour is unchanged when `env` is omitted — no `env` key is added, so the child inherits `process.env` exactly as today.
+- [x] 1.3 In `supervisor.ts`, add `readonly env?: NodeJS.ProcessEnv` to `StartSupervisorOptions` and forward it into the `spawn` options, documenting that the runtime choice belongs to the composition root (design.md Decision 4).
+- [x] 1.4 Confirm the other three supervisor test files pass untouched — connect-first, the dev no-spawn branch, `unref()`, the retry schedule, the PID-guard race, and the never-signal-on-quit guarantee are all unchanged.
 
 ## 2. Build the service into the app bundle
 

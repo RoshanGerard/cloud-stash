@@ -107,10 +107,28 @@ export interface StartSupervisorOptions {
   readonly clientOptions?: SyncClientOptions;
   /** Overrides the default 2000 ms connect-timeout (tests / tuning). */
   readonly connectTimeoutMs?: number;
-  /** Absolute path to a plain-Node binary. Required for the spawn path. */
+  /**
+   * Absolute path to the executable that runs the service. In a packaged
+   * build this is the app's OWN executable (`process.execPath`), run as a
+   * plain Node runtime via `env.ELECTRON_RUN_AS_NODE` — see `env` below.
+   * Required for the spawn path.
+   */
   readonly nodeBinary?: string;
   /** Absolute path to the service's entry JS. Required for the spawn path. */
   readonly servicePath?: string;
+  /**
+   * Environment for the spawned child. When omitted the key is not passed to
+   * `spawn` at all, so the child inherits this process's environment.
+   *
+   * Supplied by the CALLER rather than assembled here on purpose
+   * (wire-packaged-build-fs-sync-service design.md Decision 4): choosing the
+   * runtime is a composition-root concern — `main/index.ts` already knows
+   * whether the app is packaged — and keeping it out of the supervisor lets
+   * the spawn tests assert the exact options without stubbing `process.env`.
+   * In packaged builds it carries `ELECTRON_RUN_AS_NODE=1`, which makes
+   * `process.execPath` behave as Node instead of booting a second Electron app.
+   */
+  readonly env?: NodeJS.ProcessEnv;
 }
 
 const DEFAULT_CONNECT_TIMEOUT_MS = 2000;
@@ -172,6 +190,9 @@ export async function startSupervisor(opts: StartSupervisorOptions): Promise<Sup
   const child = spawn(opts.nodeBinary, [opts.servicePath], {
     detached: true,
     stdio: "ignore",
+    // Spread rather than `env: opts.env` so an absent option leaves the key
+    // off entirely and the child inherits our environment, exactly as before.
+    ...(opts.env !== undefined ? { env: opts.env } : {}),
   });
   child.unref();
 
