@@ -1,5 +1,35 @@
 # Spike — resolving the plain-Node binary for detached service spawn
 
+> **SUPERSEDED — 2026-07-26, by `wire-packaged-build-fs-sync-service`
+> Decision 1. The plan below was never shipped and is now rejected.**
+>
+> `node-binary-resolver.ts` and its test have been **deleted**. The packaged app
+> now spawns its own executable under `ELECTRON_RUN_AS_NODE=1`
+> (`service-spawn-target.ts`) instead of a vendored Node binary, so no
+> `<resources>/node/` tree exists or ever will.
+>
+> **The deciding argument is one this document did not consider.** §4 gotcha 4
+> weighed a standalone Node binary against `ELECTRON_RUN_AS_NODE` on installer
+> size, runtime-version coupling, and macOS detached-spawn complexity, and chose
+> the standalone binary. But a standalone Node runs at a _different native-module
+> ABI_ than Electron, and the app already ships `better-sqlite3` compiled for
+> Electron. Vendoring Node would therefore have required a **second copy of the
+> same native module, compiled for a second ABI, inside one installer** — a
+> correctness hazard larger than any concern it was meant to avoid.
+>
+> On this document's own three objections: installer size _improves_ by 50–90 MB
+> rather than regressing; runtime-version coupling is currently nil, because
+> Electron 41.2.1's bundled Node is 24.14.1, exactly the repo's pinned
+> `engines.node`; and macOS detached spawn is a risk under **either** option,
+> since both spawn a binary from inside the signed bundle.
+>
+> Kept, rather than deleted, because §2–§4 remain the clearest statement of what
+> the rejected alternative would have cost — read them before re-litigating.
+> Everything below is preserved as originally written and is **no longer
+> accurate as a description of the codebase**: §4's `extraResources` stanza, §5's
+> reference implementation, and §6's open questions all describe the abandoned
+> design.
+
 Status: design note for task 4.1 of `wire-fs-sync-service`. The real implementation
 lands in task 4.3 (RED) / 4.4 (GREEN) as `node-binary-resolver.ts` colocated with
 this file.
