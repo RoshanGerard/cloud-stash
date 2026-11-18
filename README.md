@@ -1,4 +1,32 @@
-# cloudstash
+<a href="https://github.com/RoshanGerard/cloud-stash">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset=".github/assets/brand/banner-dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset=".github/assets/brand/banner-light.svg">
+    <img alt="CloudStash — your local workspace, stashed in the cloud and kept in sync. Syncs local folders to Amazon S3, Google Drive, OneDrive and NAS." src=".github/assets/brand/banner-dark.svg" width="100%">
+  </picture>
+</a>
+
+<p align="center">
+  <a href="https://github.com/RoshanGerard/cloud-stash/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/RoshanGerard/cloud-stash/ci.yml?branch=master&style=flat-square&label=CI&logo=githubactions&logoColor=E6E9EE&labelColor=202632&color=E6E9EE"></a>
+  <img alt="Platforms: macOS, Windows, Linux" src="https://img.shields.io/badge/platform-macOS%20%C2%B7%20Windows%20%C2%B7%20Linux-E6E9EE?style=flat-square&labelColor=202632">
+  <a href="https://github.com/RoshanGerard/cloud-stash/commits/master"><img alt="Last commit" src="https://img.shields.io/github/last-commit/RoshanGerard/cloud-stash/master?style=flat-square&label=last%20commit&labelColor=202632&color=E6E9EE"></a>
+  <br>
+  <img alt="Electron 41" src="https://img.shields.io/badge/Electron-41-E6E9EE?style=flat-square&logo=electron&logoColor=E6E9EE&labelColor=202632">
+  <img alt="Next.js 16" src="https://img.shields.io/badge/Next.js-16-E6E9EE?style=flat-square&logo=nextdotjs&logoColor=E6E9EE&labelColor=202632">
+  <img alt="React 19" src="https://img.shields.io/badge/React-19-E6E9EE?style=flat-square&logo=react&logoColor=E6E9EE&labelColor=202632">
+  <img alt="TypeScript 6" src="https://img.shields.io/badge/TypeScript-6-E6E9EE?style=flat-square&logo=typescript&logoColor=E6E9EE&labelColor=202632">
+  <img alt="Node.js 24" src="https://img.shields.io/badge/Node.js-24-E6E9EE?style=flat-square&logo=nodedotjs&logoColor=E6E9EE&labelColor=202632">
+  <img alt="pnpm 10" src="https://img.shields.io/badge/pnpm-10-E6E9EE?style=flat-square&logo=pnpm&logoColor=E6E9EE&labelColor=202632">
+  <img alt="SQLite" src="https://img.shields.io/badge/SQLite-better--sqlite3-E6E9EE?style=flat-square&logo=sqlite&logoColor=E6E9EE&labelColor=202632">
+</p>
+
+<p align="center">
+  <b>Amazon S3</b> &nbsp;·&nbsp; <b>Google Drive</b> &nbsp;·&nbsp; <b>OneDrive</b> &nbsp;·&nbsp; <b>NAS</b>
+  <br>
+  <sub>Desktop app + per-user background sync service · manual upload &amp; mirror sync · runs on macOS, Windows and Linux</sub>
+</p>
+
+## Overview
 
 Electron desktop app that syncs a local Claude Code workspace to remote backends.
 
