@@ -10,7 +10,6 @@ Every agent working in this repository loads this file, so it holds what every a
 ## Context
 
 - `openspec/config.yaml` — project context (`context:`) and per-artifact rules (`rules:`) that OpenSpec applies when it writes artifacts.
-- `openspec/project.md` — stack, architecture, conventions.
 - `openspec/specs/` — canonical specs. `openspec/changes/` — active changes; `openspec/changes/archive/` — completed.
 - The OpenSpec steps are skills: `openspec-propose`, `openspec-update-change`, `openspec-apply-change`, `openspec-sync-specs`, `openspec-archive-change`. OpenSpec 1.x also installs each as a command (`/opsx:propose` and so on); the skill is the same step.
 - A change's `tasks.md` is both the OpenSpec task list and the superpowers plan. Before you write or edit one, or hand one to a superpowers skill or script, use the `openspec-superpowers-tasks` skill.

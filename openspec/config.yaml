@@ -4,26 +4,71 @@ schema: spec-driven
 # .claude/skills) rather than the machine-wide ~/.agents/skills install.
 skillsScope: project
 
-# Project context (optional)
-# This is shown to AI when creating artifacts.
-# Add your tech stack, conventions, style guides, domain knowledge, etc.
-# Example:
-#   context: |
-#     Tech stack: TypeScript, React, Node.js
-#     We use conventional commits
-#     Domain: e-commerce platform
+# Shown to the AI in every artifact's instructions, and at apply and archive.
+context: |
+  CloudStash: a desktop app that syncs local files with cloud datasources
+  (Google Drive, OneDrive, S3). Users switch between datasources and run
+  manual, automatic and scheduled syncs.
 
-# Per-artifact rules (optional)
-# Add custom rules for specific artifacts.
-# Example:
-#   rules:
-#     proposal:
-#       - Keep proposals under 500 words
-#       - Always include a "Non-goals" section
-#     tasks:
-#       - Break tasks into chunks of max 2 hours
+  Stack: TypeScript 6.0.3 (strict) everywhere, Node.js 24.14.1, Electron 41.2.1,
+  React 19.2.5, Next.js 16, SQLite via Drizzle ORM (better-sqlite3), Vitest,
+  Playwright for end-to-end, pnpm workspaces.
 
+  Workspace:
+  - apps/desktop/src/main — Electron main process. ipcMain handlers in
+    src/main/ipc/*, one handler per renderer-facing operation. Owns the app's
+    SQLite database, which lives under Electron's userData path.
+  - apps/desktop/src/preload — exposes a typed API with
+    contextBridge.exposeInMainWorld('api', …). Only contextBridge wiring and
+    type re-exports from packages/ipc-contracts; no application logic, no
+    Drizzle, fs, child_process or other Node built-ins beyond what the exposed
+    API strictly needs.
+  - apps/desktop/src/renderer — Next.js 16 static export (output: 'export')
+    loaded over a custom app:// protocol; never a running Next.js server.
+    All OS, file and database access goes through window.api.*. Tests use
+    Vitest with jsdom.
+  - services/fs-sync — per-user Node.js background daemon that owns upload and
+    mirror-sync jobs, takes IPC commands over a Unix socket or Windows named
+    pipe, keeps its own SQLite database, and keeps running after the app
+    closes. No Electron and no provider SDK imports.
+  - packages/fs-datasource-engine — framework-agnostic provider clients
+    (Google Drive, OneDrive, S3) behind DatasourceClient<T> and ClientFactory.
+  - packages/ipc-contracts — TypeScript contracts shared by main, preload,
+    renderer and the sync service.
+  - services/fs-monitor — placeholder package, not implemented yet.
+
+  Architecture rules (non-negotiable):
+  - Renderer MUST NOT import from main/, preload/, fs, child_process,
+    electron or any Node built-in.
+  - Every renderer-callable operation has four coordinated pieces: a handler
+    in main/ipc/, a typed contract in packages/ipc-contracts/, a contextBridge
+    exposure in preload/, and a typed call site in the renderer. A contract
+    change updates all of them.
+  - drizzle-orm may be imported only under apps/desktop/src/main/,
+    services/fs-sync/src/db/ and services/fs-sync/src/main/ (enforced by the
+    CI drizzle-boundary job).
+  - Electron security defaults stay on: contextIsolation: true,
+    nodeIntegration: false, sandbox: true, webSecurity: true. Never call
+    webContents.executeJavaScript with user-controlled input.
+  - Packaging: electron-builder (macOS dmg signed and notarized, Windows nsis
+    signed, Linux AppImage and deb). Auto-update via electron-updater. Release
+    signing keys live in CI secrets, never in the repository.
+
+  Naming: kebab-case files; PascalCase React components and classes.
+
+# Per-artifact rules, added to the schema's own guidance.
 rules:
+  proposal:
+    - "Do not propose these unless the request asks for them: disabling context isolation or the sandbox, giving the renderer a database client or filesystem access, running Next.js as a server inside Electron, shipping an unsigned or un-notarized installer."
+    - A change that adds or alters a renderer-callable operation covers all four pieces (main/ipc handler, ipc-contracts type, preload exposure, renderer call site); a proposal missing any of them is incomplete.
+  design:
+    - Disabling or weakening any Electron security default needs an explicit justification and sign-off recorded in design.md, the same as adding a production dependency.
   tasks:
     - Group the tasks so that each `## N.` group is the smallest unit that has its own test cycle and that a reviewer could accept or reject independently. Fold setup, configuration, scaffolding and documentation into the group whose deliverable needs them.
     - Put one heading line `### Task N` (the group's number) directly under each `## N.` group heading, and no heading on individual tasks, so that tools which find work by heading take a whole group at a time.
+
+# Advisory guidance for operations.
+operations:
+  apply:
+    guidance:
+      - A change to the drizzle-orm allowlist edits both the drizzle-boundary job in .github/workflows/ci.yml and scripts/drizzle-boundary.test.ts.
