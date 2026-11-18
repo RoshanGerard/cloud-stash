@@ -10,7 +10,9 @@
 pnpm-lock.yaml
 # OpenSpec artifacts are owned by the OpenSpec lifecycle, not Prettier.
 openspec/
-# Claude Code plugin artifacts (commands/skills/settings) and the project
-# rules file are owned by tooling, not Prettier.
+# Claude Code plugin artifacts (commands/skills/settings), OpenSpec's shared
+# skill copies and the project rules files are owned by tooling, not Prettier.
 .claude/
+.agents/
 CLAUDE.md
+ORCHESTRATOR.md

@@ -18,3 +18,8 @@ schema: spec-driven
 #       - Always include a "Non-goals" section
 #     tasks:
 #       - Break tasks into chunks of max 2 hours
+
+rules:
+  tasks:
+    - Group the tasks so that each `## N.` group is the smallest unit that has its own test cycle and that a reviewer could accept or reject independently. Fold setup, configuration, scaffolding and documentation into the group whose deliverable needs them.
+    - Put one heading line `### Task N` (the group's number) directly under each `## N.` group heading, and no heading on individual tasks, so that tools which find work by heading take a whole group at a time.
