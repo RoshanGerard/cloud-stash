@@ -1,5 +1,9 @@
 schema: spec-driven
 
+# Keep OpenSpec's skills in the repository (.agents/skills, linked from
+# .claude/skills) rather than the machine-wide ~/.agents/skills install.
+skillsScope: project
+
 # Project context (optional)
 # This is shown to AI when creating artifacts.
 # Add your tech stack, conventions, style guides, domain knowledge, etc.
