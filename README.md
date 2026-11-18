@@ -7,17 +7,16 @@
 </a>
 
 <p align="center">
-  <a href="https://github.com/RoshanGerard/cloud-stash/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/RoshanGerard/cloud-stash/ci.yml?branch=master&style=flat-square&label=CI&logo=githubactions&logoColor=E6E9EE&labelColor=202632&color=E6E9EE"></a>
-  <img alt="Platforms: macOS, Windows, Linux" src="https://img.shields.io/badge/platform-macOS%20%C2%B7%20Windows%20%C2%B7%20Linux-E6E9EE?style=flat-square&labelColor=202632">
-  <a href="https://github.com/RoshanGerard/cloud-stash/commits/master"><img alt="Last commit" src="https://img.shields.io/github/last-commit/RoshanGerard/cloud-stash/master?style=flat-square&label=last%20commit&labelColor=202632&color=E6E9EE"></a>
-  <br>
-  <img alt="Electron 41" src="https://img.shields.io/badge/Electron-41-E6E9EE?style=flat-square&logo=electron&logoColor=E6E9EE&labelColor=202632">
-  <img alt="Next.js 16" src="https://img.shields.io/badge/Next.js-16-E6E9EE?style=flat-square&logo=nextdotjs&logoColor=E6E9EE&labelColor=202632">
-  <img alt="React 19" src="https://img.shields.io/badge/React-19-E6E9EE?style=flat-square&logo=react&logoColor=E6E9EE&labelColor=202632">
-  <img alt="TypeScript 6" src="https://img.shields.io/badge/TypeScript-6-E6E9EE?style=flat-square&logo=typescript&logoColor=E6E9EE&labelColor=202632">
-  <img alt="Node.js 24" src="https://img.shields.io/badge/Node.js-24-E6E9EE?style=flat-square&logo=nodedotjs&logoColor=E6E9EE&labelColor=202632">
-  <img alt="pnpm 10" src="https://img.shields.io/badge/pnpm-10-E6E9EE?style=flat-square&logo=pnpm&logoColor=E6E9EE&labelColor=202632">
-  <img alt="SQLite" src="https://img.shields.io/badge/SQLite-better--sqlite3-E6E9EE?style=flat-square&logo=sqlite&logoColor=E6E9EE&labelColor=202632">
+  <a href="https://github.com/RoshanGerard/cloud-stash/actions/workflows/ci.yml"><img alt="CI status" src="https://img.shields.io/github/actions/workflow/status/RoshanGerard/cloud-stash/ci.yml?branch=master&style=flat-square&label=CI&logo=githubactions&logoColor=white&labelColor=1B222C"></a>
+  <a href="https://github.com/RoshanGerard/cloud-stash/commits/master"><img alt="Last commit" src="https://img.shields.io/github/last-commit/RoshanGerard/cloud-stash/master?style=flat-square&label=last%20commit&labelColor=1B222C&color=343D4D"></a>
+</p>
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset=".github/assets/brand/stack-dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset=".github/assets/brand/stack-light.svg">
+    <img alt="Platforms: macOS, Windows, Linux. Runtime: Electron 41, Node.js 24. Stack: Next.js 16, React 19, TypeScript 6, pnpm 10, SQLite." src=".github/assets/brand/stack-light.svg">
+  </picture>
 </p>
 
 <p align="center">
